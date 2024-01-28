@@ -2,3 +2,12 @@ spring:
   devtools:
     restart:
       enabled: true
+
+server:
+  port: 8443
+
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: -wva9.ea7)}}
+    key-store-type: PKCS12
+    key-alias: myalias
