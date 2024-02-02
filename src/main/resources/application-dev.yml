@@ -4,10 +4,14 @@ spring:
       enabled: true
 
 server:
-  port: 8443
-
+  port: 8083
   ssl:
     key-store: classpath:keystore.p12
     key-store-password: -wva9.ea7)}}
     key-store-type: PKCS12
     key-alias: myalias
+    enabled: true
+
+# 개발 환경에서 허용할 CORS 출처
+cors:
+  allowedorigins: "http://localhost:8080,http://localhost:8081"
