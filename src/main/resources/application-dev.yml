@@ -1,7 +1,12 @@
 spring:
   devtools:
     restart:
-      enabled: true
+      enabled: false
+  security:
+    user:
+      name: admin
+      password: admin
+
 
 server:
   port: 8083
