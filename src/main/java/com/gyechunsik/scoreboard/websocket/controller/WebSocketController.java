@@ -1,7 +1,6 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
 import com.gyechunsik.scoreboard.websocket.controller.dto.NicknameEnrollRequest;
-import com.gyechunsik.scoreboard.websocket.controller.dto.NicknameResponse;
 import com.gyechunsik.scoreboard.websocket.messages.RequestRemoteCode;
 import com.gyechunsik.scoreboard.websocket.service.MemorySocketUserService;
 import jakarta.servlet.http.HttpSession;
@@ -20,6 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -29,51 +29,38 @@ public class WebSocketController {
     private final SimpMessagingTemplate template;
     private final MemorySocketUserService socketService;
 
-    @MessageMapping("/hello")
-    public void greeting(String message) {
-        log.info("greetings : {}", message);
-        template.convertAndSend("/topic/greetings", message); // topic/market/{마켓아이디}를 듣고있는 client에 전송
-    }
-
     @PostMapping("/app/username")
     public ResponseEntity<?> enrollUsername(
             @RequestBody NicknameEnrollRequest request,
-            HttpSession httpSession) {
+            HttpSession httpSession
+    ) {
         String nickname = request.getNickname();
         if (!StringUtils.hasText(nickname)) {
-            log.info("nickname : {}", nickname);
-            throw new IllegalArgumentException("닉네임을 입력해 주세요.");
+            throw new IllegalArgumentException("닉네임을 입력해 주세요");
         }
-        log.info("httpSession : {}", httpSession);
-        log.info("httpSession getId : {}", httpSession.getId());
-
-        String prevNickname = (String) httpSession.getAttribute("username");
-        log.info("nickname : {}", nickname);
-        log.info("prevNickname : {}", prevNickname);
+        String prevNickname = (String) httpSession.getAttribute("nickname");
         if (prevNickname != null && prevNickname.equals(nickname)) {
             throw new IllegalArgumentException("이전 닉네임과 동일합니다");
         }
-
         if (!socketService.registerNickname(nickname, prevNickname)) {
-            throw new IllegalArgumentException("이미 존재하는 닉네임입니다.");
+            throw new IllegalArgumentException("이미 존재하는 닉네임입니다");
         }
-        httpSession.setAttribute("username", nickname);
-        log.info("username : {}", nickname);
-        return ResponseEntity.ok().body("Nickname enrolled: " + nickname);
+
+        httpSession.setAttribute("nickname", nickname);
+        log.info("nickname enrolled : {}", nickname);
+        Map<String, Object> response = Map.of("message", "닉네임 저장에 성공했습니다", "nickname", nickname);
+        return ResponseEntity.ok().body(response);
     }
 
     // /app/remote.issueCode
     @MessageMapping("/remote.issueCode")
-    public void issueCode(@Payload RequestRemoteCode message,
-                                Message<Object> messageObject,
-                                @Header("simpSessionId") String sessionId,
-                                SimpMessageHeaderAccessor headerAccessor,
-                                Principal principal) {
-        log.info("sessionId : {}", sessionId);
-        log.info("user header : {}", headerAccessor.getUser());
-        log.info("user header : {}", messageObject.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER, Principal.class));
-
-        template.convertAndSendToUser(sessionId, "/topic/code", "test-code");
+    public void issueCode(
+            Principal principal
+    ) {
+        if(principal == null) {
+            throw new IllegalArgumentException("닉네임 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
+        }
+        template.convertAndSendToUser(principal.getName(), "/topic/code", "test-code");
     }
     /*
     1) template 으로 보낸 메세지 : principal 로 인식 된다
@@ -93,13 +80,11 @@ public class WebSocketController {
     content-length:24
 
     {"code":"1234test-code"}
-
-
      */
 
     @MessageExceptionHandler
-    public String handleException(Exception e) {
-        log.error("error : {}", e.getMessage());
-        return e.getMessage();
+    public ResponseEntity<?> handleException(Exception e) {
+        Map<String, Object> errBody = Map.of("message", e.getMessage());
+        return ResponseEntity.badRequest().body(errBody);
     }
 }

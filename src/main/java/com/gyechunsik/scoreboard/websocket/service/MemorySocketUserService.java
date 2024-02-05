@@ -25,8 +25,6 @@ public class MemorySocketUserService {
      * @return 등록 성공 여부
      */
     public boolean registerNickname(@NotNull String nickname, @Nullable String prevNickname) {
-        // log.info("register username : {}", nickname);
-        // log.info("usernameSet : {}", usernameSet);
         if (usernameSet.contains(nickname))
             return false;
 

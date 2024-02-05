@@ -24,12 +24,4 @@ public class ServerOnController {
         return "on";
     }
 
-    @GetMapping("/test")
-    public String test2(Authentication argAuth) {
-        log.info("argAuth : {}", argAuth);
-        Authentication contextAuth = SecurityContextHolder.getContext().getAuthentication();
-        log.info("contextAuth : {}", contextAuth);
-        return "test";
-    }
-
 }

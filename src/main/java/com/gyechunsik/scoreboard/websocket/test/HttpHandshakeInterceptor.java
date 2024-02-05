@@ -16,11 +16,11 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
         if (request instanceof ServletServerHttpRequest) {
             ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
             HttpSession session = servletRequest.getServletRequest().getSession();
-            String userName = (String) session.getAttribute("userName"); // "userName"은 저장된 속성의 이름입니다.
-            if(userName == null || userName.isEmpty()) {
+            String nickname = (String) session.getAttribute("nickname"); // "userName"은 저장된 속성의 이름입니다.
+            if(nickname == null || nickname.isEmpty()) {
                 throw new IllegalArgumentException("Websocket 연결 이전에 username 을 설정해주세요");
             }
-            attributes.put("userName", userName);
+            attributes.put("nickname", nickname);
         }
         return true;
     }

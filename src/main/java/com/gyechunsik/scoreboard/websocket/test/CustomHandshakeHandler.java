@@ -23,8 +23,10 @@ public class CustomHandshakeHandler extends DefaultHandshakeHandler {
         if(principal != null) {
             return principal;
         }
+        String nickname = (String) attributes.get("nickname");
+        log.info("attribute nickname : {}", nickname);
 
-        return new StompPrincipal(UUID.randomUUID().toString());
+        return new StompPrincipal(nickname);
     }
 }
 
