@@ -1,24 +1,34 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.security.SecureRandom;
 
 @Getter
+@EqualsAndHashCode
 public class Code {
 
-    private String value;
+    private String codeValue;
 
     private Code() {
-        this.value = "";
+        this.codeValue = "";
     }
 
-    public static Code generateCode() {
+    @Override
+    public String toString() {
+        return "Code{" +
+                "value='" + codeValue + '\'' +
+                '}';
+    }
+
+    protected static Code generateCode() {
         String code = CodeGenerator.generateCode();
         Code instance = new Code();
-        instance.value = code;
+        instance.codeValue = code;
         return instance;
     }
+
 
     private static class CodeGenerator {
 

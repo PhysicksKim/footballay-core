@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.config;
 
 import com.gyechunsik.scoreboard.websocket.test.CustomHandshakeHandler;
 import com.gyechunsik.scoreboard.websocket.test.HttpHandshakeInterceptor;
+import com.gyechunsik.scoreboard.websocket.test.StompDisconnectInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,8 +55,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 클라이언트로 메시지를 라우팅할 때 사용할 prefix를 설정합니다.
-        registry.enableSimpleBroker("/topic");
-        registry.setApplicationDestinationPrefixes("/app");
+        registry.enableSimpleBroker("/topic","/queue");
+        registry.setApplicationDestinationPrefixes("/app","/chat");
         registry.setUserDestinationPrefix("/user");
     }
+
+    // @Override
+    // public void configureClientInboundChannel(ChannelRegistration registration) {
+    //     registration.interceptors(new StompDisconnectInterceptor());
+    // }
 }

@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.controller.dto;
+package com.gyechunsik.scoreboard.websocket.service;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class NicknameEnrollRequest {
-    private String nickname;
+public class ControlPublisher {
+
+    private String name;
 }

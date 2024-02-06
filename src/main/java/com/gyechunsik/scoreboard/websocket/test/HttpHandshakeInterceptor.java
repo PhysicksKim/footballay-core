@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.websocket.test;
 
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
@@ -9,18 +10,24 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.util.Map;
 
+@Slf4j
 public class HttpHandshakeInterceptor implements HandshakeInterceptor {
 
     @Override
-    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
+    public boolean beforeHandshake(
+            ServerHttpRequest request,
+            ServerHttpResponse response,
+            WebSocketHandler wsHandler,
+            Map<String, Object> attributes
+    ) throws Exception {
         if (request instanceof ServletServerHttpRequest) {
             ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
             HttpSession session = servletRequest.getServletRequest().getSession();
-            String nickname = (String) session.getAttribute("nickname"); // "userName"은 저장된 속성의 이름입니다.
-            if(nickname == null || nickname.isEmpty()) {
-                throw new IllegalArgumentException("Websocket 연결 이전에 username 을 설정해주세요");
+            if(session == null) {
+                throw new IllegalStateException("세션이 없습니다");
             }
-            attributes.put("nickname", nickname);
+            attributes.put("webSession", session);
+            log.info("세션 ID : {}", session.getId());
         }
         return true;
     }

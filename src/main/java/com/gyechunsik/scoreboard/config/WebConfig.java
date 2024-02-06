@@ -22,6 +22,7 @@ public class WebConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(allowOriginArray)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                        .allowedHeaders("*")
                         .allowCredentials(true);
             }
         };
