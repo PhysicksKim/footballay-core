@@ -1,11 +1,12 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.gyechunsik.scoreboard.websocket.service.Code;
-import com.gyechunsik.scoreboard.websocket.service.CodeService;
+import com.gyechunsik.scoreboard.websocket.response.HelloResponse;
+import com.gyechunsik.scoreboard.websocket.response.IssuedCodeResponse;
+import com.gyechunsik.scoreboard.websocket.service.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.service.RemoteCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -22,37 +23,37 @@ import java.util.Map;
 public class ScoreBoardStompController {
 
     private final SimpMessagingTemplate template;
-    private final CodeService codeService;
+    private final RemoteCodeService remoteCodeService;
 
     @MessageMapping("/hello")
     @SendTo("/topic/hello")
-    public HelloObj hello(
+    public HelloResponse hello(
             Principal principal
     ) {
         log.info("principal : {}", principal);
         log.info("hello");
-        return new HelloObj("hello hi " + principal.getName());
+        return new HelloResponse("hello hi " + principal.getName());
     }
 
+    /**
+     * 코드를 발급합니다. 클라이언트에서는 발급받은 코드를 사용하여
+     * @param principal
+     * @return
+     */
     // /app/code.issue
-    @MessageMapping("/board/code.issue")
-    @SendToUser("/topic/board/code.receive") //  /user/topic/code.receive
-    public Code issueCode(
+    @MessageMapping("/board/remotecode.issue")
+    @SendToUser("/topic/board/remotecode.receive") //  /user/topic/code.receive
+    public IssuedCodeResponse issueCode(
             Principal principal
     ) {
         log.info("principal : {}", principal);
         if(principal == null) {
-            throw new IllegalArgumentException("유저이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
+            throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
 
-        Code code = codeService.generateCode();
-        log.info("issued code: {} , user : {}", code, principal.getName());
-        return code;
-    }
-
-    @MessageMapping("/board/code/{codeValue}")
-    public void receiveCodeMessage(@DestinationVariable("codeValue") String codeValue) {
-        log.info("codeValue : {}", codeValue);
+        RemoteCode remoteCode = remoteCodeService.generateCode();
+        log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
+        return new IssuedCodeResponse("200", "코드가 발급되었습니다.", remoteCode.getRemoteCode());
     }
 
     @MessageExceptionHandler

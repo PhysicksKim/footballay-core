@@ -1,12 +1,15 @@
-package com.gyechunsik.scoreboard.websocket.controller;
+package com.gyechunsik.scoreboard.websocket.service;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor
-public class HelloObj {
+@AllArgsConstructor
+public class RemotePublisher {
+
     private String name;
 }
