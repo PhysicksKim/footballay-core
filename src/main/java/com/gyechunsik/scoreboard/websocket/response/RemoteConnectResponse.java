@@ -13,8 +13,8 @@ public class RemoteConnectResponse extends SuccessResponse {
 
     protected String pubPath;
 
-    public RemoteConnectResponse(String code, String message, String remoteCode) {
+    public RemoteConnectResponse(int code, String message, String remoteCode) {
         super(code, message);
-        this.pubPath = "/topic/board.{" + remoteCode + "}";
+        this.pubPath = "/app/board." + remoteCode;
     }
 }

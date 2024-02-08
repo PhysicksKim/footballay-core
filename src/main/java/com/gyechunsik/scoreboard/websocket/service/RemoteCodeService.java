@@ -35,11 +35,22 @@ public class RemoteCodeService {
     public boolean enrollPubUser(@NotNull RemoteCode remoteCode, @NotNull String name) {
         Set<RemotePublisher> remotePubSet = codeSessionMap.get(remoteCode);
         if(remotePubSet == null) {
-            throw new IllegalStateException("코드 저장소가 존재하지 않습니다. 관리자에게 문의해 주세요.");
+            throw new IllegalStateException("유효하지 않은 코드입니다. 코드를 다시 확인해주세요.");
         }
 
         RemotePublisher remotePublisher = new RemotePublisher(name);
         return remotePubSet.add(remotePublisher);
+    }
+
+    public boolean isValidCodeAndUser(@NotNull RemoteCode remoteCode, @NotNull String name) {
+        Set<RemotePublisher> remotePubSet = codeSessionMap.get(remoteCode);
+        if(remotePubSet == null) {
+            log.info("존재하지 않은 코드에 대한 요청 발생. remoteCode = [{}], name = [{}]", remoteCode, name);
+            return false;
+        }
+
+        RemotePublisher remotePublisher = new RemotePublisher(name);
+        return remotePubSet.contains(remotePublisher);
     }
 
     public ConcurrentHashMap<RemoteCode, Set<RemotePublisher>> getCodeSessionMap() {
@@ -51,7 +62,8 @@ public class RemoteCodeService {
      * @param remoteCode 제거할 코드
      * @return 제거 성공 여부
      */
-    public boolean removeCode(RemoteCode remoteCode) {
+    public boolean expireCode(RemoteCode remoteCode) {
+        log.info("expireCode : [{}]", remoteCode);
         return codeSessionMap.remove(remoteCode) != null;
     }
 

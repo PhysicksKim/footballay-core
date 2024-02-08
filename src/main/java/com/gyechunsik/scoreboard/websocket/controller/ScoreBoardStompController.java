@@ -1,18 +1,18 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.gyechunsik.scoreboard.websocket.response.HelloResponse;
-import com.gyechunsik.scoreboard.websocket.response.IssuedCodeResponse;
+import com.gyechunsik.scoreboard.websocket.response.BoardCodeIssueResponse;
 import com.gyechunsik.scoreboard.websocket.service.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.service.RemoteCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 
 import java.security.Principal;
 import java.util.Map;
@@ -25,36 +25,49 @@ public class ScoreBoardStompController {
     private final SimpMessagingTemplate template;
     private final RemoteCodeService remoteCodeService;
 
-    @MessageMapping("/hello")
-    @SendTo("/topic/hello")
-    public HelloResponse hello(
-            Principal principal
-    ) {
-        log.info("principal : {}", principal);
-        log.info("hello");
-        return new HelloResponse("hello hi " + principal.getName());
-    }
-
     /**
-     * 코드를 발급합니다. 클라이언트에서는 발급받은 코드를 사용하여
+     * 코드를 발급합니다. client 에서는 발급받은 코드를 사용하여 원격 명령을 받을 subPath channel 을 구독합니다.
      * @param principal
      * @return
      */
-    // /app/code.issue
+    //  /app/code.issue
+    //  /user/topic/code.receive
     @MessageMapping("/board/remotecode.issue")
-    @SendToUser("/topic/board/remotecode.receive") //  /user/topic/code.receive
-    public IssuedCodeResponse issueCode(
+    @SendToUser("/topic/board/remotecode.receive")
+    public BoardCodeIssueResponse issueCode(
             Principal principal
     ) {
         log.info("principal : {}", principal);
-        if(principal == null) {
+        if (principal == null) {
             throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
 
         RemoteCode remoteCode = remoteCodeService.generateCode();
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
-        return new IssuedCodeResponse("200", "코드가 발급되었습니다.", remoteCode.getRemoteCode());
+        log.info("code map :: {}", remoteCodeService.getCodeSessionMap().toString());
+        return new BoardCodeIssueResponse(200, "코드가 발급되었습니다.", remoteCode.getRemoteCode());
     }
+
+    @MessageMapping("/board/remotecode.expire/{remoteCode}")
+    @SendToUser("/topic/remotecode.expire")
+    public ResponseEntity<?> expireCode(
+            @DestinationVariable("remoteCode") RemoteCode remoteCode,
+            Principal principal
+    ) {
+        if (principal == null) {
+            throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
+        }
+        if (remoteCode == null || !StringUtils.hasText(remoteCode.getRemoteCode())) {
+            throw new IllegalArgumentException("유효하지 않은 코드입니다. 코드를 다시 확인해주세요.");
+        }
+
+        if (remoteCodeService.expireCode(remoteCode)) {
+            return ResponseEntity.ok().body(Map.of("code", "200", "message", "코드가 성공적으로 파기되었습니다."));
+        } else {
+            return ResponseEntity.badRequest().body(Map.of("code","400","message", "코드가 존재하지 않습니다."));
+        }
+    }
+
 
     @MessageExceptionHandler
     public ResponseEntity<?> handleException(Exception e) {

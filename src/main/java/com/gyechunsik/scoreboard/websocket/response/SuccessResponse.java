@@ -10,10 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SuccessResponse {
 
-    protected String code;
+    protected int code;
     protected String message;
 
-    public SuccessResponse(String code, String message) {
+    public SuccessResponse(int code, String message) {
         this.code = code;
         this.message = message;
     }
