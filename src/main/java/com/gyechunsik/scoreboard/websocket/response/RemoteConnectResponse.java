@@ -15,6 +15,6 @@ public class RemoteConnectResponse extends SuccessResponse {
 
     public RemoteConnectResponse(int code, String message, String remoteCode) {
         super(code, message);
-        this.pubPath = "/app/board." + remoteCode;
+        this.pubPath = "/app/remote/" + remoteCode;
     }
 }

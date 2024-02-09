@@ -90,7 +90,7 @@ public class RemoteStompController {
         log.info("remote control message : {}", message);
         log.info("principal name : {}", principal.getName());
 
-        if(remoteCodeService.isValidCode(RemoteCode.of(remoteCode))) {
+        if(!remoteCodeService.isValidCode(RemoteCode.of(remoteCode))) {
             throw new IllegalArgumentException("유효하지 않은 코드입니다.");
         }
 

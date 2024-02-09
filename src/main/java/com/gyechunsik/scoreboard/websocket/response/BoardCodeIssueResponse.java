@@ -11,6 +11,6 @@ public class BoardCodeIssueResponse extends SuccessResponse {
     public BoardCodeIssueResponse(int code, String message, String remoteCode) {
         super(code, message);
         this.remoteCode = remoteCode;
-        this.subPath = "/topic/board."+remoteCode;
+        this.subPath = "/topic/board/"+remoteCode;
     }
 }
