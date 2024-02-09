@@ -7,18 +7,14 @@ import com.gyechunsik.scoreboard.websocket.response.SuccessResponse;
 import com.gyechunsik.scoreboard.websocket.service.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.service.RemoteCodeMapper;
 import com.gyechunsik.scoreboard.websocket.service.RemoteCodeService;
-import jakarta.websocket.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.security.Principal;
 import java.util.Map;
@@ -43,36 +39,41 @@ public class RemoteStompController {
     @MessageMapping("/remote.connect")
     @SendToUser("/topic/remote.connect")
     public SuccessResponse remoteConnect(
-            @Payload RemoteConnectMessage message,
+            RemoteConnectMessage message,
             Principal principal,
             StompHeaderAccessor headerAccessor
     ) {
-        log.info("before code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         if (principal == null) {
             throw new IllegalArgumentException("코드 등록 에러. 유저이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요.");
         }
-
-        RemoteCode remoteCode = RemoteCodeMapper.from(message);
-        if (!remoteCodeService.enrollPubUser(remoteCode, principal.getName())) {
-            throw new IllegalArgumentException("이미 연결된 코드입니다.");
+        if(!StringUtils.hasText(message.getRemoteCode())) {
+            throw new IllegalArgumentException("코드 등록 에러. 코드가 비어있습니다.");
         }
 
-        log.info("RemoteCode Publisher Enrolled :: remote connect = {} , Username = {}",
-                remoteCode, principal.getName());
+        RemoteCode remoteCode = RemoteCodeMapper.from(message);
+        if (!remoteCodeService.isValidCode(remoteCode)) {
+            throw new IllegalArgumentException("코드 등록 에러. 유효하지 않은 코드입니다.");
+        }
 
         // subPath = "/topic/board.{remoteCode}";
-        log.info("after code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
         if(sessionAttributes == null) {
             throw new IllegalArgumentException("세션 어트리뷰트가 비어있습니다. 서버 관리자에게 문의해주세요.");
         }
-
-        log.info("before attributes : {}", sessionAttributes);
         sessionAttributes.put("remoteCode", remoteCode.getRemoteCode());
-        log.info("after attributes : {}", sessionAttributes);
+        log.info("attributes : {}", sessionAttributes);
+        log.info("after code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         return new RemoteConnectResponse(200, "원격 등록에 성공했습니다.", remoteCode.getRemoteCode());
     }
 
+    /**
+     * 원격 명령을 전달하기 전, 유효한 코드 채널인지 검사합니다.
+     * @param remoteCode
+     * @param message
+     * @param principal
+     * @param headerAccessor
+     * @return
+     */
     @MessageMapping("/remote/{remoteCode}")
     @SendTo("/topic/board/{remoteCode}")
     public Map<String, String> remoteControl(
@@ -89,9 +90,8 @@ public class RemoteStompController {
         log.info("remote control message : {}", message);
         log.info("principal name : {}", principal.getName());
 
-        if(remoteCodeService.isValidCodeAndUser(RemoteCode.of(remoteCode), principal.getName())) {
-            // throw new IllegalArgumentException("유효하지 않은 코드입니다. 코드를 다시 확인해주세요.");
-            log.info("이미 등록된 사용자의 add 명령 발생"); // TODO : 원격 컨트롤 요청자가 등록 요청을 반복하면 어떻게 처리해야하지?
+        if(remoteCodeService.isValidCode(RemoteCode.of(remoteCode))) {
+            throw new IllegalArgumentException("유효하지 않은 코드입니다.");
         }
 
         String sessionRemoteCode = (String) headerAccessor.getSessionAttributes().get("remoteCode");
@@ -102,7 +102,6 @@ public class RemoteStompController {
         log.info("code = {} 의 메세지 전송 validation 통과", remoteCode);
         return message;
     }
-
 
     @MessageExceptionHandler(IllegalArgumentException.class)
     @SendToUser("/topic/error")

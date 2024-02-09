@@ -42,32 +42,11 @@ public class ScoreBoardStompController {
             throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
 
-        RemoteCode remoteCode = remoteCodeService.generateCode();
+        RemoteCode remoteCode = remoteCodeService.generateCode(principal);
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
         log.info("code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         return new BoardCodeIssueResponse(200, "코드가 발급되었습니다.", remoteCode.getRemoteCode());
     }
-
-    @MessageMapping("/board/remotecode.expire/{remoteCode}")
-    @SendToUser("/topic/remotecode.expire")
-    public ResponseEntity<?> expireCode(
-            @DestinationVariable("remoteCode") RemoteCode remoteCode,
-            Principal principal
-    ) {
-        if (principal == null) {
-            throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
-        }
-        if (remoteCode == null || !StringUtils.hasText(remoteCode.getRemoteCode())) {
-            throw new IllegalArgumentException("유효하지 않은 코드입니다. 코드를 다시 확인해주세요.");
-        }
-
-        if (remoteCodeService.expireCode(remoteCode)) {
-            return ResponseEntity.ok().body(Map.of("code", "200", "message", "코드가 성공적으로 파기되었습니다."));
-        } else {
-            return ResponseEntity.badRequest().body(Map.of("code","400","message", "코드가 존재하지 않습니다."));
-        }
-    }
-
 
     @MessageExceptionHandler
     public ResponseEntity<?> handleException(Exception e) {

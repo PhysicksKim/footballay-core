@@ -11,14 +11,15 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class RemotePublisher {
+public class RemoteSubscriber {
 
     private String name;
-    // private LocalDateTime lastRequestTime;
+    private RemoteCode remoteCode;
+    private LocalDateTime lastRequestTime;
 
     @Override
     public String toString() {
-        return "RemotePublisher{" +
+        return "RemoteSubscriber{" +
                 "name='" + name + '\'' +
                 '}';
     }
@@ -28,7 +29,7 @@ public class RemotePublisher {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        RemotePublisher that = (RemotePublisher) o;
+        RemoteSubscriber that = (RemoteSubscriber) o;
 
         return getName().equals(that.getName());
     }

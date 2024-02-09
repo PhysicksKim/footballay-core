@@ -9,13 +9,27 @@ import org.springframework.util.StringUtils;
 import java.security.SecureRandom;
 
 @Getter
-@EqualsAndHashCode
 public class RemoteCode {
 
     private final String remoteCode;
 
     protected RemoteCode(@NotBlank String remoteCode) {
         this.remoteCode = remoteCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RemoteCode that = (RemoteCode) o;
+
+        return getRemoteCode() != null ? getRemoteCode().equals(that.getRemoteCode()) : that.getRemoteCode() == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return getRemoteCode() != null ? getRemoteCode().hashCode() : 0;
     }
 
     @Override
