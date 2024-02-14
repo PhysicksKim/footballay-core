@@ -6,13 +6,11 @@ import com.gyechunsik.scoreboard.websocket.service.RemoteCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
 
 import java.security.Principal;
 import java.util.Map;
@@ -44,7 +42,6 @@ public class ScoreBoardStompController {
 
         RemoteCode remoteCode = remoteCodeService.generateCode(principal);
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
-        log.info("code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         return new BoardCodeIssueResponse(200, "코드가 발급되었습니다.", remoteCode.getRemoteCode());
     }
 

@@ -1,56 +1,24 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.aspectj.apache.bcel.classfile.Code;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
-@Service
-public class RemoteCodeService {
+public interface RemoteCodeService {
 
-    private static final ConcurrentHashMap<RemoteCode, RemoteSubscriber> codeSessionMap = new ConcurrentHashMap<>();
+    RemoteCode generateCode(Principal principal);
 
-    public RemoteCode generateCode(Principal principal) {
-        RemoteCode remoteCode;
-        do {
-            remoteCode = RemoteCode.generate();
-            log.info("remoteCode : [{}] , contains : [{}]", remoteCode, codeSessionMap.containsKey(remoteCode));
-        }
-        while (codeSessionMap.containsKey(remoteCode));
+    boolean isValidCode(RemoteCode remoteCode);
 
-        RemoteSubscriber remoteSubscriber = new RemoteSubscriber(principal.getName(), remoteCode, LocalDateTime.now());
-
-        codeSessionMap.put(remoteCode, remoteSubscriber);
-        return remoteCode;
-    }
-
-    public boolean isValidCode(@NotNull RemoteCode remoteCode) {
-        if (!codeSessionMap.containsKey(remoteCode)) {
-            throw new IllegalStateException("유효하지 않은 코드입니다. 코드를 다시 확인해주세요.");
-        }
-
-        return true;
-    }
-
-    public ConcurrentHashMap<RemoteCode, RemoteSubscriber> getCodeSessionMap() {
-        return codeSessionMap;
-    }
+    boolean expireCode(RemoteCode remoteCode);
 
     /**
-     * 목록에서 코드를 제거한다.
-     *
-     * @param remoteCode 제거할 코드
-     * @return 제거 성공 여부
+     * 해당 코드를 구독하는 client 들의 이름 목록을 반환합니다.
+     * 이름은 각 웹소켓 클라이언트의 Principal.getName() 값을 담고 있습니다.
+     * @param code 구독자 목록을 조회할 코드
+     * @return 구독자 이름 목록
      */
-    public boolean expireCode(RemoteCode remoteCode) {
-        log.info("expireCode : [{}]", remoteCode);
-        return codeSessionMap.remove(remoteCode) != null;
-    }
-
+    Set<String> getSubscribers(RemoteCode code);
 }

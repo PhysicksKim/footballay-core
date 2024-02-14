@@ -1,5 +1,6 @@
-package com.gyechunsik.scoreboard.websocket.test;
+package com.gyechunsik.scoreboard.websocket.handler;
 
+import com.gyechunsik.scoreboard.websocket.user.StompPrincipal;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -8,7 +9,6 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import java.security.Principal;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 public class CustomHandshakeHandler extends DefaultHandshakeHandler {

@@ -1,17 +1,16 @@
 spring:
-  devtools:
-    restart:
-      enabled: false
   security:
     user:
       name: admin
       password: admin
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      timeout: 1000
-      password: dev1234redis
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#      timeout: 1000
+#      password:
+#      ssl:
+#        enabled: true
 
 server:
   port: 8083
@@ -28,5 +27,4 @@ cors:
 
 logging:
   level:
-    org:
-      testcontainers: debug
+    root: debug

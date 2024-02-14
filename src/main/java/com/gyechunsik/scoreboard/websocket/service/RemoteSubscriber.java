@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 public class RemoteSubscriber {
 
     private String name;
-    private RemoteCode remoteCode;
     private LocalDateTime lastRequestTime;
 
     @Override

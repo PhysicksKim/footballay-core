@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.test;
+package com.gyechunsik.scoreboard.websocket.handler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

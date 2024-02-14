@@ -1,4 +1,6 @@
-package com.gyechunsik.scoreboard.websocket.test;
+package com.gyechunsik.scoreboard.websocket.user;
+
+import com.gyechunsik.scoreboard.websocket.handler.CustomHandshakeHandler;
 
 import java.security.Principal;
 

@@ -30,7 +30,6 @@ public class RemoteStompController {
      * 원격 client 가 전달받은 code 를 등록합니다.
      * client 는 응답으로 pubPath 를 받아서 해당 주소를 subscribe 합니다.
      * pubPath 는 "/topic/board.{remoteCode}" 입니다.
-     *
      * @param message   remoteCode 가 담긴 STOMP 메시지
      * @param principal 원격 컨트롤 요청 client
      * @return pubPath 를 담은 응답 메세지
@@ -55,14 +54,13 @@ public class RemoteStompController {
             throw new IllegalArgumentException("코드 등록 에러. 유효하지 않은 코드입니다.");
         }
 
-        // subPath = "/topic/board.{remoteCode}";
+        // TODO : sessionAttribute 에서 이전 code 있으면 꺼내서 service 에서 삭제해야함 -> 이전 코드로 접속한 client 는 이전 코드로 접속할 수 없어야함
         Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
         if(sessionAttributes == null) {
             throw new IllegalArgumentException("세션 어트리뷰트가 비어있습니다. 서버 관리자에게 문의해주세요.");
         }
         sessionAttributes.put("remoteCode", remoteCode.getRemoteCode());
         log.info("attributes : {}", sessionAttributes);
-        log.info("after code map :: {}", remoteCodeService.getCodeSessionMap().toString());
         return new RemoteConnectResponse(200, "원격 등록에 성공했습니다.", remoteCode.getRemoteCode());
     }
 
