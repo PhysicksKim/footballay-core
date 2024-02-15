@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private static final Map<String, String> sessionKeys = new ConcurrentHashMap<>();
     /*
      yml 파일에서는 List<String> 으로 받아올 수 없는 버그가 있습니다
      그래서 단일 String 으로 "url1,url2,url3" 이런식으로 받아서 split 으로 처리합니다.
@@ -52,8 +51,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setUserDestinationPrefix("/user");
     }
 
-    // @Override
-    // public void configureClientInboundChannel(ChannelRegistration registration) {
-    //     registration.interceptors(new StompDisconnectInterceptor());
-    // }
 }

@@ -21,4 +21,10 @@ public interface RemoteCodeService {
      * @return 구독자 이름 목록
      */
     Set<String> getSubscribers(RemoteCode code);
+
+    boolean addSubscriber(RemoteCode remoteCode, String subscriber);
+
+    boolean removeSubscriber(RemoteCode remoteCode, String subscriber);
+
+    void setExpiration(RemoteCode remoteCode, long seconds);
 }
