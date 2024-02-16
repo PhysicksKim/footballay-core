@@ -3,6 +3,7 @@ package com.gyechunsik.scoreboard.websocket.service;
 import org.aspectj.apache.bcel.classfile.Code;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,5 +27,5 @@ public interface RemoteCodeService {
 
     boolean removeSubscriber(RemoteCode remoteCode, String subscriber);
 
-    void setExpiration(RemoteCode remoteCode, long seconds);
+    void setExpiration(RemoteCode remoteCode, Duration duration);
 }

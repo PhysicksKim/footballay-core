@@ -2,9 +2,9 @@ server:
   port: 443  # HTTPS 기본 포트
   ssl:
     key-store: classpath:keystore.p12
-    key-store-password: ------password----
+    key-store-password: ----password----
     key-store-type: PKCS12
-    key-alias: myalias
+    key-alias: ----alias----
     enabled: true
 
 spring:

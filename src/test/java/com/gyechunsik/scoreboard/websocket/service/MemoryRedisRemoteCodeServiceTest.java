@@ -15,6 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.security.Principal;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -69,7 +70,7 @@ public class MemoryRedisRemoteCodeServiceTest {
     @Test
     void testSetExpiration() throws InterruptedException {
         RemoteCode remoteCode = memoryRedisRemoteCodeService.generateCode(mockPrincipal);
-        memoryRedisRemoteCodeService.setExpiration(remoteCode, 1); // 1 second
+        memoryRedisRemoteCodeService.setExpiration(remoteCode, Duration.ofSeconds(1)); // 1 second
 
         Thread.sleep(1500); // Wait for the key to expire
 

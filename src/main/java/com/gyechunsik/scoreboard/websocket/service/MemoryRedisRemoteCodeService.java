@@ -20,6 +20,7 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
     private final SimpMessagingTemplate messagingTemplate;
 
     private static final String REMOTECODE_SET_PREFIX = "remote:";
+    private static final Duration REMOTECODE_EXPIRATION = Duration.ofSeconds(60);
 
     @Override
     public RemoteCode generateCode(Principal principal) {
@@ -29,8 +30,13 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
         } while (stringRedisTemplate.hasKey(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode()));
         log.info("CodeService - generateCode: {}", remoteCode.getRemoteCode());
 
-        // 코드 생성자 포함
-        stringRedisTemplate.opsForSet().add(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode(), principal.getName());
+
+        // 코드 SET 생성 - set 의 key 를 remote:remoteCode 로 하고, value 는 구독자들의 이름으로 한다.
+        String REMOTE_CODE_KEY = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        stringRedisTemplate.opsForSet().add(REMOTE_CODE_KEY, principal.getName());
+
+        // 코드 만료시간 설정
+        this.setExpiration(remoteCode, REMOTECODE_EXPIRATION);
         return remoteCode;
     }
 
@@ -53,7 +59,7 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
             return false;
         }
 
-        subs.forEach(sub -> messagingTemplate.convertAndSendToUser(sub, "/topic/remote", remoteCode.getRemoteCode()));
+        subs.forEach(sub -> messagingTemplate.convertAndSendToUser(sub, "/topic/remote/"+remoteCode.getRemoteCode(), remoteCode.getRemoteCode()));
         return true;
     }
 
@@ -92,10 +98,16 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
     /**
      * RemoteCode 만료 시간 설정
      * @param remoteCode
-     * @param timeoutInSeconds
+     * @param duration
      */
     @Override
-    public void setExpiration(RemoteCode remoteCode, long timeoutInSeconds) {
-        stringRedisTemplate.expire(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode(), Duration.ofSeconds(timeoutInSeconds));
+    public void setExpiration(RemoteCode remoteCode, Duration duration) {
+        String remoteCodeKey = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        stringRedisTemplate.expire(remoteCodeKey, duration);
+    }
+
+
+    public void setExpiration(RemoteCode remoteCode) {
+        this.setExpiration(remoteCode, REMOTECODE_EXPIRATION);
     }
 }
