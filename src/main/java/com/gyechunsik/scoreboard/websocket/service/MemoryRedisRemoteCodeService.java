@@ -20,7 +20,7 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
     private final SimpMessagingTemplate messagingTemplate;
 
     private static final String REMOTECODE_SET_PREFIX = "remote:";
-    private static final Duration REMOTECODE_EXPIRATION = Duration.ofSeconds(60);
+    private static final Duration REMOTECODE_EXPIRATION = Duration.ofSeconds(600);
 
     @Override
     public RemoteCode generateCode(Principal principal) {
