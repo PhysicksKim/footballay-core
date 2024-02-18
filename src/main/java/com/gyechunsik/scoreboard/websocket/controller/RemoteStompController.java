@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
@@ -25,11 +26,13 @@ import java.util.Map;
 public class RemoteStompController {
 
     private final RemoteCodeService remoteCodeService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/remote.issuecode")
     @SendToUser("/topic/remote.receivecode")
     public CodeIssueResponse issueCode(
-            Principal principal
+            Principal principal,
+            StompHeaderAccessor headerAccessor
     ) {
         log.info("principal : {}", principal);
         if (principal == null) {
@@ -38,6 +41,7 @@ public class RemoteStompController {
 
         RemoteCode remoteCode = remoteCodeService.generateCode(principal);
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
+        headerAccessor.getSessionAttributes().put("remoteCode", remoteCode.getRemoteCode());
         return new CodeIssueResponse(remoteCode.getRemoteCode());
     }
 
@@ -93,10 +97,9 @@ public class RemoteStompController {
      * @return
      */
     @MessageMapping("/remote/{remoteCode}")
-    @SendTo("/topic/remote/{remoteCode}")
-    public Map<String, String> remoteControl(
+    public void remoteControl(
             @DestinationVariable("remoteCode") String remoteCode,
-            Map<String, String> message,
+            Map<String, Object> message,
             Principal principal,
             StompHeaderAccessor headerAccessor
     ) {
@@ -113,12 +116,21 @@ public class RemoteStompController {
         }
 
         String sessionRemoteCode = (String) headerAccessor.getSessionAttributes().get("remoteCode");
+        log.info("sessionRemoteCode : {}", sessionRemoteCode);
         if (sessionRemoteCode == null || !sessionRemoteCode.equals(remoteCode)) {
             throw new IllegalArgumentException("세션에 등록된 코드와 요청된 코드가 일치하지 않습니다. 재접속해주세요.");
         }
 
         log.info("code = {} 의 메세지 전송 validation 통과", remoteCode);
-        return message;
+        remoteCodeService.getSubscribers(remoteCode).forEach(subscriber -> {
+            log.info("subscriber : {}", subscriber);
+            if(!subscriber.equals(principal.getName())) {
+                log.info("send to user : {}", subscriber);
+                messagingTemplate.convertAndSendToUser(subscriber, "/topic/remote/" + remoteCode, message);
+            } else {
+                log.info("skip send to user : {}", subscriber);
+            }
+        });
     }
 
     @MessageExceptionHandler(IllegalArgumentException.class)

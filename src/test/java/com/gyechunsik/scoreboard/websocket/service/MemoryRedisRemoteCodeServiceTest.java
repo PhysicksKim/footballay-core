@@ -58,9 +58,9 @@ public class MemoryRedisRemoteCodeServiceTest {
         String subscriber = "anotherUser";
 
         assertTrue(memoryRedisRemoteCodeService.addSubscriber(remoteCode, subscriber));
-        assertTrue(memoryRedisRemoteCodeService.getSubscribers(remoteCode).contains(subscriber));
+        assertTrue(memoryRedisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode()).contains(subscriber));
         assertTrue(memoryRedisRemoteCodeService.removeSubscriber(remoteCode, subscriber));
-        assertFalse(memoryRedisRemoteCodeService.getSubscribers(remoteCode).contains(subscriber));
+        assertFalse(memoryRedisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode()).contains(subscriber));
 
         // Cleanup
         stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());

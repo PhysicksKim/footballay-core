@@ -34,11 +34,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${cors.allowedorigins}")
     private String rawAllowedOrigins;
 
+    /**
+     * allow origins 을 명시하지 않고 * 로 설정하면 에러가 발생합니다.
+     * 이는 allowCredentials 가 true 일 때 * 로 설정할 수 없는 정책 때문입니다.
+     * @param registry
+     */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         String[] allowOriginArray = rawAllowedOrigins.split(",");
         log.info("allow origins : {}", Arrays.toString(allowOriginArray));
-        registry.addEndpoint("/ws").setAllowedOrigins("*")
+        registry.addEndpoint("/ws").setAllowedOrigins(allowOriginArray)
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .addInterceptors(new HttpHandshakeInterceptor());
     }

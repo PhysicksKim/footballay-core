@@ -6,8 +6,8 @@ import lombok.Getter;
  * <pre>
  *     code         : 200
  *     message      : "success"
- *     pubPath      : "/topic/remote/{remoteCode}"
- *     subPath      : "/app/remote/{remoteCode}"
+ *     pubPath      : "/app/remote/{remoteCode}"
+ *     subPath      : "/user/topic/user/remote/{remoteCode}"
  *     remoteCode   : "remoteCode"
  * </pre>
  */
