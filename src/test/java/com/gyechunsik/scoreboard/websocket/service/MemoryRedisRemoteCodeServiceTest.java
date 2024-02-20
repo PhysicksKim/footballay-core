@@ -1,18 +1,13 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
-import com.gyechunsik.scoreboard.config.TestContainerConfig;
+import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.security.Principal;
 import java.time.Duration;
@@ -21,8 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@ExtendWith(TestContainerConfig.class)
-public class MemoryRedisRemoteCodeServiceTest {
+public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
 
     @Autowired
     private MemoryRedisRemoteCodeService memoryRedisRemoteCodeService ;
