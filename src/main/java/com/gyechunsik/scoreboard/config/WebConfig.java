@@ -20,8 +20,8 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 String[] allowOriginArray = rawAllowedOrigins.split(",");
                 registry.addMapping("/**")
-                        // .allowedOrigins(allowOriginArray)
-                        .allowedOrigins("*")
+                        .allowedOrigins(allowOriginArray)
+                        // .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

@@ -16,4 +16,10 @@ public class WebSocketControllerAdviser {
         Map<String, Object> err = Map.of("message", ex.getMessage());
         return ResponseEntity.badRequest().body(err);
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleException(Exception ex) {
+        Map<String, Object> err = Map.of("message", ex.getMessage());
+        return ResponseEntity.badRequest().body(err);
+    }
 }

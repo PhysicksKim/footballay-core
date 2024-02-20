@@ -1,18 +1,3 @@
-server:
-  port: 443  # HTTPS 기본 포트
-  ssl:
-    key-store: classpath:keystore.p12
-    key-store-password: ----password----
-    key-store-type: PKCS12
-    key-alias: ----alias----
-    enabled: true
-
-spring:
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
 # 운영 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "https://example.com"
+  allowedorigins: "https://physickskim.github.io"
