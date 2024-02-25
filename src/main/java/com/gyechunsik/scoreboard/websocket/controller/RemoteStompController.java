@@ -18,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Slf4j
@@ -122,6 +123,10 @@ public class RemoteStompController {
         }
 
         log.info("code = {} 의 메세지 전송 validation 통과", remoteCode);
+        // 서버 시간 추가
+        LocalDateTime now = LocalDateTime.now();
+        log.info("server time add : {}", now);
+        message.put("serverTime", now);
         remoteCodeService.getSubscribers(remoteCode).forEach(subscriber -> {
             log.info("subscriber : {}", subscriber);
             if(!subscriber.equals(principal.getName())) {
