@@ -27,7 +27,7 @@ public class HttpHandshakeInterceptor implements HandshakeInterceptor {
                 throw new IllegalStateException("세션이 없습니다");
             }
             attributes.put("webSession", session);
-            log.info("세션 ID : {}", session.getId());
+            log.info("http 추출 세션 ID : {}", session.getId());
         }
         return true;
     }

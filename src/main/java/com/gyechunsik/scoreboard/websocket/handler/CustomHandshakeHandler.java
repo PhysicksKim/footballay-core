@@ -22,6 +22,7 @@ public class CustomHandshakeHandler extends DefaultHandshakeHandler {
             return principal;
         }
         HttpSession session = (HttpSession) attributes.get("webSession");
+        log.info("웹소켓 principal : {}", session.getId());
 
         return new StompPrincipal(session.getId());
     }

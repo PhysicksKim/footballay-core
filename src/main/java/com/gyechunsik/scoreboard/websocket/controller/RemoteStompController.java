@@ -144,4 +144,6 @@ public class RemoteStompController {
         log.error("error : {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorResponse(400, e.getMessage()));
     }
+
+
 }

@@ -2,10 +2,13 @@ package com.gyechunsik.scoreboard.config;
 
 import com.gyechunsik.scoreboard.websocket.handler.CustomHandshakeHandler;
 import com.gyechunsik.scoreboard.websocket.handler.HttpHandshakeInterceptor;
+import com.gyechunsik.scoreboard.websocket.handler.StompDisconnectInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -22,10 +25,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * </pre>
  */
 @Slf4j
-@RequiredArgsConstructor
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final StompDisconnectInterceptor stompHandler;
+
+    /**
+     * stompHandler 내부의 빈 순환 의존성 문제로 인해서 @Lazy 로 설정합니다.
+     * @param stompHandler
+     */
+    public WebSocketConfig(@Lazy StompDisconnectInterceptor stompHandler) {
+        this.stompHandler = stompHandler;
+    }
 
     /*
      yml 파일에서는 List<String> 으로 받아올 수 없는 버그가 있습니다
@@ -54,6 +66,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic","/queue");
         registry.setApplicationDestinationPrefixes("/app","/chat");
         registry.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(stompHandler);
     }
 
 }
