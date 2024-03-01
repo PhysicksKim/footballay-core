@@ -1,29 +1,30 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
-import com.gyechunsik.scoreboard.websocket.user.RemoteUsers;
-import jakarta.validation.constraints.NotEmpty;
+import com.gyechunsik.scoreboard.domain.token.RemoteHostTokenService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MemoryRedisRemoteCodeService implements RemoteCodeService {
+public class RedisRemoteCodeService implements RemoteCodeService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
+    private final RemoteHostTokenService tokenService;
 
     private static final String REMOTECODE_SET_PREFIX = "remote:";
+    private static final String REMOTECODE_HOST_TOKEN_SUFFIX = "-hostToken";
     private static final Duration REMOTECODE_EXPIRATION = Duration.ofSeconds(14400);
 
     @Override
@@ -38,9 +39,17 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
         String REMOTE_CODE_KEY = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
         stringRedisTemplate.opsForHash().put(REMOTE_CODE_KEY, principal.getName(), nickname);
 
+        // Redis 에 token 을 저장
+        String token = tokenService.generateRemoteHostToken(remoteCode.getRemoteCode(), LocalDateTime.now());
+        stringRedisTemplate.opsForValue().set(REMOTE_CODE_KEY+REMOTECODE_HOST_TOKEN_SUFFIX, token);
+
         // 코드 만료시간 설정
         this.setExpiration(remoteCode, REMOTECODE_EXPIRATION);
         return remoteCode;
+    }
+
+    private static String[] splitPrincipalAndToken(String principalAndToken) {
+        return principalAndToken.split(":");
     }
 
     /**
@@ -141,4 +150,6 @@ public class MemoryRedisRemoteCodeService implements RemoteCodeService {
         }
         return false;
     }
+
+
 }

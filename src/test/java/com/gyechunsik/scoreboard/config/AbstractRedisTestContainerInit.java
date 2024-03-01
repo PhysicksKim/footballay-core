@@ -34,4 +34,5 @@ abstract public class AbstractRedisTestContainerInit {
         registry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
         registry.add("spring.data.redis.password", () -> "1234");
     }
+
 }

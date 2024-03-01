@@ -20,10 +20,10 @@ import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest
-public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
+public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
 
     @Autowired
-    private MemoryRedisRemoteCodeService memoryRedisRemoteCodeService ;
+    private RedisRemoteCodeService redisRemoteCodeService;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -42,11 +42,11 @@ public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainer
     @Test
     void testGenerateAndValidateCode() throws InterruptedException {
         String nickname = "userNickname";
-        RemoteCode remoteCode = memoryRedisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
         log.info("generated remoteCode: {}", remoteCode);
         assertNotNull(remoteCode);
         Thread.sleep(1000); // Wait for the key to expire
-        Map<Object, Object> subscribers = memoryRedisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
+        Map<Object, Object> subscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
 
         int size = subscribers.size();
         log.info("subscribers size: {}", size);
@@ -54,7 +54,16 @@ public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainer
             log.info("subscriber: {}", entry);
         });
 
-        assertTrue(memoryRedisRemoteCodeService.isValidCode(remoteCode));
+        // then
+        assertTrue(redisRemoteCodeService.isValidCode(remoteCode));
+
+        // logging redis data
+        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
+        String hostToken = stringRedisTemplate.opsForValue().get(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode() + "-hostToken");
+        entries.forEach((k, v) -> {
+            log.info("RemoteCode:{} == { key: {}, value: {} }", remoteCode.getRemoteCode(), k, v);
+        });
+        log.info("hostToken: {}", hostToken);
 
         // Cleanup
         stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
@@ -66,13 +75,13 @@ public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainer
         String subscriber = "anotherUser";
         String nickname = "userNicknameKim";
 
-        RemoteCode remoteCode = memoryRedisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
 
-        memoryRedisRemoteCodeService.addSubscriber(remoteCode, subscriber, nickname);
-        Map<Object, Object> addedSubscribers = memoryRedisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
+        redisRemoteCodeService.addSubscriber(remoteCode, subscriber, nickname);
+        Map<Object, Object> addedSubscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
 
-        memoryRedisRemoteCodeService.removeSubscriber(remoteCode, subscriber);
-        Map<Object, Object> removedSubscribers = memoryRedisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
+        redisRemoteCodeService.removeSubscriber(remoteCode, subscriber);
+        Map<Object, Object> removedSubscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
 
         Assertions.assertThat(addedSubscribers).containsEntry(subscriber, nickname).size().isEqualTo(1);
         Assertions.assertThat(removedSubscribers).isEmpty();
@@ -86,12 +95,12 @@ public class MemoryRedisRemoteCodeServiceTest extends AbstractRedisTestContainer
     void testSetExpiration() throws InterruptedException {
         String nickname = "userNickname";
 
-        RemoteCode remoteCode = memoryRedisRemoteCodeService.generateCode(mockPrincipal, nickname);
-        memoryRedisRemoteCodeService.setExpiration(remoteCode, Duration.ofSeconds(1)); // 1 second
+        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        redisRemoteCodeService.setExpiration(remoteCode, Duration.ofSeconds(1)); // 1 second
 
         Thread.sleep(1500); // Wait for the key to expire
 
-        assertFalse(memoryRedisRemoteCodeService.isValidCode(remoteCode));
+        assertFalse(redisRemoteCodeService.isValidCode(remoteCode));
 
         // Cleanup
         stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
