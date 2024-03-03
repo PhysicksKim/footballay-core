@@ -1,0 +1,25 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #a68962;
+}
+.body-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3vh;
+}
+.body-wrapper {
+    border: 3px solid #211f19;
+    background-color: #4b4139;
+    border-radius: 30px;
+    padding: 30px;
+    color: beige;
+}
+img {
+    height: 300px;
+}
+a {
+    color: #768fa8;
+}
