@@ -1,17 +1,12 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.code;
 
-import com.gyechunsik.scoreboard.websocket.user.RemoteUsers;
-import org.aspectj.apache.bcel.classfile.Code;
-
-import java.security.Principal;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public interface RemoteCodeService {
 
-    RemoteCode generateCode(Principal principal, String nickname);
+    RemoteCode generateCodeAndSubscribe(String principalName, String nickname);
 
     /**
      * 해당 코드를 구독하는 client 들의 이름 목록을 반환합니다.

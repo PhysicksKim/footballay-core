@@ -1,8 +1,6 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.code;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.springframework.util.StringUtils;
 

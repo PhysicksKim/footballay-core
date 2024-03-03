@@ -11,6 +11,8 @@ import lombok.ToString;
  * {
  *   remoteCode: "a2s3kw3",
  *   nickname: "gyechunhoe"
+ *   isAutoRemote: true,
+ *   afterSetCookieUrl: "/api/scoreboard/usercookie"
  * }
  * </pre>
  */
@@ -22,5 +24,7 @@ public class RemoteConnectRequestMessage {
 
     protected String remoteCode;
     protected String nickname;
+    protected boolean isAutoRemote;
+    protected String afterSetCookieUrl;
 
 }

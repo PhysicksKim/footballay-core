@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.code;
 
 import com.gyechunsik.scoreboard.websocket.request.RemoteConnectRequestMessage;
 import jakarta.validation.constraints.NotNull;

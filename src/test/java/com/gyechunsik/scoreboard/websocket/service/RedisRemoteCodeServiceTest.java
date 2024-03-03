@@ -1,6 +1,8 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
+import com.gyechunsik.scoreboard.websocket.domain.remote.code.RedisRemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +44,7 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
     @Test
     void testGenerateAndValidateCode() throws InterruptedException {
         String nickname = "userNickname";
-        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(mockPrincipal.getName(), nickname);
         log.info("generated remoteCode: {}", remoteCode);
         assertNotNull(remoteCode);
         Thread.sleep(1000); // Wait for the key to expire
@@ -75,7 +77,7 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
         String subscriber = "anotherUser";
         String nickname = "userNicknameKim";
 
-        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(mockPrincipal.getName(), nickname);
 
         redisRemoteCodeService.addSubscriber(remoteCode, subscriber, nickname);
         Map<Object, Object> addedSubscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
@@ -95,7 +97,7 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
     void testSetExpiration() throws InterruptedException {
         String nickname = "userNickname";
 
-        RemoteCode remoteCode = redisRemoteCodeService.generateCode(mockPrincipal, nickname);
+        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(mockPrincipal.getName(), nickname);
         redisRemoteCodeService.setExpiration(remoteCode, Duration.ofSeconds(1)); // 1 second
 
         Thread.sleep(1500); // Wait for the key to expire

@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.code;
 
 import com.gyechunsik.scoreboard.domain.token.RemoteHostTokenService;
 import jakarta.validation.constraints.NotNull;
@@ -8,7 +8,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.security.Principal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -27,29 +26,38 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     private static final String REMOTECODE_HOST_TOKEN_SUFFIX = "-hostToken";
     private static final Duration REMOTECODE_EXPIRATION = Duration.ofSeconds(14400);
 
+    // TODO : Host 용 토큰 발급이 필요한 경우 true 로 변경
+    private static final boolean DEV_IS_HOST_TOKEN_ISSUE = false;
+
+    /**
+     * 코드를 생성하고 Redis 에 코드 채널을 생성합니다.
+     * @param principalName
+     * @param nickname
+     * @return
+     */
     @Override
-    public RemoteCode generateCode(Principal principal, String nickname) {
+    public RemoteCode generateCodeAndSubscribe(String principalName, String nickname) {
         RemoteCode remoteCode;
         do {
             remoteCode = RemoteCode.generate();
         } while (stringRedisTemplate.hasKey(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode()));
-        log.info("CodeService - generateCode: {}", remoteCode.getRemoteCode());
+        log.info("CodeService - generateCodeAndSubscribe: {}", remoteCode.getRemoteCode());
 
         // 코드 SET 생성 - set 의 key 를 remote:remoteCode 로 하고, value 는 구독자들의 이름으로 한다.
         String REMOTE_CODE_KEY = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
-        stringRedisTemplate.opsForHash().put(REMOTE_CODE_KEY, principal.getName(), nickname);
+        stringRedisTemplate.opsForHash()
+                .put(REMOTE_CODE_KEY, principalName, nickname);
 
         // Redis 에 token 을 저장
-        String token = tokenService.generateRemoteHostToken(remoteCode.getRemoteCode(), LocalDateTime.now());
-        stringRedisTemplate.opsForValue().set(REMOTE_CODE_KEY+REMOTECODE_HOST_TOKEN_SUFFIX, token);
+        if(DEV_IS_HOST_TOKEN_ISSUE) {
+            String token = tokenService.generateRemoteHostToken(remoteCode.getRemoteCode(), LocalDateTime.now());
+            stringRedisTemplate.opsForValue()
+                    .set(REMOTE_CODE_KEY + REMOTECODE_HOST_TOKEN_SUFFIX, token);
+        }
 
         // 코드 만료시간 설정
         this.setExpiration(remoteCode, REMOTECODE_EXPIRATION);
         return remoteCode;
-    }
-
-    private static String[] splitPrincipalAndToken(String principalAndToken) {
-        return principalAndToken.split(":");
     }
 
     /**
@@ -151,5 +159,15 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         return false;
     }
 
+    protected void removeAllRemoteCodes() {
+        log.info("!!! TEST UTIL METHOD :: removed All Remote Codes in Redis !!!");
+        stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + "*");
+    }
+
+    protected Set<String> getAllRemoteCodes() {
+        log.info("!!! TEST UTIL METHOD :: get All Remote Codes in Redis !!!");
+        Set<String> keys = stringRedisTemplate.keys(REMOTECODE_SET_PREFIX + "*");
+        return keys;
+    }
 
 }

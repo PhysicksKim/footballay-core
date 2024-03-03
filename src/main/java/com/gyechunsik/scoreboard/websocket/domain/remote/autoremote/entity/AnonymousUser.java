@@ -1,10 +1,9 @@
-package com.gyechunsik.scoreboard.websocket.domain.autoremote.entity;
+package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity;
 
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -28,4 +27,12 @@ public class AnonymousUser extends BaseDateAuditEntity {
     @JoinColumn(name = "autoRemoteGroupId")
     private AutoRemoteGroup autoRemoteGroup;
 
+    @Override
+    public String toString() {
+        return "AnonymousUser{" +
+                "id=" + id +
+                ", lastConnectedAt=" + lastConnectedAt +
+                ", autoRemoteGroup=" + autoRemoteGroup.getId() +
+                '}';
+    }
 }

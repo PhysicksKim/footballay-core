@@ -1,9 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.domain.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.autoremote.entity.AnonymousUser;
-import com.gyechunsik.scoreboard.websocket.domain.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.user.StompPrincipal;
+import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AutoRemoteGroup;
+import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AnonymousUserService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
@@ -38,7 +38,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
     @MockBean
     private Principal mockPrincipal;
 
-    private static final String MOCK_PRINCIPAL_NAME = "testUser";
+    private static final String MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID";
 
     @BeforeEach
     void setUp() {
@@ -70,33 +70,37 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
         // given
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
         AnonymousUser savedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
 
         final String userUuid = savedUser.getId().toString();
+        log.info("userUuid: {}", userUuid);
 
         // when
         anonymousUserService.validateAndCacheUserToRedis(mockPrincipal, userUuid);
+        String valueUUID = stringRedisTemplate.opsForValue().get(MOCK_PRINCIPAL_NAME);
+        log.info("key={} , value={}", MOCK_PRINCIPAL_NAME, valueUUID);
 
         // then
-        String value = stringRedisTemplate.opsForValue().get(MOCK_PRINCIPAL_NAME);
-        log.info("value: {}", value);
-        Assertions.assertThat(value).isNotNull();
-        Assertions.assertThat(value).isEqualTo(userUuid);
+        Assertions.assertThat(valueUUID).isNotNull();
+        Assertions.assertThat(valueUUID).isEqualTo(userUuid);
     }
 
     @Transactional
-    @DisplayName("Redis 에 일치하는 익명 유저 UUID 가 없는 경우")
+    @DisplayName("직전에 캐싱된 UUID 와 일치하지 않는 경우 예외가 발생한다.")
     @Test
     void UserValidateFail() {
         // given
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
         AnonymousUser savedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
 
         // when & then
         final String NOT_EXIST_UUID = UUID.randomUUID().toString();
+        log.info("NOT_EXIST_UUID: {}", NOT_EXIST_UUID);
 
         // then
         Assertions.assertThatThrownBy(() -> {
