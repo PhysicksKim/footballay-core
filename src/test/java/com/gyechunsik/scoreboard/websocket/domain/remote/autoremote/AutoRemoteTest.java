@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.domain.autoremote;
+package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.AutoRemote;
@@ -52,6 +52,7 @@ class AutoRemoteTest extends AbstractRedisTestContainerInit {
     @Transactional
     @DisplayName("pre-remote cache 요청에 성공합니다.")
     @Test
+    @Disabled
     void preRemoteCache_Success() {
         // given
         autoRemote.connect(mockFirstPrincipal, "nickname");

@@ -14,8 +14,8 @@ class CodeTest {
     @Test
     void CodeEquals() {
         // given
-        RemoteCode remoteCode1 = new RemoteCode("code");
-        RemoteCode remoteCode2 = new RemoteCode("code");
+        RemoteCode remoteCode1 = RemoteCode.of("excode");
+        RemoteCode remoteCode2 = RemoteCode.of("excode");
 
         // when
         boolean result = remoteCode1.equals(remoteCode2);

@@ -6,4 +6,3 @@ spring:
 # 운영 환경에서 허용할 CORS 출처
 cors:
   allowedorigins: "https://physickskim.github.io"
-

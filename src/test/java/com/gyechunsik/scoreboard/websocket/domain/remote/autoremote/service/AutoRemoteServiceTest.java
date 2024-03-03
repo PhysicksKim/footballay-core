@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.domain.autoremote.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
@@ -83,6 +83,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID userUUID = firstSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
+        // autoRemoteService.
         autoRemoteService.removeAllActivatedAutoRemoteGroups();
 
         // when

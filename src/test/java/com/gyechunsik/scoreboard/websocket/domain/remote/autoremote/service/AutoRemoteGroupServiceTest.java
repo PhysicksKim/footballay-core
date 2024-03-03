@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.domain.autoremote.service;
+package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AutoRemoteGroupService;

@@ -17,6 +17,7 @@ import java.security.Principal;
 import java.time.Duration;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
@@ -74,19 +75,38 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
     @DisplayName("Remote code 를 생성하고 subscriber 를 추가하고 삭제합니다.")
     @Test
     void testAddAndRemoveSubscriber() {
-        String subscriber = "anotherUser";
-        String nickname = "userNicknameKim";
+        // given
+        String hostPrincipalName = "hostUser";
+        String hostNickname = "hostKim";
+        String memberPrincipalName = "memberUser";
+        String memberNickname = "memberLee";
+        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(hostPrincipalName, hostNickname);
 
-        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(mockPrincipal.getName(), nickname);
-
-        redisRemoteCodeService.addSubscriber(remoteCode, subscriber, nickname);
+        // when
+        redisRemoteCodeService.addSubscriber(remoteCode, memberPrincipalName, memberNickname);
         Map<Object, Object> addedSubscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
 
-        redisRemoteCodeService.removeSubscriber(remoteCode, subscriber);
+        redisRemoteCodeService.removeSubscriber(remoteCode, memberPrincipalName);
         Map<Object, Object> removedSubscribers = redisRemoteCodeService.getSubscribers(remoteCode.getRemoteCode());
 
-        Assertions.assertThat(addedSubscribers).containsEntry(subscriber, nickname).size().isEqualTo(1);
-        Assertions.assertThat(removedSubscribers).isEmpty();
+        // logging
+        log.info("addedSubscribers: {}", addedSubscribers);
+        addedSubscribers.forEach((k, v) -> {
+            log.info("addedSubscriber: { key: {}, value: {} }", k, v);
+        });
+        log.info("removedSubscribers: {}", removedSubscribers);
+        removedSubscribers.forEach((k, v) -> {
+            log.info("removedSubscriber: { key: {}, value: {} }", k, v);
+        });
+
+        // then
+        assertThat(addedSubscribers)
+                .containsEntry(hostPrincipalName, hostNickname)
+                .containsEntry(memberPrincipalName, memberNickname)
+                .size().isEqualTo(2);
+        assertThat(removedSubscribers)
+                .containsEntry(hostPrincipalName, hostNickname)
+                .size().isEqualTo(1);
 
         // Cleanup
         stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
