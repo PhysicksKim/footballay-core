@@ -1,29 +1,29 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service;
 
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.repository.AnonymousUserRepository;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RedisRemoteCodeService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AnonymousUserRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteGroupRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RedisRemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class AutoRemoteService {
 
     private final RedisRemoteCodeService remoteCodeService;
+    private final AutoRemoteGroupRepository groupRepository;
     private final AnonymousUserRepository userRepository;
-    private final StringRedisTemplate stringRedisTemplate;
-
-    private final static String ACTIVE_AUTO_REMOTE_GROUPS = "ActiveAutoRemoteGroups";
+    private final AutoRemoteRedisRepository autoRemoteRedisRepository;
 
     /**
      * <pre>
@@ -36,7 +36,6 @@ public class AutoRemoteService {
      * {key=ActiveAutoRemoteGroups,hash{key=remoteGroupId,value=remoteCode}}
      * {key=RemoteCode:{remoteCode}, hash{key=subscribers, value=nickname}}
      * </pre>
-     *
      * @param principal
      * @param nickname
      * @return
@@ -55,13 +54,15 @@ public class AutoRemoteService {
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 익명 유저가 없습니다."));
 
         AutoRemoteGroup autoRemoteGroup = findUser.getAutoRemoteGroup();
-        Object findRemoteCode = getRemoteCodeOf(autoRemoteGroup);
+        String findRemoteCode = getRemoteCodeOf(autoRemoteGroup);
         RemoteCode remoteCode;
 
         if (isRemoteCodeExist(findRemoteCode)) {
-            remoteCode = RemoteCode.of((String) findRemoteCode);
+            log.info("RemoteCode 가 존재합니다. RemoteCode: {}", findRemoteCode);
+            remoteCode = RemoteCode.of(findRemoteCode);
             remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
         } else {
+            log.info("RemoteCode 가 존재하지 않습니다. RemoteCode 를 발급합니다.");
             remoteCode = remoteCodeService.generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(autoRemoteGroup, remoteCode);
         }
@@ -69,40 +70,25 @@ public class AutoRemoteService {
     }
 
     protected void activateAutoRemoteGroup(AutoRemoteGroup autoRemoteGroup, RemoteCode remoteCode) {
-        stringRedisTemplate.opsForHash()
-                .put(ACTIVE_AUTO_REMOTE_GROUPS, autoRemoteGroup.getId().toString(), remoteCode.getRemoteCode());
+        log.info("activated Key Pair :: AutoRemoteGroup = {} , RemoteCode = {}", autoRemoteGroup, remoteCode);
+        autoRemoteRedisRepository.setActiveAutoRemoteKeyPair(autoRemoteGroup.getId().toString(), remoteCode.getRemoteCode());
     }
 
-    private Object getRemoteCodeOf(AutoRemoteGroup autoRemoteGroup) {
-        return stringRedisTemplate.opsForHash()
-                .get(ACTIVE_AUTO_REMOTE_GROUPS, autoRemoteGroup.getId().toString());
+    private String getRemoteCodeOf(AutoRemoteGroup autoRemoteGroup) {
+        return autoRemoteRedisRepository
+                .findRemoteCodeFromAutoGroupId(autoRemoteGroup.getId().toString());
     }
 
     private String findPreCachedUserUUID(Principal principal) {
-        return stringRedisTemplate.opsForValue()
-                .get(principal.getName());
+        return autoRemoteRedisRepository
+                .findBeforeCacheUUIDFromJsessionid(principal.getName());
     }
 
-    private boolean isRemoteCodeExist(Object remoteCodeObj) {
-        if (remoteCodeObj == null) {
+    private boolean isRemoteCodeExist(String remoteCode) {
+        if (remoteCode == null) {
             return false;
         }
-        String remoteCode = (String) remoteCodeObj;
         return StringUtils.hasText(remoteCode);
     }
 
-    protected void removeAllActivatedAutoRemoteGroups() {
-        stringRedisTemplate.delete(ACTIVE_AUTO_REMOTE_GROUPS);
-    }
-
-    protected Map<String, String> getActiveAutoRemoteGroups() {
-        Map<Object, Object> entries = stringRedisTemplate.opsForHash()
-                .entries(ACTIVE_AUTO_REMOTE_GROUPS);
-        return entries.entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        entry -> (String) entry.getKey(),
-                        entry -> (String) entry.getValue()
-                ));
-    }
 }

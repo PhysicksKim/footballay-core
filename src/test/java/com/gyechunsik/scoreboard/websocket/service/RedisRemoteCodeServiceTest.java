@@ -1,10 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RedisRemoteCodeService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RedisRemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

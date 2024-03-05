@@ -1,13 +1,14 @@
 package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AnonymousUserService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AutoRemoteGroupService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AutoRemoteService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RedisRemoteCodeService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteGroupService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RedisRemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -31,18 +33,21 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @Slf4j
+@Transactional
 @SpringBootTest
 class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
 
     @Autowired
     private RedisRemoteCodeService redisRemoteCodeService;
-
     @Autowired
     private AutoRemoteService autoRemoteService;
     @Autowired
     private AnonymousUserService anonymousUserService;
     @Autowired
     private AutoRemoteGroupService autoRemoteGroupService;
+
+    @Autowired
+    private AutoRemoteRedisRepository autoRemoteRedisRepository;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
@@ -63,7 +68,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
     @Mock
     private Principal mockSecondPrincipal;
 
-    private static final String SUFFIX_MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID";
+    private static final String SUFFIX_MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID_autoremoteservicetest";
     private static final String FIRST_USER_PRINCIPAL_NAME = "first_" + SUFFIX_MOCK_PRINCIPAL_NAME;
     private static final String SECOND_USER_PRINCIPAL_NAME = "second_" + SUFFIX_MOCK_PRINCIPAL_NAME;
 
@@ -84,7 +89,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         UUID userUUID = firstSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
         // autoRemoteService.
-        autoRemoteService.removeAllActivatedAutoRemoteGroups();
+        autoRemoteRedisRepository.removeAllActiveGroups();
 
         // when
         anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, userUUID.toString());
@@ -99,10 +104,15 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         assertThat(getAllRemoteCodes).contains(remoteCodeSetPrefix + remoteCode.getRemoteCode());
 
         // 자동 원격 그룹 활성 체크
-        Map<String, String> activeAutoRemoteGroups = autoRemoteService.getActiveAutoRemoteGroups();
+        String keyToGetRemoteCode = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromGroup", autoRemoteGroup.getId().toString());
+        String keyToGetGroupId = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromCode", remoteCode.getRemoteCode());
+        log.info("Active AutoRemote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
+
+        Map<String, String> activeAutoRemoteGroups = autoRemoteRedisRepository.getAllActiveGroups();
+        log.info("map : {}", activeAutoRemoteGroups);
         assertThat(activeAutoRemoteGroups).isNotEmpty();
-        assertThat(activeAutoRemoteGroups).containsKey(autoRemoteGroup.getId().toString());
-        assertThat(activeAutoRemoteGroups.get(autoRemoteGroup.getId().toString())).isEqualTo(remoteCode.getRemoteCode());
+        assertThat(activeAutoRemoteGroups).containsKeys(keyToGetRemoteCode, keyToGetGroupId);
+        assertThat(activeAutoRemoteGroups.get(keyToGetRemoteCode)).isEqualTo(remoteCode.getRemoteCode());
 
         // 로그 확인
         log.info("Active Remote codes : {}", getAllRemoteCodes);
@@ -144,11 +154,18 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         assertThat(getAllRemoteCodes).contains(remoteCodeSetPrefix + firstConnectRemoteCode.getRemoteCode());
         assertThat(firstConnectRemoteCode).isEqualTo(secondConnectRemoteCode);
 
+        // Key Pair
+        String keyToGetRemoteCode = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromGroup", autoRemoteGroup.getId().toString());
+        String keyToGetGroupId = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromCode", firstConnectRemoteCode.getRemoteCode());
+        log.info("Active AutoRemote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
+        log.info("First and Second RemoteCode : {} and {}", firstConnectRemoteCode.getRemoteCode(), secondConnectRemoteCode.getRemoteCode());
+
         // 활성화된 자동 원격 그룹 체크
-        Map<String, String> activeAutoRemoteGroups = autoRemoteService.getActiveAutoRemoteGroups();
+        Map<String, String> activeAutoRemoteGroups = autoRemoteRedisRepository.getAllActiveGroups();
+        log.info("map : {}", activeAutoRemoteGroups);
         assertThat(activeAutoRemoteGroups).isNotEmpty();
-        assertThat(activeAutoRemoteGroups).containsKey(autoRemoteGroup.getId().toString());
-        assertThat(activeAutoRemoteGroups.get(autoRemoteGroup.getId().toString())).isEqualTo(secondConnectRemoteCode.getRemoteCode());
+        assertThat(activeAutoRemoteGroups).containsKeys(keyToGetGroupId, keyToGetRemoteCode);
+        assertThat(activeAutoRemoteGroups.get(keyToGetRemoteCode)).isEqualTo(secondConnectRemoteCode.getRemoteCode());
 
         // 활성화된 자동 원격 그룹의 원격 코드로 구독자 체크
         Map<Object, Object> subscribers = redisRemoteCodeService.getSubscribers(firstConnectRemoteCode.getRemoteCode());
@@ -173,7 +190,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID userUUID = firstSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
-        autoRemoteService.removeAllActivatedAutoRemoteGroups();
+        autoRemoteRedisRepository.removeAllActiveGroups();
 
         // when
         log.info("UUID NOT CACHED!!");
@@ -198,7 +215,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         UUID firstSavedUserId = firstSavedUser.getId();
         UUID secondSavedUserId = secondSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
-        autoRemoteService.removeAllActivatedAutoRemoteGroups();
+        autoRemoteRedisRepository.removeAllActiveGroups();
 
         // when & then
         anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, firstSavedUserId.toString());

@@ -1,12 +1,15 @@
 package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AnonymousUserService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,10 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
@@ -31,6 +37,8 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
 
     @Autowired
     private AnonymousUserService anonymousUserService;
+    @Autowired
+    private AutoRemoteRedisRepository autoRemoteRedisRepository;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -38,11 +46,15 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
     @MockBean
     private Principal mockPrincipal;
 
-    private static final String MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID";
+    private static final String MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID_userservicetest";
 
     @BeforeEach
     void setUp() {
         when(mockPrincipal.getName()).thenReturn(MOCK_PRINCIPAL_NAME);
+    }
+    @AfterEach
+    void cleanUp() {
+        stringRedisTemplate.delete(stringRedisTemplate.keys("*"));
     }
 
     @Transactional
@@ -79,12 +91,14 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
 
         // when
         anonymousUserService.validateAndCacheUserToRedis(mockPrincipal, userUuid);
-        String valueUUID = stringRedisTemplate.opsForValue().get(MOCK_PRINCIPAL_NAME);
-        log.info("key={} , value={}", MOCK_PRINCIPAL_NAME, valueUUID);
+        String cachedUserKey = ReflectionTestUtils.
+                invokeMethod(AutoRemoteRedisRepository.class, "preCachedUUIDKey", MOCK_PRINCIPAL_NAME);
+        assert cachedUserKey != null;
+        String cachedUserValue = stringRedisTemplate.opsForValue().get(cachedUserKey);
 
         // then
-        Assertions.assertThat(valueUUID).isNotNull();
-        Assertions.assertThat(valueUUID).isEqualTo(userUuid);
+        Assertions.assertThat(cachedUserValue).isNotNull();
+        Assertions.assertThat(cachedUserValue).isEqualTo(userUuid);
     }
 
     @Transactional

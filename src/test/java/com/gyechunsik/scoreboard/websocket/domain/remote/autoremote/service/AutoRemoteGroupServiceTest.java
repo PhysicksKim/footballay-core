@@ -1,10 +1,11 @@
 package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service.AutoRemoteGroupService;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteGroupService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,11 +14,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -42,18 +44,12 @@ class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
     void setUp() {
         Mockito.when(principal.getName()).thenReturn(MOCK_PRINCIPAL_NAME);
     }
+    @AfterEach
+    void cleanUp() {
+        stringRedisTemplate.delete(stringRedisTemplate.keys("*"));
+    }
 
-    /**
-     * <pre>
-     * # Will Be Cached
-     * key : Remote:{remoteCode}_AutoRemoteGroupId
-     * value : {AutoRemoteGroupId}
-     *
-     * # example
-     * - key = Remote:2eo39p_AutoRemoteGroupId
-     * - value = 1
-     * </pre>
-     */
+    @Transactional
     @DisplayName("Active RemoteCode 에 맵핑된 AutoRemoteGroup Id 를 알려주는 Redis Key-Value 생성에 성공합니다")
     @Test
     void Success_RemoteCode_AutoRemoteGroup_Mapping() {
@@ -62,19 +58,28 @@ class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
         log.info("RemoteCode: {}", remoteCode);
 
         // when
-        autoRemoteGroupService.setRemoteCodeToAutoGroupId(remoteCode, 1L);
+        autoRemoteGroupService.activateAutoRemoteGroup(remoteCode, 1L);
+
+        // logging
+        Set<String> allKeys = stringRedisTemplate.keys("*");
+        log.info("--- All keys ---");
+        allKeys.forEach(key -> {
+            log.info("Key: {}", key);
+        });
 
         // then
-        Set<String> keys = stringRedisTemplate.keys("Remote:*");
-        assertThat(keys).isNotNull();
+        Set<String> remoteCodeKey = stringRedisTemplate.keys("remote:*");
+        assertThat(remoteCodeKey).isNotNull();
+        assertThat(remoteCodeKey).hasSize(1);
 
-        keys.forEach(key -> {
-            log.info("Key: {}, Value: {}", key, stringRedisTemplate.opsForValue().get(key));
-        });
-        List<String> collect = keys.stream().collect(Collectors.toList());
+        List<String> remoteCodeList = remoteCodeKey.stream().toList();
+        assertThat(remoteCodeList.get(0)).startsWith("remote:");
 
-        assertThat(keys).isNotEmpty();
-        assertThat(collect).hasSize(1);
-        assertThat(collect.get(0)).startsWith("Remote:").endsWith("_AutoRemoteGroupId");
+        Set<String> autoremoteKeys = stringRedisTemplate.keys("autoremote_*");
+        assertThat(autoremoteKeys).isNotNull();
+        assertThat(autoremoteKeys).hasSize(2);
+
+        List<String> autoRemoteList = autoremoteKeys.stream().toList();
+        assertThat(autoRemoteList).containsAll(Arrays.asList("autoremote_groupid_1", "autoremote_remotecode_"+remoteCode.getRemoteCode()));
     }
 }

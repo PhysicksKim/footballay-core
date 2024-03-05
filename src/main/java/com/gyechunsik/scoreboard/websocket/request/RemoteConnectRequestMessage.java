@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Map;
+
 /**
  * <pre>
  * {
@@ -25,6 +27,5 @@ public class RemoteConnectRequestMessage {
     protected String remoteCode;
     protected String nickname;
     protected boolean isAutoRemote;
-    protected String afterSetCookieUrl;
 
 }

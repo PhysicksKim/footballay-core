@@ -1,4 +1,6 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote.code;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service;
+
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 
 import java.time.Duration;
 import java.util.Map;

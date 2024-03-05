@@ -55,7 +55,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         String[] allowOriginArray = rawAllowedOrigins.split(",");
         log.info("allow origins : {}", Arrays.toString(allowOriginArray));
-        registry.addEndpoint("/ws").setAllowedOrigins(allowOriginArray)
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(allowOriginArray)
                 .setHandshakeHandler(new CustomHandshakeHandler())
                 .addInterceptors(new HttpHandshakeInterceptor());
     }

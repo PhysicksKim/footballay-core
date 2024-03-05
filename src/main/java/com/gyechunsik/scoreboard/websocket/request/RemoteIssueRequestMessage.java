@@ -19,5 +19,6 @@ import lombok.ToString;
 public class RemoteIssueRequestMessage {
 
     protected String nickname;
+    protected boolean isAutoRemote;
 
 }

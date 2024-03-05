@@ -1,8 +1,8 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote;
 
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.AutoRemote;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemoteConnect;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -14,16 +14,15 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * 원격 연결 처리를 위한 Controller 퍼사드 Service 입니다.
- * 모든 원격 연결 Request 처리의 시작 지점입니다.
+ * 원격 연결 도메인 Root 에 해당합니다.
  */
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class RemoteService {
+public class ScoreBoardRemote {
 
     private final RemoteCodeService remoteCodeService;
-    private final AutoRemote autoRemote;
+    private final AutoRemoteConnect autoRemoteConnect;
 
     /**
      * 원격 연결을 위한 코드를 발급합니다.
@@ -51,19 +50,21 @@ public class RemoteService {
         remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
     }
 
+
     /**
      * 자동 원격 연결 형성 요청시 UUID 를 발급합니다.
      * @param activeRemoteCode 현재 연결된 Remote Code
      * @return UUID 는 자동 원격 연결을 위한 사용자 식별자로 사용됩니다. 쿠키로 반환합니다.
      */
-    public UUID getUUIDForAnonymousUserCookie(RemoteCode activeRemoteCode) {
-        UUID uuid = autoRemote.enrollUserToAutoRemoteGroup(activeRemoteCode);
-        log.info("Should This UUID to Set Cookie: {}", uuid);
-        return uuid;
+    public UUID issueUUIDForAnonymousUserCookie(RemoteCode activeRemoteCode) {
+        // UUID uuid = autoRemote.rejoinPreviouslyFormedAutoGroup(activeRemoteCode);
+        // log.info("Should This UUID to Set Cookie: {}", uuid);
+        // return uuid;
+        return null;
     }
 
     public void cacheUserBeforeAutoRemote(Principal principal, String userUUID) {
-        autoRemote.cacheUserBeforeAutoRemote(principal, userUUID);
+        autoRemoteConnect.cacheUserBeforeAutoRemote(principal, userUUID);
     }
 
     public void sendMessageToSubscribers(String remoteCode, Principal remotePublisher, Consumer<String> sendMessageToSubscriber) {

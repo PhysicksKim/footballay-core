@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.websocket.handler;
 
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

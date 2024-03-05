@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote.code;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -35,7 +35,7 @@ public class RemoteCode {
         return '{' + remoteCode + '}';
     }
 
-    protected static RemoteCode generate() {
+    public static RemoteCode generate() {
         String RemoteCode = CodeGenerator.generateCode();
         return new RemoteCode(RemoteCode);
     }

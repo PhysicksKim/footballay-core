@@ -1,28 +1,27 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service;
 
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.repository.AnonymousUserRepository;
-import com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.RemoteExpireTimes;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AnonymousUserRepository;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
-import static java.util.concurrent.TimeUnit.*;
 
 @RequiredArgsConstructor
 @Service
 public class AnonymousUserService {
 
     private final AnonymousUserRepository userRepository;
+    private final AutoRemoteRedisRepository autoRemoteRedisRepository;
 
-    private final StringRedisTemplate stringRedisTemplate;
-
-    private final static long TIMEOUT_5MIN = 300L; // 5분
+    private final static Duration CACHE_EXP = RemoteExpireTimes.USER_PRE_CACHING; // 5분
 
     /**
      * 익명 유저를 생성하고 저장합니다.
@@ -38,6 +37,11 @@ public class AnonymousUserService {
         anonymousUser.setAutoRemoteGroup(autoRemoteGroup); // AutoRemoteGroup을 설정합니다.
         anonymousUser.setLastConnectedAt(LocalDateTime.now());
         return userRepository.save(anonymousUser);
+    }
+
+    public AnonymousUser findUserById(UUID uuid) {
+        return userRepository.findById(uuid)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 익명 유저입니다."));
     }
 
     /**
@@ -56,8 +60,8 @@ public class AnonymousUserService {
         AnonymousUser findUser = userRepository.findById(uuid)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 익명 유저입니다."));
 
-        stringRedisTemplate.opsForValue()
-                .set(principal.getName(), userUUID, TIMEOUT_5MIN, SECONDS);
+        autoRemoteRedisRepository
+                .setUserPreCache(principal.getName(), userUUID);
 
         // TODO : test 로 LastConnected 제대로 업데이트 되는지 체크 필요
         findUser.setLastConnectedAt(LocalDateTime.now());

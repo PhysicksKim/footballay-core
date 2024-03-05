@@ -1,13 +1,13 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.gyechunsik.scoreboard.websocket.domain.remote.RemoteService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
 import com.gyechunsik.scoreboard.websocket.request.RemoteConnectRequestMessage;
 import com.gyechunsik.scoreboard.websocket.request.RemoteIssueRequestMessage;
 import com.gyechunsik.scoreboard.websocket.response.CodeIssueResponse;
 import com.gyechunsik.scoreboard.websocket.response.ErrorResponse;
 import com.gyechunsik.scoreboard.websocket.response.RemoteConnectResponse;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.remote.code.RemoteCodeMapper;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ import java.util.function.Consumer;
 @Controller
 public class RemoteStompController {
 
-    private final RemoteService remoteService;
+    private final ScoreBoardRemote scoreBoardRemote;
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/remote.issuecode")
@@ -44,7 +44,14 @@ public class RemoteStompController {
             throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
 
-        RemoteCode remoteCode = remoteService.issueCode(principal, message.getNickname());
+        RemoteCode remoteCode = scoreBoardRemote.issueCode(principal, message.getNickname());
+        if(message.isAutoRemote()) {
+            // is need to make AutoRemoteGroup?
+
+            scoreBoardRemote.subscribeRemoteCode(remoteCode, principal, message.getNickname());
+        }
+
+
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
         headerAccessor.getSessionAttributes().put("remoteCode", remoteCode.getRemoteCode());
         return new CodeIssueResponse(remoteCode.getRemoteCode());
@@ -82,7 +89,7 @@ public class RemoteStompController {
         }
         log.info("attributes : {}", sessionAttributes);
 
-        remoteService.subscribeRemoteCode(remoteCode, principal, nickname);
+        scoreBoardRemote.subscribeRemoteCode(remoteCode, principal, nickname);
 
         sessionAttributes.put("remoteCode", remoteCode.getRemoteCode());
         return new RemoteConnectResponse(remoteCode.getRemoteCode());
@@ -124,7 +131,7 @@ public class RemoteStompController {
         log.info("remote control message : {}", message);
         log.info("principal name : {}", principal.getName());
 
-        if (!remoteService.isValidCode(RemoteCode.of(remoteCode))) {
+        if (!scoreBoardRemote.isValidCode(RemoteCode.of(remoteCode))) {
             throw new IllegalArgumentException("유효하지 않은 코드입니다.");
         }
 
@@ -141,7 +148,7 @@ public class RemoteStompController {
         Consumer<String> sendMessageToUser = (userName) -> {
             messagingTemplate.convertAndSendToUser(userName,"/topic/remote/" + remoteCode, message);
         };
-        remoteService.sendMessageToSubscribers(remoteCode, principal, sendMessageToUser);
+        scoreBoardRemote.sendMessageToSubscribers(remoteCode, principal, sendMessageToUser);
     }
 
     @MessageExceptionHandler(IllegalArgumentException.class)
