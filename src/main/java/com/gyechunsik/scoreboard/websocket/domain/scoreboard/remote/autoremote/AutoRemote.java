@@ -30,6 +30,8 @@ public class AutoRemote {
      */
     public void cacheUserPrincipalAndUuidForAutoRemote(Principal principal, String userUUID) {
         if (principal == null || !StringUtils.hasText(userUUID)) {
+            log.info("Principal: {}", principal);
+            log.info("userUUID: {}", userUUID);
             throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
         autoRemoteService.validateAndCacheUserToRedis(principal, userUUID);

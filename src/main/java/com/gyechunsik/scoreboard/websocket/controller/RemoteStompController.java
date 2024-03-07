@@ -122,7 +122,9 @@ public class RemoteStompController {
             throw new IllegalArgumentException("유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
         String nickname = message.getNickname();
-        if(Strings.hasText(nickname)) {
+        log.info("message : {}", message);
+        log.info("nickname : {}", message.getNickname());
+        if(!Strings.hasText(nickname)) {
             throw new IllegalArgumentException("유저 닉네임이 비어있습니다.");
         }
 
