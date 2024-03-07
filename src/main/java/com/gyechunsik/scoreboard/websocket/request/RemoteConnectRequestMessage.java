@@ -21,11 +21,10 @@ import java.util.Map;
 @Getter
 @ToString
 @AllArgsConstructor
-@NoArgsConstructor
 public class RemoteConnectRequestMessage {
 
     protected String remoteCode;
     protected String nickname;
-    protected boolean isAutoRemote;
+    protected boolean autoRemote;
 
 }

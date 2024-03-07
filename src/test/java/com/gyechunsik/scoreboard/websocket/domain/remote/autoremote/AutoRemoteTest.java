@@ -1,13 +1,11 @@
 package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemoteConnect;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemote;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,15 +16,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @SpringBootTest
 class AutoRemoteTest extends AbstractRedisTestContainerInit {
-
-    @Autowired
-    private AutoRemoteConnect autoRemoteConnect;
-
-    @Mock
-    private AnonymousUserService anonymousUserService;
-
-    // private final AutoRemoteGroupService autoRemoteGroupService;
-    // private final AutoRemoteService autoRemoteService;
 
     @Mock
     private Principal mockFirstPrincipal;
@@ -46,7 +35,7 @@ class AutoRemoteTest extends AbstractRedisTestContainerInit {
     }
 
     /**
-     * {@link AutoRemoteConnect#cacheUserBeforeAutoRemote(Principal, String)}
+     * {@link AutoRemote#cacheUserPrincipalAndUuidForAutoRemote(Principal, String)}
      */
     @Transactional
     @DisplayName("pre-remote cache 요청에 성공합니다.")
@@ -54,7 +43,7 @@ class AutoRemoteTest extends AbstractRedisTestContainerInit {
     @Disabled
     void preRemoteCache_Success() {
         // given
-        autoRemoteConnect.connect(mockFirstPrincipal, "nickname");
+        // autoRemoteConnect.connectToPrevFormedRemoteGroup(mockFirstPrincipal, "nickname");
         // FAIL BECAUSE OF NO IMPLEMENTATION
 
         // when

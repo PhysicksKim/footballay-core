@@ -64,7 +64,7 @@ public class StompDisconnectInterceptor implements ChannelInterceptor {
                 remoteCodeService.removeSubscriber(RemoteCode.of(remoteCode), user.getName());
                 break;
             case SUBSCRIBE:
-                log.info("구독 WebSession :: {}", sessionId);
+                log.info("구독 요청한 WebsocketSession :: {}", sessionId);
                 log.info("구독 주소 :: {}", destination);
                 break;
             default:

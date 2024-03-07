@@ -1,8 +1,6 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteGroupService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
@@ -18,10 +16,8 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class AutoRemoteConnect {
+public class AutoRemote {
 
-    private final AnonymousUserService anonymousUserService;
-    private final AutoRemoteGroupService autoRemoteGroupService;
     private final AutoRemoteService autoRemoteService;
 
     /**
@@ -32,44 +28,21 @@ public class AutoRemoteConnect {
      * @param userUUID
      * @since pre-1.0.0
      */
-    public void cacheUserBeforeAutoRemote(Principal principal, String userUUID) {
+    public void cacheUserPrincipalAndUuidForAutoRemote(Principal principal, String userUUID) {
         if (principal == null || !StringUtils.hasText(userUUID)) {
             throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
-        anonymousUserService.validateAndCacheUserToRedis(principal, userUUID);
+        autoRemoteService.validateAndCacheUserToRedis(principal, userUUID);
     }
 
-    public RemoteCode connect(Principal principal, String nickname) {
+    public RemoteCode connectToPrevFormedAutoRemoteGroup(Principal principal, String nickname) {
         if (principal == null || !StringUtils.hasText(nickname)) {
             throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
 
-        RemoteCode remoteCode = autoRemoteService.connect(principal, nickname);
+        RemoteCode remoteCode = autoRemoteService.connectToPrevFormedAutoRemoteGroup(principal, nickname);
         log.info("RemoteCode: {}", remoteCode);
         return remoteCode;
-    }
-
-    /**
-     * <h3>이전에 형성된 그룹에 재연결</h3>
-     * <pre>
-     * 현재 연결된 Remote Code Group 으로 Auto Remote Group 을 형성합니다.
-     * 이미 생성된 Auto Remote Group 이 존재하는 경우 해당 그룹에 추가됩니다.
-     * </pre>
-     * <h3>Controller 에서 처리할 작업</h3>
-     * <pre>
-     * 반환 받은 UUID 를 Cookie 에 저장합니다.
-     * UUID Cookie 는 이후 원격 연결에 식별자로 사용됩니다.
-     * UUID Cookie 는 3개월을 유효기간으로 설정합니다.
-     * </pre>
-     * @param uuid
-     */
-    public boolean rejoinPreviouslyFormedAutoGroup(UUID uuid) {
-        AnonymousUser findUser = anonymousUserService.findUserById(uuid);
-        AutoRemoteGroup autoRemoteGroup = findUser.getAutoRemoteGroup();
-
-        // TODO : 여기서 부터 다시. 찾은 autoRemoteGroup 으로 redis 에서 active 중인 그룹이 있는지 찾고 분기 나뉨
-
-        return false;
     }
 
     /**
@@ -77,19 +50,34 @@ public class AutoRemoteConnect {
      * @param remoteCode
      * @return
      */
-    public UUID joinNewlyFormedAutoGroup(RemoteCode remoteCode) {
-        Optional<Long> optionalGroupId = autoRemoteGroupService.getActiveGroupIdBy(remoteCode);
+    public UUID joinNewlyFormedAutoGroup(RemoteCode remoteCode, Principal principal) {
+        Optional<Long> optionalGroupId = autoRemoteService.getActiveGroupIdBy(remoteCode);
         AutoRemoteGroup autoRemoteGroup;
         if(optionalGroupId.isPresent()) {
-            autoRemoteGroup = autoRemoteGroupService
+            // 이미 누군가 자동 연결 그룹을 생성했다면, 기존 그룹에 참여합니다.
+            log.info("기존에 생성된 그룹에 참여");
+            autoRemoteGroup = autoRemoteService
                     .getAutoRemoteGroup(optionalGroupId.get())
                     .orElseThrow(() -> new IllegalArgumentException("캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
         } else {
-            autoRemoteGroup = autoRemoteGroupService.createAutoRemoteGroup();
-            autoRemoteGroupService.activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
+            // 아직 자동 연결 그룹이 생성되지 않았다면, 새로 그룹을 만듭니다.
+            log.info("기존 그룹이 없으므로 새롭게 그룹 생성");
+            autoRemoteGroup = autoRemoteService.createAutoRemoteGroup();
+            log.info("autoRemoteGroup : {}", autoRemoteGroup);
+            log.info("autoRemoteGroup id : {}", autoRemoteGroup.getId());
+            autoRemoteService.activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
 
-        AnonymousUser createdUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser createdUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
+        UUID uuid = createdUser.getId();
+
+        cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
         return createdUser.getId();
+    }
+
+    public UUID getUuidForCookieFromPrincipalName(String principalName) {
+        String preCachedUserUUID = autoRemoteService.findPreCachedUserUUID(principalName);
+        log.info("get uuid for cookie from principalName : {}", preCachedUserUUID);
+        return UUID.fromString(preCachedUserUUID);
     }
 }

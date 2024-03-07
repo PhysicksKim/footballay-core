@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.service;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteGroupService;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.*;
 class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
 
     @Autowired
-    private AutoRemoteGroupService autoRemoteGroupService;
+    private AutoRemoteService autoRemoteService;
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
@@ -58,7 +58,7 @@ class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
         log.info("RemoteCode: {}", remoteCode);
 
         // when
-        autoRemoteGroupService.activateAutoRemoteGroup(remoteCode, 1L);
+        autoRemoteService.activateAutoRemoteGroup(remoteCode, 1L);
 
         // logging
         Set<String> allKeys = stringRedisTemplate.keys("*");

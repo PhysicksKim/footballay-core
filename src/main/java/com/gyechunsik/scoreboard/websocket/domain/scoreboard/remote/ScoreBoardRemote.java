@@ -1,8 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote;
 
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemoteConnect;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemote;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.response.RemoteConnectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 public class ScoreBoardRemote {
 
     private final RemoteCodeService remoteCodeService;
-    private final AutoRemoteConnect autoRemoteConnect;
+    private final AutoRemote autoRemote;
 
     /**
      * 원격 연결을 위한 코드를 발급합니다.
@@ -50,21 +51,19 @@ public class ScoreBoardRemote {
         remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
     }
 
-
     /**
      * 자동 원격 연결 형성 요청시 UUID 를 발급합니다.
      * @param activeRemoteCode 현재 연결된 Remote Code
      * @return UUID 는 자동 원격 연결을 위한 사용자 식별자로 사용됩니다. 쿠키로 반환합니다.
      */
-    public UUID issueUUIDForAnonymousUserCookie(RemoteCode activeRemoteCode) {
-        // UUID uuid = autoRemote.rejoinPreviouslyFormedAutoGroup(activeRemoteCode);
+    public UUID getUuidForUserUuidCookie(String webSessionId, RemoteCode activeRemoteCode) {
         // log.info("Should This UUID to Set Cookie: {}", uuid);
         // return uuid;
         return null;
     }
 
     public void cacheUserBeforeAutoRemote(Principal principal, String userUUID) {
-        autoRemoteConnect.cacheUserBeforeAutoRemote(principal, userUUID);
+        autoRemote.cacheUserPrincipalAndUuidForAutoRemote(principal, userUUID);
     }
 
     public void sendMessageToSubscribers(String remoteCode, Principal remotePublisher, Consumer<String> sendMessageToSubscriber) {
@@ -80,6 +79,12 @@ public class ScoreBoardRemote {
                 log.info("skip send to user : {}", subscriber);
             }
         });
+    }
+
+    public RemoteConnectResponse autoRemoteReconnect(Principal principal, String nickname) {
+        RemoteCode reconnectRemoteCode = autoRemote.connectToPrevFormedAutoRemoteGroup(principal, nickname);
+        log.info("ScoreBoardRemote Auto Remote Reconnected : code = {}", reconnectRemoteCode);
+        return new RemoteConnectResponse(reconnectRemoteCode.getRemoteCode(), true);
     }
 
     public boolean isValidCode(RemoteCode remoteCode) {

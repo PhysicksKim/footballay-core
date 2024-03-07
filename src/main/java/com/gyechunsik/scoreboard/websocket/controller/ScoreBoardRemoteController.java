@@ -1,7 +1,10 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemote;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -19,23 +22,22 @@ import java.util.UUID;
 @RequestMapping("/api/scoreboard")
 public class ScoreBoardRemoteController {
 
+    private final AutoRemote autoRemote;
     private final ScoreBoardRemote scoreBoardRemote;
 
     /**
-     * STOMP 를 통해 자동 연결 요청/생성이 성공한 이후에, 유저 식별 Cookie 를 받아오기 위해서 사용합니다.
-     * Host, Member 여부와 상관없이 최초 자동 원격 생성 요청자가 Group 을 생성시킵니다.
-     * Group 이 생성되면 RDB 에는 유저 정보와 그룹이 생성되어 저장됩니다.
-     * Redis 에는 현재 RemoteCode 의 다른 사용자가 자동 연결 시, 같은 그룹으로 맵핑시켜줄 수 있도록 {RemoteCode, AutoRemoteGroupId} 가 저장됩니다.
-     * @param remoteCode
+     * UUID -> 쿠키 발급
+     * @param request
      * @return
      */
-    @GetMapping("/{remoteCode}/userCookie")
+    @GetMapping("/user/cookie")
     public ResponseEntity<Void> giveUserUUIDCookie(
-            @PathVariable String remoteCode
+            HttpServletRequest request
     ) {
-        UUID uuid = scoreBoardRemote.issueUUIDForAnonymousUserCookie(RemoteCode.of(remoteCode));
-        ResponseCookie cookie = createAnonymousUserUUIDCookie(uuid.toString());
-
+        HttpSession session = request.getSession();
+        UUID userUuid = autoRemote.getUuidForCookieFromPrincipalName(session.getId());
+        ResponseCookie cookie = createAnonymousUserUUIDCookie(userUuid.toString());
+        log.info("giveUserUUIDCookie : {}", userUuid);
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -43,20 +45,17 @@ public class ScoreBoardRemoteController {
     }
 
     /**
-     * STOMP 기존 자동 연결 그룹 참여 이전에 유저 식별자를 Redis 에 캐싱해두기 위해서 사용합니다.
-     * STOMP 에서는 Cookie 를 사용할 수 없으므로, HTTP 요청을 통해서 Redis 에 캐싱해두고 STOMP 에서는 Cache 된 값을 가져오도록 합니다.
-     * @param userUUID
-     * @param principal
+     * 쿠키 -> cache UUID To Redis
+     * @param userUuid
      * @return
      */
-    @PostMapping("/preRemoteCache")
-    public ResponseEntity<Void> cacheUserBeforeAutoRemote(
-            @CookieValue(value = "AnonymousUserUUID", required = true) String userUUID,
+    @PostMapping("/user/cookie")
+    public ResponseEntity<Void> refreshUserUuidCookie(
+            @CookieValue(value = "AnonymousUserUUID", required = true) String userUuid,
             Principal principal
     ) {
-        scoreBoardRemote.cacheUserBeforeAutoRemote(principal, userUUID);
-        ResponseCookie cookie = createAnonymousUserUUIDCookie(userUUID);
-
+        scoreBoardRemote.cacheUserBeforeAutoRemote(principal, userUuid);
+        ResponseCookie cookie = createAnonymousUserUUIDCookie(userUuid);
         return ResponseEntity
                 .ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())

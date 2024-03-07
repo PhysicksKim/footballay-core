@@ -16,27 +16,28 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class RemoteConnectResponse extends AbstractSubPubPathResponse {
 
-    protected final String remoteCode;
     protected final boolean isAutoRemote;
     protected final String cookieGetUrl;
+    protected final String type = "connect";
 
     public RemoteConnectResponse(String remoteCode) {
         super(remoteCode);
-        this.remoteCode = remoteCode;
         this.isAutoRemote = false;
         this.cookieGetUrl = null;
     }
 
-    public RemoteConnectResponse(String remoteCode, String remoteCode1, boolean isAutoRemote, String cookieGetUrl) {
+    public RemoteConnectResponse(String remoteCode, boolean isAutoRemote) {
         super(remoteCode);
-        this.remoteCode = remoteCode1;
         this.isAutoRemote = isAutoRemote;
-        this.cookieGetUrl = cookieGetUrl;
+        if(isAutoRemote) {
+            this.cookieGetUrl = "/api/scoreboard/user/cookie";
+        } else {
+            this.cookieGetUrl = null;
+        }
     }
 
     public RemoteConnectResponse(int code, String message, String remoteCode) {
         super(code, message, remoteCode);
-        this.remoteCode = remoteCode;
         this.isAutoRemote = false;
         this.cookieGetUrl = null;
     }

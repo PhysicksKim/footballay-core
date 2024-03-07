@@ -5,19 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-/**
- * <pre>
- * {
- *   nickname: "gyechunhoe"
- * }
- * </pre>
- */
 @Getter
 @ToString
 @AllArgsConstructor
-public class RemoteIssueRequestMessage {
+@NoArgsConstructor
+public class AutoRemoteReconnectRequestMessage {
 
-    protected String nickname;
-    protected boolean autoRemote;
+    private String nickname;
 
 }

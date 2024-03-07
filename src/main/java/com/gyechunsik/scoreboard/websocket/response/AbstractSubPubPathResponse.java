@@ -7,6 +7,7 @@ abstract public class AbstractSubPubPathResponse extends AbstractBaseResponse{
 
     protected final String pubPath;
     protected final String subPath;
+    protected final String remoteCode;
 
     public AbstractSubPubPathResponse(String remoteCode) {
         this(200, "success", remoteCode);
@@ -16,5 +17,6 @@ abstract public class AbstractSubPubPathResponse extends AbstractBaseResponse{
         super(code, message);
         this.pubPath = "/app/remote/" + remoteCode;
         this.subPath = "/user/topic/remote/" + remoteCode;
+        this.remoteCode = remoteCode;
     }
 }

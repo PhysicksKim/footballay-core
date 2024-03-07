@@ -14,22 +14,24 @@ import lombok.Getter;
 @Getter
 public class CodeIssueResponse extends AbstractSubPubPathResponse {
 
-    protected final String remoteCode;
     protected final boolean isAutoRemote;
     protected final String cookieGetUrl;
+    protected final String type = "issue";
 
     public CodeIssueResponse(String remoteCode) {
         super(remoteCode);
-        this.remoteCode = remoteCode;
         this.isAutoRemote = false;
         this.cookieGetUrl = null;
     }
 
-    public CodeIssueResponse(String remoteCode, boolean isAutoRemote, String cookieGetUrl) {
+    public CodeIssueResponse(String remoteCode, boolean isAutoRemote) {
         super(remoteCode);
-        this.remoteCode = remoteCode;
         this.isAutoRemote = isAutoRemote;
-        this.cookieGetUrl = cookieGetUrl;
+        if(isAutoRemote) {
+            this.cookieGetUrl = "/api/scoreboard/user/cookie";
+        } else {
+            this.cookieGetUrl = null;
+        }
     }
 
 }

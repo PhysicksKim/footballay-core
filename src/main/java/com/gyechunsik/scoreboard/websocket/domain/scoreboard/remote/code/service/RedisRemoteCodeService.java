@@ -74,7 +74,6 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         return stringRedisTemplate.opsForHash().entries(REMOTECODE_SET_PREFIX + remoteCode);
     }
 
-    // TODO : NEED TO IMPLEMENTATION
     @Override
     public Set<String> getNicknames(String remoteCode) {
         return null;
@@ -89,6 +88,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public void addSubscriber(RemoteCode remoteCode, String subscriber, String nickname) {
+        log.info("add sub nickname : {}", nickname);
         stringRedisTemplate.opsForHash().put(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode(), subscriber, nickname);
         this.refreshExpiration(remoteCode);
     }

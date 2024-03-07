@@ -7,11 +7,19 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class ErrorResponse {
+public class ErrorResponse extends AbstractBaseResponse{
 
-    private int code;
-    private String message;
+    protected final String type = "error";
 
+    public ErrorResponse() {
+        super(400,"에러가 발생했습니다.");
+    }
+
+    public ErrorResponse(String message) {
+        super(400, message);
+    }
+
+    public ErrorResponse(int code, String message) {
+        super(code, message);
+    }
 }

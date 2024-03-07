@@ -32,7 +32,7 @@ public class RemoteCode {
 
     @Override
     public String toString() {
-        return '{' + remoteCode + '}';
+        return remoteCode;
     }
 
     public static RemoteCode generate() {

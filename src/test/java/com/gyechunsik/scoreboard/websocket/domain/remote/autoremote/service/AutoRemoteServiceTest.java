@@ -4,8 +4,6 @@ import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteGroupService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RedisRemoteCodeService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
@@ -24,7 +22,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -41,10 +38,6 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
     private RedisRemoteCodeService redisRemoteCodeService;
     @Autowired
     private AutoRemoteService autoRemoteService;
-    @Autowired
-    private AnonymousUserService anonymousUserService;
-    @Autowired
-    private AutoRemoteGroupService autoRemoteGroupService;
 
     @Autowired
     private AutoRemoteRedisRepository autoRemoteRedisRepository;
@@ -84,16 +77,16 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
     @Test
     void Success_connectAutoRemoteGroup_alreadyActivated() {
         // given
-        AutoRemoteGroup autoRemoteGroup = autoRemoteGroupService.createAutoRemoteGroup();
-        AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AutoRemoteGroup autoRemoteGroup = autoRemoteService.createAutoRemoteGroup();
+        AnonymousUser firstSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID userUUID = firstSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
         // autoRemoteService.
         autoRemoteRedisRepository.removeAllActiveGroups();
 
         // when
-        anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, userUUID.toString());
-        RemoteCode remoteCode = autoRemoteService.connect(mockFirstPrincipal, "nickname");
+        autoRemoteService.validateAndCacheUserToRedis(mockFirstPrincipal, userUUID.toString());
+        RemoteCode remoteCode = autoRemoteService.connectToPrevFormedAutoRemoteGroup(mockFirstPrincipal, "nickname");
 
         // then
         // 새로운 코드 활성 여부 체크
@@ -131,19 +124,19 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         final String SECOND_USER_NICKNAME = "secondUserNickname";
 
         // 자동 원격 그룹과 유저1, 유저2 생성
-        AutoRemoteGroup autoRemoteGroup = autoRemoteGroupService.createAutoRemoteGroup();
-        AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
-        AnonymousUser secondSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AutoRemoteGroup autoRemoteGroup = autoRemoteService.createAutoRemoteGroup();
+        AnonymousUser firstSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser secondSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID firstUUID = firstSavedUser.getId();
         UUID secondUUID = secondSavedUser.getId();
 
         // "유저1" 에 의해 원격 그룹 활성화
-        anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, firstUUID.toString());
-        RemoteCode firstConnectRemoteCode = autoRemoteService.connect(mockFirstPrincipal, FIRST_USER_NICKNAME);
+        autoRemoteService.validateAndCacheUserToRedis(mockFirstPrincipal, firstUUID.toString());
+        RemoteCode firstConnectRemoteCode = autoRemoteService.connectToPrevFormedAutoRemoteGroup(mockFirstPrincipal, FIRST_USER_NICKNAME);
 
         // when
-        anonymousUserService.validateAndCacheUserToRedis(mockSecondPrincipal, secondUUID.toString());
-        RemoteCode secondConnectRemoteCode = autoRemoteService.connect(mockSecondPrincipal, SECOND_USER_NICKNAME);
+        autoRemoteService.validateAndCacheUserToRedis(mockSecondPrincipal, secondUUID.toString());
+        RemoteCode secondConnectRemoteCode = autoRemoteService.connectToPrevFormedAutoRemoteGroup(mockSecondPrincipal, SECOND_USER_NICKNAME);
 
         // then
         // 새로운 코드 활성 여부 체크
@@ -186,8 +179,8 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
     @Test
     void Fail_UUIDNotCached() {
         // given
-        AutoRemoteGroup autoRemoteGroup = autoRemoteGroupService.createAutoRemoteGroup();
-        AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AutoRemoteGroup autoRemoteGroup = autoRemoteService.createAutoRemoteGroup();
+        AnonymousUser firstSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID userUUID = firstSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
         autoRemoteRedisRepository.removeAllActiveGroups();
@@ -195,11 +188,11 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         // when
         log.info("UUID NOT CACHED!!");
         log.info("does not called :: validateAndCacheUserToRedis() method");
-        // anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, userUUID.toString());
+        // autoRemoteService.validateAndCacheUserToRedis(mockFirstPrincipal, userUUID.toString());
 
         // then
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> autoRemoteService.connect(mockFirstPrincipal, "nickname"),
+                () -> autoRemoteService.connectToPrevFormedAutoRemoteGroup(mockFirstPrincipal, "nickname"),
                 "잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다."
         );
     }
@@ -209,20 +202,20 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
     @Test
     void Fail_AnonymousUserNotExist() {
         // given
-        AutoRemoteGroup autoRemoteGroup = autoRemoteGroupService.createAutoRemoteGroup();
-        AnonymousUser firstSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
-        AnonymousUser secondSavedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AutoRemoteGroup autoRemoteGroup = autoRemoteService.createAutoRemoteGroup();
+        AnonymousUser firstSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser secondSavedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         UUID firstSavedUserId = firstSavedUser.getId();
         UUID secondSavedUserId = secondSavedUser.getId();
         // 비활성 상태로 변경하기 위한 테스트용 메서드 호출
         autoRemoteRedisRepository.removeAllActiveGroups();
 
         // when & then
-        anonymousUserService.validateAndCacheUserToRedis(mockFirstPrincipal, firstSavedUserId.toString());
+        autoRemoteService.validateAndCacheUserToRedis(mockFirstPrincipal, firstSavedUserId.toString());
 
         // then
         Assertions.assertThrows(IllegalArgumentException.class,
-                () -> autoRemoteService.connect(mockSecondPrincipal, "nickname"),
+                () -> autoRemoteService.connectToPrevFormedAutoRemoteGroup(mockSecondPrincipal, "nickname"),
                 "존재하지 않는 익명 유저입니다."
         );
     }

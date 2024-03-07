@@ -4,8 +4,7 @@ import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AnonymousUserService;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.service.AutoRemoteService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
@@ -22,8 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
@@ -36,7 +33,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
     private EntityManager em;
 
     @Autowired
-    private AnonymousUserService anonymousUserService;
+    private AutoRemoteService autoRemoteService;
     @Autowired
     private AutoRemoteRedisRepository autoRemoteRedisRepository;
 
@@ -65,7 +62,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
 
         // when
-        AnonymousUser savedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser savedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         log.info("savedUser: {}", savedUser);
 
         // then
@@ -81,7 +78,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
     void UserValidatePassAndCache() {
         // given
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
-        AnonymousUser savedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser savedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
@@ -90,9 +87,9 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
         log.info("userUuid: {}", userUuid);
 
         // when
-        anonymousUserService.validateAndCacheUserToRedis(mockPrincipal, userUuid);
+        autoRemoteService.validateAndCacheUserToRedis(mockPrincipal, userUuid);
         String cachedUserKey = ReflectionTestUtils.
-                invokeMethod(AutoRemoteRedisRepository.class, "preCachedUUIDKey", MOCK_PRINCIPAL_NAME);
+                invokeMethod(AutoRemoteRedisRepository.class, "keyForPrincipalToUuid", MOCK_PRINCIPAL_NAME);
         assert cachedUserKey != null;
         String cachedUserValue = stringRedisTemplate.opsForValue().get(cachedUserKey);
 
@@ -107,7 +104,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
     void UserValidateFail() {
         // given
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
-        AnonymousUser savedUser = anonymousUserService.createAndSaveAnonymousUser(autoRemoteGroup);
+        AnonymousUser savedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
@@ -118,7 +115,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
 
         // then
         Assertions.assertThatThrownBy(() -> {
-            anonymousUserService.validateAndCacheUserToRedis(mockPrincipal, NOT_EXIST_UUID);
+            autoRemoteService.validateAndCacheUserToRedis(mockPrincipal, NOT_EXIST_UUID);
         }).isInstanceOf(IllegalArgumentException.class).hasMessage("존재하지 않는 익명 유저입니다.");
     }
 

@@ -13,31 +13,33 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * <pre>
+ * AutoRemote 와 관련된 Redis CRUD 를 관리합니다.
+ * remote:{remoteCode} 로 구성되는 RemoteCode 연결 채널은
+ * RemoteCodeService 와 RemoteCodeRepository 에서 다룹니다.
+ * <br>
+ * # 관리하는 key
+ * 1) 자동 원격 UUID Caching [Value]
+ * key : autoremote_usercookie_{principalName}
+ * value : {UUID}
+ * <br>
+ * 2) AutoGroupId to RemoteCode [Value]
+ * key : autoremote_groupid_{groupid}
+ * value : {remoteCode}
+ * <br>
+ * 3) RemoteCode to AutoGroupId
+ * key : autoremote_remotecode_{remoteCode}
+ * value : {groupid}
+ * </pre>
+ */
 @Slf4j
 @RequiredArgsConstructor
 @Repository
 public class AutoRemoteRedisRepository {
 
-    /**
-     * AutoRemoteConnect 와 관련된 Redis CRUD 를 관리합니다.
-     * remote:{remoteCode} 로 구성되는 RemoteCode 연결 채널은
-     * RemoteCodeService 와 RemoteCodeRepository 에서 다룹니다.
-     * <p>
-     * # 관리하는 key
-     * 1) 자동 원격 Before Caching [Value]
-     * key : autoremote_beforecache_{principalName}
-     * value : UUID
-     * <p>
-     * 2) AutoGroupId to RemoteCode [Value]
-     * key : autoremote_groupid_{groupid}
-     * value : {remoteCode}
-     * <p>
-     * 3) RemoteCode to AutoGroupId
-     * key : autoremote_remotecode_{remoteCode}
-     * value : {groupid}
-     */
     private static final String PREFIX_AUTOREMOTE_COMMON = "autoremote_";
-    private static final String IDENTIFIER_BEFORE_CACHE = "beforecache_";
+    private static final String IDENTIFIER_BEFORE_CACHE = "usercookie_";
     private static final String IDENTIFIER_GROUP_ID = "groupid_";
     private static final String IDENTIFIER_REMOTE_CODE = "remotecode_";
 
@@ -57,10 +59,16 @@ public class AutoRemoteRedisRepository {
         stringRedisTemplate.opsForValue().set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
     }
 
-    public void setUserPreCache(String principalName, String userId) {
-        log.info("setUserPreCache Called :: Principal={} , userId={}", principalName, userId);
-        final String key = preCachedUUIDKey(principalName);
+    public void setUserPreCacheForCookie(String principalName, String userId) {
+        log.info("setUserPreCacheForCookie Called :: Principal={} , userId={}", principalName, userId);
+        final String key = keyForPrincipalToUuid(principalName);
         stringRedisTemplate.opsForValue().set(key, userId, EXP_USER_PRE_CACHE);
+    }
+
+    public Optional<String> findUserPreCache(String principalName) {
+        final String key = keyForPrincipalToUuid(principalName);
+        String value = stringRedisTemplate.opsForValue().get(key);
+        return Optional.ofNullable(value);
     }
 
     public String findRemoteCodeFromAutoGroupId(String autoGroupId) {
@@ -79,13 +87,15 @@ public class AutoRemoteRedisRepository {
     public Optional<String> findAutoGroupIdFromRemoteCode(String remoteCode) {
         String autoGroupId = stringRedisTemplate.opsForValue()
                 .get(activeKeyFromCode(remoteCode));
-        setActiveAutoRemoteKeyPair(autoGroupId, remoteCode);
+        if (autoGroupId != null && remoteCode != null) {
+            setActiveAutoRemoteKeyPair(autoGroupId, remoteCode);
+        }
         return Optional.ofNullable(autoGroupId);
     }
 
-    public String findBeforeCacheUUIDFromJsessionid(String principalName) {
-        String key = preCachedUUIDKey(principalName);
-        return stringRedisTemplate.opsForValue().get(key);
+    public Optional<String> findPrincipalToUuid(String principalName) {
+        String key = keyForPrincipalToUuid(principalName);
+        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(key));
     }
 
     private static String activeKeyFromGroup(String autoGroupId) {
@@ -96,7 +106,7 @@ public class AutoRemoteRedisRepository {
         return PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_REMOTE_CODE + remoteCode;
     }
 
-    private static String preCachedUUIDKey(String principalName) {
+    private static String keyForPrincipalToUuid(String principalName) {
         return PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_BEFORE_CACHE + principalName;
     }
 
