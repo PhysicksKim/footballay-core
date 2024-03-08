@@ -5,7 +5,6 @@ import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.A
 import com.gyechunsik.scoreboard.websocket.request.AutoRemoteReconnectRequestMessage;
 import com.gyechunsik.scoreboard.websocket.request.RemoteConnectRequestMessage;
 import com.gyechunsik.scoreboard.websocket.request.RemoteIssueRequestMessage;
-import com.gyechunsik.scoreboard.websocket.response.CodeIssueResponse;
 import com.gyechunsik.scoreboard.websocket.response.ErrorResponse;
 import com.gyechunsik.scoreboard.websocket.response.RemoteConnectResponse;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
@@ -13,7 +12,6 @@ import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service
 import io.jsonwebtoken.lang.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
@@ -38,7 +36,7 @@ public class RemoteStompController {
 
     @MessageMapping("/remote.issuecode")
     @SendToUser("/topic/remote")
-    public CodeIssueResponse issueCode(
+    public RemoteConnectResponse issueCode(
             RemoteIssueRequestMessage message,
             Principal principal,
             StompHeaderAccessor headerAccessor
@@ -60,7 +58,7 @@ public class RemoteStompController {
 
         log.info("issued remoteCode: {} , user : {}", remoteCode, principal.getName());
         headerAccessor.getSessionAttributes().put("remoteCode", remoteCode.getRemoteCode());
-        return new CodeIssueResponse(remoteCode.getRemoteCode(), message.isAutoRemote());
+        return new RemoteConnectResponse(remoteCode.getRemoteCode(), message.isAutoRemote());
     }
 
     /**

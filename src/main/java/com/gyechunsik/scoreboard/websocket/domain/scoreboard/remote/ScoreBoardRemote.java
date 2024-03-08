@@ -84,7 +84,7 @@ public class ScoreBoardRemote {
     public RemoteConnectResponse autoRemoteReconnect(Principal principal, String nickname) {
         RemoteCode reconnectRemoteCode = autoRemote.connectToPrevFormedAutoRemoteGroup(principal, nickname);
         log.info("ScoreBoardRemote Auto Remote Reconnected : code = {}", reconnectRemoteCode);
-        return new RemoteConnectResponse(reconnectRemoteCode.getRemoteCode(), true);
+        return new RemoteConnectResponse(reconnectRemoteCode.getRemoteCode(), true, "autoreconnect");
     }
 
     public boolean isValidCode(RemoteCode remoteCode) {

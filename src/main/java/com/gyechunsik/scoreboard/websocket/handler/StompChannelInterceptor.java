@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.websocket.handler;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.response.SubscribeDoneResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StompDisconnectInterceptor implements ChannelInterceptor {
+public class StompChannelInterceptor implements ChannelInterceptor {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RemoteCodeService remoteCodeService;
@@ -28,6 +29,7 @@ public class StompDisconnectInterceptor implements ChannelInterceptor {
      * Spring 은 안전한 종료를 보장하기 위해서, 사용자의 DISCONNECT 요청 뿐만 아니라, Websocket 종료시에도 DISCONNECT command 를 실행시킵니다.
      * 따라서 StompHeaderAccessor.getCommand() == DISCONNECT 를 다룰 때에는
      * 항상 두 번 실행될 가능성이 더 높음을 인지하고 작성해야 합니다.
+     *
      * @param message
      * @param channel
      * @param sent
@@ -40,7 +42,7 @@ public class StompDisconnectInterceptor implements ChannelInterceptor {
         Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
         HttpSession webSession = (HttpSession) sessionAttributes.get("webSession");
 
-        if(accessor.getCommand() == null)
+        if (accessor.getCommand() == null)
             return;
 
         switch ((accessor.getCommand())) {
@@ -51,11 +53,11 @@ public class StompDisconnectInterceptor implements ChannelInterceptor {
                 log.info("세션 끊음 :: {}", sessionId);
                 Principal user = accessor.getUser();
                 String remoteCode = (String) sessionAttributes.get("remoteCode");
-                if(user == null) {
+                if (user == null) {
                     log.info("Principal User IS NULL");
                     break;
                 }
-                if(remoteCode == null) {
+                if (remoteCode == null) {
                     log.info("remoteCode IS NULL");
                     break;
                 }
@@ -66,6 +68,14 @@ public class StompDisconnectInterceptor implements ChannelInterceptor {
             case SUBSCRIBE:
                 log.info("구독 요청한 WebsocketSession :: {}", sessionId);
                 log.info("구독 주소 :: {}", destination);
+                String subDestination = accessor.getDestination();
+                if (subDestination != null && subDestination.equals("/user/topic/remote")) {
+                    messagingTemplate.convertAndSendToUser(
+                                    webSession.getId(),
+                                    "/topic/remote",
+                                    new SubscribeDoneResponse(subDestination)
+                            );
+                }
                 break;
             default:
                 log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession);
