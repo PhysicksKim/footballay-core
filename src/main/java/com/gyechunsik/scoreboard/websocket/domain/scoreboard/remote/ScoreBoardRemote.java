@@ -10,9 +10,10 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * 원격 연결 도메인 Root 에 해당합니다.
@@ -51,15 +52,24 @@ public class ScoreBoardRemote {
         remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
     }
 
-    /**
-     * 자동 원격 연결 형성 요청시 UUID 를 발급합니다.
-     * @param activeRemoteCode 현재 연결된 Remote Code
-     * @return UUID 는 자동 원격 연결을 위한 사용자 식별자로 사용됩니다. 쿠키로 반환합니다.
-     */
-    public UUID getUuidForUserUuidCookie(String webSessionId, RemoteCode activeRemoteCode) {
-        // log.info("Should This UUID to Set Cookie: {}", uuid);
-        // return uuid;
-        return null;
+    public List<String> getRemoteMembers(RemoteCode remoteCode) {
+        List<String> remoteMembers = remoteCodeService.getSubscribers(remoteCode.getRemoteCode())
+                .entrySet().stream()
+                .map(entry -> (String) entry.getValue())
+                .collect(Collectors.toList());
+        log.info("remoteMembers : {}", remoteMembers);
+        return remoteMembers;
+    }
+
+    public List<List<String>> getRemoteUserDetails(RemoteCode remoteCode) {
+        Map<Object, Object> subscribers = remoteCodeService.getSubscribers(remoteCode.getRemoteCode());
+        List<String> keys = subscribers.keySet().stream()
+                .map(Object::toString)
+                .toList();
+        List<String> values = subscribers.values().stream()
+                .map(Object::toString)
+                .toList();
+        return List.of(keys, values);
     }
 
     public void cacheUserBeforeAutoRemote(Principal principal, String userUUID) {

@@ -84,6 +84,24 @@ public class ScoreBoardRemoteController {
                 .build();
     }
 
+    // POST /user/cookie/clear
+    // 사용자 인증 관련 쿠키를 모두 즉시 expire 함
+    @PostMapping("/user/cookie/clear")
+    public ResponseEntity<Void> clearUserUuidCookie() {
+        ResponseCookie cookie = ResponseCookie.from("anonymousUserUUID", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("none")
+                .path("/")
+                .maxAge(Duration.ofSeconds(0))
+                .build();
+        return ResponseEntity
+                .ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .build();
+    }
+
+
     private ResponseCookie createAnonymousUserUUIDCookie(String uuid) {
         return ResponseCookie.from("anonymousUserUUID", uuid)
                 .httpOnly(true)

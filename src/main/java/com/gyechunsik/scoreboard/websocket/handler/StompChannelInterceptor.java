@@ -1,7 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.handler;
 
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
+import com.gyechunsik.scoreboard.websocket.response.RemoteMembersResponse;
 import com.gyechunsik.scoreboard.websocket.response.SubscribeDoneResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,6 +26,7 @@ public class StompChannelInterceptor implements ChannelInterceptor {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final RemoteCodeService remoteCodeService;
+    private final ScoreBoardRemote scoreBoardRemote;
 
     /**
      * 주의 : DISCONNECT 는 두 번 발생합니다.
@@ -63,7 +67,20 @@ public class StompChannelInterceptor implements ChannelInterceptor {
                 }
 
                 log.info("remoteCode :: {} , Principal :: {}", remoteCode, user.getName());
-                remoteCodeService.removeSubscriber(RemoteCode.of(remoteCode), user.getName());
+                RemoteCode remoteCodeInstance = RemoteCode.of(remoteCode);
+                remoteCodeService.removeSubscriber(remoteCodeInstance, user.getName());
+
+                List<List<String>> remoteUserDetails = scoreBoardRemote.getRemoteUserDetails(remoteCodeInstance);
+                List<String> principals = remoteUserDetails.get(0);
+                List<String> nicknames = remoteUserDetails.get(1);
+                RemoteMembersResponse memberResponse = new RemoteMembersResponse(nicknames);
+                for (String userName : principals) {
+                    messagingTemplate.convertAndSendToUser(
+                            userName,
+                            "/topic/remote/"+remoteCode+"/members",
+                            memberResponse
+                    );
+                }
                 break;
             case SUBSCRIBE:
                 log.info("구독 요청한 WebsocketSession :: {}", sessionId);
