@@ -77,7 +77,7 @@ public class StompChannelInterceptor implements ChannelInterceptor {
                 for (String userName : principals) {
                     messagingTemplate.convertAndSendToUser(
                             userName,
-                            "/topic/remote/"+remoteCode+"/members",
+                            "/topic/remote/"+remoteCode,
                             memberResponse
                     );
                 }
