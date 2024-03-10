@@ -1,7 +1,7 @@
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: validate
+#spring:
+#  jpa:
+#    hibernate:
+#      ddl-auto: validate
 
 server:
   # session cookie 를 모든 사이트에서 사용 가능하도록 합니다
@@ -22,4 +22,4 @@ server:
 
 # 운영 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "https://physickskim.github.io"
+  allowedorigins: "https://physickskim.github.io,https://gyechunsik.site"
