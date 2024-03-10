@@ -29,11 +29,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
     // to set more detail Jsession cookie policies
-    implementation 'org.springframework.session:spring-session-core'
-
     implementation 'org.springframework.session:spring-session-core'
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
