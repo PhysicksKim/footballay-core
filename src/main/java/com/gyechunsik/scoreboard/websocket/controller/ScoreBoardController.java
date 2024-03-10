@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class ScoreBoardController {
 
     @GetMapping
-    public String indexpage() {
-        return "/scoreboard/index.html";
+    public String scoreboardIndexPage() {
+        return "/scoreboard/index";
     }
 
 }
