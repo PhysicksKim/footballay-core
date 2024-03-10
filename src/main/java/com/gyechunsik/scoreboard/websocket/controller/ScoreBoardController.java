@@ -10,7 +10,7 @@ public class ScoreBoardController {
 
     @GetMapping
     public String scoreboardIndexPage() {
-        return "/scoreboard/index";
+        return "scoreboard/index";
     }
 
 }
