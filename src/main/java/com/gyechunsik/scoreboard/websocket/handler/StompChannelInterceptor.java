@@ -46,8 +46,10 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
         HttpSession webSession = (HttpSession) sessionAttributes.get("webSession");
 
-        if (accessor.getCommand() == null)
+        if (accessor.getCommand() == null) {
+            log.info("STOMP interceptor 에서 command 가 null 입니다");
             return;
+        }
 
         switch ((accessor.getCommand())) {
             case CONNECT:
@@ -85,17 +87,21 @@ public class StompChannelInterceptor implements ChannelInterceptor {
             case SUBSCRIBE:
                 log.info("구독 요청한 WebsocketSession :: {}", sessionId);
                 log.info("구독 주소 :: {}", destination);
-                String subDestination = accessor.getDestination();
-                if (subDestination != null && subDestination.equals("/user/topic/remote")) {
+                if (destination != null && destination.equals("/user/topic/remote")) {
+                    log.info("구독 Remote 채널에서 send to user :: {}", webSession.getId());
                     messagingTemplate.convertAndSendToUser(
                                     webSession.getId(),
                                     "/topic/remote",
-                                    new SubscribeDoneResponse(subDestination)
+                                    new SubscribeDoneResponse(destination)
                             );
+                } else {
+                    log.info("destination :: {}", destination);
+                    log.info("destination.equals(\"/user/topic/remote\") :: {}", destination.equals("/user/topic/remote"));
+                    log.info("destination != null && destination.equals(\"/user/topic/remote\") :: {}", (destination != null && destination.equals("/user/topic/remote")));
                 }
                 break;
             default:
-                log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession);
+                log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession.getId());
                 break;
         }
     }
