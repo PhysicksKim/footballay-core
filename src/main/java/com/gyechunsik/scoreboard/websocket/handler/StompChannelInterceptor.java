@@ -13,6 +13,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -89,11 +90,12 @@ public class StompChannelInterceptor implements ChannelInterceptor {
                 log.info("구독 주소 :: {}", destination);
                 if (destination != null && destination.equals("/user/topic/remote")) {
                     log.info("구독 Remote 채널에서 send to user :: {}", webSession.getId());
-                    messagingTemplate.convertAndSendToUser(
-                                    webSession.getId(),
-                                    "/topic/remote",
-                                    new SubscribeDoneResponse(destination)
-                            );
+                    sendSubscribeDoneMessage(webSession.getId(), destination);
+                    // messagingTemplate.convertAndSendToUser(
+                    //                 webSession.getId(),
+                    //                 "/topic/remote",
+                    //                 new SubscribeDoneResponse(destination)
+                    //         );
                 } else {
                     log.info("destination :: {}", destination);
                     log.info("destination.equals(\"/user/topic/remote\") :: {}", destination.equals("/user/topic/remote"));
@@ -106,4 +108,23 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         }
     }
 
+    public void sendSubscribeDoneMessage(String sessionId, String destination) {
+        try {
+            log.info("Subscribe 완료 메세지 보내기 전 0.5 초 sleep");
+            // Sleep for 0.5 seconds
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+
+        log.info("구독 완료 메세지 보내기 직전 로그");
+        log.info("sessionId :: {}", sessionId);
+        log.info("destination :: {}", destination);
+        messagingTemplate.convertAndSendToUser(
+                sessionId,
+                "/topic/remote",
+                new SubscribeDoneResponse(destination)
+        );
+    }
 }
