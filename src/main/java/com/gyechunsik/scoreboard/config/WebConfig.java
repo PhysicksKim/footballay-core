@@ -22,7 +22,6 @@ public class WebConfig {
                 String[] allowOriginArray = rawAllowedOrigins.split(",");
                 registry.addMapping("/**")
                         .allowedOrigins(allowOriginArray)
-                        // .allowedOrigins("*")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
