@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.domain.remote.autoremote.entity;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;

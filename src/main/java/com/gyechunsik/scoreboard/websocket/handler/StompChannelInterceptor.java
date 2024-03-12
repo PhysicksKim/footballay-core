@@ -88,43 +88,10 @@ public class StompChannelInterceptor implements ChannelInterceptor {
             case SUBSCRIBE:
                 log.info("구독 요청한 WebsocketSession :: {}", sessionId);
                 log.info("구독 주소 :: {}", destination);
-                if (destination != null && destination.equals("/user/topic/remote")) {
-                    log.info("구독 Remote 채널에서 send to user :: {}", webSession.getId());
-                    sendSubscribeDoneMessage(webSession.getId(), destination);
-                    // messagingTemplate.convertAndSendToUser(
-                    //                 webSession.getId(),
-                    //                 "/topic/remote",
-                    //                 new SubscribeDoneResponse(destination)
-                    //         );
-                } else {
-                    log.info("destination :: {}", destination);
-                    log.info("destination.equals(\"/user/topic/remote\") :: {}", destination.equals("/user/topic/remote"));
-                    log.info("destination != null && destination.equals(\"/user/topic/remote\") :: {}", (destination != null && destination.equals("/user/topic/remote")));
-                }
                 break;
             default:
                 log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession.getId());
                 break;
         }
-    }
-
-    public void sendSubscribeDoneMessage(String sessionId, String destination) {
-        try {
-            log.info("Subscribe 완료 메세지 보내기 전 0.5 초 sleep");
-            // Sleep for 0.5 seconds
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException(e);
-        }
-
-        log.info("구독 완료 메세지 보내기 직전 로그");
-        log.info("sessionId :: {}", sessionId);
-        log.info("destination :: {}", destination);
-        messagingTemplate.convertAndSendToUser(
-                sessionId,
-                "/topic/remote",
-                new SubscribeDoneResponse(destination)
-        );
     }
 }

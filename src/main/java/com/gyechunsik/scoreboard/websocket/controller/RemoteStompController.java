@@ -10,6 +10,7 @@ import com.gyechunsik.scoreboard.websocket.response.RemoteConnectResponse;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeMapper;
 import com.gyechunsik.scoreboard.websocket.response.RemoteMembersResponse;
+import com.gyechunsik.scoreboard.websocket.response.SubscribeDoneResponse;
 import io.jsonwebtoken.lang.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,13 +48,14 @@ public class RemoteStompController {
         if (principal == null) {
             throw new IllegalArgumentException("general:유저 이름 객체가 비어있습니다. 서버 관리자에게 문의해주세요");
         }
+
         log.info("message : {}", message);
         log.info("nickname : {}", message.getNickname());
         log.info("is autoRemote : {}", message.isAutoRemote());
         RemoteCode remoteCode = scoreBoardRemote.issueCode(principal, message.getNickname());
+
         // is need to make AutoRemoteGroup 'NEWLY'?
         if (message.isAutoRemote()) {
-            log.info("CALL autoRemote.JoinNewlyFormedAutoGroup() FROM StompController :: {} , {}", remoteCode, principal.getName());
             UUID uuid = autoRemote.joinNewlyFormedAutoGroup(remoteCode, principal);
             autoRemote.cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
         }
@@ -136,6 +138,12 @@ public class RemoteStompController {
 
         headerAccessor.getSessionAttributes().put("remoteCode", response.getRemoteCode());
         return response;
+    }
+
+    @MessageMapping("/remote.subcheck")
+    @SendToUser("/topic/remote")
+    public SubscribeDoneResponse subscribeCheck() {
+        return new SubscribeDoneResponse("/user/topic/remote");
     }
 
     /**

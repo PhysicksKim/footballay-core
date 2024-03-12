@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,6 +29,8 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     private static final String REMOTECODE_HOST_TOKEN_SUFFIX = "-hostToken";
     private static final Duration REMOTECODE_EXPIRATION = RemoteExpireTimes.REMOTECODE_EXP;
 
+    protected static final int MAX_CHANNEL_MEMBER = 10;
+
     // TODO : Host 용 토큰 발급이 필요한 경우 true 로 변경
     private static final boolean DEV_IS_HOST_TOKEN_ISSUE = false;
 
@@ -35,6 +38,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      * 코드를 생성하고 Redis 에 코드 채널을 생성합니다.
      * Key : remote:{remoteCode}
      * Value : {principalName, nickname}
+     *
      * @param principalName
      * @param nickname
      * @return
@@ -53,7 +57,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
                 .put(REMOTE_CODE_KEY, principalName, nickname);
 
         // Redis 에 Host token 을 저장
-        if(DEV_IS_HOST_TOKEN_ISSUE) {
+        if (DEV_IS_HOST_TOKEN_ISSUE) {
             String token = tokenService.generateRemoteHostToken(remoteCode.getRemoteCode(), LocalDateTime.now());
             stringRedisTemplate.opsForValue()
                     .set(REMOTE_CODE_KEY + REMOTECODE_HOST_TOKEN_SUFFIX, token);
@@ -66,6 +70,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     /**
      * RemoteCode 의 구독자 목록 조회
+     *
      * @param remoteCode 구독자 목록을 조회할 코드
      * @return 구독자 목록
      */
@@ -81,6 +86,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     /**
      * RemoteCode 에 구독자 추가
+     *
      * @param remoteCode 원격제어 코드
      * @param subscriber principal.getName() 으로 식별자를 제공한다.
      * @param nickname   구독자의 닉네임
@@ -88,6 +94,19 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public void addSubscriber(RemoteCode remoteCode, String subscriber, String nickname) {
+        Set<String> nicknameSet = stringRedisTemplate.opsForHash()
+                .entries(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode())
+                .entrySet().stream().map(entry -> entry.getValue().toString()).collect(Collectors.toSet());
+        if (nicknameSet.isEmpty()) {
+            throw new IllegalArgumentException("remotecode:존재하지 않는 원격 코드입니다");
+        }
+        if (nicknameSet.contains(nickname)) {
+            throw new IllegalArgumentException("nickname:이미 존재하는 닉네임입니다");
+        }
+        if (nicknameSet.size() > MAX_CHANNEL_MEMBER) {
+            throw new IllegalArgumentException("general:최대 참가자 수("+MAX_CHANNEL_MEMBER+")를 초과했습니다.");
+        }
+
         log.info("add sub nickname : {}", nickname);
         stringRedisTemplate.opsForHash().put(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode(), subscriber, nickname);
         this.refreshExpiration(remoteCode);
@@ -136,6 +155,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      * 코드를 만료시킵니다. 만료된 코드는 redis 에서 삭제됩니다.
      * 원격 코드 hash 를 제외한 다른 값들으 삭제는 도메인 로직에서 처리해야 합니다.
      * 예를 들어 {RemoteCode, AutoRemoteGroupId} 와 같은 value 는 이 메서드에서 삭제하지 않습니다.
+     *
      * @param remoteCode
      * @return
      */
@@ -172,6 +192,10 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         log.info("!!! TEST UTIL METHOD :: get All Remote Codes in Redis !!!");
         Set<String> keys = stringRedisTemplate.keys(REMOTECODE_SET_PREFIX + "*");
         return keys;
+    }
+
+    protected int getMaxChannelMember() {
+        return this.MAX_CHANNEL_MEMBER;
     }
 
 }
