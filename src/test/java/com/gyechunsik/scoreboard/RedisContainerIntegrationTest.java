@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard;
 
 import com.gyechunsik.scoreboard.config.AbstractRedisTestContainerInit;
 import lombok.extern.slf4j.Slf4j;

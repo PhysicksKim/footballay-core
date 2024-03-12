@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.websocket.service;
+package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import lombok.extern.slf4j.Slf4j;

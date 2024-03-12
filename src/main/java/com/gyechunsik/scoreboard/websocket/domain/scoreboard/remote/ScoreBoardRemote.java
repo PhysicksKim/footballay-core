@@ -44,10 +44,10 @@ public class ScoreBoardRemote {
      */
     public void subscribeRemoteCode(RemoteCode remoteCode, Principal principal, String nickname) {
         if (!remoteCodeService.isValidCode(remoteCode)) {
-            throw new IllegalArgumentException("코드 연결 에러. 유효하지 않은 코드입니다.");
+            throw new IllegalArgumentException("noshow:코드 연결 에러. 유효하지 않은 코드입니다.");
         }
         if (Strings.isEmpty(nickname)) {
-            throw new IllegalArgumentException("코드 연결 에러. 닉네임이 비어있습니다.");
+            throw new IllegalArgumentException("noshow:코드 연결 에러. 닉네임이 비어있습니다.");
         }
         remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
     }

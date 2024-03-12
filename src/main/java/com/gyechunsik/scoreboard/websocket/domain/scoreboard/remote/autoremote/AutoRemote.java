@@ -32,14 +32,14 @@ public class AutoRemote {
         if (principal == null || !StringUtils.hasText(userUUID)) {
             log.info("Principal: {}", principal);
             log.info("userUUID: {}", userUUID);
-            throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
+            throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
         autoRemoteService.validateAndCacheUserToRedis(principal, userUUID);
     }
 
     public RemoteCode connectToPrevFormedAutoRemoteGroup(Principal principal, String nickname) {
         if (principal == null || !StringUtils.hasText(nickname)) {
-            throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
+            throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
 
         RemoteCode remoteCode = autoRemoteService.connectToPrevFormedAutoRemoteGroup(principal, nickname);
@@ -60,7 +60,7 @@ public class AutoRemote {
             log.info("기존에 생성된 그룹에 참여");
             autoRemoteGroup = autoRemoteService
                     .getAutoRemoteGroup(optionalGroupId.get())
-                    .orElseThrow(() -> new IllegalArgumentException("캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("noshow:캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
         } else {
             // 아직 자동 연결 그룹이 생성되지 않았다면, 새로 그룹을 만듭니다.
             log.info("기존 그룹이 없으므로 새롭게 그룹 생성");

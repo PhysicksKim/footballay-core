@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     private static final String REMOTECODE_HOST_TOKEN_SUFFIX = "-hostToken";
     private static final Duration REMOTECODE_EXPIRATION = RemoteExpireTimes.REMOTECODE_EXP;
 
-    protected static final int MAX_CHANNEL_MEMBER = 10;
+    protected static final int MAX_CHANNEL_MEMBER = 5;
 
     // TODO : Host 용 토큰 발급이 필요한 경우 true 로 변경
     private static final boolean DEV_IS_HOST_TOKEN_ISSUE = false;
@@ -86,7 +87,6 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     /**
      * RemoteCode 에 구독자 추가
-     *
      * @param remoteCode 원격제어 코드
      * @param subscriber principal.getName() 으로 식별자를 제공한다.
      * @param nickname   구독자의 닉네임
@@ -103,7 +103,9 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         if (nicknameSet.contains(nickname)) {
             throw new IllegalArgumentException("nickname:이미 존재하는 닉네임입니다");
         }
-        if (nicknameSet.size() > MAX_CHANNEL_MEMBER) {
+        log.info("{} 채널의 참가자 수 : {} , 최대 참가자 수 : {}", remoteCode.getRemoteCode(), nicknameSet.size(), MAX_CHANNEL_MEMBER);
+        if (isOverLimitIfAddMember(nicknameSet)) {
+            log.info("최대 참가자 수 초과, subscriber : {}", subscriber);
             throw new IllegalArgumentException("general:최대 참가자 수("+MAX_CHANNEL_MEMBER+")를 초과했습니다.");
         }
 
@@ -198,4 +200,11 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         return this.MAX_CHANNEL_MEMBER;
     }
 
+    private boolean isOverLimitIfAddMember(Collection<?> collection) {
+        return collection.size()+1 > MAX_CHANNEL_MEMBER;
+    }
+
+    private boolean isOverLimitIfAddMember(Map<?,?> map) {
+        return map.size()+1 > MAX_CHANNEL_MEMBER;
+    }
 }

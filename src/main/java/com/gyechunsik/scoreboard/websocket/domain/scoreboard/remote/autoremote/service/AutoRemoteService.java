@@ -35,7 +35,7 @@ public class AutoRemoteService {
      */
     public AnonymousUser createAndSaveAnonymousUser(AutoRemoteGroup autoRemoteGroup) {
         if(autoRemoteGroup == null) {
-            throw new IllegalArgumentException("AutoRemoteGroup 이 존재하지 않습니다.");
+            throw new IllegalArgumentException("noshow:AutoRemoteGroup 이 존재하지 않습니다.");
         }
 
         AnonymousUser anonymousUser = new AnonymousUser(); // UUID는 자동으로 생성됩니다.
@@ -58,16 +58,16 @@ public class AutoRemoteService {
      */
     public RemoteCode connectToPrevFormedAutoRemoteGroup(Principal principal, String nickname) {
         if (principal == null || !StringUtils.hasText(nickname)) {
-            throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
+            throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
 
         String userUuid = findPreCachedUserUUID(principal);
         if (userUuid == null) {
-            throw new IllegalArgumentException("존재하지 않는 익명 유저 UUID 입니다.");
+            throw new IllegalArgumentException("noshow:존재하지 않는 익명 유저 UUID 입니다.");
         }
         UUID uuid = UUID.fromString(userUuid);
         AnonymousUser findUser = userRepository.findById(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("일치하는 익명 유저가 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("noshow:일치하는 익명 유저가 없습니다."));
 
         AutoRemoteGroup autoRemoteGroup = findUser.getAutoRemoteGroup();
         String findRemoteCode = getActiveRemoteCodeFrom(autoRemoteGroup);
@@ -95,12 +95,12 @@ public class AutoRemoteService {
      */
     public void validateAndCacheUserToRedis(Principal principal, String userUUID) {
         if(principal == null || !StringUtils.hasText(userUUID)) {
-            throw new IllegalArgumentException("잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
+            throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
 
         UUID uuid = UUID.fromString(userUUID);
         AnonymousUser findUser = userRepository.findById(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 익명 유저입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("noshow:존재하지 않는 익명 유저입니다."));
 
         autoRemoteRedisRepository
                 .setUserPreCacheForCookie(principal.getName(), userUUID);
@@ -142,13 +142,13 @@ public class AutoRemoteService {
 
     public String findPreCachedUserUUID(Principal principal) {
         return autoRemoteRedisRepository
-                .findPrincipalToUuid(principal.getName()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 Principal 입니다."));
+                .findPrincipalToUuid(principal.getName()).orElseThrow(() -> new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다."));
     }
     public String findPreCachedUserUUID(String username) {
         return autoRemoteRedisRepository
                 .findPrincipalToUuid(username)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("존재하지 않는 Principal 입니다.")
+                        new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다.")
                 );
     }
 

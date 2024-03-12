@@ -116,7 +116,7 @@ class AnonymousUserServiceTest extends AbstractRedisTestContainerInit {
         // then
         Assertions.assertThatThrownBy(() -> {
             autoRemoteService.validateAndCacheUserToRedis(mockPrincipal, NOT_EXIST_UUID);
-        }).isInstanceOf(IllegalArgumentException.class).hasMessage("존재하지 않는 익명 유저입니다.");
+        }).isInstanceOf(IllegalArgumentException.class).hasMessage("noshow:존재하지 않는 익명 유저입니다.");
     }
 
     private AutoRemoteGroup persistAutoRemoteGroup() {

@@ -81,9 +81,6 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
             log.info("RemoteCode:{} == { key: {}, value: {} }", remoteCode.getRemoteCode(), k, v);
         });
         log.info("hostToken: {}", hostToken);
-
-        // Cleanup
-        stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
     }
 
     @DisplayName("Remote code 를 생성하고 subscriber 를 추가하고 삭제합니다.")
@@ -121,9 +118,6 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
         assertThat(removedSubscribers)
                 .containsEntry(hostPrincipalName, hostNickname)
                 .size().isEqualTo(1);
-
-        // Cleanup
-        stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
     }
 
     @DisplayName("Remote code expire 시간을 설정하고 유효성을 검증합니다.")
@@ -137,9 +131,6 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
         Thread.sleep(1500); // Wait for the key to expire
 
         assertFalse(redisRemoteCodeService.isValidCode(remoteCode));
-
-        // Cleanup
-        stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
     }
 
     @DisplayName("같은 remoteCode 채널에 중복 닉네임이 있는 경우 예외를 반환합니다.")
@@ -158,14 +149,29 @@ public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
 
     @DisplayName("채널에 최대 접속 가능 인원 수를 초과하는 경우 예외를 반환합니다.")
     @Test
-    @Disabled // TODO : 멤버 초과 테스트 구현 필요
     void fail_exceed_max_subscriber() {
         // given
+        String hostNickname = "hostUser";
+        RemoteCode remoteCode = redisRemoteCodeService.generateCodeAndSubscribe(mockFirstPrincipal.getName(), hostNickname);
+
         int maxMember = redisRemoteCodeService.getMaxChannelMember();
 
         // when
-
+        // memberUser1 은 hostUser 에 해당하므로 2부터 시작
+        for (int i = 2; i <= maxMember; i++) {
+            String memberPrincipalName = "memberUser" + i;
+            String memberNickname = "memberNickname" + i;
+            redisRemoteCodeService.addSubscriber(remoteCode, memberPrincipalName, memberNickname);
+        }
 
         // then
+        String exceedMemberPrincipalName = "exceedMember";
+        String exceedMemberNickname = "exceedNickname";
+        // 예외 캡처 및 로깅
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            redisRemoteCodeService.addSubscriber(remoteCode, exceedMemberPrincipalName, exceedMemberNickname);
+        });
+        // 로그에 에러 메시지 출력
+        log.info("Caught exception: {}", exception.getMessage());
     }
 }

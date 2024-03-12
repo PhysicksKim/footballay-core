@@ -214,13 +214,13 @@ public class RemoteStompController {
         String errMessage = e.getMessage();
         log.error("error : {}", errMessage);
         if(!isErrorFieldRecord(errMessage)) {
-            errMessage = "general:" + errMessage;
+            errMessage = "noshow:" + errMessage;
         }
         return new ErrorResponse(errMessage);
     }
 
     private boolean isErrorFieldRecord(String message) {
-        String[] prefixes = {"general:", "remotecode:", "nickname:"};
+        String[] prefixes = {"general:", "remotecode:", "nickname:", "noshow:"};
         for (String prefix : prefixes) {
             boolean isErrorFieldRecorded = message.startsWith(prefix);
             if(isErrorFieldRecorded) return true;
