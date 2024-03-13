@@ -212,7 +212,6 @@ public class RemoteStompController {
     @SendToUser("/topic/remote")
     public ErrorResponse handleException(Exception e) {
         String errMessage = e.getMessage();
-        log.error("error : {}", errMessage);
         if(!isErrorFieldRecord(errMessage)) {
             errMessage = "noshow:" + errMessage;
         }

@@ -100,7 +100,6 @@ public class ScoreBoardRemoteController {
                 .build();
     }
 
-
     private ResponseCookie createAnonymousUserUUIDCookie(String uuid) {
         return ResponseCookie.from("anonymousUserUUID", uuid)
                 .httpOnly(true)
