@@ -65,7 +65,7 @@ public class ScoreBoardRemoteController {
         }
         log.info("userUuid cookie : {}", userUuid);
         if (!Strings.hasText(userUuid)) {
-            return ResponseEntity.ok().body("userUuid 쿠키가 없습니다");
+            return ResponseEntity.badRequest().body("userUuid 쿠키가 없습니다");
         }
 
         if (principal == null) {
