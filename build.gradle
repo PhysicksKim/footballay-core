@@ -31,6 +31,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // OKHttp : for http client
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // Jackson : for json serialize
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 
     // to set more detail Jsession cookie policies
