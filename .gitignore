@@ -39,3 +39,5 @@ out/
 
 ### secret keys ###
 application-secret.yml
+application-api.yml
+dev/
