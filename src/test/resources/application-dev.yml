@@ -24,7 +24,6 @@ spring:
     user:
       name: admin
       password: admin
-      roles: ADMIN
   data:
     redis:
       host: localhost

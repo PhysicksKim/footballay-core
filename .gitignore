@@ -39,3 +39,9 @@ out/
 
 ### secret keys ###
 application-secret.yml
+application-devsecret.yml
+
+### Dev Files
+/src/main/resources/dev/**
+/src/main/resources/dev/
+application-api.yml

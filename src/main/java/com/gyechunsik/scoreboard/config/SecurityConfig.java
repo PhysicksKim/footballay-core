@@ -32,17 +32,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(registry ->
-                        registry.anyRequest().permitAll());
-        http.anonymous(Customizer.withDefaults())
-                .formLogin(AbstractHttpConfigurer::disable)
-                .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(
+        http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN")
+                        .anyRequest().permitAll())
+                .formLogin(form -> form
+                        .permitAll())
+                .anonymous(Customizer.withDefaults())
+                .headers(headers -> headers.frameOptions(
                         custom -> custom.sameOrigin()
                 ))
-                .sessionManagement(httpSecuritySessionManagementConfigurer ->
-                        httpSecuritySessionManagementConfigurer.
-                                sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                 );
         return http.build();
     }
