@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  redis:
+    image: redis:7.2.4-alpine
+    container_name: redis-scoreboard
+    command: redis-server --requirepass 1234 --port 6379
+    ports:
+      - "6379:6379"
+
+  mariadb:
+    image: mariadb:10.11.7
+    container_name: mariadb-scoreboard
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: scoreboard
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev1234
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  mariadb_data:

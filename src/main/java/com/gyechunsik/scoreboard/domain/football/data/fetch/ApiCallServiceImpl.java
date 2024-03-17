@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.data.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueTeamsInfoResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,6 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
-        log.info("call url : {}", ("https://v3.football.api-sports.io/leagues?id="+leagueId+"&current=true"));
         Request request = new Request.Builder()
                 .url("https://v3.football.api-sports.io/leagues?id="+leagueId+"&current=true")
                 .get()
@@ -47,6 +47,11 @@ public class ApiCallServiceImpl implements ApiCallService {
             log.error("Api-Football call error :: leagueId={} ", leagueId, exception);
             throw new RuntimeException("Api-Football call error :: leagueId=" + leagueId, exception);
         }
+    }
+
+    @Override
+    public LeagueInfoResponse teamCurrentLeaguesInfo(long teamId) {
+        return null;
     }
 
     @Override
@@ -92,4 +97,5 @@ public class ApiCallServiceImpl implements ApiCallService {
             throw new RuntimeException("Api-Football call error :: teamId=" + teamId, exception);
         }
     }
+
 }

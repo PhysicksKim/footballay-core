@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.data;
 
+import com.gyechunsik.scoreboard.domain.football.data.cache.ApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
 import com.gyechunsik.scoreboard.domain.football.fixture.Fixture;
@@ -16,6 +17,7 @@ import java.util.Optional;
 public class FootballDataFacade {
 
     private final ApiCallService apiCallService;
+    private final ApiCacheService apiCacheService;
 
     public boolean cachingLeague(long leagueId) {
         // api 에서 콜 하고

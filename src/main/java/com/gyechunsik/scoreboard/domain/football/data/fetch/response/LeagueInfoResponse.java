@@ -2,39 +2,16 @@ package com.gyechunsik.scoreboard.domain.football.data.fetch.response;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
 @ToString
-public class LeagueInfoResponse {
+public class LeagueInfoResponse extends ApiFootballResponse {
 
-    private String get;
-    private Parameters parameters;
-    private List<String> errors;
-    private int results;
-    private Paging paging;
     private List<Response> response;
-
-    @Getter
-    @Setter
-    @ToString
-    public static class Parameters {
-        private String current;
-        private String id;
-    }
-
-    @Getter
-    @Setter
-    @ToString
-    public static class Paging {
-        private int current;
-        private int total;
-    }
 
     @Getter
     @Setter
@@ -48,11 +25,7 @@ public class LeagueInfoResponse {
     @Getter
     @Setter
     @ToString
-    public static class LeagueResponse {
-        private long id;
-        private String name;
-        private String type;
-        private String logo;
+    public static class LeagueResponseInner extends LeagueResponse {
     }
 
     @Getter

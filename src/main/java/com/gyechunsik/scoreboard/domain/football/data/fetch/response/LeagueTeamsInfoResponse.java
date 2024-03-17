@@ -1,31 +1,27 @@
 package com.gyechunsik.scoreboard.domain.football.data.fetch.response;
 
+import com.gyechunsik.scoreboard.domain.football.team.Team;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import java.util.List;
 
 @Getter
 @Setter
-@ToString
-public class TeamInfoResponse extends ApiFootballResponse {
-
-    private List<TeamInfo> response;
+public class LeagueTeamsInfoResponse extends ApiFootballResponse {
+    private List<Response> response;
 
     @Getter
     @Setter
-    @ToString
-    public static class TeamInfo {
+    public static class Response {
         private TeamResponse team;
         private Venue venue;
     }
 
     @Getter
     @Setter
-    @ToString
     public static class TeamResponse {
-        private long id;
+        private int id;
         private String name;
         private String code;
         private String country;
@@ -36,9 +32,8 @@ public class TeamInfoResponse extends ApiFootballResponse {
 
     @Getter
     @Setter
-    @ToString
     public static class Venue {
-        private long id;
+        private int id;
         private String name;
         private String address;
         private String city;
@@ -46,5 +41,4 @@ public class TeamInfoResponse extends ApiFootballResponse {
         private String surface;
         private String image;
     }
-
 }

@@ -4,12 +4,13 @@ import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoR
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
 
-import java.io.IOException;
-
 public interface ApiCallService {
     LeagueInfoResponse leagueInfo(long leagueId);
+
+    LeagueInfoResponse teamCurrentLeaguesInfo(long teamId);
 
     TeamInfoResponse teamInfo(long teamId);
 
     PlayerSquadResponse playerSquad(long teamId);
+
 }

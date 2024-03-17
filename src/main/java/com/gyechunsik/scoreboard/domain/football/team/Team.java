@@ -3,13 +3,16 @@ package com.gyechunsik.scoreboard.domain.football.team;
 import com.gyechunsik.scoreboard.domain.football.league.League;
 import com.gyechunsik.scoreboard.domain.football.relations.LeagueTeam;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Team {
 
@@ -21,6 +24,7 @@ public class Team {
     private String korean_name;
     private String logo;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "team")
     private List<LeagueTeam> leagueTeams;
 }
