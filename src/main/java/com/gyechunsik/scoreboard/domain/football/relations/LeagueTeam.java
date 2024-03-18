@@ -19,11 +19,11 @@ public class LeagueTeam {
     @Id
     @ManyToOne
     @JoinColumn(name = "league_id")
-    private League league;
+    private League league; // 복합 키의 일부로 사용될 필드
 
     @Id
     @ManyToOne
     @JoinColumn(name = "team_id")
-    private Team team;
+    private Team team; // 복합 키의 일부로 사용될 필드
 
 }

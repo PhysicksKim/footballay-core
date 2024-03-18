@@ -27,7 +27,7 @@ class MockApiCallServiceImplTest {
     @Autowired
     private MockApiCallServiceImpl mockApiCallService;
 
-    @DisplayName("Mock Api 로 League 반환")
+    @DisplayName("Mock Api 로 LeagueResponse 반환")
     @Test
     void success_league() {
         // given
@@ -41,7 +41,7 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
 
         LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
-        log.info("League Response : {}", leagueResponse);
+        log.info("LeagueResponse Response : {}", leagueResponse);
     }
 
 
@@ -59,7 +59,7 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse.getResponse()).size().isGreaterThan(2);
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
         for (LeagueInfoResponse.Response response : leagueInfoResponse.getResponse()) {
-            log.info("League Response : {}", response);
+            log.info("LeagueResponse Response : {}", response);
         }
     }
 

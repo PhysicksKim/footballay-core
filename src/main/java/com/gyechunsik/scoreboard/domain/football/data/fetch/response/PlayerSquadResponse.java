@@ -31,6 +31,8 @@ public class PlayerSquadResponse extends ApiFootballResponse {
     @Getter
     @Setter
     @ToString
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PlayerData {
         private long id;
         private String name;

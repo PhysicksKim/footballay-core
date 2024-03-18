@@ -7,14 +7,44 @@
 <body>
 <h1>admin page</h1>
 <form action="/admin/cache/league" method="post">
-    <button type="submit">Cache League [EPL]</button>
+    <input type="text" name="leagueId" placeholder="League ID" required>
+    <button type="submit">Cache League</button>
 </form>
 <form action="/admin/cache/team" method="post">
-    <button type="submit">Cache Team [ManCity]</button>
+    <input type="text" name="teamId" placeholder="Team ID" required>
+    <button type="submit">Cache Team</button>
 </form>
-<form action="/admin/cache/squad" method="post">
-    <button type="submit">Cache Squad [ManCity]</button>
+<form action="/admin/cache/team/squad" method="post">
+    <input type="text" name="teamId" placeholder="Team ID for Squad" required>
+    <button type="submit">Cache Team Squad</button>
 </form>
+<form action="/admin/cache/team/leagues" method="post">
+    <input type="text" name="teamId" placeholder="Team ID for Squad" required>
+    <button type="submit">Cache Leagues of Team</button>
+</form>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // 폼의 기본 제출 동작을 방지합니다.
+
+                const actionUrl = this.action;
+                const formData = new FormData(this); // 폼 데이터를 쉽게 처리할 수 있도록 FormData 객체를 사용합니다.
+
+                fetch(actionUrl, {
+                    method: 'POST',
+                    body: formData // FormData 객체를 직접 요청의 body로 설정합니다.
+                })
+                    .then(response => response.text())
+                    .then(data => alert("응답: " + data))
+                    .catch(error => alert("요청 실패"));
+            });
+        });
+    });
+</script>
+</body>
+</html>
+
 <!--&lt;!&ndash;순위 위젯 예시&ndash;&gt;-->
 <!--<div style="width: 30%">-->
 <!--<div id="wg-api-football-standings"-->
@@ -74,5 +104,3 @@
 <!--        src="https://widgets.api-sports.io/2.0.3/widgets.js">-->
 <!--</script>-->
 <!--</div>-->
-</body>
-</html>

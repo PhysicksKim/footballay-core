@@ -9,7 +9,6 @@ import com.gyechunsik.scoreboard.domain.football.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.team.Team;
 import com.gyechunsik.scoreboard.domain.football.team.TeamRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,30 +17,26 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-//TODO : 혹시 이미 캐싱된 항목에 다시 캐싱 요청하는 경우에 대한 테스트 필요.
 @Slf4j
 @Transactional
 @SpringBootTest
-// @ActiveProfiles("api")
 @ActiveProfiles("mockapi")
-class ApiCacheServiceTest {
+public class ApiCacheServiceTest {
 
     @Autowired
     private ApiCacheService apiCacheService;
 
     @Autowired
-    private LeagueRepository leagueRepository;
+    LeagueRepository leagueRepository;
     @Autowired
-    private TeamRepository teamRepository;
+    TeamRepository teamRepository;
     @Autowired
-    private LeagueTeamRepository leagueTeamRepository;
+    LeagueTeamRepository leagueTeamRepository;
 
-    @DisplayName("")
+    @DisplayName("mockapi 를 사용해 league json 파일의 caching 에 성공합니다")
     @Test
     void success_leagueCaching() {
         // given
@@ -59,7 +54,7 @@ class ApiCacheServiceTest {
         assertThat(findLeague.getLeagueId()).isEqualTo(eplId);
     }
 
-    @DisplayName("")
+    @DisplayName("mockapi 를 사용해 league json 파일의 caching 에 성공합니다")
     @Test
     void success_teamCurrentLeagues() {
         // given
@@ -78,4 +73,5 @@ class ApiCacheServiceTest {
         log.info("findTeams : {}", findTeams);
         log.info("findLeagueTeams : {}", findLeagueTeams);
     }
+
 }

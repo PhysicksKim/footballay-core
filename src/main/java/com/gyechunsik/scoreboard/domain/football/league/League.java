@@ -27,6 +27,9 @@ public class League {
     private String korean_name;
     private String logo;
 
+    @Column(name = "current_season", nullable = true)
+    private int currentSeason;
+
     @ToString.Exclude
     @OneToMany(mappedBy = "league")
     private List<LeagueTeam> leagueTeams;

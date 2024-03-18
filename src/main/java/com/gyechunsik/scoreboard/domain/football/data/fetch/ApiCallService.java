@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.data.fetch;
 
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueCurrentResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
@@ -13,4 +14,5 @@ public interface ApiCallService {
 
     PlayerSquadResponse playerSquad(long teamId);
 
+    LeagueInfoResponse allLeagueCurrent();
 }

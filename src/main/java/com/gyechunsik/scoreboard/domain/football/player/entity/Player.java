@@ -1,18 +1,18 @@
 package com.gyechunsik.scoreboard.domain.football.player.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
+import com.gyechunsik.scoreboard.domain.football.team.Team;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
 @Setter
-@Table(name = "players")
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
+@Table(name = "players")
 public class Player {
 
     @Id
@@ -24,4 +24,21 @@ public class Player {
     private String koreanName;
     private String photoUrl;
     private String position;
+
+    @ManyToOne
+    @JoinColumn(name = "team_id", nullable = true)
+    private Team team;
+
+    public Player(PlayerSquadResponse.PlayerData playerData) {
+        this.id = playerData.getId();
+        this.name = playerData.getName();
+        this.photoUrl = playerData.getPhoto();
+        this.position = playerData.getPosition();
+    }
+
+    public void updateFromApiData(PlayerSquadResponse.PlayerData apiData) {
+        this.name = apiData.getName();
+        this.photoUrl = apiData.getPhoto();
+        this.position = apiData.getPosition();
+    }
 }

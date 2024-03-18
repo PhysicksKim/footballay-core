@@ -1,10 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.data.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueTeamsInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -49,9 +46,27 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    // TODO : 테스트 작성필요
     @Override
     public LeagueInfoResponse teamCurrentLeaguesInfo(long teamId) {
-        return null;
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/leagues?team="+teamId+"&current=true")
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("Response body is null for league ID " + teamId);
+            }
+            return objectMapper.readValue(responseBody.string(), LeagueInfoResponse.class);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: teamId={} ", teamId, exception);
+            throw new RuntimeException("Api-Football call error :: teamId=" + teamId, exception);
+        }
     }
 
     @Override
@@ -98,4 +113,24 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    @Override
+    public LeagueInfoResponse allLeagueCurrent() {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/leagues?current=true")
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("unExpected Error when cache All Current Leagues");
+            }
+            return objectMapper.readValue(responseBody.string(), LeagueInfoResponse.class);
+        } catch (IOException exception) {
+            throw new RuntimeException("Api-Football call error :: current true call", exception);
+        }
+    }
 }

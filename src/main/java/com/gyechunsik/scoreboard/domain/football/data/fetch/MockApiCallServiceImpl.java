@@ -1,10 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.data.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueTeamsInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.*;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -65,6 +62,17 @@ public class MockApiCallServiceImpl
         }
     }
 
+    @Override
+    public LeagueInfoResponse allLeagueCurrent() {
+        String resourcePath = resolvePathOfAllLeagueCurrent();
+        String rawString = readFile(resourcePath);
+        try {
+            return objectMapper.readValue(rawString, LeagueInfoResponse.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Mock data parsing error : " + resourcePath, e);
+        }
+    }
+
     private String readFile(String path) {
         try {
             // 클래스 로더를 통해 실제 경로에 접근
@@ -74,6 +82,10 @@ public class MockApiCallServiceImpl
         } catch (IOException e) {
             throw new RuntimeException("Mock data file reading error : " + path, e);
         }
+    }
+
+    private String resolvePathOfAllLeagueCurrent() {
+        return getMockApiJsonFilePath("league/current/currentleagues","","");
     }
 
     private String resolvePathOfLeagueInfo(long leagueId) {

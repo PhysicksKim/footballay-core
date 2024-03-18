@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -27,4 +28,10 @@ public class Team {
     @ToString.Exclude
     @OneToMany(mappedBy = "team")
     private List<LeagueTeam> leagueTeams;
+
+    public void updateCompare(Team other) {
+        if(this.id != other.getId()) return;
+        if(!Objects.equals(this.name, other.getName())) this.name = other.getName();
+        if(!Objects.equals(this.logo, other.getLogo())) this.logo = other.getLogo();
+    }
 }

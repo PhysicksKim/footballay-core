@@ -1,11 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.data.cache;
 
-import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.ApiCallService;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.data.fetch.response.*;
 import com.gyechunsik.scoreboard.domain.football.league.League;
 import com.gyechunsik.scoreboard.domain.football.league.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.player.entity.Player;
@@ -21,6 +17,11 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse.*;
+import static com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquadResponse.*;
 
 @Slf4j
 @Service
@@ -36,17 +37,19 @@ public class ApiCacheService {
 
     public League cacheLeague(long leagueId) {
         LeagueInfoResponse leagueInfoResponse = apiCallService.leagueInfo(leagueId);
-        LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
+        Response response = leagueInfoResponse.getResponse().get(0);
 
         League league = null;
         Optional<League> findLeague = leagueRepository.findById(leagueId);
-        if(findLeague.isEmpty()) {
-            League build = toLeagueEntity(leagueResponse);
+        if (findLeague.isEmpty()) {
+            League build = toLeagueEntity(response);
             league = leagueRepository.save(build);
-        } else { // 이미 캐싱된경우 업데이트 수행
+        } else {
+            // 이미 캐싱된경우 업데이트 수행
             league = findLeague.get();
-            league.setLogo(leagueResponse.getLogo());
-            league.setName(leagueResponse.getName());
+            league.setLogo(response.getLeague().getLogo());
+            league.setName(response.getLeague().getName());
+            league.setCurrentSeason(extractCurrentSeason(response));
         }
 
         log.info("leagueId: {} is cached", league.getLeagueId());
@@ -60,16 +63,18 @@ public class ApiCacheService {
         Optional<Team> findTeam = teamRepository.findById(teamId);
         if (findTeam.isEmpty()) {
             team = cacheSingleTeam(teamId);
-            log.info("team is empty. cached team : {}", team);
+            log.info("team is empty. cached new team : {}", team);
+        } else {
+            team = findTeam.get();
         }
 
         LeagueInfoResponse leagueInfoResponse = apiCallService.teamCurrentLeaguesInfo(teamId);
-        for (LeagueInfoResponse.Response response : leagueInfoResponse.getResponse()) {
+        for (Response response : leagueInfoResponse.getResponse()) {
             long leagueId = response.getLeague().getId();
             Optional<League> findLeague = leagueRepository.findById(leagueId);
 
-            if(findLeague.isEmpty()) {
-                league = leagueRepository.save(toLeagueEntity(response.getLeague()));
+            if (findLeague.isEmpty()) {
+                league = leagueRepository.save(toLeagueEntity(response));
             } else {
                 league = findLeague.get();
             }
@@ -82,55 +87,123 @@ public class ApiCacheService {
         }
     }
 
-    // TODO : 이미 캐싱된 경우에 대해서 처리 필요
     public Team cacheSingleTeam(long teamId) {
-        TeamInfoResponse teamInfoResponse = apiCallService.teamInfo(TeamId.MANCITY);
-        TeamInfoResponse.TeamResponse team = teamInfoResponse.getResponse().get(0).getTeam();
+        Optional<Team> findTeam = teamRepository.findById(teamId);
+        TeamInfoResponse teamInfoResponse = apiCallService.teamInfo(teamId);
+        TeamInfoResponse.TeamResponse teamResponse = teamInfoResponse.getResponse().get(0).getTeam();
 
         Team build = Team.builder()
-                .id(team.getId())
-                .name(team.getName())
+                .id(teamResponse.getId())
+                .name(teamResponse.getName())
                 .korean_name(null)
-                .logo(team.getLogo())
+                .logo(teamResponse.getLogo())
                 .build();
 
-        Team save = teamRepository.save(build);
-
-        log.info("teamId: {} is cached", save.getId());
-        log.info("cached team : {}", save);
-        return save;
+        log.info("teamId: {} is cached", build.getId());
+        if (findTeam.isEmpty()) {
+            Team save = teamRepository.save(build);
+            log.info("new team saved :: {}", save);
+            return save;
+        } else {
+            findTeam.get().updateCompare(build);
+            log.info("team updated :: {}", findTeam.get());
+            return findTeam.get();
+        }
     }
 
-    // TODO : 이미 캐싱된 경우에 대해서 처리 필요
-    public List<Player> cacheSquad(long teamId) {
-        PlayerSquadResponse playerSquadResponse = apiCallService.playerSquad(TeamId.MANCITY);
-        List<PlayerSquadResponse.PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
+    /**
+     * <h1>Cases</h1>
+     * <pre>
+     * 1. api 있고 db 있음 : db에서 api 와 일치하지 않는 값을 업데이트
+     * 2. api 있고 db 없음 : 새롭게 db에 값을 넣음
+     * 3. api 없고 db 있음 : db 에서 teamId 값을 null 로 지움(연관관계 끊음)
+     * </pre>
+     */
+    public void cacheTeamSquad(long teamId) {
+        log.info("cache team squad : {}", teamId);
+        Optional<Team> findTeam = teamRepository.findById(teamId);
+        Team optionalTeam = null;
+        if (findTeam.isEmpty()) {
+            log.info("new team squad cache called! id : {}", teamId);
+            optionalTeam = cacheSingleTeam(teamId);
+        } else {
+            optionalTeam = findTeam.get();
+        }
+        final Team team = optionalTeam;
 
-        List<Player> savePlayers = new ArrayList<>();
-        for (PlayerSquadResponse.PlayerData player : players) {
-            Player build = Player.builder()
-                    .id(player.getId())
-                    .name(player.getName())
-                    .koreanName(null)
-                    .position(player.getPosition())
-                    .photoUrl(player.getPhoto())
-                    .build();
-            Player save = playerRepository.save(build);
-            savePlayers.add(save);
+        PlayerSquadResponse playerSquadResponse = apiCallService.playerSquad(teamId);
+
+        List<PlayerData> apiPlayers = playerSquadResponse.getResponse().get(0).getPlayers();
+        Set<Long> apiPlayerIds = apiPlayers.stream()
+                .map(PlayerData::getId)
+                .collect(Collectors.toSet());
+
+        List<Player> dbPlayers = playerRepository.findAllByTeamId(teamId);
+        Set<Long> dbPlayerIds = dbPlayers.stream()
+                .map(Player::getId)
+                .collect(Collectors.toSet());
+
+        // case 1 & 2 : API의 선수를 DB에 업데이트하거나 추가
+        for (PlayerData apiPlayer : apiPlayers) {
+            playerRepository.findById(apiPlayer.getId())
+                    .map(player -> {
+                        // API 데이터로 업데이트
+                        log.info("Updating player [{} - {}] with new API data.", player.getId(), player.getName());
+                        player.updateFromApiData(apiPlayer);
+                        return playerRepository.save(player);
+                    })
+                    .orElseGet(() -> {
+                        // DB에 없는 경우 새로 추가
+                        log.info("Adding new player [{} - {}] to DB.", apiPlayer.getId(), apiPlayer.getName());
+                        Player newPlayer = new Player(apiPlayer);
+                        newPlayer.setTeam(team); // TeamId 설정
+                        return playerRepository.save(newPlayer);
+                    });
         }
 
-        log.info("team squad cached", teamId);
-        log.info("cached players : {}", savePlayers);
-        return savePlayers;
+        // case 3 : DB에만 존재하는 선수의 teamId 연관관계 끊기
+        dbPlayerIds.removeAll(apiPlayerIds);
+        dbPlayers.stream()
+                .filter(player -> dbPlayerIds.contains(player.getId()))
+                .forEach(player -> {
+                    log.info("Player [{},{}] team relationship disconnected", player.getId(), player.getName());
+                    player.setTeam(null); // TeamId 연관관계 끊기
+                    playerRepository.save(player);
+                });
     }
 
-    private static League toLeagueEntity(LeagueResponse leagueResponse) {
-        League build = League.builder()
-                .leagueId(leagueResponse.getId())
-                .name(leagueResponse.getName())
+    public void cacheAllCurrentLeagues() {
+        LeagueInfoResponse response = apiCallService.allLeagueCurrent();
+        List<League> leagues = new ArrayList<>();
+
+        for (LeagueInfoResponse.Response leagueResponse : response.getResponse()) {
+            League league = toLeagueEntity(leagueResponse);
+            leagues.add(league);
+        }
+
+        if (!leagues.isEmpty()) {
+            leagueRepository.saveAll(leagues);
+        }
+    }
+
+    private static League toLeagueEntity(LeagueInfoResponse.Response leagueResponse) {
+        LeagueResponse leagueInfo = leagueResponse.getLeague();
+        int currentSeason = extractCurrentSeason(leagueResponse);
+
+        return League.builder()
+                .leagueId(leagueInfo.getId())
+                .name(leagueInfo.getName())
                 .korean_name(null)
-                .logo(leagueResponse.getLogo())
+                .logo(leagueInfo.getLogo())
+                .currentSeason(currentSeason)
                 .build();
-        return build;
+    }
+
+    private static int extractCurrentSeason(Response info) {
+        return info.getSeasons().stream()
+                .filter(Season::isCurrent)
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException("Current season not found"))
+                .getYear();
     }
 }
