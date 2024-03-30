@@ -20,7 +20,7 @@ import java.security.interfaces.RSAPublicKey;
 public class TokenKeyConfiguration {
 
     @Bean
-    public SecretKey jwtHS256SecretKey(@Value("${secret.key:#{null}}") String secretKey) {
+    public SecretKey jwtHS256SecretKey(@Value("${jwt.secret.key:#{null}}") String secretKey) {
         if (secretKey != null && !secretKey.trim().isEmpty()) {
             return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         }
