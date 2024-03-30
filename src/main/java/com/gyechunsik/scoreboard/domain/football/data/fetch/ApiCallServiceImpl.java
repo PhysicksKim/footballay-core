@@ -34,7 +34,8 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("Response body is null for league ID " + leagueId);
@@ -57,7 +58,8 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("Response body is null for league ID " + teamId);
@@ -66,6 +68,29 @@ public class ApiCallServiceImpl implements ApiCallService {
         } catch (IOException exception) {
             log.error("Api-Football call error :: teamId={} ", teamId, exception);
             throw new RuntimeException("Api-Football call error :: teamId=" + teamId, exception);
+        }
+    }
+
+    @Override
+    public TeamInfoResponse teamsInfo(long leagueId, int currentSeason) {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/teams?league="+leagueId+"&season="+currentSeason)
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("Response body is null for league ID " + leagueId);
+            }
+            return objectMapper.readValue(responseBody.string(), TeamInfoResponse.class);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: leagueId={} ", leagueId, exception);
+            throw new RuntimeException("Api-Football call error :: leagueId=" + leagueId, exception);
         }
     }
 
@@ -79,7 +104,8 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("Response body is null for team ID " + teamId);
@@ -101,7 +127,8 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("Response body is null for team ID " + teamId);
@@ -123,7 +150,8 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("unExpected Error when cache All Current Leagues");

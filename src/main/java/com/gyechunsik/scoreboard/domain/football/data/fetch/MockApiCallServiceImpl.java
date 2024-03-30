@@ -41,8 +41,19 @@ public class MockApiCallServiceImpl
     }
 
     @Override
+    public TeamInfoResponse teamsInfo(long leagueId, int currentSeason) {
+        String resourcePath = resolvePathOfTeamsByLeague(leagueId, currentSeason);
+        String rawString = readFile(resourcePath);
+        try {
+            return objectMapper.readValue(rawString, TeamInfoResponse.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Mock data parsing error : " + resourcePath, e);
+        }
+    }
+
+    @Override
     public TeamInfoResponse teamInfo(long teamId) {
-        String resourcePath = resolvePathOfLTeamInfo(teamId);
+        String resourcePath = resolvePathOfTeamInfo(teamId);
         String rawString = readFile(resourcePath);
         try {
             return objectMapper.readValue(rawString, TeamInfoResponse.class);
@@ -96,7 +107,14 @@ public class MockApiCallServiceImpl
         return getMockApiJsonFilePath("league/", String.valueOf(teamId), "_team_leagues");
     }
 
-    private String resolvePathOfLTeamInfo(long teamId) {
+    private String resolvePathOfTeamsByLeague(long leagueId, int currentSeason) {
+        if(currentSeason != 2023 && leagueId != 39)
+            throw new IllegalArgumentException("Mock league 는 leagueId=39,currentSeason=2023 만 가능합니다. " +
+                    "주어진 leagueId=" + leagueId + ",currentSeason=" + currentSeason);
+        return getMockApiJsonFilePath("league/", String.valueOf(leagueId), "_teams_by_league");
+    }
+
+    private String resolvePathOfTeamInfo(long teamId) {
         return getMockApiJsonFilePath("team/", String.valueOf(teamId), "_team");
     }
 

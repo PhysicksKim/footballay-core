@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.web;
+package com.gyechunsik.scoreboard.web.controller;
 
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;

@@ -22,6 +22,20 @@
     <input type="text" name="teamId" placeholder="Team ID for Squad" required>
     <button type="submit">Cache Leagues of Team</button>
 </form>
+<form action="/admin/cache/league/current" method="post">
+    <button type="submit">Cache All Current Leagues</button>
+</form>
+<form action="/admin/cache/fixtures" method="post">
+    <label>
+        From
+        <input type="date" name="from" />
+    </label>
+    <label>
+        To
+        <input type="date" name="to" />
+    </label>
+    <button type="submit">Cache Fixture From To</button>
+</form>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('form').forEach(form => {

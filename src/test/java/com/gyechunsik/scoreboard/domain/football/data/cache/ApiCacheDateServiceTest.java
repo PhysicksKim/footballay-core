@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 @SpringBootTest
 @ActiveProfiles("mockapi")
-public class ApiCacheServiceTest {
+public class ApiCacheDateServiceTest {
 
     @Autowired
     private ApiCacheService apiCacheService;

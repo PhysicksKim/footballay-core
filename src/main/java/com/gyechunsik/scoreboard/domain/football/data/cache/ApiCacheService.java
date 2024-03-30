@@ -1,5 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.data.cache;
 
+import com.gyechunsik.scoreboard.domain.football.data.cache.date.ApiCacheDateService;
+import com.gyechunsik.scoreboard.domain.football.data.cache.date.entity.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.*;
 import com.gyechunsik.scoreboard.domain.football.league.League;
@@ -14,10 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gyechunsik.scoreboard.domain.football.data.fetch.response.LeagueInfoResponse.*;
@@ -29,6 +29,7 @@ import static com.gyechunsik.scoreboard.domain.football.data.fetch.response.Play
 public class ApiCacheService {
 
     private final ApiCallService apiCallService;
+    private final ApiCacheDateService apiCacheDateService;
 
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
@@ -52,6 +53,7 @@ public class ApiCacheService {
             league.setCurrentSeason(extractCurrentSeason(response));
         }
 
+        apiCacheDateService.saveApiCache(ApiCacheType.LEAGUE, Map.of("leagueId", leagueId), LocalDateTime.now());
         log.info("leagueId: {} is cached", league.getLeagueId());
         log.info("cached league : {}", league);
         return league;
@@ -85,8 +87,31 @@ public class ApiCacheService {
                     .build();
             LeagueTeam saveLeagueTeam = leagueTeamRepository.save(leagueTeam);
         }
+
+        apiCacheDateService.saveApiCache(ApiCacheType.CURRENT_LEAGUES_OF_TEAM, Map.of("teamId", teamId), LocalDateTime.now());
     }
 
+    public void cacheTeams(Long leagueId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다"));
+        if (league.getCurrentSeason() == null) {
+            throw new RuntimeException("아직 current Season 이 캐싱되어있지 않습니다");
+        }
+
+        TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(leagueId, league.getCurrentSeason());
+        List<Team> teams = teamInfoResponse.getResponse().stream().map(teamInfo -> toTeamEntity(teamInfo.getTeam()))
+                .toList();
+        teamRepository.saveAll(teams);
+
+        apiCacheDateService.saveApiCache(ApiCacheType.LEAGUE_TEAMS, Map.of("leagueId", leagueId), LocalDateTime.now());
+    }
+
+    /**
+     * LeagueTeam 연관관계는 자동으로 저장되지 않습니다.
+     * @param teamId
+     * @return
+     */
+    @Deprecated
     public Team cacheSingleTeam(long teamId) {
         Optional<Team> findTeam = teamRepository.findById(teamId);
         TeamInfoResponse teamInfoResponse = apiCallService.teamInfo(teamId);
@@ -100,15 +125,18 @@ public class ApiCacheService {
                 .build();
 
         log.info("teamId: {} is cached", build.getId());
+        Team result;
         if (findTeam.isEmpty()) {
-            Team save = teamRepository.save(build);
-            log.info("new team saved :: {}", save);
-            return save;
+            result = teamRepository.save(build);
+            log.info("new team saved :: {}", result);
         } else {
             findTeam.get().updateCompare(build);
             log.info("team updated :: {}", findTeam.get());
-            return findTeam.get();
+            result = findTeam.get();
         }
+
+        apiCacheDateService.saveApiCache(ApiCacheType.TEAM, Map.of("teamId", teamId), LocalDateTime.now());
+        return result;
     }
 
     /**
@@ -170,6 +198,9 @@ public class ApiCacheService {
                     player.setTeam(null); // TeamId 연관관계 끊기
                     playerRepository.save(player);
                 });
+
+        LocalDateTime now = LocalDateTime.now();
+        apiCacheDateService.saveApiCache(ApiCacheType.SQUAD, Map.of("teamId", teamId), now);
     }
 
     public void cacheAllCurrentLeagues() {
@@ -184,6 +215,8 @@ public class ApiCacheService {
         if (!leagues.isEmpty()) {
             leagueRepository.saveAll(leagues);
         }
+
+        apiCacheDateService.saveApiCache(ApiCacheType.CURRENT_LEAGUES, Map.of(), LocalDateTime.now());
     }
 
     private static League toLeagueEntity(LeagueInfoResponse.Response leagueResponse) {
@@ -196,6 +229,15 @@ public class ApiCacheService {
                 .korean_name(null)
                 .logo(leagueInfo.getLogo())
                 .currentSeason(currentSeason)
+                .build();
+    }
+
+    private static Team toTeamEntity(TeamInfoResponse.TeamResponse teamResponse) {
+        return Team.builder()
+                .id(teamResponse.getId())
+                .name(teamResponse.getName())
+                .korean_name(null)
+                .logo(teamResponse.getLogo())
                 .build();
     }
 

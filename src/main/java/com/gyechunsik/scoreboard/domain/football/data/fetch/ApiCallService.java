@@ -6,13 +6,17 @@ import com.gyechunsik.scoreboard.domain.football.data.fetch.response.PlayerSquad
 import com.gyechunsik.scoreboard.domain.football.data.fetch.response.TeamInfoResponse;
 
 public interface ApiCallService {
+
     LeagueInfoResponse leagueInfo(long leagueId);
 
     LeagueInfoResponse teamCurrentLeaguesInfo(long teamId);
 
     TeamInfoResponse teamInfo(long teamId);
 
+    TeamInfoResponse teamsInfo(long leagueId, int currentSeason);
+
     PlayerSquadResponse playerSquad(long teamId);
 
     LeagueInfoResponse allLeagueCurrent();
+
 }

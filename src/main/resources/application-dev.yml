@@ -7,7 +7,9 @@ spring:
 
   jpa:
     properties:
-      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
     hibernate:
       ddl-auto: create-drop
     show-sql: true
@@ -31,9 +33,16 @@ spring:
       port: 6379
       password: 1234
 
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/schema.sql
+      data-locations: classpath:sql/data.sql
+
 server:
   port: 8083
   ssl:
+    client-auth: none
     key-store: classpath:keystore.p12
     key-store-password: -wva9.ea7)}}
     key-store-type: PKCS12
@@ -59,5 +68,6 @@ cors:
 
 logging:
   level:
+    root: debug
     org:
       testcontainers: debug

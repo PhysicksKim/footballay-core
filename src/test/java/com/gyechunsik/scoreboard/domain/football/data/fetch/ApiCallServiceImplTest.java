@@ -50,6 +50,23 @@ class ApiCallServiceImplTest {
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
     }
 
+    @DisplayName("리그 아이디로 해당 리그의 팀들을 조회")
+    @Test
+    void success_teamsByLeagueId() {
+        // given
+        long epl = LeagueId.EPL;
+        int currentSeason = 2023;
+
+        // when
+        TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(epl, currentSeason);
+
+        // then
+        for (TeamInfoResponse.TeamInfo teamInfo : teamInfoResponse.getResponse()) {
+            TeamInfoResponse.TeamResponse team = teamInfo.getTeam();
+            log.info("Team :: {}", team);
+        }
+    }
+
     @DisplayName("실제 api ; 팀 id로 팀 정보를 얻어옵니다")
     @Test
     void success_teamInfo() throws IOException {

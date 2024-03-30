@@ -28,7 +28,7 @@ public class League {
     private String logo;
 
     @Column(name = "current_season", nullable = true)
-    private int currentSeason;
+    private Integer currentSeason;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "league")

@@ -80,6 +80,22 @@ class MockApiCallServiceImplTest {
         log.info("Team Response : {}", team);
     }
 
+    @DisplayName("LeagueId 와 CurrentSeason 으로 해당 리그의 팀들을 조회한다")
+    @Test
+    void success_teamsInfoByLeagueIdAndCurrentSeason() {
+        // given
+        final long leagueId = LeagueId.EPL; // 39
+        final int currentSeason = 2023; // 2023
+
+        // when
+        TeamInfoResponse teamInfoResponse = mockApiCallService.teamsInfo(leagueId, currentSeason);
+
+        // then
+        assertThat(teamInfoResponse).isNotNull();
+        assertThat(teamInfoResponse.getResponse().get(0)).isNotNull();
+        log.info("teamInfo :: {}", teamInfoResponse);
+    }
+
     @DisplayName("Mock Api 로 player Squad 반환")
     @Test
     void success_playerSquad() {
