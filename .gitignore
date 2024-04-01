@@ -45,3 +45,5 @@ application-devsecret.yml
 /src/main/resources/dev/**
 /src/main/resources/dev/
 application-api.yml
+
+dev/
