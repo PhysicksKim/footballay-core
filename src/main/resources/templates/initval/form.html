@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Initial Value Form</title>
+</head>
+<body>
+<h1>Initial Value Form</h1>
+
+<h2>Create Streamer</h2>
+<form action="/admin/initval/streamer" method="post">
+    <label for="streamerName">Streamer Name:</label>
+    <input type="text" id="streamerName" name="streamerName" required>
+    <button type="submit">Create</button>
+</form>
+
+<h2>Save Default Match</h2>
+<form action="/admin/initval/match" method="post">
+    <label for="streamerHash">Streamer Hash:</label>
+    <input type="text" id="streamerHash" name="streamerHash" required>
+    <label for="matchName">Match Name:</label>
+    <input type="text" id="matchName" name="matchName" required>
+    <button type="submit">Save</button>
+</form>
+
+<h2>Save Team</h2>
+<form action="/admin/initval/team" method="post">
+    <label for="streamerHash">Streamer Hash:</label>
+    <input type="text" id="streamerHash" name="streamerHash" required>
+    <label for="category">League Category:</label>
+    <select id="category" name="category" required>
+        <option th:each="entry : ${leagueCategories}" th:value="${entry.key}" th:text="${entry.value}"></option>
+    </select>
+    <label for="teamCode">Team Code:</label>
+    <select id="teamCode" name="teamCode" required>
+        <!-- Team codes will be dynamically populated based on the selected category -->
+    </select>
+    <label for="side">Team Side:</label>
+    <select id="side" name="side" required>
+        <option value="A">A</option>
+        <option value="B">B</option>
+    </select>
+    <label for="uniform">Uniform:</label>
+    <select id="uniform" name="uniform" required>
+        <option th:each="uniform : ${uniforms}" th:value="${uniform}" th:text="${uniform}"></option>
+    </select>
+    <button type="submit">Save</button>
+</form>
+
+<script>
+    // 선택된 리그 카테고리에 따라 팀 코드 드롭다운을 동적으로 채우는 JavaScript 코드
+    document.getElementById('category').addEventListener('change', function() {
+        var category = this.value;
+        console.log("category",category);
+        fetch('/admin/initval/teamCodes?category=' + category)
+            .then(response => response.json())
+            .catch(err => console.log(err))
+            .then(data => {
+                var teamCodeSelect = document.getElementById('teamCode');
+                teamCodeSelect.innerHTML = '';
+                for (var code in data) {
+                    var option = document.createElement('option');
+                    option.value = code;
+                    option.text = data[code];
+                    teamCodeSelect.appendChild(option);
+                }
+            })
+            .catch(err => console.log(err));
+    });
+</script>
+</body>
+</html>
