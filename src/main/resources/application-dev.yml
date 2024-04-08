@@ -68,6 +68,10 @@ cors:
 
 logging:
   level:
-    root: debug
+    root: info
     org:
       testcontainers: debug
+
+custom:
+  login:
+    remember-me-key: remember-me-key-only-for-dev

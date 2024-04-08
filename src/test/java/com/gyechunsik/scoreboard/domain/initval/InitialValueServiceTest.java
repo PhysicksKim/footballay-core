@@ -15,11 +15,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
+@Transactional
+@ActiveProfiles({"mockapi"})
 @SpringBootTest
 class InitialValueServiceTest {
 
@@ -66,5 +70,19 @@ class InitialValueServiceTest {
 
         // then
         log.info("initialValueJson :: {}", initialValueJson);
+    }
+
+    @DisplayName("streamer 의 Map<이름,해시> 목록을 가져옵니다.")
+    @Test
+    void success_getStreamers() {
+        // given
+        streamerRepository.save(new Streamer("gyechunhoe"));
+        streamerRepository.save(new Streamer("LookSam"));
+
+        // when
+        Map<String, String> streamers = initialValueService.getStreamers();
+
+        // then
+        log.info("streamers :: {}", streamers);
     }
 }

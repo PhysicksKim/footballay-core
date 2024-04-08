@@ -10,6 +10,8 @@ import com.gyechunsik.scoreboard.domain.initval.Entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.initval.repository.DefaultMatchRepository;
 import com.gyechunsik.scoreboard.domain.initval.repository.DefaultTeamRepository;
 import com.gyechunsik.scoreboard.domain.initval.repository.StreamerRepository;
+import com.gyechunsik.scoreboard.web.response.DefaultMatchResponse;
+import com.gyechunsik.scoreboard.web.response.DefaultTeamResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -89,6 +91,7 @@ public class InitialValueService {
 
     /**
      * 기존에 존재하는
+     *
      * @param streamerHash
      * @param matchName
      * @return
@@ -99,7 +102,7 @@ public class InitialValueService {
 
         Optional<DefaultMatch> optionalDefaultMatch = defaultMatchRepository.findDefaultMatchByStreamer(streamer);
         DefaultMatch defaultMatch;
-        if(optionalDefaultMatch.isPresent()) {
+        if (optionalDefaultMatch.isPresent()) {
             defaultMatch = optionalDefaultMatch.get();
             defaultMatch.setName(matchName);
         } else {
@@ -108,14 +111,17 @@ public class InitialValueService {
         return defaultMatchRepository.save(defaultMatch);
     }
 
-    public DefaultMatch findDefaultMatch(String streamerHash) {
-        return defaultMatchRepository.findDefaultMatchByStreamer(
-                streamerRepository.findByHash(streamerHash)
-                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 streamerHash 입니다. hash=" + streamerHash)))
-                .orElseThrow(() -> new IllegalArgumentException("Streamer Hash 와 일치하는 defaultMatch 를 찾을 수 없습니다."));
+    public DefaultMatchResponse findDefaultMatch(String streamerHash) {
+        DefaultMatch defaultMatch =
+                defaultMatchRepository.findDefaultMatchByStreamer(
+                                streamerRepository.findByHash(streamerHash)
+                                        .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 streamerHash 입니다. hash=" + streamerHash)))
+                        .orElseThrow(() -> new IllegalArgumentException("Streamer Hash 와 일치하는 defaultMatch 를 찾을 수 없습니다."));
+
+        return new DefaultMatchResponse(defaultMatch.getName());
     }
 
-    public DefaultTeam saveTeam(String streamerHash, LeagueCategory category, DefaultTeamCodes teamCode, TeamSide side, DefaultUniform uniform) {
+    public DefaultTeamResponse saveTeam(String streamerHash, LeagueCategory category, DefaultTeamCodes teamCode, TeamSide side, DefaultUniform uniform) {
         Streamer streamer = streamerRepository.findByHash(streamerHash)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 streamerHash 입니다. hash=" + streamerHash));
         Optional<DefaultTeam> optionalDefaultTeamA = defaultTeamRepository.findByStreamerAndSide(streamer, side);
@@ -133,20 +139,28 @@ public class InitialValueService {
             defaultTeam = new DefaultTeam(side, category, teamCode, uniform, streamer);
             log.info("create new default team :: {}", defaultTeam);
         }
-        return defaultTeam;
+
+        DefaultTeamResponse response = new DefaultTeamResponse(
+                defaultTeam.getCategory().name(),
+                defaultTeam.getCode().name(),
+                defaultTeam.getCode().getKoreaName(),
+                defaultTeam.getSide().name(),
+                defaultTeam.getUniform().name()
+        );
+        return response;
     }
 
     /**
      * @param streamerHash
      * @return length=2 배열 {teamA, teamB} 를 반환합니다.
      */
-    public DefaultTeam[] findTeam(String streamerHash) {
+    public DefaultTeamResponse[] findTeam(String streamerHash) {
         Streamer streamer = streamerRepository.findByHash(streamerHash)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 streamerHash 입니다. hash=" + streamerHash));
 
         List<DefaultTeam> teams = defaultTeamRepository.findByStreamer(streamer);
 
-        if(teams.size() != 2) {
+        if (teams.size() != 2) {
             throw new IllegalArgumentException("Streamer Hash 와 일치하는 defaultTeam 찾은 결과가 2개가 아닙니다. Team은 Side A 와 B 로 size=2 이어야 합니다. find list size=" + teams.size());
         }
 
@@ -162,12 +176,23 @@ public class InitialValueService {
             throw new IllegalArgumentException("Side 무결성에 문제가 있습니다. " + teams);
         }
 
-        return new DefaultTeam[]{teamA, teamB};
-    }
+        DefaultTeamResponse responseA = new DefaultTeamResponse(
+                teamA.getCategory().name(),
+                teamA.getCode().name(),
+                teamA.getCode().getKoreaName(),
+                teamA.getSide().name(),
+                teamA.getUniform().name()
+        );
+        DefaultTeamResponse responseB = new DefaultTeamResponse(
+                teamB.getCategory().name(),
+                teamB.getCode().name(),
+                teamB.getCode().getKoreaName(),
+                teamB.getSide().name(),
+                teamB.getUniform().name()
+        );
 
-    // public List<String> getLeagueCategories() {
-    //     return Arrays.stream(LeagueCategory.values()).map(LeagueCategory::name).toList();
-    // }
+        return new DefaultTeamResponse[]{responseA, responseB};
+    }
 
     public Map<String, String> getLeagueCategories() {
         return Arrays.stream(LeagueCategory.values())
@@ -185,7 +210,7 @@ public class InitialValueService {
                 .collect(
                         HashMap::new,
                         (map, teamCode) ->
-                                map.put(teamCode.name(),teamCode.getName()),
+                                map.put(teamCode.name(), teamCode.getName()),
                         HashMap::putAll
                 );
     }
@@ -193,4 +218,13 @@ public class InitialValueService {
     public List<String> getUniforms() {
         return Arrays.stream(DefaultUniform.values()).map(Enum::name).toList();
     }
+
+    public Map<String, String> getStreamers() {
+        return streamerRepository.findAll().stream().collect(
+                HashMap::new,
+                ((hashMap, streamer) -> hashMap.put(streamer.getName(), streamer.getHash())),
+                HashMap::putAll
+        );
+    }
 }
+
