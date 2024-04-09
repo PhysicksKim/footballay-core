@@ -1,10 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.handler;
 
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemoteServiceImpl;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import com.gyechunsik.scoreboard.websocket.response.RemoteMembersResponse;
-import com.gyechunsik.scoreboard.websocket.response.SubscribeDoneResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -26,15 +24,14 @@ import java.util.Map;
 public class StompChannelInterceptor implements ChannelInterceptor {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final RemoteCodeService remoteCodeService;
-    private final ScoreBoardRemote scoreBoardRemote;
+
+    private final ScoreBoardRemoteServiceImpl scoreBoardRemoteService;
 
     /**
      * 주의 : DISCONNECT 는 두 번 발생합니다.
      * Spring 은 안전한 종료를 보장하기 위해서, 사용자의 DISCONNECT 요청 뿐만 아니라, Websocket 종료시에도 DISCONNECT command 를 실행시킵니다.
      * 따라서 StompHeaderAccessor.getCommand() == DISCONNECT 를 다룰 때에는
      * 항상 두 번 실행될 가능성이 더 높음을 인지하고 작성해야 합니다.
-     *
      * @param message
      * @param channel
      * @param sent
@@ -71,9 +68,9 @@ public class StompChannelInterceptor implements ChannelInterceptor {
 
                 log.info("remoteCode :: {} , Principal :: {}", remoteCode, user.getName());
                 RemoteCode remoteCodeInstance = RemoteCode.of(remoteCode);
-                remoteCodeService.removeSubscriber(remoteCodeInstance, user.getName());
+                scoreBoardRemoteService.exitUser(remoteCodeInstance, user);
 
-                List<List<String>> remoteUserDetails = scoreBoardRemote.getRemoteUserDetails(remoteCodeInstance);
+                List<List<String>> remoteUserDetails = scoreBoardRemoteService.getRemoteUserDetails(remoteCodeInstance);
                 List<String> principals = remoteUserDetails.get(0);
                 List<String> nicknames = remoteUserDetails.get(1);
                 RemoteMembersResponse memberResponse = new RemoteMembersResponse(nicknames);

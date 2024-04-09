@@ -22,7 +22,12 @@ public interface RemoteCodeService {
 
     void addSubscriber(RemoteCode remoteCode, String subscriber, String nickname);
 
-    void removeSubscriber(RemoteCode remoteCode, String subscriber);
+    /**
+     * @param remoteCode
+     * @param subscriber
+     * @return is Empty
+     */
+    boolean removeSubscriber(RemoteCode remoteCode, String subscriber);
 
     void setExpiration(RemoteCode remoteCode, Duration duration);
 

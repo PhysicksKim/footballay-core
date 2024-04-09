@@ -1,8 +1,6 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemote;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemoteServiceImpl;
 import com.gyechunsik.scoreboard.websocket.user.StompPrincipal;
 import io.jsonwebtoken.lang.Strings;
 import jakarta.servlet.http.Cookie;
@@ -25,8 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/scoreboard")
 public class ScoreBoardRemoteController {
 
-    private final AutoRemote autoRemote;
-    private final ScoreBoardRemote scoreBoardRemote;
+    private final ScoreBoardRemoteServiceImpl scoreBoardRemoteService;
 
     /**
      * UUID -> 쿠키 발급
@@ -38,7 +35,7 @@ public class ScoreBoardRemoteController {
             HttpServletRequest request
     ) {
         HttpSession session = request.getSession();
-        UUID userUuid = autoRemote.getUuidForCookieFromPrincipalName(session.getId());
+        UUID userUuid = scoreBoardRemoteService.getUuidForCookieFromPrincipalName(session.getId());
         ResponseCookie cookie = createAnonymousUserUUIDCookie(userUuid.toString());
         log.info("giveUserUUIDCookie : {}", userUuid);
         return ResponseEntity
@@ -74,7 +71,7 @@ public class ScoreBoardRemoteController {
             log.info("Http session id : {}", session.getId());
             principal = new StompPrincipal(session.getId());
         }
-        scoreBoardRemote.cacheUserBeforeAutoRemote(principal, userUuid);
+        scoreBoardRemoteService.cacheUserBeforeAutoRemote(principal, userUuid);
         ResponseCookie cookie = createAnonymousUserUUIDCookie(userUuid);
         log.info("cache 완료 및 200 OK 반환");
         return ResponseEntity

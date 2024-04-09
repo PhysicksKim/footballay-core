@@ -24,16 +24,11 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
-    private final RemoteHostTokenService tokenService;
 
     private static final String REMOTECODE_SET_PREFIX = "remote:";
-    private static final String REMOTECODE_HOST_TOKEN_SUFFIX = "-hostToken";
     private static final Duration REMOTECODE_EXPIRATION = RemoteExpireTimes.REMOTECODE_EXP;
 
     protected static final int MAX_CHANNEL_MEMBER = 5;
-
-    // TODO : Host 용 토큰 발급이 필요한 경우 true 로 변경
-    private static final boolean DEV_IS_HOST_TOKEN_ISSUE = false;
 
     /**
      * 코드를 생성하고 Redis 에 코드 채널을 생성합니다.
@@ -56,13 +51,6 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         String REMOTE_CODE_KEY = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
         stringRedisTemplate.opsForHash()
                 .put(REMOTE_CODE_KEY, principalName, nickname);
-
-        // Redis 에 Host token 을 저장
-        if (DEV_IS_HOST_TOKEN_ISSUE) {
-            String token = tokenService.generateRemoteHostToken(remoteCode.getRemoteCode(), LocalDateTime.now());
-            stringRedisTemplate.opsForValue()
-                    .set(REMOTE_CODE_KEY + REMOTECODE_HOST_TOKEN_SUFFIX, token);
-        }
 
         // 코드 만료시간 설정
         this.refreshExpiration(remoteCode);
@@ -87,6 +75,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     /**
      * RemoteCode 에 구독자 추가
+     *
      * @param remoteCode 원격제어 코드
      * @param subscriber principal.getName() 으로 식별자를 제공한다.
      * @param nickname   구독자의 닉네임
@@ -98,15 +87,18 @@ public class RedisRemoteCodeService implements RemoteCodeService {
                 .entries(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode())
                 .entrySet().stream().map(entry -> entry.getValue().toString()).collect(Collectors.toSet());
         if (nicknameSet.isEmpty()) {
+            log.info("Throw Exception - remotecode:{}, 존재하지 않는 원격 코드입니다", remoteCode.getRemoteCode());
             throw new IllegalArgumentException("remotecode:존재하지 않는 원격 코드입니다");
         }
         if (nicknameSet.contains(nickname)) {
+            log.info("Throw Exception - remotecode:{}, 이미 존재하는 닉네임 [{}] 입니다.", remoteCode.getRemoteCode(), nickname);
+            log.info("Nickname SET : {}", nicknameSet);
             throw new IllegalArgumentException("nickname:이미 존재하는 닉네임입니다");
         }
         log.info("{} 채널의 참가자 수 : {} , 최대 참가자 수 : {}", remoteCode.getRemoteCode(), nicknameSet.size(), MAX_CHANNEL_MEMBER);
         if (isOverLimitIfAddMember(nicknameSet)) {
             log.info("최대 참가자 수 초과, subscriber : {}", subscriber);
-            throw new IllegalArgumentException("general:최대 참가자 수("+MAX_CHANNEL_MEMBER+")를 초과했습니다.");
+            throw new IllegalArgumentException("general:최대 참가자 수(" + MAX_CHANNEL_MEMBER + ")를 초과했습니다.");
         }
 
         log.info("add sub nickname : {}", nickname);
@@ -117,17 +109,16 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     /**
      * subscriber 를 명단에서 제외합니다.
      * 삭제 후 더이상 구독자가 없다면 remoteCode 를 삭제합니다.
-     *
      * @param remoteCode
      * @param subscriber
-     * @return 성공여부
+     * @return Is Empty?
      */
     @Override
-    public void removeSubscriber(RemoteCode remoteCode, String subscriber) {
+    public boolean removeSubscriber(RemoteCode remoteCode, String subscriber) {
         String remoteCodeKey = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
         stringRedisTemplate.opsForHash().delete(remoteCodeKey, subscriber);
-
-        clearIfEmptyRemoteCode(remoteCode.getRemoteCode());
+        Long size = stringRedisTemplate.opsForHash().size(remoteCodeKey);
+        return size == 0;
     }
 
     /**
@@ -177,14 +168,6 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         return true;
     }
 
-    private boolean clearIfEmptyRemoteCode(String remoteCode) {
-        Long size = stringRedisTemplate.opsForHash().size(REMOTECODE_SET_PREFIX + remoteCode);
-        if (size == 0) {
-            return stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + remoteCode);
-        }
-        return false;
-    }
-
     protected void removeAllRemoteCodes() {
         log.info("!!! TEST UTIL METHOD :: removed All Remote Codes in Redis !!!");
         stringRedisTemplate.delete(REMOTECODE_SET_PREFIX + "*");
@@ -201,10 +184,10 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     }
 
     private boolean isOverLimitIfAddMember(Collection<?> collection) {
-        return collection.size()+1 > MAX_CHANNEL_MEMBER;
+        return collection.size() + 1 > MAX_CHANNEL_MEMBER;
     }
 
-    private boolean isOverLimitIfAddMember(Map<?,?> map) {
-        return map.size()+1 > MAX_CHANNEL_MEMBER;
+    private boolean isOverLimitIfAddMember(Map<?, ?> map) {
+        return map.size() + 1 > MAX_CHANNEL_MEMBER;
     }
 }

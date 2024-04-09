@@ -15,7 +15,7 @@ import java.util.Set;
 
 /**
  * <pre>
- * AutoRemote 와 관련된 Redis CRUD 를 관리합니다.
+ * 자동 원격 연결과 관련된 Redis CRUD 를 관리합니다.
  * remote:{remoteCode} 로 구성되는 RemoteCode 연결 채널은
  * RemoteCodeService 와 RemoteCodeRepository 에서 다룹니다.
  * <br>
@@ -51,10 +51,10 @@ public class AutoRemoteRedisRepository {
     public void setActiveAutoRemoteKeyPair(String autoGroupId, String remoteCode) {
         final String KEY_FROM_AUTOGROUP = activeKeyFromGroup(autoGroupId);
         final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
-        log.info("Set Active AutoRemote Key Pair: {} - {}", autoGroupId, remoteCode);
+        log.info("Set Active Auto Remote Key Pair: {} - {}", autoGroupId, remoteCode);
         // Key log
-        log.info("Key: {}", KEY_FROM_AUTOGROUP);
-        log.info("Key: {}", KEY_FROM_REMOTECODE);
+        log.info("Key from autogroup: {}", KEY_FROM_AUTOGROUP);
+        log.info("Key from remotecode: {}", KEY_FROM_REMOTECODE);
         stringRedisTemplate.opsForValue().set(KEY_FROM_AUTOGROUP, remoteCode, EXP_ACTIVE_GROUP);
         stringRedisTemplate.opsForValue().set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
     }
@@ -122,6 +122,17 @@ public class AutoRemoteRedisRepository {
         if (activeFromRemoteKeys != null) {
             activeFromRemoteKeys.forEach(stringRedisTemplate::delete);
         }
+    }
+
+    public void removeGroupIfExist(String remoteCode) {
+        final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
+        String autoGroupId = stringRedisTemplate.opsForValue().get(KEY_FROM_REMOTECODE);
+        if(autoGroupId == null) return;
+
+        final String KEY_FROM_AUTOGROUP = activeKeyFromGroup(autoGroupId);
+
+        stringRedisTemplate.delete(autoGroupId);
+        stringRedisTemplate.delete(remoteCode);
     }
 
     public Map<String, String> getAllActiveGroups() {
