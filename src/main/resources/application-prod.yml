@@ -10,4 +10,4 @@ server:
 
 # 운영 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "https://physickskim.github.io,https://gyechunsik.site"
+  allowedorigins: "https://physickskim.github.io,https://gyechunsik.site,https://static.gyechunsik.site"
