@@ -6,6 +6,7 @@ import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteC
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -42,13 +43,17 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     @Override
     public RemoteCode generateCodeAndSubscribe(String principalName, String nickname) {
         RemoteCode remoteCode;
-        do {
-            remoteCode = RemoteCode.generate();
-        } while (stringRedisTemplate.hasKey(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode()));
+        try{
+            do {
+                remoteCode = RemoteCode.generate();
+            } while (stringRedisTemplate.hasKey(getRemoteCodeKey(remoteCode)));
+        } catch (RedisConnectionFailureException e) {
+            throw new RuntimeException("Maybe Redis Docker is Not running.",e);
+        }
         log.info("CodeService - generateCodeAndSubscribe: {}", remoteCode.getRemoteCode());
 
         // 코드 SET 생성 - set 의 key 를 remote:remoteCode 로 하고, value 는 구독자들의 이름으로 한다.
-        String REMOTE_CODE_KEY = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        final String REMOTE_CODE_KEY = getRemoteCodeKey(remoteCode);
         stringRedisTemplate.opsForHash()
                 .put(REMOTE_CODE_KEY, principalName, nickname);
 
@@ -65,7 +70,8 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public Map<Object, Object> getSubscribers(String remoteCode) {
-        return stringRedisTemplate.opsForHash().entries(REMOTECODE_SET_PREFIX + remoteCode);
+        return stringRedisTemplate.opsForHash()
+                .entries(getRemoteCodeKey(RemoteCode.of(remoteCode)));
     }
 
     @Override
@@ -77,14 +83,15 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      * RemoteCode 에 구독자 추가
      *
      * @param remoteCode 원격제어 코드
-     * @param subscriber principal.getName() 으로 식별자를 제공한다.
+     * @param subscriberPrincipalName principal.getName() 으로 식별자를 제공한다.
      * @param nickname   구독자의 닉네임
      * @return
      */
     @Override
-    public void addSubscriber(RemoteCode remoteCode, String subscriber, String nickname) {
+    public void addSubscriber(RemoteCode remoteCode, String subscriberPrincipalName, String nickname) {
+        final String REMOTE_CODE_KEY = getRemoteCodeKey(remoteCode);
         Set<String> nicknameSet = stringRedisTemplate.opsForHash()
-                .entries(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode())
+                .entries(REMOTE_CODE_KEY)
                 .entrySet().stream().map(entry -> entry.getValue().toString()).collect(Collectors.toSet());
         if (nicknameSet.isEmpty()) {
             log.info("Throw Exception - remotecode:{}, 존재하지 않는 원격 코드입니다", remoteCode.getRemoteCode());
@@ -97,12 +104,13 @@ public class RedisRemoteCodeService implements RemoteCodeService {
         }
         log.info("{} 채널의 참가자 수 : {} , 최대 참가자 수 : {}", remoteCode.getRemoteCode(), nicknameSet.size(), MAX_CHANNEL_MEMBER);
         if (isOverLimitIfAddMember(nicknameSet)) {
-            log.info("최대 참가자 수 초과, subscriber : {}", subscriber);
+            log.info("최대 참가자 수 초과, subscriber : {}", subscriberPrincipalName);
             throw new IllegalArgumentException("general:최대 참가자 수(" + MAX_CHANNEL_MEMBER + ")를 초과했습니다.");
         }
 
         log.info("add sub nickname : {}", nickname);
-        stringRedisTemplate.opsForHash().put(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode(), subscriber, nickname);
+        stringRedisTemplate.opsForHash()
+                .put(REMOTE_CODE_KEY, subscriberPrincipalName, nickname);
         this.refreshExpiration(remoteCode);
     }
 
@@ -115,7 +123,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public boolean removeSubscriber(RemoteCode remoteCode, String subscriber) {
-        String remoteCodeKey = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        String remoteCodeKey = getRemoteCodeKey(remoteCode);
         stringRedisTemplate.opsForHash().delete(remoteCodeKey, subscriber);
         Long size = stringRedisTemplate.opsForHash().size(remoteCodeKey);
         return size == 0;
@@ -129,7 +137,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public void setExpiration(RemoteCode remoteCode, Duration duration) {
-        String remoteCodeKey = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        String remoteCodeKey = getRemoteCodeKey(remoteCode);
         stringRedisTemplate.expire(remoteCodeKey, duration);
     }
 
@@ -140,8 +148,9 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     @Override
     public boolean isValidCode(@NotNull RemoteCode remoteCode) {
-        log.info("hasKey : {}", stringRedisTemplate.hasKey(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode()));
-        return stringRedisTemplate.hasKey(REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode());
+        final String REMOTE_CODE_KEY = getRemoteCodeKey(remoteCode);
+        log.info("hasKey : {}", stringRedisTemplate.hasKey(REMOTE_CODE_KEY));
+        return stringRedisTemplate.hasKey(REMOTE_CODE_KEY);
     }
 
     /**
@@ -155,7 +164,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     @Override
     public boolean expireCode(RemoteCode remoteCode) {
         // 삭제하는 코드의 구독자들에게 코드가 만료됨을 알려준다.
-        final String remoteCodeKey = REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
+        final String remoteCodeKey = getRemoteCodeKey(remoteCode);
         Set<Object> subs = getSubscribers(remoteCode.getRemoteCode()).keySet();
         if (!stringRedisTemplate.delete(remoteCodeKey)) {
             // 코드 삭제 실패
@@ -181,6 +190,10 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     protected int getMaxChannelMember() {
         return this.MAX_CHANNEL_MEMBER;
+    }
+
+    protected String getRemoteCodeKey(RemoteCode remoteCode) {
+        return REMOTECODE_SET_PREFIX + remoteCode.getRemoteCode();
     }
 
     private boolean isOverLimitIfAddMember(Collection<?> collection) {

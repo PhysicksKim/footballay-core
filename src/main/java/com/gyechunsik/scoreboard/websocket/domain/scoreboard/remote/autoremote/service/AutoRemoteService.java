@@ -79,10 +79,22 @@ public class AutoRemoteService {
             remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
         } else {
             log.info("RemoteCode 가 존재하지 않습니다. RemoteCode 를 발급합니다.");
-            remoteCode = remoteCodeService.generateCodeAndSubscribe(principal.getName(), nickname);
+            // cleanPrevRemoteGroup(autoRemoteGroup);
+            remoteCode = remoteCodeService
+                    .generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
         return remoteCode;
+    }
+
+    /**
+     * auto remote group key pair 가 존재한다면 이를 제거합니다.
+     * @param autoRemoteGroup
+     */
+    private void cleanPrevRemoteGroup(AutoRemoteGroup autoRemoteGroup) {
+        // remote pair key 가 존재한다면 제거함
+        String autoGroupId = Long.toString(autoRemoteGroup.getId());
+        autoRemoteRedisRepository.removeAutoGroupKeys(autoGroupId);
     }
 
     /**
@@ -185,14 +197,10 @@ public class AutoRemoteService {
     }
 
     private boolean isActiveRemoteCodeExist(String remoteCode) {
-        // TODO : BUG FIX!!! remoteCode 가 문자가 있으면서 redis 에 "remote:{remoteCode}" 가 있어야 합니다.
-        /*
-        remote:{remoteCode} 는 remote group 에 속한 모든 사람들이 접속을 끊으면 소멸됩니다.
-        하지만 autoremote 관련 value 값 들은 여전히 존재할 수 있습니다.
-        이를 인식하기 위해서 isActiveRemoteCodeExist 에서 추가적으로 remote:{remoteCode} 가 있는지 인식해야합니다.
-        간단히 remote:{remoteCode} 로 해결할 수 있지만
-         */
         if (remoteCode == null) {
+            return false;
+        }
+        if (!remoteCodeService.isValidCode(RemoteCode.of(remoteCode))) {
             return false;
         }
         return StringUtils.hasText(remoteCode);

@@ -1,7 +1,9 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.RemoteExpireTimes;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import io.jsonwebtoken.lang.Strings;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -55,14 +57,35 @@ public class AutoRemoteRedisRepository {
         // Key log
         log.info("Key from autogroup: {}", KEY_FROM_AUTOGROUP);
         log.info("Key from remotecode: {}", KEY_FROM_REMOTECODE);
-        stringRedisTemplate.opsForValue().set(KEY_FROM_AUTOGROUP, remoteCode, EXP_ACTIVE_GROUP);
-        stringRedisTemplate.opsForValue().set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
+        stringRedisTemplate.opsForValue()
+                .set(KEY_FROM_AUTOGROUP, remoteCode, EXP_ACTIVE_GROUP);
+        stringRedisTemplate.opsForValue()
+                .set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
     }
 
     public void setUserPreCacheForCookie(String principalName, String userId) {
         log.info("setUserPreCacheForCookie Called :: Principal={} , userId={}", principalName, userId);
         final String key = keyForPrincipalToUuid(principalName);
         stringRedisTemplate.opsForValue().set(key, userId, EXP_USER_PRE_CACHE);
+    }
+
+    /**
+     * 이미 AutoGroup 을 위한 key pair(groupId-RemoteCode)가 존재하는 경우 key pair 를 삭제한다.
+     * key pair 가 존재하지 않는 경우에는 단순히 메서드를 종료한다.
+     * @param autoGroupId
+     */
+    public void removeAutoGroupKeys(String autoGroupId) {
+        final String KEY_FROM_AUTOGROUP = activeKeyFromGroup(autoGroupId);
+        String remoteCode = stringRedisTemplate.opsForValue().get(KEY_FROM_AUTOGROUP);
+        // 만약 이미 생성된 remoteGroup id-remoteCode key pair 가 없는 경우에
+        // early return 을 한다
+        if(remoteCode == null)
+            return;
+
+        final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
+
+        stringRedisTemplate.delete(KEY_FROM_AUTOGROUP);
+        stringRedisTemplate.delete(KEY_FROM_REMOTECODE);
     }
 
     public Optional<String> findUserPreCache(String principalName) {
@@ -126,13 +149,14 @@ public class AutoRemoteRedisRepository {
 
     public void removeGroupIfExist(String remoteCode) {
         final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
-        String autoGroupId = stringRedisTemplate.opsForValue().get(KEY_FROM_REMOTECODE);
+        String autoGroupId = stringRedisTemplate.opsForValue()
+                .get(KEY_FROM_REMOTECODE);
         if(autoGroupId == null) return;
 
         final String KEY_FROM_AUTOGROUP = activeKeyFromGroup(autoGroupId);
 
-        stringRedisTemplate.delete(autoGroupId);
-        stringRedisTemplate.delete(remoteCode);
+        stringRedisTemplate.delete(KEY_FROM_AUTOGROUP);
+        stringRedisTemplate.delete(KEY_FROM_REMOTECODE);
     }
 
     public Map<String, String> getAllActiveGroups() {
