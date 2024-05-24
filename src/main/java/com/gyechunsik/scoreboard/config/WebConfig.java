@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +14,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
+@Slf4j
 @Configuration
 public class WebConfig {
 
@@ -22,12 +25,14 @@ public class WebConfig {
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
+        String[] origins = rawAllowedOrigins.split(",");
+        log.info("Web Config allowed origins : {}", Arrays.toString(origins));
+
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                String[] allowOriginArray = rawAllowedOrigins.split(",");
                 registry.addMapping("/**")
-                        .allowedOrigins(allowOriginArray)
+                        .allowedOrigins(origins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

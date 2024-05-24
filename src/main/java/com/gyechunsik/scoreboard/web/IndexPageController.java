@@ -27,4 +27,15 @@ public class IndexPageController {
                 .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
                 .body(html);
     }
+
+    @GetMapping("/dev/23ep13/mainpage")
+    public ResponseEntity<String> DEV_scoreboardMainPageProfile() {
+        String path = "https://static.gyechunsik.site/dev/main-feature-profile/23ep13/index.html";
+        String html = restTemplate.getForObject(path, String.class);
+        log.info("main Page");
+
+        return ResponseEntity.ok()
+                .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
+                .body(html);
+    }
 }
