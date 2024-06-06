@@ -1,14 +1,12 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemote;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.AutoRemote;
+import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.ScoreBoardRemoteServiceImpl;
 import com.gyechunsik.scoreboard.websocket.request.AutoRemoteReconnectRequestMessage;
 import com.gyechunsik.scoreboard.websocket.request.RemoteConnectRequestMessage;
 import com.gyechunsik.scoreboard.websocket.request.RemoteIssueRequestMessage;
 import com.gyechunsik.scoreboard.websocket.response.ErrorResponse;
 import com.gyechunsik.scoreboard.websocket.response.RemoteConnectResponse;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service.RemoteCodeMapper;
 import com.gyechunsik.scoreboard.websocket.response.RemoteMembersResponse;
 import com.gyechunsik.scoreboard.websocket.response.SubscribeDoneResponse;
 import io.jsonwebtoken.lang.Strings;
@@ -33,8 +31,7 @@ import java.util.function.Consumer;
 @Controller
 public class RemoteStompController {
 
-    private final ScoreBoardRemote scoreBoardRemote;
-    private final AutoRemote autoRemote;
+    private final ScoreBoardRemoteServiceImpl scoreBoardRemoteService;
     private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/remote.issuecode")
@@ -52,12 +49,12 @@ public class RemoteStompController {
         log.info("message : {}", message);
         log.info("nickname : {}", message.getNickname());
         log.info("is autoRemote : {}", message.isAutoRemote());
-        RemoteCode remoteCode = scoreBoardRemote.issueCode(principal, message.getNickname());
+        RemoteCode remoteCode = scoreBoardRemoteService.issueCode(principal, message.getNickname());
 
         // is need to make AutoRemoteGroup 'NEWLY'?
         if (message.isAutoRemote()) {
-            UUID uuid = autoRemote.joinNewlyFormedAutoGroup(remoteCode, principal);
-            autoRemote.cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
+            UUID uuid = scoreBoardRemoteService.joinNewlyFormedAutoGroup(remoteCode, principal);
+            scoreBoardRemoteService.cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
         }
 
         sendRemoteMembersUpdateMessage(remoteCode);
@@ -91,16 +88,16 @@ public class RemoteStompController {
         Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
         log.info("attributes : {}", sessionAttributes);
 
-        RemoteCode remoteCode = RemoteCodeMapper.from(message);
+        RemoteCode remoteCode = RemoteCode.of(message.getRemoteCode());
         String nickname = message.getNickname().trim();
-        scoreBoardRemote.subscribeRemoteCode(remoteCode, principal, nickname);
+        scoreBoardRemoteService.subscribeRemoteCode(remoteCode, principal, nickname);
 
         log.info("nickname : {}", message.getNickname());
         log.info("is autoRemote : {}", message.isAutoRemote());
         if(message.isAutoRemote()){
             log.info("CALL autoRemote.JoinNewlyFormedAutoGroup() FROM StompController :: {} , {}", remoteCode, principal.getName());
-            UUID uuid = autoRemote.joinNewlyFormedAutoGroup(remoteCode, principal);
-            autoRemote.cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
+            UUID uuid = scoreBoardRemoteService.joinNewlyFormedAutoGroup(remoteCode, principal);
+            scoreBoardRemoteService.cacheUserPrincipalAndUuidForAutoRemote(principal, uuid.toString());
         }
 
         sendRemoteMembersUpdateMessage(remoteCode);
@@ -131,7 +128,7 @@ public class RemoteStompController {
             throw new IllegalArgumentException("nickname:유저 닉네임이 비어있습니다.");
         }
 
-        RemoteConnectResponse response = scoreBoardRemote.autoRemoteReconnect(principal, nickname);
+        RemoteConnectResponse response = scoreBoardRemoteService.autoRemoteReconnect(principal, nickname);
         log.info("autoRemoteReconnect Response : {}", response);
 
         sendRemoteMembersUpdateMessage(RemoteCode.of(response.getRemoteCode()));
@@ -168,7 +165,7 @@ public class RemoteStompController {
         log.info("remoteCode : {}", remoteCode);
         log.info("remote control message : {}", message);
         log.info("principal name : {}", principal.getName());
-        if (!scoreBoardRemote.isValidCode(RemoteCode.of(remoteCode))) {
+        if (!scoreBoardRemoteService.isValidCode(RemoteCode.of(remoteCode))) {
             throw new IllegalArgumentException("remotecode:유효하지 않은 코드입니다.");
         }
 
@@ -185,7 +182,7 @@ public class RemoteStompController {
         Consumer<String> sendMessageToUser = (userName) -> {
             messagingTemplate.convertAndSendToUser(userName, "/topic/remote/" + remoteCode, message);
         };
-        scoreBoardRemote.sendMessageToSubscribers(remoteCode, principal, sendMessageToUser);
+        scoreBoardRemoteService.sendMessageToSubscribers(remoteCode, principal, sendMessageToUser);
     }
 
     @MessageMapping("/remote/{remoteCode}/members")
@@ -194,11 +191,11 @@ public class RemoteStompController {
             Principal principal
     ) {
         RemoteCode code = RemoteCode.of(remoteCode);
-        if(!scoreBoardRemote.isValidCode(code)) {
+        if(!scoreBoardRemoteService.isValidCode(code)) {
             throw new IllegalArgumentException("general:유효하지 않은 원격 코드입니다");
         }
 
-        List<String> remoteMembers = scoreBoardRemote.getRemoteMembers(code);
+        List<String> remoteMembers = scoreBoardRemoteService.getRemoteMembers(code);
         messagingTemplate.convertAndSendToUser(
                 principal.getName(),
                 "/topic/remote/"+remoteCode,
@@ -228,7 +225,7 @@ public class RemoteStompController {
     }
 
     private void sendRemoteMembersUpdateMessage(RemoteCode remoteCode) {
-        List<List<String>> remoteUserDetails = scoreBoardRemote.getRemoteUserDetails(remoteCode);
+        List<List<String>> remoteUserDetails = scoreBoardRemoteService.getRemoteUserDetails(remoteCode);
         List<String> principals = remoteUserDetails.get(0);
         List<String> nicknames = remoteUserDetails.get(1);
         log.info("principals : {}", principals);

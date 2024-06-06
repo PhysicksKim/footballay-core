@@ -99,7 +99,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         // 자동 원격 그룹 활성 체크
         String keyToGetRemoteCode = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromGroup", autoRemoteGroup.getId().toString());
         String keyToGetGroupId = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromCode", remoteCode.getRemoteCode());
-        log.info("Active AutoRemote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
+        log.info("Active Auto Remote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
 
         Map<String, String> activeAutoRemoteGroups = autoRemoteRedisRepository.getAllActiveGroups();
         log.info("map : {}", activeAutoRemoteGroups);
@@ -150,7 +150,7 @@ class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
         // Key Pair
         String keyToGetRemoteCode = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromGroup", autoRemoteGroup.getId().toString());
         String keyToGetGroupId = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "activeKeyFromCode", firstConnectRemoteCode.getRemoteCode());
-        log.info("Active AutoRemote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
+        log.info("Active Auto Remote Key Pair: {} - {}", keyToGetRemoteCode, keyToGetGroupId);
         log.info("First and Second RemoteCode : {} and {}", firstConnectRemoteCode.getRemoteCode(), secondConnectRemoteCode.getRemoteCode());
 
         // 활성화된 자동 원격 그룹 체크

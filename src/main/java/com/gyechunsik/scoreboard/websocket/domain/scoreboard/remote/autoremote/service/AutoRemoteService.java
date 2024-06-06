@@ -23,8 +23,8 @@ import java.util.UUID;
 public class AutoRemoteService {
 
     private final RedisRemoteCodeService remoteCodeService;
-    private final AutoRemoteRedisRepository autoRemoteRedisRepository;
 
+    private final AutoRemoteRedisRepository autoRemoteRedisRepository;
     private final AutoRemoteGroupRepository groupRepository;
     private final AnonymousUserRepository userRepository;
 
@@ -79,10 +79,22 @@ public class AutoRemoteService {
             remoteCodeService.addSubscriber(remoteCode, principal.getName(), nickname);
         } else {
             log.info("RemoteCode 가 존재하지 않습니다. RemoteCode 를 발급합니다.");
-            remoteCode = remoteCodeService.generateCodeAndSubscribe(principal.getName(), nickname);
+            // cleanPrevRemoteGroup(autoRemoteGroup);
+            remoteCode = remoteCodeService
+                    .generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
         return remoteCode;
+    }
+
+    /**
+     * auto remote group key pair 가 존재한다면 이를 제거합니다.
+     * @param autoRemoteGroup
+     */
+    private void cleanPrevRemoteGroup(AutoRemoteGroup autoRemoteGroup) {
+        // remote pair key 가 존재한다면 제거함
+        String autoGroupId = Long.toString(autoRemoteGroup.getId());
+        autoRemoteRedisRepository.removeAutoGroupKeys(autoGroupId);
     }
 
     /**
@@ -94,7 +106,9 @@ public class AutoRemoteService {
      * @param userUUID
      */
     public void validateAndCacheUserToRedis(Principal principal, String userUUID) {
-        if(principal == null || !StringUtils.hasText(userUUID)) {
+        if (principal == null || !StringUtils.hasText(userUUID)) {
+            log.info("Principal: {}", principal);
+            log.info("userUUID: {}", userUUID);
             throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
 
@@ -144,16 +158,49 @@ public class AutoRemoteService {
         return autoRemoteRedisRepository
                 .findPrincipalToUuid(principal.getName()).orElseThrow(() -> new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다."));
     }
-    public String findPreCachedUserUUID(String username) {
-        return autoRemoteRedisRepository
+    public UUID findPreCachedUserUUID(String username) {
+        String preCachedUserUUID = autoRemoteRedisRepository
                 .findPrincipalToUuid(username)
                 .orElseThrow(() ->
                         new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다.")
                 );
+        log.info("get uuid for cookie from principalName : {}", preCachedUserUUID);
+        return UUID.fromString(preCachedUserUUID);
+    }
+
+    public UUID joinNewlyFormedAutoGroup(RemoteCode remoteCode, Principal principal) {
+        Optional<Long> optionalGroupId = getActiveGroupIdBy(remoteCode);
+        AutoRemoteGroup autoRemoteGroup;
+        if (optionalGroupId.isPresent()) {
+            // 이미 누군가 자동 연결 그룹을 생성했다면, 기존 그룹에 참여합니다.
+            log.info("기존에 생성된 그룹에 참여");
+            autoRemoteGroup = getAutoRemoteGroup(optionalGroupId.get())
+                    .orElseThrow(() -> new IllegalArgumentException("noshow:캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
+        } else {
+            // 아직 자동 연결 그룹이 생성되지 않았다면, 새로 그룹을 만듭니다.
+            log.info("기존 그룹이 없으므로 새롭게 그룹 생성");
+            autoRemoteGroup = createAutoRemoteGroup();
+            log.info("autoRemoteGroup : {}", autoRemoteGroup);
+            log.info("autoRemoteGroup id : {}", autoRemoteGroup.getId());
+            this.activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
+        }
+
+        AnonymousUser createdUser = createAndSaveAnonymousUser(autoRemoteGroup);
+        UUID uuid = createdUser.getId();
+
+        validateAndCacheUserToRedis(principal, uuid.toString());
+        return createdUser.getId();
+    }
+
+    public void deactivateAutoGroupIfExist(RemoteCode remoteCode) {
+        autoRemoteRedisRepository.removeGroupIfExist(remoteCode.getRemoteCode());
     }
 
     private boolean isActiveRemoteCodeExist(String remoteCode) {
         if (remoteCode == null) {
+            return false;
+        }
+        if (!remoteCodeService.isValidCode(RemoteCode.of(remoteCode))) {
             return false;
         }
         return StringUtils.hasText(remoteCode);
