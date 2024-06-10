@@ -17,9 +17,6 @@ spring:
       enabled: true
       path: /h2-console
 
-  devtools:
-    restart:
-      enabled: false
   security:
     user:
       name: admin

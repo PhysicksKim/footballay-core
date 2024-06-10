@@ -1,12 +1,10 @@
 package com.gyechunsik.scoreboard.web.request;
 
-import com.gyechunsik.scoreboard.domain.initval.Entity.enums.DefaultUniform;
-import com.gyechunsik.scoreboard.domain.initval.Entity.enums.TeamSide;
+import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.DefaultUniform;
+import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Getter
 @Setter

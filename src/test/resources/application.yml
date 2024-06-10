@@ -28,3 +28,18 @@ cors:
 logging:
   level:
     root: info
+
+# -dev 환경에서만 사용할 설정
+custom:
+  login:
+    remember-me-key: remember-me-key-only-for-dev
+
+# 세션 쿠키 설정
+cookies:
+  remember-me:
+    name: "remember-me"
+    max-age: 1209600
+    # 2주 (단위: 초)
+  user-info:
+    name: "user-info"
+    max-age: 1209600 # 2주 (단위: 초)

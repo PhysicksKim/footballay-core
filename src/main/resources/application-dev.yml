@@ -10,6 +10,14 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
+
+#      # schema.sql 을 통한 스키마 생성을 위한 설정
+#      javax:
+#        persistence:
+#          schema-generation:
+#            scripts:
+#              create-target: src/main/resources/schema.sql
+#              action: create
     hibernate:
       ddl-auto: create-drop
     show-sql: true
