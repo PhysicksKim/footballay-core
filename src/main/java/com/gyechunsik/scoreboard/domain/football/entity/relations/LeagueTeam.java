@@ -3,12 +3,10 @@ package com.gyechunsik.scoreboard.domain.football.entity.relations;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @ToString
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -26,4 +24,11 @@ public class LeagueTeam {
     @JoinColumn(name = "team_id")
     private Team team; // 복합 키의 일부로 사용될 필드
 
+    @Override
+    public String toString() {
+        return "LeagueTeam{" +
+                "league=" + league +
+                ", team=" + team +
+                '}';
+    }
 }

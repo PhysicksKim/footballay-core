@@ -130,8 +130,8 @@ public class MockApiCallServiceImpl
      * @return "league/{leagueId}_teams_by_league.json"
      */
     private String resolvePathOfTeamsByLeague(long leagueId, int currentSeason) {
-        if(currentSeason != 2023 && leagueId != 39)
-            throw new IllegalArgumentException("Mock league 는 leagueId=39,currentSeason=2023 만 가능합니다. " +
+        if(currentSeason != 2023 && leagueId != 39 && currentSeason != 2024 && leagueId != 4)
+            throw new IllegalArgumentException("Mock league 는 [leagueId=39,currentSeason=2023],[leagueId=4,currentSeason=2024] 만 가능합니다. " +
                     "주어진 leagueId=" + leagueId + ",currentSeason=" + currentSeason);
         return getMockApiJsonFilePath("league/", String.valueOf(leagueId), "_teams_by_league");
     }

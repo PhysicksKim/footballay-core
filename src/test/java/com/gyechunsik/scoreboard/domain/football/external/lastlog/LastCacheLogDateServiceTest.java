@@ -3,7 +3,7 @@ package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.external.ExternalApiCacheFacade;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LastCacheLogDateServiceTest {
 
     @Autowired
-    private ExternalApiCacheFacade externalApiCacheFacade;
+    private FootballApiCacheService footballApiCacheService;
 
     @Autowired
     LeagueRepository leagueRepository;
@@ -44,7 +44,7 @@ public class LastCacheLogDateServiceTest {
         long eplId = LeagueId.EPL;
 
         // when
-        externalApiCacheFacade.cacheLeague(eplId);
+        footballApiCacheService.cacheLeague(eplId);
 
         // then
         League findLeague = leagueRepository.findById(eplId)
@@ -62,7 +62,7 @@ public class LastCacheLogDateServiceTest {
         long manutd = TeamId.MANUTD;
 
         // when
-        externalApiCacheFacade.cacheTeamAndCurrentLeagues(manutd);
+        footballApiCacheService.cacheTeamAndCurrentLeagues(manutd);
 
         // then
         List<League> findLeagues = leagueRepository.findAll();

@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -42,7 +41,7 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ExternalApiCacheFacade {
+public class FootballApiCacheService {
 
     // TODO : LastCacheLog 에 따라서 캐싱 거부 로직 향후 추가
 
@@ -90,7 +89,7 @@ public class ExternalApiCacheFacade {
      * 현재 시즌 값은 this.cacheLeague(leagueId) 에 의해서 자동으로 캐싱되지만, 데이터 무결성을 위해서 검사를 거칩니다.
      * @param leagueId
      */
-    public void cacheTeams(Long leagueId) {
+    public List<Team> cacheTeamsOfLeague(Long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다"));
         if (league.getCurrentSeason() == null) {
@@ -100,9 +99,22 @@ public class ExternalApiCacheFacade {
         TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(leagueId, league.getCurrentSeason());
         List<Team> teams = teamInfoResponse.getResponse().stream().map(teamInfo -> toTeamEntity(teamInfo.getTeam()))
                 .toList();
-        teamRepository.saveAll(teams);
+        List<Team> savedTeams = teamRepository.saveAll(teams);
 
         lastCacheLogService.saveApiCache(ApiCacheType.LEAGUE_TEAMS, Map.of("leagueId", leagueId), ZonedDateTime.now());
+
+        log.info("Teams of [leagueId={},name={}] is cached", league.getLeagueId(), league.getName());
+        log.info("cached teams : {}", savedTeams.stream().map(Team::getName).collect(Collectors.toList()));
+
+        for(Team iterTeam : savedTeams) {
+            LeagueTeam leagueTeam = LeagueTeam.builder()
+                    .league(league)
+                    .team(iterTeam)
+                    .build();
+            LeagueTeam savedLeagueTeam = leagueTeamRepository.save(leagueTeam);
+        }
+
+        return savedTeams;
     }
 
     /**
@@ -187,7 +199,7 @@ public class ExternalApiCacheFacade {
      * 3. api 없고 db 있음 : db 에서 teamId 값을 null 로 지움(연관관계 끊음)
      * </pre>
      */
-    public void cacheTeamSquad(long teamId) {
+    public List<Player> cacheTeamSquad(long teamId) {
         log.info("cache team squad : {}", teamId);
         Optional<Team> findTeam = teamRepository.findById(teamId);
         Team optionalTeam = null;
@@ -211,9 +223,11 @@ public class ExternalApiCacheFacade {
                 .map(Player::getId)
                 .collect(Collectors.toSet());
 
+        List<Player> cachedPlayers = new ArrayList<>();
+
         // case 1 & 2 : API의 선수를 DB에 업데이트하거나 추가
         for (PlayerData apiPlayer : apiPlayers) {
-            playerRepository.findById(apiPlayer.getId())
+            Player cachedPlayer = playerRepository.findById(apiPlayer.getId())
                     .map(player -> {
                         // API 데이터로 업데이트
                         log.info("Updating player [{} - {}] with new API data.", player.getId(), player.getName());
@@ -227,6 +241,7 @@ public class ExternalApiCacheFacade {
                         newPlayer.setTeam(team); // TeamId 설정
                         return playerRepository.save(newPlayer);
                     });
+            cachedPlayers.add(cachedPlayer);
         }
 
         // case 3 : DB에만 존재하는 선수의 teamId 연관관계 끊기
@@ -239,8 +254,11 @@ public class ExternalApiCacheFacade {
                     playerRepository.save(player);
                 });
 
+        cachedPlayers.addAll(dbPlayers);
         ZonedDateTime now = ZonedDateTime.now();
         lastCacheLogService.saveApiCache(ApiCacheType.SQUAD, Map.of("teamId", teamId), now);
+
+        return cachedPlayers;
     }
 
     /**
@@ -267,23 +285,20 @@ public class ExternalApiCacheFacade {
      * @param leagueId
      * @param season
      */
-    public void cacheFixturesOfLeagueSeason(long leagueId, int season) {
+    public List<Fixture> cacheFixturesOfLeagueSeason(long leagueId, int season) {
         FixtureResponse fixtureResponse = apiCallService.fixturesOfLeagueSeason(leagueId, season);
-        try {
-            log.info("fixture response : {}", jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(fixtureResponse));
-        } catch (JsonProcessingException e) {
-            log.error("error formatting fixture response : {} ", fixtureResponse.toString(), e);
-        }
 
         List<Fixture> fixtures = fixtureResponse.getResponse().stream()
                 .map(this::toFixtureEntity)
                 .toList();
-        fixtureRepository.saveAll(fixtures);
+        List<Fixture> savedFixtures = fixtureRepository.saveAll(fixtures);
 
         lastCacheLogService.saveApiCache(
                 ApiCacheType.FIXTURES_OF_LEAGUE,
                 Map.of("leagueId", leagueId, "season", season),
                 ZonedDateTime.now());
+
+        return savedFixtures;
     }
 
     private static League toLeagueEntity(LeagueInfoResponse.Response leagueResponse) {

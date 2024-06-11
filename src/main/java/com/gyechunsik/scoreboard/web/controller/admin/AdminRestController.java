@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.controller.admin;
 
-import com.gyechunsik.scoreboard.domain.football.external.ExternalApiCacheFacade;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.FavoriteLeagueRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 public class AdminRestController {
 
-    private final ExternalApiCacheFacade externalApiCacheFacade;
+    private final FootballApiCacheService footballApiCacheService;
     private final FavoriteLeagueRepository favoriteLeagueRepository;
 
     @GetMapping("/league/available")

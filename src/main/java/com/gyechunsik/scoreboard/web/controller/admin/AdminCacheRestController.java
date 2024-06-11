@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.controller.admin;
 
-import com.gyechunsik.scoreboard.domain.football.external.ExternalApiCacheFacade;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,12 +19,12 @@ import java.time.LocalDate;
 @RequestMapping("/api/admin/cache")
 public class AdminCacheRestController {
 
-    private final ExternalApiCacheFacade externalApiCacheFacade;
+    private final FootballApiCacheService footballApiCacheService;
 
     @PostMapping("/league")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheLeague(@RequestParam("leagueId") Long leagueId) {
-        externalApiCacheFacade.cacheLeague(leagueId);
+        footballApiCacheService.cacheLeague(leagueId);
         log.info("api league {} cached", leagueId);
         return ResponseEntity.ok().body("cache 성공 league :: EPL, UEFA Champions");
     }
@@ -32,7 +32,7 @@ public class AdminCacheRestController {
     @PostMapping("/team/league")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeamsByLeagueId(@RequestParam("leagueId") Long leagueId) {
-        externalApiCacheFacade.cacheTeams(leagueId);
+        footballApiCacheService.cacheTeamsOfLeague(leagueId);
         log.info("api teams cached of leagueId {}", leagueId);
         return ResponseEntity.ok().body("cache 성공 team :: teams by leagueId");
     }
@@ -40,7 +40,7 @@ public class AdminCacheRestController {
     @PostMapping("/team")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeam(@RequestParam("teamId") Long teamId) {
-        externalApiCacheFacade.cacheTeamAndCurrentLeagues(teamId);
+        footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
         log.info("teamId {} cached. Team and CurrentLeagues of the team", teamId);
         return ResponseEntity.ok().body("cache 성공 team :: Mancity, Manutd");
     }
@@ -48,7 +48,7 @@ public class AdminCacheRestController {
     @PostMapping("/team/squad")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheSquad(@RequestParam("teamId") Long teamId) {
-        externalApiCacheFacade.cacheTeamSquad(teamId);
+        footballApiCacheService.cacheTeamSquad(teamId);
         log.info("teamId {} squad cached", teamId);
         return ResponseEntity.ok().body("cache 성공 league :: Mancity, Manutd");
     }
@@ -56,7 +56,7 @@ public class AdminCacheRestController {
     @PostMapping("/team/leagues")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeamAndCurrentLeagues(@RequestParam("teamId") Long teamId) {
-        externalApiCacheFacade.cacheTeamAndCurrentLeagues(teamId);
+        footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
         log.info("api manutd current seasons cached");
         return ResponseEntity.ok().body("cache 성공 current league seasons of team :: Manutd, Mancity");
     }
@@ -64,7 +64,7 @@ public class AdminCacheRestController {
     @PostMapping("/league/current")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheAllCurrentLeagues() {
-        externalApiCacheFacade.cacheAllCurrentLeagues();
+        footballApiCacheService.cacheAllCurrentLeagues();
         log.info("api All Current Leagues Cached");
         return ResponseEntity.ok().body("cache 성공 All Current League");
     }
@@ -93,7 +93,7 @@ public class AdminCacheRestController {
         log.info("leagueId : {}", leagueId);
         log.info("season : {}", season);
 
-        externalApiCacheFacade.cacheFixturesOfLeagueSeason(leagueId, season);
+        footballApiCacheService.cacheFixturesOfLeagueSeason(leagueId, season);
         log.info("Fixtures of league {} in season {} cached successfully.", leagueId, season);
         return ResponseEntity.ok("Fixtures of league " + leagueId + " in season " + season + " cached successfully.");
     }

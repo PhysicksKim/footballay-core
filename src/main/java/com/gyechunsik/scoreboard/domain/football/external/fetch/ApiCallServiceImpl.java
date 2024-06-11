@@ -47,7 +47,6 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // TODO : 테스트 작성필요
     @Override
     public LeagueInfoResponse teamCurrentLeaguesInfo(long teamId) {
         Request request = new Request.Builder()

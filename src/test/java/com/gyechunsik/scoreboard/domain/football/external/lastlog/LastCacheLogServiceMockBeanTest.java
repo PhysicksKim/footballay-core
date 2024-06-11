@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
-import com.gyechunsik.scoreboard.domain.football.external.ExternalApiCacheFacade;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 class LastCacheLogServiceMockBeanTest {
 
     @Autowired
-    private ExternalApiCacheFacade externalApiCacheFacade;
+    private FootballApiCacheService footballApiCacheService;
 
     @Autowired
     private LeagueRepository leagueRepository;
@@ -74,7 +74,7 @@ class LastCacheLogServiceMockBeanTest {
         log.info("saved player : {}", existingPlayer);
 
         // 여기서는 ApiCallService가 실제로 작동한다고 가정하고 메서드를 직접 호출합니다.
-        externalApiCacheFacade.cacheTeamSquad(team.getId());
+        footballApiCacheService.cacheTeamSquad(team.getId());
 
         // 검증
         Player updatedPlayer = playerRepository.findById(1L).get();
@@ -92,7 +92,7 @@ class LastCacheLogServiceMockBeanTest {
         when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
 
         // cacheTeamSquad() 메서드 실행
-        externalApiCacheFacade.cacheTeamSquad(team.getId());
+        footballApiCacheService.cacheTeamSquad(team.getId());
 
         // 검증
         Optional<Player> newPlayerOptional = playerRepository.findById(2L);
@@ -113,7 +113,7 @@ class LastCacheLogServiceMockBeanTest {
         when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
 
         // cacheTeamSquad() 메서드 실행
-        externalApiCacheFacade.cacheTeamSquad(team.getId());
+        footballApiCacheService.cacheTeamSquad(team.getId());
 
         // 검증
         Optional<Player> disconnectedPlayerOptional = playerRepository.findById(3L);

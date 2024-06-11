@@ -3,7 +3,7 @@ package com.gyechunsik.scoreboard.runner;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
-import com.gyechunsik.scoreboard.domain.football.external.ExternalApiCacheFacade;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FavoriteLeagueRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
@@ -34,7 +34,7 @@ public class DevInitRunner implements ApplicationRunner {
     private final DefaultMatchRepository defaultMatchRepository;
     private final DefaultTeamRepository defaultTeamRepository;
     private final FavoriteLeagueRepository favoriteLeagueRepository;
-    private final ExternalApiCacheFacade externalApiCacheFacade;
+    private final FootballApiCacheService footballApiCacheService;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
@@ -94,12 +94,12 @@ public class DevInitRunner implements ApplicationRunner {
     }
 
     private void cacheEuro2024() {
-        externalApiCacheFacade.cacheLeague(LeagueId.EURO);
-        externalApiCacheFacade.cacheTeams(LeagueId.EURO);
+        footballApiCacheService.cacheLeague(LeagueId.EURO);
+        footballApiCacheService.cacheTeamsOfLeague(LeagueId.EURO);
         for (Long teamId : TeamId.EURO2024TEAMS) {
-            externalApiCacheFacade.cacheTeamSquad(teamId);
+            footballApiCacheService.cacheTeamSquad(teamId);
         }
-        externalApiCacheFacade.cacheFixturesOfLeagueSeason(LeagueId.EURO, 2024);
+        footballApiCacheService.cacheFixturesOfLeagueSeason(LeagueId.EURO, 2024);
         cacheEuro2024FavoriteFixtures();
     }
 
