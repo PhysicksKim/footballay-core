@@ -184,7 +184,7 @@ public class GenerateLeagueTeamFixture {
         return List.of(generateFirstSet(), generateSecondSet());
     }
 
-    public static List<LeagueTeamFixture> generateTwoOtherLeague() {
+    public static List<LeagueTeamFixture> generateTwoOtherLeagues() {
         return List.of(generateFirstSet(), generateThirdSet());
     }
 

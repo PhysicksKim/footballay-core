@@ -5,24 +5,23 @@ import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
 
-@ToString
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
-@IdClass(LeagueTeamId.class)
 public class LeagueTeam {
 
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @ManyToOne
     @JoinColumn(name = "league_id")
-    private League league; // 복합 키의 일부로 사용될 필드
+    private League league;
 
-    @Id
     @ManyToOne
     @JoinColumn(name = "team_id")
-    private Team team; // 복합 키의 일부로 사용될 필드
+    private Team team;
 
     @Override
     public String toString() {

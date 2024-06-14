@@ -70,7 +70,7 @@ public class LastCacheLogDateServiceTest {
         List<LeagueTeam> findLeagueTeams = leagueTeamRepository.findAll();
 
         // log all finds
-        log.info("findLeagues : {}", findLeagues);
+        log.info("getLeagues : {}", findLeagues);
         log.info("findTeams : {}", findTeams);
         log.info("findLeagueTeams : {}", findLeagueTeams);
     }

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.security.Principal;
@@ -26,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @Slf4j
+@ActiveProfiles("mockapi")
 @SpringBootTest
 public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
 

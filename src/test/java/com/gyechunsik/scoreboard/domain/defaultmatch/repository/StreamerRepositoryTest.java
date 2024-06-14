@@ -14,14 +14,13 @@ import static org.assertj.core.api.Assertions.*;
 @DataJpaTest
 class StreamerRepositoryTest {
 
-    // todo : hash 저장해두고 em.clear() 후에 다시 찾는 테스트
     @Autowired
     private StreamerRepository repository;
 
     @Autowired
     private EntityManager em;
 
-    @DisplayName("")
+    @DisplayName("Streamer 저장 시 Hash 값으로 저장합니다")
     @Test
     void hashFind() {
         // given
@@ -41,7 +40,7 @@ class StreamerRepositoryTest {
         // then
         assertThat(hash).isEqualTo(findStreamer.getHash());
         assertThat(save).isEqualTo(findStreamer);
-
+        log.info("스트리머 hash : {}", hash);
     }
 
 }

@@ -9,9 +9,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * TODO : EPL, EURO 를 자동으로 등록 합니다.
- */
 @Repository
 public interface FavoriteLeagueRepository extends JpaRepository<FavoriteLeague, Long> {
 
@@ -20,5 +17,5 @@ public interface FavoriteLeagueRepository extends JpaRepository<FavoriteLeague, 
     Optional<FavoriteLeague> findByLeagueId(Long leagueId);
 
     Page<FavoriteLeague> findByOrderByCreatedDateAsc(Pageable pageable);
-    
+
 }

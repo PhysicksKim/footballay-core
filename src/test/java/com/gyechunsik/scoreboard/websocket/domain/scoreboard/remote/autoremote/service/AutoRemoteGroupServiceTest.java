@@ -14,6 +14,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
@@ -24,6 +25,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
+@ActiveProfiles("mockapi")
 @SpringBootTest
 class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
 

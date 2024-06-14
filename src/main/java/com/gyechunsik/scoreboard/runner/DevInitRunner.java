@@ -76,11 +76,13 @@ public class DevInitRunner implements ApplicationRunner {
                 .leagueId(LeagueId.EPL)
                 .name("England Premier League")
                 .koreanName("잉글랜드 프리미어 리그")
+                .season(2023)
                 .build();
         FavoriteLeague euro = FavoriteLeague.builder()
                 .leagueId(LeagueId.EURO)
                 .name("Euro Championship")
                 .koreanName("유로피언 챔피언쉽")
+                .season(2024)
                 .build();
 
         FavoriteLeague eplSaved = favoriteLeagueRepository.save(epl);

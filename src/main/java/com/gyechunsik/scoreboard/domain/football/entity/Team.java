@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.entity;
 
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +26,12 @@ public class Team {
     private String logo;
 
     @ToString.Exclude
-    @OneToMany(mappedBy = "team")
+    @OneToMany(mappedBy = "team", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<LeagueTeam> leagueTeams;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "team")
+    private List<TeamPlayer> teamPlayers;
 
     public void updateCompare(Team other) {
         if(this.id != other.getId()) return;

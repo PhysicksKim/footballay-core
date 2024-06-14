@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
+import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
@@ -9,6 +10,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-//TODO : 혹시 이미 캐싱된 항목에 다시 캐싱 요청하는 경우에 대한 테스트 필요.
+//TODO : 캐싱 거부 로직 테스트
 @Slf4j
 @Transactional
 @SpringBootTest
@@ -47,6 +49,8 @@ class LastCacheLogServiceMockBeanTest {
     private ApiCallService apiCallService;
 
     private Team team;
+    @Autowired
+    private TeamPlayerRepository teamPlayerRepository;
 
     @BeforeEach
     public void setup() {
@@ -59,7 +63,7 @@ class LastCacheLogServiceMockBeanTest {
         );
     }
 
-    @DisplayName("1. Api 존재 | DB 존재 | 정보 불일치로 업데이트")
+    @DisplayName("1. Api 응답에 존재 | DB 에 존재 | 정보 불일치로 업데이트")
     @Test
     public void whenPlayerExistsInApiAndDb_thenUpdatePlayer() {
         // Mock API 데이터 생성
@@ -68,12 +72,18 @@ class LastCacheLogServiceMockBeanTest {
         when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
 
         // DB에 선수 데이터 사전 등록
-        Player existingPlayer = new Player(1L, "Player One", null, "photoUrl", "Midfielder", team);
+        // Player existingPlayer = new Player(1L, "Player One", null, "photoUrl", "Midfielder",);
+        Player existingPlayer = Player.builder()
+                .id(1L)
+                .name("Player One")
+                .photoUrl("photoUrl")
+                .position("Midfielder")
+                .build();
+
         playerRepository.save(existingPlayer);
         log.info("saved team : {}", team);
         log.info("saved player : {}", existingPlayer);
 
-        // 여기서는 ApiCallService가 실제로 작동한다고 가정하고 메서드를 직접 호출합니다.
         footballApiCacheService.cacheTeamSquad(team.getId());
 
         // 검증
@@ -83,7 +93,7 @@ class LastCacheLogServiceMockBeanTest {
     }
 
 
-    @DisplayName("2. Api 존재 | DB 없음 | 새로운 선수 업데이트")
+    @DisplayName("2. Api 응답에 존재 | DB 에 없음 | 새로운 선수 업데이트")
     @Test
     public void whenPlayerExistsInApiAndNotInDb_thenAddPlayerToDb() {
         // Mock API 데이터 생성
@@ -101,12 +111,19 @@ class LastCacheLogServiceMockBeanTest {
         assertEquals("Midfielder", newPlayerOptional.get().getPosition());
     }
 
-    @DisplayName("3. Api 없음 | DB 존재 | 다른 팀으로 옮긴 선수로 판단하고 연관관계 끊음")
+    @DisplayName("3. Api 응답에 없음 | DB 응답에 존재 | 다른 팀으로 옮긴 선수로 판단하고 연관관계 끊음")
     @Test
     public void whenPlayerNotInApiAndExistsInDb_thenDisconnectTeamRelation() {
         // DB에 선수 데이터 사전 등록
-        Player existingPlayer = new Player(3L, "Player Three", null, "photoUrl", "Defender", team);
+        Player existingPlayer = Player.builder()
+                .id(3L)
+                .name("Player Three")
+                .koreanName(null)
+                .photoUrl("photoUrl")
+                .position("Defender")
+                .build();
         playerRepository.save(existingPlayer);
+        teamPlayerRepository.save(TeamPlayer.builder().team(team).player(existingPlayer).build());
 
         // Mock API 데이터 생성 (빈 목록)
         PlayerSquadResponse mockPlayerSquadResponse = createMockPlayerSquadResponse();
@@ -118,7 +135,7 @@ class LastCacheLogServiceMockBeanTest {
         // 검증
         Optional<Player> disconnectedPlayerOptional = playerRepository.findById(3L);
         assertTrue(disconnectedPlayerOptional.isPresent());
-        assertNull(disconnectedPlayerOptional.get().getTeam());
+        assertNull(disconnectedPlayerOptional.get().getTeamPlayers());
     }
 
     private PlayerSquadResponse createMockPlayerSquadResponse(PlayerData... playerDatas) {

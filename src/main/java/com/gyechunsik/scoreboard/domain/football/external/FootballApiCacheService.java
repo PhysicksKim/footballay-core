@@ -16,9 +16,11 @@ import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,8 +41,9 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
  * </pre>
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
+@Transactional
+@Service
 public class FootballApiCacheService {
 
     // TODO : LastCacheLog 에 따라서 캐싱 거부 로직 향후 추가
@@ -54,6 +57,7 @@ public class FootballApiCacheService {
     private final LeagueTeamRepository leagueTeamRepository;
     private final ObjectMapper jacksonObjectMapper;
     private final FixtureRepository fixtureRepository;
+    private final TeamPlayerRepository teamPlayerRepository;
 
     /**
      * 리그 아이디로 리그 정보를 캐싱합니다. 직접 리그 아이디를 외부 API 에서 찾아와야 합니다.
@@ -112,6 +116,7 @@ public class FootballApiCacheService {
                     .team(iterTeam)
                     .build();
             LeagueTeam savedLeagueTeam = leagueTeamRepository.save(leagueTeam);
+            log.info("LeagueTeam saved : {}", savedLeagueTeam);
         }
 
         return savedTeams;
@@ -218,7 +223,7 @@ public class FootballApiCacheService {
                 .map(PlayerData::getId)
                 .collect(Collectors.toSet());
 
-        List<Player> dbPlayers = playerRepository.findAllByTeamId(teamId);
+        List<Player> dbPlayers = playerRepository.findAllByTeam(teamId);
         Set<Long> dbPlayerIds = dbPlayers.stream()
                 .map(Player::getId)
                 .collect(Collectors.toSet());
@@ -237,9 +242,7 @@ public class FootballApiCacheService {
                     .orElseGet(() -> {
                         // DB에 없는 경우 새로 추가
                         log.info("Adding new player [{} - {}] to DB.", apiPlayer.getId(), apiPlayer.getName());
-                        Player newPlayer = new Player(apiPlayer);
-                        newPlayer.setTeam(team); // TeamId 설정
-                        return playerRepository.save(newPlayer);
+                        return playerRepository.save(new Player(apiPlayer));
                     });
             cachedPlayers.add(cachedPlayer);
         }
@@ -250,11 +253,18 @@ public class FootballApiCacheService {
                 .filter(player -> dbPlayerIds.contains(player.getId()))
                 .forEach(player -> {
                     log.info("Player [{},{}] team relationship disconnected", player.getId(), player.getName());
-                    player.setTeam(null); // TeamId 연관관계 끊기
+                    // TeamId 연관관계 끊기
+                    teamPlayerRepository.deleteByTeamAndPlayer(team, player);
                     playerRepository.save(player);
                 });
 
+        // TeamPlayer 연관관계 설정
+        cachedPlayers.forEach(player -> {
+            teamPlayerRepository.save(player.toTeamPlayer(team));
+        });
         cachedPlayers.addAll(dbPlayers);
+
+        // 캐싱 날짜 저장
         ZonedDateTime now = ZonedDateTime.now();
         lastCacheLogService.saveApiCache(ApiCacheType.SQUAD, Map.of("teamId", teamId), now);
 
