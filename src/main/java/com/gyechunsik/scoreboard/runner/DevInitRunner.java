@@ -15,6 +15,7 @@ import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultMatchRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultTeamRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.StreamerRepository;
+import com.gyechunsik.scoreboard.domain.quartz.SchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -22,6 +23,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -36,6 +38,8 @@ public class DevInitRunner implements ApplicationRunner {
     private final FavoriteLeagueRepository favoriteLeagueRepository;
     private final FootballApiCacheService footballApiCacheService;
 
+    private final SchedulerService schedulerService;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
         Streamer gyechunhoe = saveGyechunhoe();
@@ -46,6 +50,9 @@ public class DevInitRunner implements ApplicationRunner {
         log.info("Streamer :: {}", gyechunhoe);
         log.info("DefaultMatch :: {}", defaultMatch);
         log.info("DefaultTeams :: {}", defaultTeams);
+
+        // schedulerService.start();
+        // log.info("스케쥴러 시작 , 10분 후 SimpleJob 실행 , {} ", LocalDateTime.now().plusMinutes(10));
     }
 
     private Streamer saveGyechunhoe() {

@@ -51,6 +51,9 @@ dependencies {
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     annotationProcessor 'org.projectlombok:lombok'
 
+    // Quartz
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
     // 테스트 관련
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 

@@ -27,6 +27,27 @@ spring:
       port: 6379
       password: 1234
 
+
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: MyScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            tablePrefix: QRTZ_
+            isClustered: false
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+
+
 server:
   port: 8083
   ssl:
