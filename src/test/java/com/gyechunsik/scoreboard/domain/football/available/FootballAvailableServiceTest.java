@@ -1,8 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.available;
 
 import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableRefacService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 class FootballAvailableServiceTest {
 
     @Autowired
-    private FootballAvailableService footballAvailableService;
+    private FootballAvailableRefacService footballAvailableRefacService;
 
     @Autowired
     private LeagueRepository leagueRepository;
@@ -50,17 +50,26 @@ class FootballAvailableServiceTest {
                 .build();
         League save = leagueRepository.save(league);
 
+        em.flush();
+        em.clear();
+
         // when
-        AvailableLeague availableLeague = footballAvailableService.addFavoriteLeague(save);
+        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
+        List<League> availableLeague = footballAvailableRefacService.getAvailableLeagues();
 
         // then
         assertThat(availableLeague).isNotNull();
-        assertThat(availableLeague.getLeagueId()).isEqualTo(leagueId);
-        assertThat(availableLeague.getName()).isEqualTo(name);
+        assertThat(availableLeague).hasSize(1);
+        League findLeague = availableLeague.get(0);
+        assertThat(findLeague.getLeagueId()).isEqualTo(leagueId);
+        assertThat(findLeague.getName()).isEqualTo(name);
+        assertThat(findLeague.getKoreanName()).isEqualTo(koreanName);
+        assertThat(findLeague.getLogo()).isEqualTo(logo);
+        assertThat(findLeague.getCurrentSeason()).isEqualTo(currentSeason);
     }
 
     @Transactional
-    @DisplayName("즐겨찾는 리그를 조회합니다")
+    @DisplayName("여러 개의 즐겨찾는 리그를 조회합니다")
     @Test
     void findFavoriteLeagues() {
         // given
@@ -93,25 +102,32 @@ class FootballAvailableServiceTest {
 
         League save1 = leagueRepository.save(league1);
         League save2 = leagueRepository.save(league2);
-        AvailableLeague availableLeague1 = footballAvailableService.addFavoriteLeague(save1);
-        AvailableLeague availableLeague2 = footballAvailableService.addFavoriteLeague(save2);
+        footballAvailableRefacService.updateAvailableLeague(leagueId1, true);
+        footballAvailableRefacService.updateAvailableLeague(leagueId2, true);
+
+        em.flush();
+        em.clear();
 
         // when
-        List<AvailableLeague> oneAvailableLeague = footballAvailableService.getFavoriteLeagues(1);
-        List<AvailableLeague> twoAvailableLeagues = footballAvailableService.getFavoriteLeagues(2);
-        List<AvailableLeague> ThreeButExistTwoFavorite = footballAvailableService.getFavoriteLeagues(3);
-
-        log.info("singleFavoriteLeague :: {}", oneAvailableLeague);
-        log.info("twoAvailableLeagues :: {}", twoAvailableLeagues);
-        log.info("ThreeButExistTwoFavorite :: {}", ThreeButExistTwoFavorite);
+        List<League> availableLeagues = footballAvailableRefacService.getAvailableLeagues();
+        log.info("availableLeagues :: {}", availableLeagues);
 
         // then
-        assertThat(oneAvailableLeague).isNotNull();
-        assertThat(twoAvailableLeagues).isNotNull();
-        assertThat(ThreeButExistTwoFavorite).isNotNull();
-        assertThat(oneAvailableLeague).hasSize(1);
-        assertThat(twoAvailableLeagues).hasSize(2);
-        assertThat(ThreeButExistTwoFavorite).hasSize(2);
+        assertThat(availableLeagues).isNotNull();
+        assertThat(availableLeagues).hasSize(2);
+        availableLeagues.forEach(league -> {
+            if (league.getLeagueId().equals(leagueId1)) {
+                assertThat(league.getName()).isEqualTo(name1);
+                assertThat(league.getKoreanName()).isEqualTo(koreanName1);
+                assertThat(league.getLogo()).isEqualTo(logo1);
+                assertThat(league.getCurrentSeason()).isEqualTo(currentSeason1);
+            } else if (league.getLeagueId().equals(leagueId2)) {
+                assertThat(league.getName()).isEqualTo(name2);
+                assertThat(league.getKoreanName()).isEqualTo(koreanName2);
+                assertThat(league.getLogo()).isEqualTo(logo2);
+                assertThat(league.getCurrentSeason()).isEqualTo(currentSeason2);
+            }
+        });
     }
 
     @Transactional
@@ -133,21 +149,18 @@ class FootballAvailableServiceTest {
                 .currentSeason(currentSeason)
                 .build();
         League save = leagueRepository.save(league);
-        AvailableLeague addAvailableLeague = footballAvailableService.addFavoriteLeague(save);
+        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
 
         em.flush();
         em.clear();
 
         // when
-        AvailableLeague findAvailableLeague = footballAvailableService.findFavoriteLeague(leagueId);
-        boolean removeFavoriteLeague = footballAvailableService.removeFavoriteLeague(leagueId);
+        footballAvailableRefacService.updateAvailableLeague(leagueId, false);
+        List<League> availableLeagues = footballAvailableRefacService.getAvailableLeagues();
 
         // then
-        assertThat(addAvailableLeague).isNotNull();
-        assertThat(findAvailableLeague).isNotNull();
-        assertThat(removeFavoriteLeague).isTrue();
-        assertThatThrownBy(() -> footballAvailableService.findFavoriteLeague(leagueId))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(availableLeagues).isNotNull();
+        assertThat(availableLeagues).hasSize(0);
     }
 
 }

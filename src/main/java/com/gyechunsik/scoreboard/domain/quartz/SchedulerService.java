@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.quartz;
 
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.query.sqm.TemporalUnit;
 import org.quartz.*;
@@ -13,13 +14,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class SchedulerService {
 
-    @Autowired
-    private Scheduler scheduler;
+    private final Scheduler scheduler;
 
-    @PostConstruct
     public void start() {
         try {
             JobDetail jobDetail = JobBuilder.newJob(SimpleJob.class)
@@ -27,15 +27,15 @@ public class SchedulerService {
                     .build();
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("simpleTrigger", "group1")
-                    .startAt(Date.from(Instant.now().plus(1, ChronoUnit.MINUTES)))
+                    .startAt(Date.from(Instant.now().plus(5, ChronoUnit.SECONDS)))
                     .withSchedule(SimpleScheduleBuilder.simpleSchedule()
-                            .withIntervalInSeconds(10)
+                            .withIntervalInSeconds(5)
                             .repeatForever())
                     .build();
 
             scheduler.scheduleJob(jobDetail, trigger);
 
-            log.info("스케쥴러 시작 , 10분 후 SimpleJob 실행 , {} ", LocalDateTime.now().plusMinutes(1));
+            log.info("스케쥴러 시작 , 5초 후 SimpleJob 실행 , 5초 간격으로 실행, 최초 실행 {} ", LocalDateTime.now().plusSeconds(5));
         } catch (SchedulerException e) {
             e.printStackTrace();
         }

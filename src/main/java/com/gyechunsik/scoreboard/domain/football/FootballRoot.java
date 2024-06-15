@@ -1,19 +1,19 @@
 package com.gyechunsik.scoreboard.domain.football;
 
-import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.domain.football.available.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableRefacService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Slf4j
@@ -21,12 +21,10 @@ import java.util.List;
 @Service
 public class FootballRoot {
 
-    private final FootballAvailableService footballAvailableService;
-
-    private final LeagueRepository leagueRepository;
-
     private final FootballApiCacheService footballApiCacheService;
     private final FootballDataService footballDataService;
+    private final FootballAvailableRefacService footballAvailableRefacService;
+    private final LeagueRepository leagueRepository;
 
     public List<League> getLeagues() {
         List<League> leagues;
@@ -97,22 +95,18 @@ public class FootballRoot {
         }
         return fixtures;
     }
-
-    public AvailableLeague addFavoriteLeague(long leagueId) {
+    //
+    public League addAvailableLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
 
-        AvailableLeague availableLeague = footballAvailableService.addFavoriteLeague(league);
-        log.info("addFavoriteLeague :: {}", availableLeague);
-        return availableLeague;
+        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
+
+        return league;
     }
 
-    public List<AvailableLeague> getFavoriteLeagues() {
-        return footballAvailableService.getFavoriteLeagues();
-    }
-
-    public List<AvailableLeague> getFavoriteLeagues(int count) {
-        return footballAvailableService.getFavoriteLeagues(count);
+    public List<League> getAvailableLeagues() {
+        return footballAvailableRefacService.getAvailableLeagues();
     }
 
     /**
@@ -120,8 +114,36 @@ public class FootballRoot {
      * @param leagueId
      * @return 존재하지 않는 경우 false 를 반환합니다.
      */
-    public boolean removeFavoriteLeague(long leagueId) {
-        return footballAvailableService.removeFavoriteLeague(leagueId);
+    public boolean removeAvailableLeague(long leagueId) {
+        try {
+            footballAvailableRefacService.updateAvailableLeague(leagueId, false);
+        } catch (Exception e) {
+            log.error("error while removing Available League :: {}", e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public Fixture addAvailableFixture(long fixtureId) {
+        Fixture fixture = footballDataService.getFixtureById(fixtureId);
+        footballAvailableRefacService.updateAvailableFixture(fixtureId, true);
+        log.info("Add Available fixture :: {}", fixture);
+        return fixture;
+    }
+
+    public List<Fixture> getAvailableFixtures(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        return footballAvailableRefacService.getAvailableFixturesFromDate(leagueId, truncated);
+    }
+
+    public boolean removeAvailableFixture(long fixtureId) {
+        try {
+            footballAvailableRefacService.updateAvailableFixture(fixtureId, false);
+        } catch (Exception e) {
+            log.error("error while removing Available Fixture :: {}", e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     public boolean cacheAllCurrentLeagues() {

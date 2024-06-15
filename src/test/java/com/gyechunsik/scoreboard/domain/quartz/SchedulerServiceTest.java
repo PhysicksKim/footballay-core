@@ -14,10 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class SchedulerServiceTest {
 
     @Autowired
-    private Scheduler scheduler;
+    private SchedulerService schedulerService;
 
     @Test
     public void testScheduler() throws Exception {
-        Thread.sleep(30000); // 30초 동안 대기하며 SimpleJob의 실행을 확인합니다.
+        schedulerService.start();
+        Thread.sleep(15000); // 30초 동안 대기하며 SimpleJob의 실행을 확인합니다.
     }
 }

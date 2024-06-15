@@ -22,4 +22,13 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     @Query("SELECT f FROM Fixture f WHERE f.date = " +
             "(SELECT MIN(f2.date) FROM Fixture f2 WHERE f2.date >= :date)")
     List<Fixture> findNextFixturesAfterDate(@Param("date") ZonedDateTime date);
+
+    /**
+     * 이용 가능한 fixture 를 조회합니다. leagueId , isAvailable , date 로 조회
+     * 해당 리그의 date 이후의 이용 가능한 fixture 를 조회합니다.
+     * 이를 위해 Index ( leagueId , isAvailable , date ) 로 생성합니다.
+     */
+    @Query("SELECT f FROM Fixture f WHERE f.league.leagueId = :leagueId AND f.available = true AND f.date >= :date")
+    List<Fixture> findAvailableFixturesByLeagueIdAndDate(@Param("leagueId") Long leagueId, @Param("date") ZonedDateTime date);
+
 }

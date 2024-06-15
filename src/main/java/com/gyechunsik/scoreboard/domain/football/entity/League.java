@@ -4,10 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,12 +26,14 @@ public class League extends BaseDateAuditEntity {
     private String koreanName;
     private String logo;
 
-    @Column(name = "current_season", nullable = true)
+    @Builder.Default
+    private boolean available = false;
+
+    @Column(nullable = true)
     private Integer currentSeason;
 
     @ToString.Exclude
     @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
-    @LazyCollection(LazyCollectionOption.EXTRA)
     private List<LeagueTeam> leagueTeams;
 
 

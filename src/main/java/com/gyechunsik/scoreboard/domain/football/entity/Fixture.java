@@ -3,7 +3,6 @@ package com.gyechunsik.scoreboard.domain.football.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
 @Entity
@@ -12,7 +11,6 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "fixtures")
 public class Fixture {
 
     @Id
@@ -23,8 +21,8 @@ public class Fixture {
     private ZonedDateTime date;
     private Long timestamp;
 
-    @Column(nullable = false)
-    private Boolean available = false;
+    @Builder.Default
+    private boolean available = false;
 
     @Embedded
     private Status status;

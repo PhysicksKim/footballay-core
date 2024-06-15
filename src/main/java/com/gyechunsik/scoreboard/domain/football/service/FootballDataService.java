@@ -72,6 +72,11 @@ public class FootballDataService {
         return this.getFixturesOfLeagueAfterDate(leagueId, ZonedDateTime.now());
     }
 
+    public Fixture getFixtureById(long fixtureId) {
+        return fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+    }
+
     public List<Fixture> getFixturesOfLeagueAfterDate(long leagueId, ZonedDateTime zonedDateTime) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);

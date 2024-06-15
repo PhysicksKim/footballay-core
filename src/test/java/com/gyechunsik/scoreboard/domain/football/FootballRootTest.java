@@ -7,7 +7,6 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -23,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +38,7 @@ class FootballRootTest {
 
     @Autowired
     private FootballRoot footballRoot;
+
     @Autowired
     private LeagueTeamRepository leagueTeamRepository;
     @Autowired
@@ -46,13 +47,12 @@ class FootballRootTest {
     private PlayerRepository playerRepository;
     @Autowired
     private FixtureRepository fixtureRepository;
-    @Autowired
-    private TeamRepository teamRepository;
 
     @Autowired
     private EntityManager em;
+    @Autowired
+    private TeamRepository teamRepository;
 
-    @Disabled
     @Test
     @DisplayName("리그를 ID로 캐싱합니다")
     void successCacheLeagueById() {
@@ -70,7 +70,6 @@ class FootballRootTest {
         assertThat(leagueOptional.get().getLeagueId()).isEqualTo(leagueId);
     }
 
-    @Disabled
     @Test
     @DisplayName("리그에 속한 모든 팀을 캐싱합니다")
     void successAllTeamsOfLeagueByLeagueId() {
@@ -93,7 +92,6 @@ class FootballRootTest {
         assertThat(all.get(0).getTeam().getName()).isNotNull();
     }
 
-    @Disabled
     @Test
     @DisplayName("팀의 선수 명단을 캐싱합니다")
     void successCacheSquadOfATeamByTeamId() {
@@ -106,6 +104,9 @@ class FootballRootTest {
         // when
         boolean isSuccess = footballRoot.cacheSquadOfTeam(teamId);
 
+        em.flush();
+        em.clear();
+
         // then
         playerRepository.findAllByTeam(teamId).forEach(player -> {
             log.info("Player : {}", player);
@@ -115,7 +116,6 @@ class FootballRootTest {
         assertThat(isSuccess).isTrue();
     }
 
-    @Disabled
     @Test
     @DisplayName("리그의 현재 시즌의 모든 경기 일정을 캐싱합니다")
     void successCacheAllFixturesOfCurrentSeasonOfALeagueByLeagueId() {
@@ -167,6 +167,7 @@ class FootballRootTest {
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
 
+        // leagueTeams 연관관계 collection 을 채우기 위해 1차 캐시 flush clear 해야합니다
         em.flush();
         em.clear();
 
@@ -194,6 +195,7 @@ class FootballRootTest {
         footballRoot.cacheTeamsOfLeague(leagueId);
         footballRoot.cacheSquadOfTeam(teamId);
 
+        // leagueTeams 연관관계 collection 을 채우기 위해 1차 캐시 flush clear 해야합니다
         em.flush();
         em.clear();
 
@@ -235,16 +237,16 @@ class FootballRootTest {
 
     @Test
     @DisplayName("리그를 즐겨찾기에 추가하고 조회합니다")
-    void successAddFavoriteLeagueByLeagueId() {
+    void successAddAvailableLeagueByLeagueId() {
         // given
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
 
         // when
-        footballRoot.addFavoriteLeague(leagueId);
+        footballRoot.addAvailableLeague(leagueId);
 
         // then
-        List<AvailableLeague> availableLeagues = footballRoot.getFavoriteLeagues();
+        List<League> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isNotEmpty();
         assertThat(availableLeagues).hasSize(1);
         assertThat(availableLeagues.get(0).getLeagueId()).isEqualTo(leagueId);
@@ -252,17 +254,17 @@ class FootballRootTest {
 
     @Test
     @DisplayName("리그를 즐겨찾기에서 삭제합니다")
-    void successRemoveFavoriteLeagueByLeagueId() {
+    void successRemoveAvailableLeagueByLeagueId() {
         // given
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
-        footballRoot.addFavoriteLeague(leagueId);
+        footballRoot.addAvailableLeague(leagueId);
 
         // when
-        footballRoot.removeFavoriteLeague(leagueId);
+        footballRoot.removeAvailableLeague(leagueId);
 
         // then
-        List<AvailableLeague> availableLeagues = footballRoot.getFavoriteLeagues();
+        List<League> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isEmpty();
     }
 
@@ -270,21 +272,93 @@ class FootballRootTest {
     @DisplayName("이용 가능한 경기 일정을 추가합니다")
     void successAddAvailableFixture() {
         // given
+        LeagueTeamFixture leagueTeamFixture = generate();
+        League league = leagueTeamFixture.league;
+        Team homeTeam = leagueTeamFixture.home;
+        Team awayTeam = leagueTeamFixture.away;
+        Fixture fixture = leagueTeamFixture.fixture;
+        leagueRepository.save(league);
+        teamRepository.saveAll(List.of(homeTeam, awayTeam));
+        LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
+        LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
+        leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
+        fixtureRepository.save(fixture);
 
+        em.flush();
+        em.clear();
 
+        // when
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+
+        // then
+        assertThat(addAvailableFixture.isAvailable()).isTrue();
     }
 
     @Test
     @DisplayName("이용 가능한 경기 일정을 조회합니다")
     void successGetAvailableFixtures() {
+        // given
+        LeagueTeamFixture leagueTeamFixture = generate();
+        League league = leagueTeamFixture.league;
+        Team homeTeam = leagueTeamFixture.home;
+        Team awayTeam = leagueTeamFixture.away;
+        Fixture fixture = leagueTeamFixture.fixture;
+        leagueRepository.save(league);
+        teamRepository.saveAll(List.of(homeTeam, awayTeam));
+        LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
+        LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
+        leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
+        fixtureRepository.save(fixture);
 
+        em.flush();
+        em.clear();
+
+        // when
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+        List<Fixture> availableFixtures = footballRoot.getAvailableFixtures(
+                league.getLeagueId(),
+                ZonedDateTime.of(2023,1,1,0,0,0,0, ZoneId.systemDefault()));
+
+        // then
+        assertThat(addAvailableFixture.isAvailable()).isTrue();
+        assertThat(availableFixtures).isNotEmpty();
+        assertThat(availableFixtures).hasSize(1);
+        assertThat(availableFixtures.get(0).getFixtureId()).isEqualTo(fixture.getFixtureId());
     }
 
     @Test
     @DisplayName("이용 가능한 경기 일정을 삭제합니다")
     void successRemoveAvailableFixture() {
+        // given
+        LeagueTeamFixture leagueTeamFixture = generate();
+        League league = leagueTeamFixture.league;
+        Team homeTeam = leagueTeamFixture.home;
+        Team awayTeam = leagueTeamFixture.away;
+        Fixture fixture = leagueTeamFixture.fixture;
+        leagueRepository.save(league);
+        teamRepository.saveAll(List.of(homeTeam, awayTeam));
+        LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
+        LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
+        leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
+        fixtureRepository.save(fixture);
 
+        em.flush();
+        em.clear();
+
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+
+        em.flush();
+        em.clear();
+
+        // when
+        boolean isSuccess = footballRoot.removeAvailableFixture(fixture.getFixtureId());
+
+        // then
+        assertThat(addAvailableFixture.isAvailable()).isTrue();
+        assertThat(isSuccess).isTrue();
+        fixtureRepository.findById(fixture.getFixtureId()).ifPresent(f -> {
+            assertThat(f.isAvailable()).isFalse();
+        });
     }
-
 
 }

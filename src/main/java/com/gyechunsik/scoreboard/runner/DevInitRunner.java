@@ -1,10 +1,8 @@
 package com.gyechunsik.scoreboard.runner;
 
-import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.domain.football.repository.FavoriteLeagueRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.Streamer;
@@ -34,7 +32,6 @@ public class DevInitRunner implements ApplicationRunner {
     private final StreamerRepository streamerRepository;
     private final DefaultMatchRepository defaultMatchRepository;
     private final DefaultTeamRepository defaultTeamRepository;
-    private final FavoriteLeagueRepository favoriteLeagueRepository;
     private final FootballApiCacheService footballApiCacheService;
 
     private final SchedulerService schedulerService;
@@ -44,7 +41,6 @@ public class DevInitRunner implements ApplicationRunner {
         Streamer gyechunhoe = saveGyechunhoe();
         DefaultMatch defaultMatch = saveEpl2324Round30(gyechunhoe);
         List<DefaultTeam> defaultTeams = saveTeamATeamB(gyechunhoe);
-        saveDefaultFavoriteLeagues();
 
         log.info("Streamer :: {}", gyechunhoe);
         log.info("DefaultMatch :: {}", defaultMatch);
@@ -75,26 +71,6 @@ public class DevInitRunner implements ApplicationRunner {
                 DefaultUniform.away,
                 streamer);
         return defaultTeamRepository.saveAll(List.of(teamA, teamB));
-    }
-
-    private List<AvailableLeague> saveDefaultFavoriteLeagues() {
-        AvailableLeague epl = AvailableLeague.builder()
-                .leagueId(LeagueId.EPL)
-                .name("England Premier League")
-                .build();
-        AvailableLeague euro = AvailableLeague.builder()
-                .leagueId(LeagueId.EURO)
-                .name("Euro Championship")
-                .build();
-
-        AvailableLeague eplSaved = favoriteLeagueRepository.save(epl);
-        AvailableLeague euroSaved = favoriteLeagueRepository.save(euro);
-
-        // log
-        log.info("AvailableLeague :: {}", eplSaved);
-        log.info("AvailableLeague :: {}", euroSaved);
-
-        return List.of(epl, euro);
     }
 
     private void cacheEuro2024() {
