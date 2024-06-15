@@ -1,13 +1,12 @@
 package com.gyechunsik.scoreboard.domain.football;
 
+import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.domain.football.favorite.FavoriteService;
-import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
-import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.available.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +21,7 @@ import java.util.List;
 @Service
 public class FootballRoot {
 
-    private final FavoriteService favoriteService;
+    private final FootballAvailableService footballAvailableService;
 
     private final LeagueRepository leagueRepository;
 
@@ -99,21 +98,21 @@ public class FootballRoot {
         return fixtures;
     }
 
-    public FavoriteLeague addFavoriteLeague(long leagueId) {
+    public AvailableLeague addFavoriteLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
 
-        FavoriteLeague favoriteLeague = favoriteService.addFavoriteLeague(league);
-        log.info("addFavoriteLeague :: {}", favoriteLeague);
-        return favoriteLeague;
+        AvailableLeague availableLeague = footballAvailableService.addFavoriteLeague(league);
+        log.info("addFavoriteLeague :: {}", availableLeague);
+        return availableLeague;
     }
 
-    public List<FavoriteLeague> getFavoriteLeagues() {
-        return favoriteService.getFavoriteLeagues();
+    public List<AvailableLeague> getFavoriteLeagues() {
+        return footballAvailableService.getFavoriteLeagues();
     }
 
-    public List<FavoriteLeague> getFavoriteLeagues(int count) {
-        return favoriteService.getFavoriteLeagues(count);
+    public List<AvailableLeague> getFavoriteLeagues(int count) {
+        return footballAvailableService.getFavoriteLeagues(count);
     }
 
     /**
@@ -122,7 +121,18 @@ public class FootballRoot {
      * @return 존재하지 않는 경우 false 를 반환합니다.
      */
     public boolean removeFavoriteLeague(long leagueId) {
-        return favoriteService.removeFavoriteLeague(leagueId);
+        return footballAvailableService.removeFavoriteLeague(leagueId);
+    }
+
+    public boolean cacheAllCurrentLeagues() {
+        try {
+            footballApiCacheService.cacheAllCurrentLeagues();
+            log.info("cachedAllCurrentLeagues");
+        } catch (Exception e) {
+            log.error("error while caching All Current Leagues :: {}", e.getMessage());
+            return false;
+        }
+        return true;
     }
 
     public boolean cacheLeagueById(long leagueId) {
@@ -168,8 +178,7 @@ public class FootballRoot {
      */
     public boolean cacheAllFixturesOfLeague(long leagueId) {
         try {
-            League league = footballDataService.findLeagueById(leagueId);
-            List<Fixture> fixtures = footballApiCacheService.cacheFixturesOfLeagueSeason(leagueId, league.getCurrentSeason());
+            List<Fixture> fixtures = footballApiCacheService.cacheFixturesOfLeague(leagueId);
             log.info("cachedAllFixturesOfLeague :: {}", leagueId);
             log.info("cached fixtures :: {}",
                     fixtures.stream().map(Fixture::getFixtureId).toList());

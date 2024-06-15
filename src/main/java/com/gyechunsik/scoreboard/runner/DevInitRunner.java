@@ -1,8 +1,8 @@
 package com.gyechunsik.scoreboard.runner;
 
+import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FavoriteLeagueRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
@@ -23,7 +23,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -78,26 +77,22 @@ public class DevInitRunner implements ApplicationRunner {
         return defaultTeamRepository.saveAll(List.of(teamA, teamB));
     }
 
-    private List<FavoriteLeague> saveDefaultFavoriteLeagues() {
-        FavoriteLeague epl = FavoriteLeague.builder()
+    private List<AvailableLeague> saveDefaultFavoriteLeagues() {
+        AvailableLeague epl = AvailableLeague.builder()
                 .leagueId(LeagueId.EPL)
                 .name("England Premier League")
-                .koreanName("잉글랜드 프리미어 리그")
-                .season(2023)
                 .build();
-        FavoriteLeague euro = FavoriteLeague.builder()
+        AvailableLeague euro = AvailableLeague.builder()
                 .leagueId(LeagueId.EURO)
                 .name("Euro Championship")
-                .koreanName("유로피언 챔피언쉽")
-                .season(2024)
                 .build();
 
-        FavoriteLeague eplSaved = favoriteLeagueRepository.save(epl);
-        FavoriteLeague euroSaved = favoriteLeagueRepository.save(euro);
+        AvailableLeague eplSaved = favoriteLeagueRepository.save(epl);
+        AvailableLeague euroSaved = favoriteLeagueRepository.save(euro);
 
         // log
-        log.info("FavoriteLeague :: {}", eplSaved);
-        log.info("FavoriteLeague :: {}", euroSaved);
+        log.info("AvailableLeague :: {}", eplSaved);
+        log.info("AvailableLeague :: {}", euroSaved);
 
         return List.of(epl, euro);
     }
@@ -108,7 +103,7 @@ public class DevInitRunner implements ApplicationRunner {
         for (Long teamId : TeamId.EURO2024TEAMS) {
             footballApiCacheService.cacheTeamSquad(teamId);
         }
-        footballApiCacheService.cacheFixturesOfLeagueSeason(LeagueId.EURO, 2024);
+        footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
         cacheEuro2024FavoriteFixtures();
     }
 

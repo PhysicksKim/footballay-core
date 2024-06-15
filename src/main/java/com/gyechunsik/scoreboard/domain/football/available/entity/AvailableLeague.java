@@ -1,14 +1,16 @@
-package com.gyechunsik.scoreboard.domain.football.favorite.entity;
+package com.gyechunsik.scoreboard.domain.football.available.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 자주 찾는 리그 id 들을 지정해둡니다.
- * FK 를 등록하지 않고 독립적으로 둡니다.
+ * 이용 가능한 리그 id 들을 지정해둡니다.
+ * 수정 삭제 편의를 위해 FK 를 등록하지 않고 독립적으로 둡니다.
  */
 @Entity
 @Slf4j
@@ -18,8 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "FAVORITE_LEAGUES")
-public class FavoriteLeague extends BaseDateAuditEntity {
+public class AvailableLeague extends BaseDateAuditEntity{
 
     @JsonIgnore
     @Id
@@ -30,11 +31,8 @@ public class FavoriteLeague extends BaseDateAuditEntity {
     private Long leagueId;
 
     @Column(nullable = false)
-    private Integer season;
-
-    @Column(nullable = false)
     private String name;
-    @Column(nullable = true)
-    private String koreanName;
 
+    // @OneToOne
+    // private League league;
 }

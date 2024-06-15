@@ -23,6 +23,9 @@ public class Fixture {
     private ZonedDateTime date;
     private Long timestamp;
 
+    @Column(nullable = false)
+    private Boolean available = false;
+
     @Embedded
     private Status status;
 

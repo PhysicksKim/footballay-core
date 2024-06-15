@@ -1,36 +1,36 @@
-package com.gyechunsik.scoreboard.domain.football.favorite;
+package com.gyechunsik.scoreboard.domain.football.available;
 
+import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.FavoriteLeagueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Slf4j
+@Transactional
 @RequiredArgsConstructor
 @Service
-public class FavoriteService {
+public class FootballAvailableService {
 
     private final FavoriteLeagueRepository favoriteLeagueRepository;
 
     private static final int DEFAULT_FAVORITE_LEAGUE_NUM = 10;
 
-    public FavoriteLeague addFavoriteLeague(League league) {
+    public AvailableLeague addFavoriteLeague(League league) {
         log.info("addFavoriteLeague :: {}", league);
 
-        FavoriteLeague favoriteLeague = FavoriteLeague.builder()
+        AvailableLeague availableLeague = AvailableLeague.builder()
                 .leagueId(league.getLeagueId())
-                .season(league.getCurrentSeason())
                 .name(league.getName())
-                .koreanName(league.getKoreanName())
                 .build();
 
-        return favoriteLeagueRepository.save(favoriteLeague);
+        return favoriteLeagueRepository.save(availableLeague);
     }
 
     public boolean removeFavoriteLeague(long leagueId) {
@@ -45,7 +45,7 @@ public class FavoriteService {
      *
      * @return
      */
-    public List<FavoriteLeague> getFavoriteLeagues() {
+    public List<AvailableLeague> getFavoriteLeagues() {
         return this.getFavoriteLeagues(DEFAULT_FAVORITE_LEAGUE_NUM);
     }
 
@@ -56,13 +56,13 @@ public class FavoriteService {
      * @param num
      * @return
      */
-    public List<FavoriteLeague> getFavoriteLeagues(int num) {
-        Page<FavoriteLeague> favoriteLeagues
+    public List<AvailableLeague> getFavoriteLeagues(int num) {
+        Page<AvailableLeague> favoriteLeagues
                 = favoriteLeagueRepository.findByOrderByCreatedDateAsc(PageRequest.of(0, num));
         return favoriteLeagues.getContent();
     }
 
-    public FavoriteLeague findFavoriteLeague(long leagueId) {
+    public AvailableLeague findFavoriteLeague(long leagueId) {
         return favoriteLeagueRepository.findByLeagueId(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
     }

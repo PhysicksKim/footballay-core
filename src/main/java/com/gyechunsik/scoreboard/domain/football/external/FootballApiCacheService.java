@@ -1,6 +1,5 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
@@ -291,13 +290,15 @@ public class FootballApiCacheService {
     }
 
     /**
-     * 리그 시즌에 해당하는 모든 경기를 캐싱합니다.
+     * 캐싱된 리그의 currentSeason 모든 경기 일정을 캐싱합니다.
      * @param leagueId
-     * @param season
      */
-    public List<Fixture> cacheFixturesOfLeagueSeason(long leagueId, int season) {
-        FixtureResponse fixtureResponse = apiCallService.fixturesOfLeagueSeason(leagueId, season);
+    public List<Fixture> cacheFixturesOfLeague(long leagueId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다"));
+        final int leagueSeason = league.getCurrentSeason();
 
+        FixtureResponse fixtureResponse = apiCallService.fixturesOfLeagueSeason(leagueId, leagueSeason);
         List<Fixture> fixtures = fixtureResponse.getResponse().stream()
                 .map(this::toFixtureEntity)
                 .toList();
@@ -305,7 +306,7 @@ public class FootballApiCacheService {
 
         lastCacheLogService.saveApiCache(
                 ApiCacheType.FIXTURES_OF_LEAGUE,
-                Map.of("leagueId", leagueId, "season", season),
+                Map.of("leagueId", leagueId, "season", leagueSeason),
                 ZonedDateTime.now());
 
         return savedFixtures;

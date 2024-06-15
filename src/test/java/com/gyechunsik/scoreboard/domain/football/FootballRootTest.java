@@ -7,7 +7,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
+import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -244,10 +244,10 @@ class FootballRootTest {
         footballRoot.addFavoriteLeague(leagueId);
 
         // then
-        List<FavoriteLeague> favoriteLeagues = footballRoot.getFavoriteLeagues();
-        assertThat(favoriteLeagues).isNotEmpty();
-        assertThat(favoriteLeagues).hasSize(1);
-        assertThat(favoriteLeagues.get(0).getLeagueId()).isEqualTo(leagueId);
+        List<AvailableLeague> availableLeagues = footballRoot.getFavoriteLeagues();
+        assertThat(availableLeagues).isNotEmpty();
+        assertThat(availableLeagues).hasSize(1);
+        assertThat(availableLeagues.get(0).getLeagueId()).isEqualTo(leagueId);
     }
 
     @Test
@@ -262,8 +262,8 @@ class FootballRootTest {
         footballRoot.removeFavoriteLeague(leagueId);
 
         // then
-        List<FavoriteLeague> favoriteLeagues = footballRoot.getFavoriteLeagues();
-        assertThat(favoriteLeagues).isEmpty();
+        List<AvailableLeague> availableLeagues = footballRoot.getFavoriteLeagues();
+        assertThat(availableLeagues).isEmpty();
     }
 
     @Test

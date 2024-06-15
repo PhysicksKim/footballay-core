@@ -1,7 +1,7 @@
-package com.gyechunsik.scoreboard.domain.football.favorite;
+package com.gyechunsik.scoreboard.domain.football.available;
 
 import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.favorite.entity.FavoriteLeague;
+import com.gyechunsik.scoreboard.domain.football.available.entity.AvailableLeague;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 @SpringBootTest
 @ActiveProfiles("mockapi")
-class FavoriteServiceTest {
+class FootballAvailableServiceTest {
 
     @Autowired
-    private FavoriteService favoriteService;
+    private FootballAvailableService footballAvailableService;
 
     @Autowired
     private LeagueRepository leagueRepository;
@@ -51,14 +51,12 @@ class FavoriteServiceTest {
         League save = leagueRepository.save(league);
 
         // when
-        FavoriteLeague favoriteLeague = favoriteService.addFavoriteLeague(save);
+        AvailableLeague availableLeague = footballAvailableService.addFavoriteLeague(save);
 
         // then
-        assertThat(favoriteLeague).isNotNull();
-        assertThat(favoriteLeague.getLeagueId()).isEqualTo(leagueId);
-        assertThat(favoriteLeague.getName()).isEqualTo(name);
-        assertThat(favoriteLeague.getKoreanName()).isEqualTo(koreanName);
-        assertThat(favoriteLeague.getSeason()).isEqualTo(currentSeason);
+        assertThat(availableLeague).isNotNull();
+        assertThat(availableLeague.getLeagueId()).isEqualTo(leagueId);
+        assertThat(availableLeague.getName()).isEqualTo(name);
     }
 
     @Transactional
@@ -95,24 +93,24 @@ class FavoriteServiceTest {
 
         League save1 = leagueRepository.save(league1);
         League save2 = leagueRepository.save(league2);
-        FavoriteLeague favoriteLeague1 = favoriteService.addFavoriteLeague(save1);
-        FavoriteLeague favoriteLeague2 = favoriteService.addFavoriteLeague(save2);
+        AvailableLeague availableLeague1 = footballAvailableService.addFavoriteLeague(save1);
+        AvailableLeague availableLeague2 = footballAvailableService.addFavoriteLeague(save2);
 
         // when
-        List<FavoriteLeague> OneFavoriteLeague = favoriteService.getFavoriteLeagues(1);
-        List<FavoriteLeague> TwoFavoriteLeagues = favoriteService.getFavoriteLeagues(2);
-        List<FavoriteLeague> ThreeButExistTwoFavorite = favoriteService.getFavoriteLeagues(3);
+        List<AvailableLeague> oneAvailableLeague = footballAvailableService.getFavoriteLeagues(1);
+        List<AvailableLeague> twoAvailableLeagues = footballAvailableService.getFavoriteLeagues(2);
+        List<AvailableLeague> ThreeButExistTwoFavorite = footballAvailableService.getFavoriteLeagues(3);
 
-        log.info("singleFavoriteLeague :: {}", OneFavoriteLeague);
-        log.info("TwoFavoriteLeagues :: {}", TwoFavoriteLeagues);
+        log.info("singleFavoriteLeague :: {}", oneAvailableLeague);
+        log.info("twoAvailableLeagues :: {}", twoAvailableLeagues);
         log.info("ThreeButExistTwoFavorite :: {}", ThreeButExistTwoFavorite);
 
         // then
-        assertThat(OneFavoriteLeague).isNotNull();
-        assertThat(TwoFavoriteLeagues).isNotNull();
+        assertThat(oneAvailableLeague).isNotNull();
+        assertThat(twoAvailableLeagues).isNotNull();
         assertThat(ThreeButExistTwoFavorite).isNotNull();
-        assertThat(OneFavoriteLeague).hasSize(1);
-        assertThat(TwoFavoriteLeagues).hasSize(2);
+        assertThat(oneAvailableLeague).hasSize(1);
+        assertThat(twoAvailableLeagues).hasSize(2);
         assertThat(ThreeButExistTwoFavorite).hasSize(2);
     }
 
@@ -135,20 +133,20 @@ class FavoriteServiceTest {
                 .currentSeason(currentSeason)
                 .build();
         League save = leagueRepository.save(league);
-        FavoriteLeague addFavoriteLeague = favoriteService.addFavoriteLeague(save);
+        AvailableLeague addAvailableLeague = footballAvailableService.addFavoriteLeague(save);
 
         em.flush();
         em.clear();
 
         // when
-        FavoriteLeague findFavoriteLeague = favoriteService.findFavoriteLeague(leagueId);
-        boolean removeFavoriteLeague = favoriteService.removeFavoriteLeague(leagueId);
+        AvailableLeague findAvailableLeague = footballAvailableService.findFavoriteLeague(leagueId);
+        boolean removeFavoriteLeague = footballAvailableService.removeFavoriteLeague(leagueId);
 
         // then
-        assertThat(addFavoriteLeague).isNotNull();
-        assertThat(findFavoriteLeague).isNotNull();
+        assertThat(addAvailableLeague).isNotNull();
+        assertThat(findAvailableLeague).isNotNull();
         assertThat(removeFavoriteLeague).isTrue();
-        assertThatThrownBy(() -> favoriteService.findFavoriteLeague(leagueId))
+        assertThatThrownBy(() -> footballAvailableService.findFavoriteLeague(leagueId))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
