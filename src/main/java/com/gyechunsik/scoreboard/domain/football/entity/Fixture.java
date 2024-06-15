@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,14 +28,17 @@ public class Fixture {
     @Embedded
     private Status status;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "league_id", nullable = false)
     private League league;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "home_team_id", nullable = false)
     private Team homeTeam;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "away_team_id", nullable = false)
     private Team awayTeam;

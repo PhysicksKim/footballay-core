@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
 import jakarta.persistence.*;
@@ -25,10 +26,12 @@ public class Team {
     private String koreanName;
     private String logo;
 
+    @JsonIgnore
     @ToString.Exclude
     @OneToMany(mappedBy = "team", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<LeagueTeam> leagueTeams;
 
+    @JsonIgnore
     @ToString.Exclude
     @OneToMany(mappedBy = "team")
     private List<TeamPlayer> teamPlayers;

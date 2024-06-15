@@ -95,7 +95,7 @@ public class FootballRoot {
         }
         return fixtures;
     }
-    //
+
     public League addAvailableLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));

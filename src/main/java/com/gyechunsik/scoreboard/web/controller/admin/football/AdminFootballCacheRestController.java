@@ -17,6 +17,7 @@ import java.time.LocalDate;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin/football/cache")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminFootballCacheRestController {
 
     private final FootballApiCacheService footballApiCacheService;
@@ -31,7 +32,6 @@ public class AdminFootballCacheRestController {
      */
 
     @PostMapping("/league")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheLeague(@RequestParam("leagueId") Long leagueId) {
         footballApiCacheService.cacheLeague(leagueId);
         log.info("api league {} cached", leagueId);
@@ -39,7 +39,6 @@ public class AdminFootballCacheRestController {
     }
 
     @PostMapping("/league/current")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheAllCurrentLeagues() {
         footballApiCacheService.cacheAllCurrentLeagues();
         log.info("api All Current Leagues Cached");
@@ -47,7 +46,6 @@ public class AdminFootballCacheRestController {
     }
 
     @PostMapping("/team")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeam(@RequestParam("teamId") Long teamId) {
         footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
         log.info("teamId {} cached. Team and CurrentLeagues of the team", teamId);
@@ -55,7 +53,6 @@ public class AdminFootballCacheRestController {
     }
 
     @PostMapping("/team/league")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeamsByLeagueId(@RequestParam("leagueId") Long leagueId) {
         footballApiCacheService.cacheTeamsOfLeague(leagueId);
         log.info("api teams cached of leagueId {}", leagueId);
@@ -63,7 +60,6 @@ public class AdminFootballCacheRestController {
     }
 
     @PostMapping("/team/leagues")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheTeamAndCurrentLeagues(@RequestParam("teamId") Long teamId) {
         footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
         log.info("api manutd current seasons cached");
@@ -71,7 +67,6 @@ public class AdminFootballCacheRestController {
     }
 
     @PostMapping("/team/squad")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheSquad(@RequestParam("teamId") Long teamId) {
         footballApiCacheService.cacheTeamSquad(teamId);
         log.info("teamId {} squad cached", teamId);
@@ -82,7 +77,6 @@ public class AdminFootballCacheRestController {
      * 리그 아이디와 시즌을 받아서 해당 리그의 시즌 정보를 캐싱합니다.
      */
     @PostMapping("/fixtures/league")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheFixturesByLeagueAndSeason(
             @RequestParam("leagueId") Long leagueId
     ) {
@@ -93,10 +87,8 @@ public class AdminFootballCacheRestController {
         return ResponseEntity.ok("Fixtures of league " + leagueId + " cached successfully.");
     }
 
-
     // ---------
     @PostMapping("/fixtures")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> cacheFixtures(
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to

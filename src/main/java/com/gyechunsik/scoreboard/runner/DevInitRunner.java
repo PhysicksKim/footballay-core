@@ -1,8 +1,9 @@
 package com.gyechunsik.scoreboard.runner;
 
+import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.Streamer;
@@ -13,7 +14,6 @@ import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultMatchRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultTeamRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.StreamerRepository;
-import com.gyechunsik.scoreboard.domain.quartz.SchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -23,6 +23,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 개발 환경에서 mockapi 저장된 json 을 사용해 초기 데이터를 저장하는 Runner
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,26 +35,58 @@ public class DevInitRunner implements ApplicationRunner {
     private final StreamerRepository streamerRepository;
     private final DefaultMatchRepository defaultMatchRepository;
     private final DefaultTeamRepository defaultTeamRepository;
-    private final FootballApiCacheService footballApiCacheService;
 
-    private final SchedulerService schedulerService;
+    private final FootballRoot footballRoot;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Streamer gyechunhoe = saveGyechunhoe();
-        DefaultMatch defaultMatch = saveEpl2324Round30(gyechunhoe);
-        List<DefaultTeam> defaultTeams = saveTeamATeamB(gyechunhoe);
+        // Save Streamer "gyechunhoe"
+        Streamer gyechunhoe = saveStreamer();
 
-        log.info("Streamer :: {}", gyechunhoe);
-        log.info("DefaultMatch :: {}", defaultMatch);
-        log.info("DefaultTeams :: {}", defaultTeams);
+        // Save [ DefaultMatch, DefaultTeams] of EPL 2023-24 Round 30
+        saveDefaultMatchAndTeams(gyechunhoe);
 
-        // schedulerService.start();
-        // log.info("스케쥴러 시작 , 10분 후 SimpleJob 실행 , {} ", LocalDateTime.now().plusMinutes(10));
+        // Save [ League, Team, Player, Fixture ] of Euro 2024
+        cacheLeagueTeamPlayerFixtureOfEuro2024();
+
+        // Save [ AvailableLeague, AvailableFixture ] of Euro 2024
+        cacheAvailableLeagueAndAvailableFixtureOfEuro2024();
     }
 
-    private Streamer saveGyechunhoe() {
-        return streamerRepository.save(new Streamer("gyechunhoe"));
+    private void cacheLeagueTeamPlayerFixtureOfEuro2024() {
+        footballRoot.cacheLeagueById(LeagueId.EURO);
+        footballRoot.cacheTeamsOfLeague(LeagueId.EURO);
+        for (Long teamId : TeamId.EURO2024TEAMS) {
+            footballRoot.cacheSquadOfTeam(teamId);
+        }
+        footballRoot.cacheAllFixturesOfLeague(LeagueId.EURO);
+    }
+
+    private void cacheAvailableLeagueAndAvailableFixtureOfEuro2024() {
+        cacheAvailableLeague(LeagueId.EURO);
+        cacheAvailableFixture(LeagueId.EURO);
+    }
+
+    private void cacheAvailableLeague(long leagueId) {
+        footballRoot.addAvailableLeague(leagueId);
+    }
+
+    private void cacheAvailableFixture(long leagueId) {
+        if(leagueId == LeagueId.EURO)
+            footballRoot.addAvailableFixture(FixtureId.FIXTURE_EURO2024_1);
+    }
+
+    private Streamer saveStreamer() {
+        Streamer streamer = streamerRepository.save(new Streamer("gyechunhoe"));
+        log.info("Streamer :: {}", streamer);
+        return streamer;
+    }
+
+    private void saveDefaultMatchAndTeams(Streamer streamer) {
+        DefaultMatch defaultMatch = saveEpl2324Round30(streamer);
+        List<DefaultTeam> defaultTeams = saveTeamATeamB(streamer);
+        log.info("DefaultMatch :: {}", defaultMatch);
+        log.info("DefaultTeams :: {}", defaultTeams);
     }
 
     private DefaultMatch saveEpl2324Round30(Streamer streamer) {
@@ -71,24 +106,6 @@ public class DevInitRunner implements ApplicationRunner {
                 DefaultUniform.away,
                 streamer);
         return defaultTeamRepository.saveAll(List.of(teamA, teamB));
-    }
-
-    private void cacheEuro2024() {
-        footballApiCacheService.cacheLeague(LeagueId.EURO);
-        footballApiCacheService.cacheTeamsOfLeague(LeagueId.EURO);
-        for (Long teamId : TeamId.EURO2024TEAMS) {
-            footballApiCacheService.cacheTeamSquad(teamId);
-        }
-        footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
-        cacheEuro2024FavoriteFixtures();
-    }
-
-    private void cacheFavoriteLeague(long leagueId) {
-
-    }
-
-    private void cacheEuro2024FavoriteFixtures() {
-
     }
 
 }

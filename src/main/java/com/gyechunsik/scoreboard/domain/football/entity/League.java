@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
@@ -32,6 +33,7 @@ public class League extends BaseDateAuditEntity {
     @Column(nullable = true)
     private Integer currentSeason;
 
+    @JsonIgnore
     @ToString.Exclude
     @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LeagueTeam> leagueTeams;
