@@ -6,7 +6,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
-import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableRefacService;
+import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class FootballRoot {
 
     private final FootballApiCacheService footballApiCacheService;
     private final FootballDataService footballDataService;
-    private final FootballAvailableRefacService footballAvailableRefacService;
+    private final FootballAvailableService footballAvailableService;
     private final LeagueRepository leagueRepository;
 
     public List<League> getLeagues() {
@@ -100,13 +100,13 @@ public class FootballRoot {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
 
-        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
+        footballAvailableService.updateAvailableLeague(leagueId, true);
 
         return league;
     }
 
     public List<League> getAvailableLeagues() {
-        return footballAvailableRefacService.getAvailableLeagues();
+        return footballAvailableService.getAvailableLeagues();
     }
 
     /**
@@ -116,7 +116,7 @@ public class FootballRoot {
      */
     public boolean removeAvailableLeague(long leagueId) {
         try {
-            footballAvailableRefacService.updateAvailableLeague(leagueId, false);
+            footballAvailableService.updateAvailableLeague(leagueId, false);
         } catch (Exception e) {
             log.error("error while removing Available League :: {}", e.getMessage());
             return false;
@@ -126,19 +126,19 @@ public class FootballRoot {
 
     public Fixture addAvailableFixture(long fixtureId) {
         Fixture fixture = footballDataService.getFixtureById(fixtureId);
-        footballAvailableRefacService.updateAvailableFixture(fixtureId, true);
+        footballAvailableService.updateAvailableFixture(fixtureId, true);
         log.info("Add Available fixture :: {}", fixture);
         return fixture;
     }
 
     public List<Fixture> getAvailableFixtures(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableRefacService.getAvailableFixturesFromDate(leagueId, truncated);
+        return footballAvailableService.getAvailableFixturesFromDate(leagueId, truncated);
     }
 
     public boolean removeAvailableFixture(long fixtureId) {
         try {
-            footballAvailableRefacService.updateAvailableFixture(fixtureId, false);
+            footballAvailableService.updateAvailableFixture(fixtureId, false);
         } catch (Exception e) {
             log.error("error while removing Available Fixture :: {}", e.getMessage());
             return false;
@@ -175,6 +175,17 @@ public class FootballRoot {
             log.info("cached Teams :: {}", teams.stream().map(Team::getName).toList());
         } catch (Exception e) {
             log.error("error while caching Teams of League :: {}", e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public boolean cacheTeamAndCurrentLeagues(long teamId) {
+        try {
+            footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
+            log.info("cachedTeamAndCurrentLeagues :: {}", teamId);
+        } catch (Exception e) {
+            log.error("error while caching Team and Current Leagues :: {}", e.getMessage());
             return false;
         }
         return true;

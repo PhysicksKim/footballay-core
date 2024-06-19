@@ -1,0 +1,97 @@
+package com.gyechunsik.scoreboard.web.admin.football.service;
+
+import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class AdminFootballCacheWebService {
+
+    private final FootballRoot footballRoot;
+    private final ApiCommonResponseService apiCommonResponseService;
+
+    /**
+     * 1. cache league
+     * 2. cache all current leagues
+     * 3. cache team and current leagues
+     * 4. cache team
+     * 5. cache teams by league id
+     * 6. cache squad
+     * 7. cache fixtures of league current season
+     */
+    public ApiResponse<Void> cacheLeague(Long leagueId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheLeagueById(leagueId);
+        if(!isSuccess) {
+            log.error("error while caching league :: leagueId={}", leagueId);
+            return apiCommonResponseService.createFailureResponse("리그 캐싱 실패", requestUrl);
+        }
+        log.info("api league {} cached", leagueId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheAllCurrentLeagues(String requestUrl) {
+        boolean isSuccess = footballRoot.cacheAllCurrentLeagues();
+        if(!isSuccess) {
+            log.error("error while caching all current leagues");
+            return apiCommonResponseService.createFailureResponse("모든 현재 리그 캐싱 실패", requestUrl);
+        }
+        log.info("api All Current Leagues Cached");
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheTeamAndCurrentLeagues(Long teamId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheTeamAndCurrentLeagues(teamId);
+        if(!isSuccess) {
+            log.error("error while caching team and current leagues :: teamId={}", teamId);
+            return apiCommonResponseService.createFailureResponse("팀 및 현재 리그 캐싱 실패", requestUrl);
+        }
+        log.info("api team and current leagues of teamId {} cached", teamId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheTeam(Long teamId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheTeamAndCurrentLeagues(teamId);
+        if(!isSuccess) {
+            log.error("error while caching team :: teamId={}", teamId);
+            return apiCommonResponseService.createFailureResponse("팀 캐싱 실패", requestUrl);
+        }
+        log.info("api teamId {} cached. Team and CurrentLeagues of the team", teamId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheTeamsByLeagueId(Long leagueId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheTeamsOfLeague(leagueId);
+        if(!isSuccess) {
+            log.error("error while caching teams by leagueId :: leagueId={}", leagueId);
+            return apiCommonResponseService.createFailureResponse("리그에 속한 팀 캐싱 실패", requestUrl);
+        }
+        log.info("api teams cached of leagueId {}", leagueId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheSquad(Long teamId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheSquadOfTeam(teamId);
+        if(!isSuccess) {
+            log.error("error while caching squad :: teamId={}", teamId);
+            return apiCommonResponseService.createFailureResponse("팀 선수단 캐싱 실패", requestUrl);
+        }
+        log.info("api teamId {} squad cached", teamId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cacheFixturesOfLeagueCurrentSeason(Long leagueId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheAllFixturesOfLeague(leagueId);
+        if(!isSuccess) {
+            log.error("error while caching fixtures by league and season :: leagueId={}", leagueId);
+            return apiCommonResponseService.createFailureResponse("리그 일정 캐싱 실패", requestUrl);
+        }
+        log.info("Fixtures of league {} cached successfully.", leagueId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+}

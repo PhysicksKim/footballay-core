@@ -2,7 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.available;
 
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
-import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableRefacService;
+import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 class FootballAvailableServiceTest {
 
     @Autowired
-    private FootballAvailableRefacService footballAvailableRefacService;
+    private FootballAvailableService footballAvailableService;
 
     @Autowired
     private LeagueRepository leagueRepository;
@@ -54,8 +54,8 @@ class FootballAvailableServiceTest {
         em.clear();
 
         // when
-        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
-        List<League> availableLeague = footballAvailableRefacService.getAvailableLeagues();
+        footballAvailableService.updateAvailableLeague(leagueId, true);
+        List<League> availableLeague = footballAvailableService.getAvailableLeagues();
 
         // then
         assertThat(availableLeague).isNotNull();
@@ -102,14 +102,14 @@ class FootballAvailableServiceTest {
 
         League save1 = leagueRepository.save(league1);
         League save2 = leagueRepository.save(league2);
-        footballAvailableRefacService.updateAvailableLeague(leagueId1, true);
-        footballAvailableRefacService.updateAvailableLeague(leagueId2, true);
+        footballAvailableService.updateAvailableLeague(leagueId1, true);
+        footballAvailableService.updateAvailableLeague(leagueId2, true);
 
         em.flush();
         em.clear();
 
         // when
-        List<League> availableLeagues = footballAvailableRefacService.getAvailableLeagues();
+        List<League> availableLeagues = footballAvailableService.getAvailableLeagues();
         log.info("availableLeagues :: {}", availableLeagues);
 
         // then
@@ -149,14 +149,14 @@ class FootballAvailableServiceTest {
                 .currentSeason(currentSeason)
                 .build();
         League save = leagueRepository.save(league);
-        footballAvailableRefacService.updateAvailableLeague(leagueId, true);
+        footballAvailableService.updateAvailableLeague(leagueId, true);
 
         em.flush();
         em.clear();
 
         // when
-        footballAvailableRefacService.updateAvailableLeague(leagueId, false);
-        List<League> availableLeagues = footballAvailableRefacService.getAvailableLeagues();
+        footballAvailableService.updateAvailableLeague(leagueId, false);
+        List<League> availableLeagues = footballAvailableService.getAvailableLeagues();
 
         // then
         assertThat(availableLeagues).isNotNull();

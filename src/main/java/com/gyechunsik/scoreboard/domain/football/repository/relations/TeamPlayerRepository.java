@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface TeamPlayerRepository extends JpaRepository<TeamPlayer, TeamPlayersId>{
+public interface TeamPlayerRepository extends JpaRepository<TeamPlayer, Long>{
 
     void deleteByTeamAndPlayer(Team team, Player player);
 

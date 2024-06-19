@@ -2,12 +2,11 @@ package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
-import com.gyechunsik.scoreboard.domain.football.repository.LastCacheLogRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.apicache.LastCacheLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;

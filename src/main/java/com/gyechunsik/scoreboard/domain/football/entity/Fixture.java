@@ -1,17 +1,18 @@
 package com.gyechunsik.scoreboard.domain.football.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.ZonedDateTime;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
 public class Fixture {
 
     @Id
@@ -25,35 +26,24 @@ public class Fixture {
     @Builder.Default
     private boolean available = false;
 
-    @Embedded
-    private Status status;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "live_status_id")
+    private LiveStatus liveStatus;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "league_id", nullable = false)
     private League league;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id", nullable = false)
     private Team homeTeam;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "away_team_id", nullable = false)
     private Team awayTeam;
-
-    @Embeddable
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class Status {
-        private String longStatus;
-        private String shortStatus;
-        private Integer elapsed;
-    }
 
     @Embeddable
     @Getter
@@ -84,7 +74,6 @@ public class Fixture {
                 ", timezone='" + timezone + '\'' +
                 ", date=" + date +
                 ", timestamp=" + timestamp +
-                ", status=" + status +
                 ", leagueId=" + league.getLeagueId() +
                 ", homeTeamId=" + homeTeam.getId() +
                 ", awayTeamId=" + awayTeam.getId() +

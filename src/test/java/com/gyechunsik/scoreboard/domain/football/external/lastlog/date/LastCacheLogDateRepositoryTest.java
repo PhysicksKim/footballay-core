@@ -4,7 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.repository.LastCacheLogRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.apicache.LastCacheLogRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;

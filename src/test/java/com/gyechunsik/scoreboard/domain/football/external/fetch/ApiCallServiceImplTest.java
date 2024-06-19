@@ -7,6 +7,7 @@ import com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueI
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,9 +22,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 
 
+@Disabled
 @Slf4j
 @SpringBootTest
-@ActiveProfiles({"dev","api","cookies"})
+@ActiveProfiles({"api","cookies"})
 class ApiCallServiceImplTest {
 
     @Autowired

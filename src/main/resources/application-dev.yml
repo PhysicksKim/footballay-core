@@ -8,7 +8,7 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MariaDBDialect
+#        dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
 
 #      # schema.sql 을 통한 스키마 생성을 위한 설정
@@ -40,6 +40,11 @@ spring:
       host: localhost
       port: 6379
       password: 1234
+#      repositories:
+#        enabled: false
+#    jdbc:
+#      repositories:
+#        enabled: false
 
   sql:
     init:

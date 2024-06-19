@@ -58,11 +58,11 @@ public class GenerateLeagueTeamFixture {
     public static final String timezone = "UTC";
     public static final ZonedDateTime date = ZonedDateTime.parse("2024-06-14T19:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME);
     public static final Long timestamp = date.toInstant().getEpochSecond();
-    public static final Fixture.Status status = Fixture.Status.builder()
-            .longStatus("Not Started")
-            .shortStatus("NS")
-            .elapsed(null)
-            .build();
+    // public static final Fixture.Status status = Fixture.Status.builder()
+    //         .longStatus("Not Started")
+    //         .shortStatus("NS")
+    //         .elapsed(null)
+    //         .build();
     public static final Long fixtureId2 = 789012L;
     public static final Long fixtureId3 = 345678L;
 
@@ -100,7 +100,7 @@ public class GenerateLeagueTeamFixture {
                 .timezone(timezone)
                 .date(date)
                 .timestamp(timestamp)
-                .status(status)
+                // .status(status)
                 .homeTeam(home)
                 .awayTeam(away)
                 .league(league)
@@ -134,7 +134,7 @@ public class GenerateLeagueTeamFixture {
                 .timezone(timezone)
                 .date(date)
                 .timestamp(timestamp)
-                .status(status)
+                // .status(status)
                 .homeTeam(home)
                 .awayTeam(away)
                 .league(league)
@@ -168,7 +168,7 @@ public class GenerateLeagueTeamFixture {
                 .timezone(timezone)
                 .date(date)
                 .timestamp(timestamp)
-                .status(status)
+                // .status(status)
                 .homeTeam(home)
                 .awayTeam(away)
                 .league(league)

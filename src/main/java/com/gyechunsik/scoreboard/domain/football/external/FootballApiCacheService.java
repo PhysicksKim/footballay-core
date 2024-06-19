@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
@@ -12,6 +12,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
@@ -54,12 +55,13 @@ public class FootballApiCacheService {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final LeagueTeamRepository leagueTeamRepository;
-    private final ObjectMapper jacksonObjectMapper;
     private final FixtureRepository fixtureRepository;
     private final TeamPlayerRepository teamPlayerRepository;
+    private final LiveStatusRepository liveStatusRepository;
 
     /**
      * 리그 아이디로 리그 정보를 캐싱합니다. 직접 리그 아이디를 외부 API 에서 찾아와야 합니다.
+     *
      * @param leagueId
      * @return
      */
@@ -90,6 +92,7 @@ public class FootballApiCacheService {
      * 리그에 속한 팀들을 캐싱합니다.
      * 팀들을 캐싱 가능한 리그의 조건은 이미 캐싱되어 있고 해당 리그의 현재 시즌 값이 설정되어 있어야 합니다.
      * 현재 시즌 값은 this.cacheLeague(leagueId) 에 의해서 자동으로 캐싱되지만, 데이터 무결성을 위해서 검사를 거칩니다.
+     *
      * @param leagueId
      */
     public List<Team> cacheTeamsOfLeague(Long leagueId) {
@@ -100,7 +103,13 @@ public class FootballApiCacheService {
         }
 
         TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(leagueId, league.getCurrentSeason());
-        List<Team> teams = teamInfoResponse.getResponse().stream().map(teamInfo -> toTeamEntity(teamInfo.getTeam()))
+        //
+        // List<Long> teamIds = teamInfoResponse.getResponse().stream()
+        //         .map(teamInfo -> teamInfo.getTeam().getId())
+        //         .toList();
+
+        List<Team> teams = teamInfoResponse.getResponse().stream()
+                .map(teamInfo -> toTeamEntity(teamInfo.getTeam()))
                 .toList();
         List<Team> savedTeams = teamRepository.saveAll(teams);
 
@@ -109,7 +118,7 @@ public class FootballApiCacheService {
         log.info("Teams of [leagueId={},name={}] is cached", league.getLeagueId(), league.getName());
         log.info("cached teams : {}", savedTeams.stream().map(Team::getName).collect(Collectors.toList()));
 
-        for(Team iterTeam : savedTeams) {
+        for (Team iterTeam : savedTeams) {
             LeagueTeam leagueTeam = LeagueTeam.builder()
                     .league(league)
                     .team(iterTeam)
@@ -126,6 +135,7 @@ public class FootballApiCacheService {
      * 팀 id 를 바탕으로 해당 팀이 현재 속한 리그들을 캐싱합니다.
      * 팀은 여러 리그에 속해있을 수 있습니다. (ex. epl, fa컵, uefa champions 등 여러 리그)
      * 따라서 팀 아이디를 기반으로 여러 리그에 속하도록 합니다.
+     *
      * @param teamId
      */
     public void cacheTeamAndCurrentLeagues(long teamId) {
@@ -164,6 +174,7 @@ public class FootballApiCacheService {
      * 팀 아이디로 하나의 팀 정보를 캐싱합니다.
      * 선수단 정보는 이 메서드에 의해서 캐싱되지 않습니다.
      * LeagueTeam 연관관계는 자동으로 저장되지 않습니다.
+     *
      * @param teamId
      * @return
      */
@@ -291,6 +302,7 @@ public class FootballApiCacheService {
 
     /**
      * 캐싱된 리그의 currentSeason 모든 경기 일정을 캐싱합니다.
+     *
      * @param leagueId
      */
     public List<Fixture> cacheFixturesOfLeague(long leagueId) {
@@ -299,9 +311,18 @@ public class FootballApiCacheService {
         final int leagueSeason = league.getCurrentSeason();
 
         FixtureResponse fixtureResponse = apiCallService.fixturesOfLeagueSeason(leagueId, leagueSeason);
-        List<Fixture> fixtures = fixtureResponse.getResponse().stream()
-                .map(this::toFixtureEntity)
-                .toList();
+
+        List<LiveStatus> liveStatusList = new ArrayList<>();
+        List<Fixture> fixtures = new ArrayList<>();
+
+        fixtureResponse.getResponse().forEach(response -> {
+            LiveStatus liveStatus = toLiveStatusEntity(response);
+            liveStatusList.add(liveStatus);
+            Fixture fixtureEntity = toFixtureEntity(response, liveStatus);
+            fixtures.add(fixtureEntity);
+        });
+
+        List<LiveStatus> savedLiveStatus = liveStatusRepository.saveAll(liveStatusList);
         List<Fixture> savedFixtures = fixtureRepository.saveAll(fixtures);
 
         lastCacheLogService.saveApiCache(
@@ -342,14 +363,16 @@ public class FootballApiCacheService {
                 .getYear();
     }
 
-    private Fixture toFixtureEntity(FixtureResponse.Response response) {
-        ZonedDateTime dateTime = ZonedDateTime.parse(response.getFixture().getDate(), DateTimeFormatter.ISO_DATE_TIME);
-        Fixture.Status status
-                = Fixture.Status.builder()
+    private LiveStatus toLiveStatusEntity(FixtureResponse.Response response) {
+        return LiveStatus.builder()
                 .longStatus(response.getFixture().getStatus().getLongStatus())
                 .shortStatus(response.getFixture().getStatus().getShortStatus())
                 .elapsed(response.getFixture().getStatus().getElapsed())
                 .build();
+    }
+
+    private Fixture toFixtureEntity(FixtureResponse.Response response, LiveStatus status) {
+        ZonedDateTime dateTime = ZonedDateTime.parse(response.getFixture().getDate(), DateTimeFormatter.ISO_DATE_TIME);
 
         Optional<Team> findHome = teamRepository.findById(response.getTeams().getHome().getId());
         Optional<Team> findAway = teamRepository.findById(response.getTeams().getAway().getId());
@@ -381,7 +404,7 @@ public class FootballApiCacheService {
                 .date(dateTime)
                 .league(league)
                 .timestamp(response.getFixture().getTimestamp())
-                .status(status)
+                .liveStatus(status)
                 .homeTeam(home)
                 .awayTeam(away)
                 .build();
