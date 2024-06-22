@@ -28,7 +28,7 @@ public class Team {
 
     @JsonIgnore
     @ToString.Exclude
-    @OneToMany(mappedBy = "team", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    @OneToMany(mappedBy = "team")
     private List<LeagueTeam> leagueTeams;
 
     @JsonIgnore

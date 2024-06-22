@@ -84,4 +84,8 @@ public class FootballDataService {
         return fixtureRepository.findNextFixturesAfterDate(truncatedZonedDateTime);
     }
 
+    public Player getPlayerById(long playerId) {
+        return playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+    }
 }

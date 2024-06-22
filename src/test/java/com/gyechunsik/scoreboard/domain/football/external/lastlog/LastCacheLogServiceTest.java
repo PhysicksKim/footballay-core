@@ -1,7 +1,6 @@
-package com.gyechunsik.scoreboard.domain.football.external.lastlog.date;
+package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.LastCacheLog;
-import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -21,7 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
-class LastCacheLogDateServiceTest {
+class LastCacheLogServiceTest {
 
     @Autowired
     private LastCacheLogService lastCacheLogService;

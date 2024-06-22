@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"league_id", "team_id"}))
 public class LeagueTeam {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

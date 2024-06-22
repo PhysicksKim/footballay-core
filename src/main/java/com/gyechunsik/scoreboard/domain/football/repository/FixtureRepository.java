@@ -21,8 +21,12 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
 
     List<Fixture> findFixturesByLeague(League league, Pageable pageable);
 
-    @Query("SELECT f FROM Fixture f WHERE f.date = " +
-            "(SELECT MIN(f2.date) FROM Fixture f2 WHERE f2.date >= :date)")
+    @Query("SELECT f FROM Fixture f " +
+            "JOIN FETCH f.liveStatus ls " +
+            "JOIN FETCH f.league l " +
+            "JOIN FETCH f.homeTeam ht " +
+            "JOIN FETCH f.awayTeam at " +
+            "WHERE CAST( f.date AS DATE ) = (SELECT CAST( MIN(f2.date) AS DATE) FROM Fixture f2 WHERE f2.date >= :date)")
     List<Fixture> findNextFixturesAfterDate(@Param("date") ZonedDateTime date);
 
     /**

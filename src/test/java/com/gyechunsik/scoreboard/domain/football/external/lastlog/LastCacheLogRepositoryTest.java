@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.external.lastlog.date;
+package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
 @DataJpaTest
-class LastCacheLogDateRepositoryTest {
+class LastCacheLogRepositoryTest {
 
     @Autowired
     private LastCacheLogRepository repository;

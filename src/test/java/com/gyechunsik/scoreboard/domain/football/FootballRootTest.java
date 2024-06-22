@@ -14,7 +14,6 @@ import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -161,7 +160,7 @@ class FootballRootTest {
 
     @Test
     @DisplayName("캐싱된 리그의 팀 목록을 가져옵니다")
-    void successGetTeamsByLeagueId() {
+    void successGetTeamsOfLeague() {
         // given
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
@@ -172,7 +171,7 @@ class FootballRootTest {
         em.clear();
 
         // when
-        List<Team> teams = footballRoot.getTeamsByLeagueId(leagueId);
+        List<Team> teams = footballRoot.getTeamsOfLeague(leagueId);
 
         // then
         assertThat(teams).isNotEmpty();
@@ -200,7 +199,7 @@ class FootballRootTest {
         em.clear();
 
         // when
-        List<Player> players = footballRoot.getSquadByTeamId(teamId);
+        List<Player> players = footballRoot.getSquadOfTeam(teamId);
 
         // then
         assertThat(players).isNotEmpty();

@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
-import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.web.admin.football.dto.LeagueDto;
+import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
+import com.gyechunsik.scoreboard.web.admin.football.request.TeamIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballCacheWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -9,10 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
@@ -23,7 +20,6 @@ import java.time.LocalDate;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminFootballCacheRestController {
 
-    private final FootballApiCacheService footballApiCacheService;
     private final AdminFootballCacheWebService adminFootballCacheWebService;
 
     /**
@@ -36,60 +32,71 @@ public class AdminFootballCacheRestController {
      */
 
     @PostMapping("/leagues")
-    public ResponseEntity<ApiResponse<Void>> cacheLeague(@RequestParam("leagueId") Long leagueId) {
+    public ResponseEntity<ApiResponse<Void>> cacheLeague(@RequestBody LeagueIdRequest leagueIdRequest) {
+        final String requestUrl = "/api/admin/football/cache/leagues";
+        final long leagueId = leagueIdRequest.leagueId();
         log.info("cache league :: leagueId={}", leagueId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheLeague(leagueId, "/api/admin/football/cache/leagues")
+                adminFootballCacheWebService.cacheLeague(leagueId, requestUrl)
         );
     }
 
     @PostMapping("/leagues/current")
     public ResponseEntity<ApiResponse<Void>> cacheAllCurrentLeagues() {
+        final String requestUrl = "/api/admin/football/cache/leagues/current";
         log.info("cache all current leagues");
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheAllCurrentLeagues("/api/admin/football/cache/leagues/current")
+                adminFootballCacheWebService.cacheAllCurrentLeagues(requestUrl)
         );
     }
 
     /**
      * 팀을 캐싱하고, 해당 팀이 속한 모든 현재 리그를 캐싱합니다.
-     * @param teamId 팀 아이디
+     * @param teamIdRequest 팀 아이디
      * @return 캐싱 결과
      */
     @PostMapping("/leagues/current/team")
-    public ResponseEntity<ApiResponse<Void>> cacheTeamAndCurrentLeagues(@RequestParam("teamId") Long teamId) {
+    public ResponseEntity<ApiResponse<Void>> cacheTeamAndCurrentLeagues(@RequestBody TeamIdRequest teamIdRequest) {
+        final String requestUrl = "/api/admin/football/cache/leagues/current/team";
+        final long teamId = teamIdRequest.teamId();
         log.info("cache team and current leagues of it :: teamId={}", teamId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheTeamAndCurrentLeagues(teamId, "/api/admin/football/cache/leagues/current/team")
+                adminFootballCacheWebService.cacheTeamAndCurrentLeagues(teamId, requestUrl)
         );
     }
 
     /**
      * 팀의 정보만 캐싱합니다.
-     * @param teamId 팀 아이디
+     * @param teamIdRequest 팀 아이디
      * @return 캐싱 결과
      */
     @PostMapping("/teams")
-    public ResponseEntity<ApiResponse<Void>> cacheTeam(@RequestParam("teamId") Long teamId) {
+    public ResponseEntity<ApiResponse<Void>> cacheTeam(@RequestBody TeamIdRequest teamIdRequest) {
+        final String requestUrl = "/api/admin/football/cache/teams";
+        final long teamId = teamIdRequest.teamId();
         log.info("cache team :: teamId={}", teamId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheTeam(teamId, "/api/admin/football/cache/teams")
+                adminFootballCacheWebService.cacheTeam(teamId, requestUrl)
         );
     }
 
     @PostMapping("/teams/league")
-    public ResponseEntity<ApiResponse<Void>> cacheTeamsByLeagueId(@RequestParam("leagueId") Long leagueId) {
+    public ResponseEntity<ApiResponse<Void>> cacheTeamsByLeagueId(@RequestBody LeagueIdRequest leagueIdRequest) {
+        final String requestUrl = "/api/admin/football/cache/teams/league";
+        final long leagueId = leagueIdRequest.leagueId();
         log.info("cache teams by leagueId = {}", leagueId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheTeamsByLeagueId(leagueId, "/api/admin/football/cache/teams/league")
+                adminFootballCacheWebService.cacheTeamsByLeagueId(leagueId, requestUrl)
         );
     }
 
     @PostMapping("/teams/squad")
-    public ResponseEntity<ApiResponse<Void>> cacheSquad(@RequestParam("teamId") Long teamId) {
+    public ResponseEntity<ApiResponse<Void>> cacheSquad(@RequestBody TeamIdRequest teamIdRequest) {
+        final String requestUrl = "/api/admin/football/cache/teams/squad";
+        final long teamId = teamIdRequest.teamId();
         log.info("cache squad of teamId = {}", teamId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheSquad(teamId, "/api/admin/football/cache/teams/squad")
+                adminFootballCacheWebService.cacheSquad(teamId, requestUrl)
         );
     }
 
@@ -98,11 +105,13 @@ public class AdminFootballCacheRestController {
      */
     @PostMapping("/fixtures/league")
     public ResponseEntity<ApiResponse<Void>> cacheFixturesOfLeagueCurrentSeason(
-            @RequestParam("leagueId") Long leagueId
+            @RequestBody LeagueIdRequest leagueIdRequest
     ) {
+        final String requestUrl = "/api/admin/football/cache/fixtures/league";
+        final long leagueId = leagueIdRequest.leagueId();
         log.info("cache fixtures of leagueId = {}", leagueId);
         return ResponseEntity.ok().body(
-                adminFootballCacheWebService.cacheFixturesOfLeagueCurrentSeason(leagueId, "/api/admin/football/cache/fixtures/league")
+                adminFootballCacheWebService.cacheFixturesOfLeagueCurrentSeason(leagueId, requestUrl)
         );
     }
 
@@ -117,4 +126,5 @@ public class AdminFootballCacheRestController {
 
         return ResponseEntity.ok().body("(Not Implemented) Fixtures from " + from + " to " + to + " cached successfully.");
     }
+
 }

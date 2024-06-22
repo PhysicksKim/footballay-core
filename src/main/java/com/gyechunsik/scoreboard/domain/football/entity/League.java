@@ -35,9 +35,15 @@ public class League extends BaseDateAuditEntity {
 
     @JsonIgnore
     @ToString.Exclude
-    @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "league")
     private List<LeagueTeam> leagueTeams;
 
+    public void updateCompare(League other) {
+        if(this.getLeagueId() != other.getLeagueId()) return;
+        if(!Objects.equals(this.getName(), other.getName())) this.setName(other.getName());
+        if(!Objects.equals(this.getLogo(), other.getLogo())) this.setLogo(other.getLogo());
+        if(!Objects.equals(this.getCurrentSeason(), other.getCurrentSeason())) this.setCurrentSeason(other.getCurrentSeason());
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -22,4 +22,10 @@ public class LiveStatus {
     private String shortStatus;
     private Integer elapsed;
 
+    public void updateCompare(LiveStatus other) {
+        this.longStatus = other.getLongStatus();
+        this.shortStatus = other.getShortStatus();
+        this.elapsed = other.getElapsed();
+    }
+
 }

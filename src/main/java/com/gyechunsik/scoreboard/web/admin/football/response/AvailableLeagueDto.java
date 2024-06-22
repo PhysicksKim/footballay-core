@@ -1,6 +1,4 @@
-package com.gyechunsik.scoreboard.web.admin.football.dto;
-
-import lombok.*;
+package com.gyechunsik.scoreboard.web.admin.football.response;
 
 public record AvailableLeagueDto(long leagueId,
                                  String name,

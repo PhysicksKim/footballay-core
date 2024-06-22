@@ -26,6 +26,7 @@ public class LastCacheLogService {
      * @return
      */
     public LastCacheLog saveApiCache(ApiCacheType type, Map<String, Object> parameter, ZonedDateTime cachedAt) {
+        log.info("save api cache : type={}, parameter={}, cachedAt={}", type, parameter, cachedAt);
         Optional<LastCacheLog> findApiCache = lastCacheLogRepository.findLastCacheLogByApiCacheTypeAndParametersJson(type, parameter);
         LastCacheLog lastCacheLog = findApiCache.orElseGet(() -> LastCacheLog.builder().apiCacheType(type).parametersJson(parameter).build());
         lastCacheLog.setLastCachedAt(cachedAt);

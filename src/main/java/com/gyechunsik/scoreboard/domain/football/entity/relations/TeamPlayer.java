@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"team_id", "player_id"}))
 public class TeamPlayer {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.external.lastlog.date.entity;
+package com.gyechunsik.scoreboard.domain.football.external.lastlog.entity;
 
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.entity.apicache.JsonFieldConverter;

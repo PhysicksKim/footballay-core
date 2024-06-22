@@ -1,7 +1,4 @@
-package com.gyechunsik.scoreboard.web.admin.football.dto;
-
-import lombok.Getter;
-import lombok.Setter;
+package com.gyechunsik.scoreboard.web.admin.football.response;
 
 import java.time.ZonedDateTime;
 

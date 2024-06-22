@@ -26,6 +26,9 @@ public class Fixture {
     @Builder.Default
     private boolean available = false;
 
+    @Builder.Default
+    private boolean isSummerTime = false;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "live_status_id")
     private LiveStatus liveStatus;
@@ -64,6 +67,14 @@ public class Fixture {
         private Long venueId;
         private String name;
         private String city;
+    }
+
+    public void updateCompare(Fixture other) {
+        if(this.fixtureId != other.getFixtureId()) return;
+        this.referee = other.getReferee();
+        this.timezone = other.getTimezone();
+        this.date = other.getDate();
+        this.timestamp = other.getTimestamp();
     }
 
     @Override

@@ -21,4 +21,10 @@ class SchedulerServiceTest {
         schedulerService.start();
         Thread.sleep(15000); // 30초 동안 대기하며 SimpleJob의 실행을 확인합니다.
     }
+
+    @Test
+    public void testBean() throws Exception {
+        schedulerService.beanTest();
+        Thread.sleep(15000); // 30초 동안 대기하며 StartLineupJob의 실행을 확인합니다.
+    }
 }

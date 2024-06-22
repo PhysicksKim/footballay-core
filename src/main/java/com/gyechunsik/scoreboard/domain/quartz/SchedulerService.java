@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.quartz;
 
+import com.gyechunsik.scoreboard.domain.football.scheduler.StartLineupJob;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,27 @@ public class SchedulerService {
             scheduler.scheduleJob(jobDetail, trigger);
 
             log.info("스케쥴러 시작 , 5초 후 SimpleJob 실행 , 5초 간격으로 실행, 최초 실행 {} ", LocalDateTime.now().plusSeconds(5));
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void beanTest() {
+        try {
+            JobDetail jobDetail = JobBuilder.newJob(StartLineupJob.class)
+                    .withIdentity("beanTest", "group2")
+                    .build();
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("startLineupTrigger", "group2")
+                    .startAt(Date.from(Instant.now().plus(5, ChronoUnit.SECONDS)))
+                    .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                            .withIntervalInSeconds(5)
+                            .repeatForever())
+                    .build();
+
+            scheduler.scheduleJob(jobDetail, trigger);
+
+            log.info("스케쥴러 시작 , 5초 후 StartLineupJob 실행 , 5초 간격으로 실행, 최초 실행 {} ", LocalDateTime.now().plusSeconds(5));
         } catch (SchedulerException e) {
             e.printStackTrace();
         }

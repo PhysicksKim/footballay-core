@@ -40,6 +40,9 @@ public class FootballAvailableService {
         log.info("updateAvailableFixture :: fixtureId={}, isAvailable={}", fixtureId, isAvailable);
         Fixture fixture = fixtureRepository.findById(fixtureId).
                 orElseThrow(() -> new IllegalArgumentException("fixture not found"));
+
+        // TODO : 여기서 Available Quartz 2가지 세트를 등록해줘야함
+
         fixture.setAvailable(isAvailable);
         fixtureRepository.save(fixture);
     }

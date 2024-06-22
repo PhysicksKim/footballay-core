@@ -37,4 +37,6 @@ public class TeamId {
             SLOVAKIA, ROMANIA, AUSTRIA, TURKEY, ALBANIA, SLOVENIA, GEORGIA, SCOTLAND, NETHERLANDS
     };
 
+    // nations
+    public static final long SOUTH_KOREA = 17;
 }

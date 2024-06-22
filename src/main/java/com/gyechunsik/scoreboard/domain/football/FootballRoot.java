@@ -38,11 +38,11 @@ public class FootballRoot {
         return leagues;
     }
 
-    public List<Team> getTeamsByLeagueId(long leagueId) {
+    public List<Team> getTeamsOfLeague(long leagueId) {
         List<Team> teams;
         try {
             teams = footballDataService.getTeamsByLeagueId(leagueId);
-            log.info("getTeamsByLeagueId :: {}", teams);
+            log.info("getTeamsOfLeague :: {}", teams);
         } catch (Exception e) {
             log.error("error while getting Teams by LeagueId :: {}", e.getMessage());
             return List.of();
@@ -50,7 +50,7 @@ public class FootballRoot {
         return teams;
     }
 
-    public List<Player> getSquadByTeamId(long teamId) {
+    public List<Player> getSquadOfTeam(long teamId) {
         List<Player> squad;
         try {
             squad = footballDataService.getSquadOfTeam(teamId);
@@ -60,6 +60,18 @@ public class FootballRoot {
             return List.of();
         }
         return squad;
+    }
+
+    public Player getPlayer(long playerId) {
+        Player player;
+        try {
+            player = footballDataService.getPlayerById(playerId);
+            log.info("getPlayer :: {}", player);
+        } catch (Exception e) {
+            log.error("error while getting Player by Id :: {}", e.getMessage());
+            return null;
+        }
+        return player;
     }
 
     /**

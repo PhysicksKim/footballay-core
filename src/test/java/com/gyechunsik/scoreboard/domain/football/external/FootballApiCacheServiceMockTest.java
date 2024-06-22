@@ -1,13 +1,10 @@
-package com.gyechunsik.scoreboard.domain.football.external.lastlog;
+package com.gyechunsik.scoreboard.domain.football.external;
 
 import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
-import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
@@ -27,21 +24,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
-//TODO : 캐싱 거부 로직 테스트
 @Slf4j
 @Transactional
 @SpringBootTest
-class LastCacheLogServiceMockBeanTest {
+class FootballApiCacheServiceMockTest {
 
     @Autowired
     private FootballApiCacheService footballApiCacheService;
 
     @Autowired
-    private LeagueRepository leagueRepository;
-    @Autowired
     private TeamRepository teamRepository;
-    @Autowired
-    private LeagueTeamRepository leagueTeamRepository;
     @Autowired
     private PlayerRepository playerRepository;
 
