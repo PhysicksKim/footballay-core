@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   redis:
     image: redis:7.2.4-alpine
@@ -8,13 +7,13 @@ services:
       - "6379:6379"
 
   mariadb:
-    image: mariadb:10.11.7
+    image: mariadb:latest
     container_name: mariadb-scoreboard
     environment:
-      MYSQL_ROOT_PASSWORD: root1234
-      MYSQL_DATABASE: scoreboard
-      MYSQL_USER: dev
-      MYSQL_PASSWORD: dev1234
+      MARIADB_ROOT_PASSWORD: 1234
+      MARIADB_DATABASE: scoreboard
+      MARIADB_USER: dev
+      MARIADB_PASSWORD: dev1234
       TZ: Asia/Seoul
     ports:
       - "3306:3306"
@@ -23,3 +22,4 @@ services:
 
 volumes:
   mariadb_data:
+    driver: local

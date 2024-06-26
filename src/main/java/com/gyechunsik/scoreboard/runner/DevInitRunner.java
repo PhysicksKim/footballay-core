@@ -29,7 +29,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Profile("dev")
+@Profile("mockapi")
 public class DevInitRunner implements ApplicationRunner {
 
     private final StreamerRepository streamerRepository;
@@ -38,8 +38,16 @@ public class DevInitRunner implements ApplicationRunner {
 
     private final FootballRoot footballRoot;
 
+    private static final boolean WANT_TO_ADD_DATA = false;
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
+        if(WANT_TO_ADD_DATA) {
+            addData();
+        }
+    }
+
+    private void addData() {
         // Save Streamer "gyechunhoe"
         Streamer gyechunhoe = saveStreamer();
 

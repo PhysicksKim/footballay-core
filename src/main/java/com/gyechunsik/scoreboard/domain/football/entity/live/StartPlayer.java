@@ -47,4 +47,15 @@ public class StartPlayer {
     @Column(nullable = false)
     private Boolean substitute;
 
+    @Override
+    public String toString() {
+        return "StartPlayer{" +
+                "id=" + id +
+                ", startLineup=" + startLineup +
+                ", player=" + player +
+                ", position='" + position + '\'' +
+                ", grid='" + grid + '\'' +
+                ", substitute=" + substitute +
+                '}';
+    }
 }

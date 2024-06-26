@@ -1,30 +1,27 @@
 package com.gyechunsik.scoreboard.domain.quartz;
 
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.quartz.Scheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ActiveProfiles({"mockapi","dev"})
+@Slf4j
+@ActiveProfiles({"dev","mockapi"})
 @SpringBootTest
 class SchedulerServiceTest {
 
     @Autowired
     private SchedulerService schedulerService;
 
+    @DisplayName("")
     @Test
-    public void testScheduler() throws Exception {
+    void beanInjectionTest() throws InterruptedException {
         schedulerService.start();
-        Thread.sleep(15000); // 30초 동안 대기하며 SimpleJob의 실행을 확인합니다.
+        Thread.sleep(10000);
     }
 
-    @Test
-    public void testBean() throws Exception {
-        schedulerService.beanTest();
-        Thread.sleep(15000); // 30초 동안 대기하며 StartLineupJob의 실행을 확인합니다.
-    }
 }

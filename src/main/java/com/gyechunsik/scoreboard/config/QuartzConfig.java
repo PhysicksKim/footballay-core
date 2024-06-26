@@ -19,12 +19,13 @@ public class QuartzConfig {
     private DataSource dataSource;
 
     @Autowired
-    private SpringBeanJobFactory springJobFactory;
+    private SpringBeanJobFactory springBeanJobFactory;
 
     @Bean
     public SchedulerFactoryBean schedulerFactoryBean() {
         SchedulerFactoryBean factory = new SchedulerFactoryBean();
         factory.setDataSource(dataSource);
+        factory.setJobFactory(springBeanJobFactory); // SpringBeanJobFactory 설정
         return factory;
     }
 

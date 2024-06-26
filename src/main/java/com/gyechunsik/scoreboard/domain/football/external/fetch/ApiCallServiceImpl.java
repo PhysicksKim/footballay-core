@@ -38,7 +38,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for league ID " + leagueId);
+                throw new IllegalArgumentException("FixtureSingle body is null for league ID " + leagueId);
             }
             return objectMapper.readValue(responseBody.string(), LeagueInfoResponse.class);
         } catch (IOException exception) {
@@ -61,7 +61,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for league ID " + teamId);
+                throw new IllegalArgumentException("FixtureSingle body is null for league ID " + teamId);
             }
             return objectMapper.readValue(responseBody.string(), LeagueInfoResponse.class);
         } catch (IOException exception) {
@@ -84,7 +84,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for league ID " + leagueId);
+                throw new IllegalArgumentException("FixtureSingle body is null for league ID " + leagueId);
             }
             return objectMapper.readValue(responseBody.string(), TeamInfoResponse.class);
         } catch (IOException exception) {
@@ -107,7 +107,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for team ID " + teamId);
+                throw new IllegalArgumentException("FixtureSingle body is null for team ID " + teamId);
             }
             return objectMapper.readValue(responseBody.string(), TeamInfoResponse.class);
         } catch (IOException exception) {
@@ -130,7 +130,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for team ID " + teamId);
+                throw new IllegalArgumentException("FixtureSingle body is null for team ID " + teamId);
             }
             return objectMapper.readValue(responseBody.string(), PlayerSquadResponse.class);
         } catch (IOException exception) {
@@ -162,7 +162,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     }
 
     // example request
-    // Response | GET : https://v3.football.api-sports.io/fixtures?league=4&season=2024
+    // FixtureSingle | GET : https://v3.football.api-sports.io/fixtures?league=4&season=2024
     @Override
     public FixtureResponse fixturesOfLeagueSeason(long leagueId, int season) {
         Request request = new Request.Builder()
@@ -177,7 +177,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("Response body is null for league ID " + leagueId);
+                throw new IllegalArgumentException("FixtureSingle body is null for league ID " + leagueId);
             }
             return objectMapper.readValue(responseBody.string(), FixtureResponse.class);
         } catch (IOException exception) {
@@ -185,4 +185,28 @@ public class ApiCallServiceImpl implements ApiCallService {
             throw new RuntimeException("Api-Football call error :: leagueId=" + leagueId, exception);
         }
     }
+
+    @Override
+    public FixtureSingleResponse fixtureSingle(long fixtureId) {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/fixtures?id="+fixtureId)
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("FixtureSingle body is null. fixture ID : " + fixtureId);
+            }
+            return objectMapper.readValue(responseBody.string(), FixtureSingleResponse.class);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: fixtureId={} ", fixtureId, exception);
+            throw new RuntimeException("Api-Football call error :: fixtureId=" + fixtureId, exception);
+        }
+    }
+
 }

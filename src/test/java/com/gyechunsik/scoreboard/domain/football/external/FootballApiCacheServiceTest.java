@@ -217,7 +217,7 @@ class FootballApiCacheServiceTest {
                 .withFailMessage("리그팀 연관관계가 중복 저장되었습니다.");
     }
 
-    @DisplayName("리그의 팀 캐싱 - 연관관계 중복 저장 방지 및 업데이트 테스트")
+    @DisplayName("팀 스쿼드 캐싱 - 연관관계 중복 저장 방지 및 업데이트 테스트")
     @Test
     void cacheTeamSquad_AvoidDuplicateAndUpdate() {
         // given

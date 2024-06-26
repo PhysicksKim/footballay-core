@@ -17,4 +17,7 @@ public interface ApiCallService {
     LeagueInfoResponse allLeagueCurrent();
 
     FixtureResponse fixturesOfLeagueSeason(long leagueId, int season);
+
+    FixtureSingleResponse fixtureSingle(long fixtureId);
+
 }

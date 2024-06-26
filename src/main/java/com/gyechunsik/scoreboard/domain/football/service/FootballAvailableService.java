@@ -4,8 +4,10 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class FootballAvailableService {
 
     private final LeagueRepository leagueRepository;
     private final FixtureRepository fixtureRepository;
+    private final StartLineupJobSchedulerService startLineupJobSchedulerService;
 
     public void updateAvailableLeague(long leagueId, boolean isAvailable) {
         log.info("updateAvailableLeague :: leagueId={}, isAvailable={}", leagueId, isAvailable);
@@ -36,14 +39,25 @@ public class FootballAvailableService {
         return leagues;
     }
 
-    public void updateAvailableFixture(long fixtureId, boolean isAvailable) {
-        log.info("updateAvailableFixture :: fixtureId={}, isAvailable={}", fixtureId, isAvailable);
-        Fixture fixture = fixtureRepository.findById(fixtureId).
-                orElseThrow(() -> new IllegalArgumentException("fixture not found"));
+    public void addAvailableFixture(long fixtureId) throws SchedulerException {
+        log.info("addAvailableFixture :: fixtureId={}", fixtureId);
+        Fixture fixture = fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 
-        // TODO : 여기서 Available Quartz 2가지 세트를 등록해줘야함
+        ZonedDateTime kickOffTime = fixture.getDate();
+        ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(1);
+        startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        fixture.setAvailable(true);
+        fixtureRepository.save(fixture);
+    }
 
-        fixture.setAvailable(isAvailable);
+    public void removeAvailableFixture(long fixtureId) throws SchedulerException {
+        log.info("removeAvailableFixture :: fixtureId={}", fixtureId);
+        Fixture fixture = fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
+
+        startLineupJobSchedulerService.removeJob(fixtureId);
+        fixture.setAvailable(false);
         fixtureRepository.save(fixture);
     }
 

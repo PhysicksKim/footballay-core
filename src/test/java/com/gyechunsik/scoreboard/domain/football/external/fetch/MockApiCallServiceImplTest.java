@@ -1,11 +1,11 @@
 package com.gyechunsik.scoreboard.domain.football.external.fetch;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,6 +26,8 @@ class MockApiCallServiceImplTest {
 
     @Autowired
     private MockApiCallServiceImpl mockApiCallService;
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
 
     @DisplayName("Mock Api 로 LeagueResponse 반환")
     @Test
@@ -41,7 +43,7 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
 
         LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
-        log.info("LeagueResponse Response : {}", leagueResponse);
+        log.info("LeagueResponse FixtureSingle : {}", leagueResponse);
     }
 
 
@@ -59,7 +61,7 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse.getResponse()).size().isGreaterThan(2);
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
         for (LeagueInfoResponse.Response response : leagueInfoResponse.getResponse()) {
-            log.info("LeagueResponse Response : {}", response);
+            log.info("LeagueResponse FixtureSingle : {}", response);
         }
     }
 
@@ -77,7 +79,7 @@ class MockApiCallServiceImplTest {
         assertThat(teamInfoResponse.getResponse().get(0)).isNotNull();
 
         TeamInfoResponse.TeamResponse team = teamInfoResponse.getResponse().get(0).getTeam();
-        log.info("Team Response : {}", team);
+        log.info("Team FixtureSingle : {}", team);
     }
 
     @DisplayName("LeagueId 와 CurrentSeason 으로 해당 리그의 팀들을 조회한다")
@@ -113,5 +115,17 @@ class MockApiCallServiceImplTest {
         for (PlayerSquadResponse.PlayerData player : players) {
             log.info("player : {}", player);
         }
+    }
+
+    @DisplayName("단일 fixture 조회")
+    @Test
+    void success_fixtureSingle() throws JsonProcessingException {
+        // given
+        long fixtureId = FixtureId.FIXTURE_SINGLE_1145526;
+
+        // when
+        FixtureSingleResponse fixture = mockApiCallService.fixtureSingle(fixtureId);
+        String json = jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(fixture);
+        log.info("FixtureSingleResponse : {}", json);
     }
 }

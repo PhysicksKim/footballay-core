@@ -129,7 +129,7 @@ public class RemoteStompController {
         }
 
         RemoteConnectResponse response = scoreBoardRemoteService.autoRemoteReconnect(principal, nickname);
-        log.info("autoRemoteReconnect Response : {}", response);
+        log.info("autoRemoteReconnect FixtureSingle : {}", response);
 
         sendRemoteMembersUpdateMessage(RemoteCode.of(response.getRemoteCode()));
 

@@ -1,14 +1,19 @@
 spring:
+#  datasource:
+#    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password:
   datasource:
-    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:mariadb://localhost:3306/scoreboard
+    username: dev
+    password: dev1234
+    driver-class-name: org.mariadb.jdbc.Driver
 
   jpa:
     properties:
       hibernate:
-#        dialect: org.hibernate.dialect.MariaDBDialect
+        dialect: org.hibernate.dialect.MariaDBDialect
         format_sql: true
 
 #      # schema.sql 을 통한 스키마 생성을 위한 설정
@@ -19,7 +24,7 @@ spring:
 #              create-target: src/main/resources/schema.sql
 #              action: create
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
 
   h2:
@@ -48,7 +53,8 @@ spring:
 
   sql:
     init:
-      mode: always
+#      mode: always
+      mode: never
       schema-locations: classpath:sql/schema.sql
       data-locations: classpath:sql/data.sql
 

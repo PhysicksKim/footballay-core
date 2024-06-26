@@ -95,6 +95,17 @@ public class MockApiCallServiceImpl
         }
     }
 
+    @Override
+    public FixtureSingleResponse fixtureSingle(long fixtureId) {
+        String resourcePath = resolvePathOfFixtureSingle(fixtureId);
+        String rawString = readFile(resourcePath);
+        try {
+            return objectMapper.readValue(rawString, FixtureSingleResponse.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Mock data parsing error : " + resourcePath, e);
+        }
+    }
+
     private String readFile(String path) {
         try {
             // 클래스 로더를 통해 실제 경로에 접근
@@ -148,10 +159,15 @@ public class MockApiCallServiceImpl
         return getMockApiJsonFilePath("fixture/", leagueId +"_"+ season, "_fixtures_of_league_season");
     }
 
+    private String resolvePathOfFixtureSingle(long fixtureId) {
+        return getMockApiJsonFilePath("fixture/single/", String.valueOf(fixtureId), "_fixture");
+    }
+
     /**
      * @param typePath ex. player/squad/
-     * @param id
-     * @return
+     * @param id ex. 39
+     * @param suffix ex. _squad
+     * @return "/dev/mockapi/{typePath}{id}{suffix}.json" ex. "/dev/mockapi/player/squad/39_squad.json"
      */
     private String getMockApiJsonFilePath(String typePath, String id, String suffix) {
         return "/dev/mockapi/" + typePath + id + suffix + ".json";
