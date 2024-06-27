@@ -5,7 +5,9 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -19,8 +21,9 @@ public class Fixture {
     private Long fixtureId;
 
     private String referee;
+
+    private LocalDateTime date;
     private String timezone;
-    private ZonedDateTime date;
     private Long timestamp;
 
     @Builder.Default
@@ -70,7 +73,7 @@ public class Fixture {
     }
 
     public void updateCompare(Fixture other) {
-        if(this.fixtureId != other.getFixtureId()) return;
+        if(!Objects.equals(this.fixtureId, other.getFixtureId())) return;
         this.referee = other.getReferee();
         this.timezone = other.getTimezone();
         this.date = other.getDate();

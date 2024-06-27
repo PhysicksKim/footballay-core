@@ -6,6 +6,9 @@ import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 public class FootballDtoMapper {
 
     public static LiveStatusDto toLiveStatusDto(LiveStatus liveStatus) {
@@ -49,7 +52,7 @@ public class FootballDtoMapper {
                 fixture.getFixtureId(),
                 fixture.getReferee(),
                 fixture.getTimezone(),
-                fixture.getDate(),
+                ZonedDateTime.of(fixture.getDate(), ZoneId.of(fixture.getTimezone())),
                 fixture.getTimestamp(),
                 toLiveStatusDto(fixture.getLiveStatus()),
                 toLeagueDto(fixture.getLeague()),
@@ -74,7 +77,7 @@ public class FootballDtoMapper {
                 fixture.getFixtureId(),
                 fixture.getReferee(),
                 fixture.getTimezone(),
-                fixture.getDate(),
+                ZonedDateTime.of(fixture.getDate(), ZoneId.of(fixture.getTimezone())),
                 fixture.getTimestamp(),
                 fixture.isAvailable(),
                 toLiveStatusDto(fixture.getLiveStatus()),

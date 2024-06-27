@@ -36,11 +36,13 @@ public class StartLineupJobSchedulerService {
                 .startAt(startTime)
                 .withSchedule(SimpleScheduleBuilder.simpleSchedule()
                         .withIntervalInSeconds(INTERVAL_SEC)
-                        .withRepeatCount(MAX_REPEAT_COUNT))
+                        .withRepeatCount(MAX_REPEAT_COUNT)
+                        .withMisfireHandlingInstructionNextWithRemainingCount())
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);
-        log.info("addJob :: jobName={}, triggerName={}, groupName={}", jobName, triggerName, groupName);
+        log.info("addJob :: jobName={}, triggerName={}, groupName={}, startAt={}",
+                jobName, triggerName, groupName, startTime);
     }
 
     public void removeJob(long fixtureId) throws SchedulerException {

@@ -11,8 +11,9 @@ import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.time.zone.ZoneRulesException;
 import java.util.List;
 
 @Slf4j
@@ -24,6 +25,8 @@ public class FootballAvailableService {
     private final LeagueRepository leagueRepository;
     private final FixtureRepository fixtureRepository;
     private final StartLineupJobSchedulerService startLineupJobSchedulerService;
+
+    private final int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
 
     public void updateAvailableLeague(long leagueId, boolean isAvailable) {
         log.info("updateAvailableLeague :: leagueId={}, isAvailable={}", leagueId, isAvailable);
@@ -44,8 +47,13 @@ public class FootballAvailableService {
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 
-        ZonedDateTime kickOffTime = fixture.getDate();
-        ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(1);
+        ZonedDateTime kickOffTime = toSeoulZonedDateTime(
+                fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
+        );
+        // TODO : 향후 summer time 적용된 리그인지 체크해서 서머타임 보정 해야함
+        ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
+        log.info("try to add LineupJob schedule of fixtureId={} Start At lineupAnnounceTime={}",
+                fixtureId, lineupAnnounceTime);
         startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
         fixture.setAvailable(true);
         fixtureRepository.save(fixture);
@@ -74,6 +82,17 @@ public class FootballAvailableService {
         log.info("getAvailableFixturesFromDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
         ZonedDateTime truncated = matchDateFrom.truncatedTo(ChronoUnit.DAYS);
         return fixtureRepository.findAvailableFixturesByLeagueIdAndDate(leagueId, truncated);
+    }
+
+    private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {
+        try {
+            ZoneId zoneId = ZoneId.of(timeZone);
+            return ZonedDateTime.of(kickoffTime, zoneId)
+                    .withZoneSameInstant(ZoneId.of("Asia/Seoul"));
+        } catch (ZoneRulesException e) {
+            Instant instant = Instant.ofEpochSecond(timestamp);
+            return ZonedDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
+        }
     }
 
 }

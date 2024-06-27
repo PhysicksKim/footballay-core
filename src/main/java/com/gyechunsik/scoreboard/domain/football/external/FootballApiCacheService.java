@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -418,10 +419,33 @@ public class FootballApiCacheService {
                 .build();
     }
 
+    /*
+    # timezone 이 없는 경우 기본 UTC
+        fixture: {
+        id: 1177042
+        referee: null
+        timezone: "UTC"
+        date: "2024-06-27T00:00:00+00:00"
+        timestamp: 1719446400
+     */
+    /*
+    # Asia/Seoul 로 요청하는 경우
+        fixture: {
+        id: 1177042
+        referee: null
+        timezone: "Asia/Seoul"
+        date: "2024-06-27T09:00:00+09:00"
+        timestamp: 1719446400
+     */
+
     private Fixture toFixtureEntity(FixtureResponse.Response response, LiveStatus status) {
         final ZoneId ZONE_ID_SEOUL = ZoneId.of("Asia/Seoul");
-        ZonedDateTime dateTime = ZonedDateTime.parse(response.getFixture().getDate(), DateTimeFormatter.ISO_DATE_TIME)
+
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(response.getFixture().getDate(), DateTimeFormatter.ISO_DATE_TIME)
                 .withZoneSameInstant(ZONE_ID_SEOUL);
+
+        LocalDateTime dateTime = zonedDateTime.toLocalDateTime();
+        String zoneId = ZONE_ID_SEOUL.toString();
 
         Optional<Team> findHome = teamRepository.findById(response.getTeams().getHome().getId());
         Optional<Team> findAway = teamRepository.findById(response.getTeams().getAway().getId());
@@ -449,7 +473,7 @@ public class FootballApiCacheService {
         return Fixture.builder()
                 .fixtureId(response.getFixture().getId())
                 .referee(response.getFixture().getReferee())
-                .timezone(ZONE_ID_SEOUL.toString())
+                .timezone(zoneId)
                 .date(dateTime)
                 .timestamp(response.getFixture().getTimestamp())
                 .liveStatus(status)

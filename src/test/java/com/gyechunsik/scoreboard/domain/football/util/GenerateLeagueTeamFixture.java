@@ -5,6 +5,9 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import lombok.AllArgsConstructor;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -56,8 +59,8 @@ public class GenerateLeagueTeamFixture {
     public static final Long fixtureId = 123456L;
     public static final String referee = "Anthony Taylor";
     public static final String timezone = "UTC";
-    public static final ZonedDateTime date = ZonedDateTime.parse("2024-06-14T19:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME);
-    public static final Long timestamp = date.toInstant().getEpochSecond();
+    public static final LocalDateTime date = LocalDateTime.parse("2024-06-14T19:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME);
+    public static final Long timestamp = ZonedDateTime.of(date, ZoneId.of(timezone)).toInstant().toEpochMilli();
     // public static final Fixture.Status status = Fixture.Status.builder()
     //         .longStatus("Not Started")
     //         .shortStatus("NS")
