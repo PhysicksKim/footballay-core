@@ -39,8 +39,8 @@ dependencies {
 
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'
+    implementation 'org.mariadb.jdbc:mariadb-java-client'
     runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 
     // JJWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
