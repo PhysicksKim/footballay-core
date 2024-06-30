@@ -21,8 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-
-@Disabled
+// @Disabled
 @Slf4j
 @SpringBootTest
 @ActiveProfiles({"api","cookies"})
