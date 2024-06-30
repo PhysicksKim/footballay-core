@@ -1,0 +1,231 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "27"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 27,
+        "name": "Portugal",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/27.png"
+      },
+      "players": [
+        {
+          "id": 2674,
+          "name": "Rui Patr\u00edcio",
+          "age": 35,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2674.png"
+        },
+        {
+          "id": 1590,
+          "name": "Jos\u00e9 S\u00e1",
+          "age": 30,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1590.png"
+        },
+        {
+          "id": 369,
+          "name": "Diogo Costa",
+          "age": 24,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/369.png"
+        },
+        {
+          "id": 130,
+          "name": "N\u00e9lson Semedo",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/130.png"
+        },
+        {
+          "id": 855,
+          "name": "Jo\u00e3o Cancelo",
+          "age": 29,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/855.png"
+        },
+        {
+          "id": 886,
+          "name": "Diogo Dalot",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/886.png"
+        },
+        {
+          "id": 373,
+          "name": "Pepe",
+          "age": 40,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/373.png"
+        },
+        {
+          "id": 567,
+          "name": "R\u00faben Dias",
+          "age": 26,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/567.png"
+        },
+        {
+          "id": 265595,
+          "name": "Gon\u00e7alo In\u00e1cio",
+          "age": 22,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/265595.png"
+        },
+        {
+          "id": 331832,
+          "name": "Ant\u00f3nio Silva",
+          "age": 20,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/331832.png"
+        },
+        {
+          "id": 263482,
+          "name": "Nuno Mendes",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/263482.png"
+        },
+        {
+          "id": 1485,
+          "name": "Bruno Fernandes",
+          "age": 29,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1485.png"
+        },
+        {
+          "id": 380,
+          "name": "Ot\u00e1vio",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/380.png"
+        },
+        {
+          "id": 2676,
+          "name": "R\u00faben Neves",
+          "age": 26,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2676.png"
+        },
+        {
+          "id": 335051,
+          "name": "Jo\u00e3o Neves",
+          "age": 19,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/335051.png"
+        },
+        {
+          "id": 41104,
+          "name": "Jo\u00e3o Palhinha",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/41104.png"
+        },
+        {
+          "id": 128384,
+          "name": "Vitinha",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/128384.png"
+        },
+        {
+          "id": 636,
+          "name": "Bernardo Silva",
+          "age": 29,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/636.png"
+        },
+        {
+          "id": 381,
+          "name": "Danilo Pereira",
+          "age": 32,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/381.png"
+        },
+        {
+          "id": 22236,
+          "name": "Rafael Le\u00e3o",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/22236.png"
+        },
+        {
+          "id": 874,
+          "name": "Cristiano Ronaldo",
+          "age": 38,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/874.png"
+        },
+        {
+          "id": 583,
+          "name": "Jo\u00e3o F\u00e9lix",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/583.png"
+        },
+        {
+          "id": 161585,
+          "name": "Francisco Concei\u00e7\u00e3o",
+          "age": 21,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/161585.png"
+        },
+        {
+          "id": 1864,
+          "name": "Pedro Neto",
+          "age": 23,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1864.png"
+        },
+        {
+          "id": 41585,
+          "name": "Gon\u00e7alo Ramos",
+          "age": 22,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/41585.png"
+        },
+        {
+          "id": 2678,
+          "name": "Diogo Jota",
+          "age": 27,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2678.png"
+        }
+      ]
+    }
+  ]
+}

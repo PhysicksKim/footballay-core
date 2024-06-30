@@ -1,0 +1,263 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "1091"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 1091,
+        "name": "Slovenia",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/1091.png"
+      },
+      "players": [
+        {
+          "id": 30442,
+          "name": "V. Belec",
+          "age": 33,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30442.png"
+        },
+        {
+          "id": 29,
+          "name": "J. Oblak",
+          "age": 30,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/29.png"
+        },
+        {
+          "id": 109939,
+          "name": "I. Veki\u010d",
+          "age": 25,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/109939.png"
+        },
+        {
+          "id": 56868,
+          "name": "M. Vidov\u0161ek",
+          "age": 24,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/56868.png"
+        },
+        {
+          "id": 30918,
+          "name": "J. Balkovec",
+          "age": 29,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30918.png"
+        },
+        {
+          "id": 833,
+          "name": "J. Bijol",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/833.png"
+        },
+        {
+          "id": 28325,
+          "name": "M. Bla\u017ei\u010d",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28325.png"
+        },
+        {
+          "id": 109887,
+          "name": "D. Brekalo",
+          "age": 25,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/109887.png"
+        },
+        {
+          "id": 36983,
+          "name": "V. Drku\u0161i\u0107",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/36983.png"
+        },
+        {
+          "id": 14299,
+          "name": "E. Jan\u017ea",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/14299.png"
+        },
+        {
+          "id": 109724,
+          "name": "\u017d. Karni\u010dnik",
+          "age": 29,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/109724.png"
+        },
+        {
+          "id": 1315,
+          "name": "P. Stojanovi\u0107",
+          "age": 28,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1315.png"
+        },
+        {
+          "id": 109684,
+          "name": "\u017d. Zaletel",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/109684.png"
+        },
+        {
+          "id": 17789,
+          "name": "T. El\u0161nik",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/17789.png"
+        },
+        {
+          "id": 56025,
+          "name": "A. \u010cerin",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/56025.png"
+        },
+        {
+          "id": 19041,
+          "name": "J. Gorenc Stankovi\u010d",
+          "age": 27,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19041.png"
+        },
+        {
+          "id": 109740,
+          "name": "T. Horvat",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/109740.png"
+        },
+        {
+          "id": 30434,
+          "name": "J. Ili\u010di\u0107",
+          "age": 35,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30434.png"
+        },
+        {
+          "id": 30865,
+          "name": "J. Kurti\u010d",
+          "age": 34,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30865.png"
+        },
+        {
+          "id": 7591,
+          "name": "S. Lovri\u0107",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/7591.png"
+        },
+        {
+          "id": 2183,
+          "name": "B. Verbi\u010d",
+          "age": 30,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2183.png"
+        },
+        {
+          "id": 1369,
+          "name": "M. Zajc",
+          "age": 29,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1369.png"
+        },
+        {
+          "id": 290045,
+          "name": "Adrian Zeljkovi\u0107",
+          "age": 21,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/290045.png"
+        },
+        {
+          "id": 788,
+          "name": "\u017d. Celar",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/788.png"
+        },
+        {
+          "id": 91457,
+          "name": "J. Mlakar",
+          "age": 25,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/91457.png"
+        },
+        {
+          "id": 115589,
+          "name": "B. \u0160e\u0161ko",
+          "age": 20,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/115589.png"
+        },
+        {
+          "id": 56026,
+          "name": "A. \u0160porar",
+          "age": 29,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/56026.png"
+        },
+        {
+          "id": 162839,
+          "name": "Z. Vipotnik",
+          "age": 21,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/162839.png"
+        },
+        {
+          "id": 56027,
+          "name": "L. Zahovi\u0107",
+          "age": 28,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/56027.png"
+        },
+        {
+          "id": 131309,
+          "name": "N. \u017dugelj",
+          "age": 23,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/131309.png"
+        }
+      ]
+    }
+  ]
+}

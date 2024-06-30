@@ -1,0 +1,231 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "769"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 769,
+        "name": "Hungary",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/769.png"
+      },
+      "players": [
+        {
+          "id": 28322,
+          "name": "D. Dibusz",
+          "age": 33,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28322.png"
+        },
+        {
+          "id": 1139,
+          "name": "P. Gul\u00e1csi",
+          "age": 33,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1139.png"
+        },
+        {
+          "id": 28437,
+          "name": "P. Szappanos",
+          "age": 33,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28437.png"
+        },
+        {
+          "id": 180763,
+          "name": "B. Balogh",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/180763.png"
+        },
+        {
+          "id": 27778,
+          "name": "B. Bolla",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/27778.png"
+        },
+        {
+          "id": 28326,
+          "name": "E. Botka",
+          "age": 29,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28326.png"
+        },
+        {
+          "id": 199934,
+          "name": "M. D\u00e1rdai",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/199934.png"
+        },
+        {
+          "id": 2332,
+          "name": "A. Fiola",
+          "age": 33,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2332.png"
+        },
+        {
+          "id": 206254,
+          "name": "M. Kerkez",
+          "age": 20,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/206254.png"
+        },
+        {
+          "id": 42984,
+          "name": "\u00c1. Lang",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/42984.png"
+        },
+        {
+          "id": 28478,
+          "name": "Z. Nagy",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28478.png"
+        },
+        {
+          "id": 2336,
+          "name": "L. N\u00e9go",
+          "age": 32,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2336.png"
+        },
+        {
+          "id": 1148,
+          "name": "W. Orb\u00e1n",
+          "age": 31,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1148.png"
+        },
+        {
+          "id": 28443,
+          "name": "A. Szalai",
+          "age": 25,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28443.png"
+        },
+        {
+          "id": 28423,
+          "name": "D. Gazdag",
+          "age": 27,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28423.png"
+        },
+        {
+          "id": 27789,
+          "name": "K. Horv\u00e1th",
+          "age": 21,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/27789.png"
+        },
+        {
+          "id": 28561,
+          "name": "M. Kata",
+          "age": 21,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/28561.png"
+        },
+        {
+          "id": 14310,
+          "name": "L. Kleinheisler",
+          "age": 29,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/14310.png"
+        },
+        {
+          "id": 30481,
+          "name": "\u00c1. Nagy",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30481.png"
+        },
+        {
+          "id": 26252,
+          "name": "R. Sallai",
+          "age": 26,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/26252.png"
+        },
+        {
+          "id": 30785,
+          "name": "A. Sch\u00e4fer",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30785.png"
+        },
+        {
+          "id": 19806,
+          "name": "C. Styles",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19806.png"
+        },
+        {
+          "id": 1096,
+          "name": "D. Szoboszlai",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1096.png"
+        },
+        {
+          "id": 27826,
+          "name": "M. \u00c1d\u00e1m",
+          "age": 29,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/27826.png"
+        },
+        {
+          "id": 41590,
+          "name": "K. Csoboth",
+          "age": 23,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/41590.png"
+        },
+        {
+          "id": 7398,
+          "name": "B. Varga",
+          "age": 29,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/7398.png"
+        }
+      ]
+    }
+  ]
+}

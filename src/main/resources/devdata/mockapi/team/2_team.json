@@ -1,0 +1,34 @@
+{
+  "get": "teams",
+  "parameters": {
+    "id": "2"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 2,
+        "name": "France",
+        "code": "FRA",
+        "country": "France",
+        "founded": 1919,
+        "national": true,
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/2.png"
+      },
+      "venue": {
+        "id": 20332,
+        "name": "Stade de France",
+        "address": "Rue Jules Rimet",
+        "city": "Saint-Denis",
+        "capacity": 81338,
+        "surface": "grass",
+        "image": "https:\/\/media.api-sports.io\/football\/venues\/20332.png"
+      }
+    }
+  ]
+}

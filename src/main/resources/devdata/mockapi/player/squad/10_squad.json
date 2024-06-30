@@ -1,0 +1,287 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "10"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 10,
+        "name": "England",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/10.png"
+      },
+      "players": [
+        {
+          "id": 19088,
+          "name": "D. Henderson",
+          "age": 26,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19088.png"
+        },
+        {
+          "id": 2932,
+          "name": "J. Pickford",
+          "age": 29,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2932.png"
+        },
+        {
+          "id": 20355,
+          "name": "A. Ramsdale",
+          "age": 25,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/20355.png"
+        },
+        {
+          "id": 162489,
+          "name": "J. Trafford",
+          "age": 21,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/162489.png"
+        },
+        {
+          "id": 283,
+          "name": "T. Alexander-Arnold",
+          "age": 25,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/283.png"
+        },
+        {
+          "id": 158698,
+          "name": "J. Quansah",
+          "age": 20,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/158698.png"
+        },
+        {
+          "id": 17661,
+          "name": "J. Branthwaite",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/17661.png"
+        },
+        {
+          "id": 18963,
+          "name": "L. Dunk",
+          "age": 32,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/18963.png"
+        },
+        {
+          "id": 284,
+          "name": "J. Gomez",
+          "age": 26,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/284.png"
+        },
+        {
+          "id": 67971,
+          "name": "M. Gu\u00e9hi",
+          "age": 23,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/67971.png"
+        },
+        {
+          "id": 19354,
+          "name": "E. Konsa",
+          "age": 26,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19354.png"
+        },
+        {
+          "id": 2935,
+          "name": "H. Maguire",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2935.png"
+        },
+        {
+          "id": 891,
+          "name": "L. Shaw",
+          "age": 28,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/891.png"
+        },
+        {
+          "id": 626,
+          "name": "J. Stones",
+          "age": 29,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/626.png"
+        },
+        {
+          "id": 169,
+          "name": "K. Trippier",
+          "age": 33,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/169.png"
+        },
+        {
+          "id": 627,
+          "name": "K. Walker",
+          "age": 33,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/627.png"
+        },
+        {
+          "id": 129718,
+          "name": "J. Bellingham",
+          "age": 20,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/129718.png"
+        },
+        {
+          "id": 19586,
+          "name": "E. Eze",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19586.png"
+        },
+        {
+          "id": 631,
+          "name": "P. Foden",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/631.png"
+        },
+        {
+          "id": 67972,
+          "name": "C. Gallagher",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/67972.png"
+        },
+        {
+          "id": 19187,
+          "name": "J. Grealish",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19187.png"
+        },
+        {
+          "id": 293,
+          "name": "C. Jones",
+          "age": 22,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/293.png"
+        },
+        {
+          "id": 18784,
+          "name": "J. Maddison",
+          "age": 27,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/18784.png"
+        },
+        {
+          "id": 284322,
+          "name": "K. Mainoo",
+          "age": 18,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/284322.png"
+        },
+        {
+          "id": 152982,
+          "name": "C. Palmer",
+          "age": 21,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/152982.png"
+        },
+        {
+          "id": 2937,
+          "name": "D. Rice",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2937.png"
+        },
+        {
+          "id": 288102,
+          "name": "A. Wharton",
+          "age": 19,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/288102.png"
+        },
+        {
+          "id": 19428,
+          "name": "J. Bowen",
+          "age": 27,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19428.png"
+        },
+        {
+          "id": 138787,
+          "name": "A. Gordon",
+          "age": 22,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/138787.png"
+        },
+        {
+          "id": 184,
+          "name": "H. Kane",
+          "age": 30,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/184.png"
+        },
+        {
+          "id": 1460,
+          "name": "B. Saka",
+          "age": 22,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1460.png"
+        },
+        {
+          "id": 19974,
+          "name": "I. Toney",
+          "age": 27,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19974.png"
+        },
+        {
+          "id": 19366,
+          "name": "O. Watkins",
+          "age": 28,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/19366.png"
+        }
+      ]
+    }
+  ]
+}

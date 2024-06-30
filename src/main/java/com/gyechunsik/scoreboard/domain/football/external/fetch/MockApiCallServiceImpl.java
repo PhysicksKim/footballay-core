@@ -170,6 +170,6 @@ public class MockApiCallServiceImpl
      * @return "/dev/mockapi/{typePath}{id}{suffix}.json" ex. "/dev/mockapi/player/squad/39_squad.json"
      */
     private String getMockApiJsonFilePath(String typePath, String id, String suffix) {
-        return "/dev/mockapi/" + typePath + id + suffix + ".json";
+        return "/devdata/mockapi/" + typePath + id + suffix + ".json";
     }
 }

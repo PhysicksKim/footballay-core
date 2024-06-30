@@ -1,0 +1,34 @@
+{
+  "get": "teams",
+  "parameters": {
+    "id": "774"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 774,
+        "name": "Romania",
+        "code": "ROM",
+        "country": "Romania",
+        "founded": 1909,
+        "national": true,
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/774.png"
+      },
+      "venue": {
+        "id": 1326,
+        "name": "Arena Na\u0163ional\u0103",
+        "address": "Bulevardul Basarabia 37-39",
+        "city": "Bucure\u015fti",
+        "capacity": 55611,
+        "surface": "grass",
+        "image": "https:\/\/media.api-sports.io\/football\/venues\/1326.png"
+      }
+    }
+  ]
+}

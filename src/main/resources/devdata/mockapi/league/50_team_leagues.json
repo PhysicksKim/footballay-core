@@ -1,0 +1,311 @@
+{
+  "get": "leagues",
+  "parameters": {
+    "current": "true",
+    "team": "50"
+  },
+  "errors": [],
+  "results": 8,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "league": {
+        "id": 769,
+        "name": "Premier League Asia Trophy",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/769.png"
+      },
+      "country": {
+        "name": "World",
+        "code": null,
+        "flag": null
+      },
+      "seasons": [
+        {
+          "year": 2019,
+          "start": "2019-07-17",
+          "end": "2019-07-20",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": false,
+              "statistics_players": false
+            },
+            "standings": false,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": false,
+            "predictions": true,
+            "odds": false
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 528,
+        "name": "Community Shield",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/528.png"
+      },
+      "country": {
+        "name": "England",
+        "code": "GB",
+        "flag": "https://media.api-sports.io/flags/gb.svg"
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-08-06",
+          "end": "2023-08-06",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": false,
+            "players": false,
+            "top_scorers": false,
+            "top_assists": false,
+            "top_cards": false,
+            "injuries": false,
+            "predictions": true,
+            "odds": false
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 531,
+        "name": "UEFA Super Cup",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/531.png"
+      },
+      "country": {
+        "name": "World",
+        "code": null,
+        "flag": null
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-08-16",
+          "end": "2023-08-16",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": false,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": false,
+            "predictions": true,
+            "odds": false
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 2,
+        "name": "UEFA Champions League",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/2.png"
+      },
+      "country": {
+        "name": "World",
+        "code": null,
+        "flag": null
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-06-27",
+          "end": "2024-04-17",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": true,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": true,
+            "predictions": true,
+            "odds": true
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 39,
+        "name": "Premier League",
+        "type": "League",
+        "logo": "https://media.api-sports.io/football/leagues/39.png"
+      },
+      "country": {
+        "name": "England",
+        "code": "GB",
+        "flag": "https://media.api-sports.io/flags/gb.svg"
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-08-11",
+          "end": "2024-05-19",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": true,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": true,
+            "predictions": true,
+            "odds": true
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 48,
+        "name": "League Cup",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/48.png"
+      },
+      "country": {
+        "name": "England",
+        "code": "GB",
+        "flag": "https://media.api-sports.io/flags/gb.svg"
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-08-08",
+          "end": "2024-02-25",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": false,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": false,
+            "predictions": true,
+            "odds": false
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 45,
+        "name": "FA Cup",
+        "type": "Cup",
+        "logo": "https://media.api-sports.io/football/leagues/45.png"
+      },
+      "country": {
+        "name": "England",
+        "code": "GB",
+        "flag": "https://media.api-sports.io/flags/gb.svg"
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-08-04",
+          "end": "2024-03-17",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": false,
+            "players": true,
+            "top_scorers": true,
+            "top_assists": true,
+            "top_cards": true,
+            "injuries": false,
+            "predictions": true,
+            "odds": true
+          }
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 15,
+        "name": "FIFA Club World Cup",
+        "type": "League",
+        "logo": "https://media.api-sports.io/football/leagues/15.png"
+      },
+      "country": {
+        "name": "World",
+        "code": null,
+        "flag": null
+      },
+      "seasons": [
+        {
+          "year": 2023,
+          "start": "2023-12-12",
+          "end": "2023-12-22",
+          "current": true,
+          "coverage": {
+            "fixtures": {
+              "events": true,
+              "lineups": true,
+              "statistics_fixtures": true,
+              "statistics_players": true
+            },
+            "standings": false,
+            "players": false,
+            "top_scorers": false,
+            "top_assists": false,
+            "top_cards": false,
+            "injuries": false,
+            "predictions": true,
+            "odds": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "768"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 768,
+        "name": "Italy",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/768.png"
+      },
+      "players": [
+        {
+          "id": 1622,
+          "name": "G. Donnarumma",
+          "age": 24,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1622.png"
+        },
+        {
+          "id": 312,
+          "name": "A. Meret",
+          "age": 26,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/312.png"
+        },
+        {
+          "id": 31037,
+          "name": "I. Provedel",
+          "age": 29,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31037.png"
+        },
+        {
+          "id": 31354,
+          "name": "G. Vicario",
+          "age": 27,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31354.png"
+        },
+        {
+          "id": 1836,
+          "name": "F. Acerbi",
+          "age": 35,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1836.png"
+        },
+        {
+          "id": 31009,
+          "name": "A. Bastoni",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31009.png"
+        },
+        {
+          "id": 91422,
+          "name": "R. Bellanova",
+          "age": 23,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/91422.png"
+        },
+        {
+          "id": 31226,
+          "name": "A. Buongiorno",
+          "age": 24,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31226.png"
+        },
+        {
+          "id": 157052,
+          "name": "R. Calafiori",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/157052.png"
+        },
+        {
+          "id": 127011,
+          "name": "A. Cambiaso",
+          "age": 23,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/127011.png"
+        },
+        {
+          "id": 887,
+          "name": "M. Darmian",
+          "age": 34,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/887.png"
+        },
+        {
+          "id": 31042,
+          "name": "G. Di Lorenzo",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31042.png"
+        },
+        {
+          "id": 31010,
+          "name": "F. Dimarco",
+          "age": 26,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31010.png"
+        },
+        {
+          "id": 30425,
+          "name": "G. Mancini",
+          "age": 27,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30425.png"
+        },
+        {
+          "id": 289761,
+          "name": "G. Scalvini",
+          "age": 20,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/289761.png"
+        },
+        {
+          "id": 30558,
+          "name": "N. Barella",
+          "age": 26,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30558.png"
+        },
+        {
+          "id": 778,
+          "name": "B. Cristante",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/778.png"
+        },
+        {
+          "id": 876,
+          "name": "N. Fagioli",
+          "age": 22,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/876.png"
+        },
+        {
+          "id": 31173,
+          "name": "D. Frattesi",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31173.png"
+        },
+        {
+          "id": 2289,
+          "name": "Jorginho",
+          "age": 32,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2289.png"
+        },
+        {
+          "id": 56851,
+          "name": "M. Folorunsho",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/56851.png"
+        },
+        {
+          "id": 782,
+          "name": "L. Pellegrini",
+          "age": 27,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/782.png"
+        },
+        {
+          "id": 31056,
+          "name": "S. Ricci",
+          "age": 22,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31056.png"
+        },
+        {
+          "id": 30937,
+          "name": "M. Zaccagni",
+          "age": 28,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30937.png"
+        },
+        {
+          "id": 30410,
+          "name": "F. Chiesa",
+          "age": 26,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30410.png"
+        },
+        {
+          "id": 791,
+          "name": "S. El Shaarawy",
+          "age": 31,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/791.png"
+        },
+        {
+          "id": 30488,
+          "name": "R. Orsolini",
+          "age": 26,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30488.png"
+        },
+        {
+          "id": 30543,
+          "name": "G. Raspadori",
+          "age": 23,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30543.png"
+        },
+        {
+          "id": 6420,
+          "name": "M. Retegui",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/6420.png"
+        },
+        {
+          "id": 30544,
+          "name": "G. Scamacca",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30544.png"
+        }
+      ]
+    }
+  ]
+}

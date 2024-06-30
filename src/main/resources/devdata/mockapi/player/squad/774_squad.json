@@ -1,0 +1,247 @@
+{
+  "get": "players\/squads",
+  "parameters": {
+    "team": "774"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 774,
+        "name": "Romania",
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/774.png"
+      },
+      "players": [
+        {
+          "id": 42642,
+          "name": "H. Moldovan",
+          "age": 25,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/42642.png"
+        },
+        {
+          "id": 55966,
+          "name": "F. Ni\u0163\u0103",
+          "age": 36,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/55966.png"
+        },
+        {
+          "id": 197830,
+          "name": "R. Sava",
+          "age": 21,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/197830.png"
+        },
+        {
+          "id": 42589,
+          "name": "\u0218. T\u00e2rnovanu",
+          "age": 23,
+          "number": null,
+          "position": "Goalkeeper",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/42589.png"
+        },
+        {
+          "id": 43204,
+          "name": "A. Burc\u0103",
+          "age": 30,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43204.png"
+        },
+        {
+          "id": 43048,
+          "name": "N. Bancu",
+          "age": 31,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43048.png"
+        },
+        {
+          "id": 162498,
+          "name": "R. Dr\u0103gu\u0219in",
+          "age": 21,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/162498.png"
+        },
+        {
+          "id": 31608,
+          "name": "V. Mogo\u0219",
+          "age": 31,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31608.png"
+        },
+        {
+          "id": 53704,
+          "name": "I. Nedelcearu",
+          "age": 27,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/53704.png"
+        },
+        {
+          "id": 191110,
+          "name": "B. Racovi\u021ban",
+          "age": 23,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/191110.png"
+        },
+        {
+          "id": 1703,
+          "name": "A. Ra\u021biu",
+          "age": 25,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/1703.png"
+        },
+        {
+          "id": 43129,
+          "name": "A. Rus",
+          "age": 27,
+          "number": null,
+          "position": "Defender",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43129.png"
+        },
+        {
+          "id": 43050,
+          "name": "A. Cic\u00e2ld\u0103u",
+          "age": 26,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43050.png"
+        },
+        {
+          "id": 43033,
+          "name": "F. Coman",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43033.png"
+        },
+        {
+          "id": 43171,
+          "name": "D. Olaru",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43171.png"
+        },
+        {
+          "id": 161731,
+          "name": "C. Grameni",
+          "age": 21,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/161731.png"
+        },
+        {
+          "id": 43084,
+          "name": "I. Hagi",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43084.png"
+        },
+        {
+          "id": 43036,
+          "name": "D. Man",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43036.png"
+        },
+        {
+          "id": 30723,
+          "name": "M. Marin",
+          "age": 25,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/30723.png"
+        },
+        {
+          "id": 2118,
+          "name": "R. Marin",
+          "age": 27,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/2118.png"
+        },
+        {
+          "id": 43056,
+          "name": "V. Mih\u0103il\u0103",
+          "age": 23,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43056.png"
+        },
+        {
+          "id": 43194,
+          "name": "D. Sorescu",
+          "age": 26,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43194.png"
+        },
+        {
+          "id": 44439,
+          "name": "N. Stanciu",
+          "age": 30,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/44439.png"
+        },
+        {
+          "id": 42500,
+          "name": "A. \u0218ut",
+          "age": 24,
+          "number": null,
+          "position": "Midfielder",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/42500.png"
+        },
+        {
+          "id": 43119,
+          "name": "D. Alibec",
+          "age": 32,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43119.png"
+        },
+        {
+          "id": 126892,
+          "name": "D. B\u00eerligea",
+          "age": 23,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/126892.png"
+        },
+        {
+          "id": 43092,
+          "name": "D. Dr\u0103gu\u015f",
+          "age": 24,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/43092.png"
+        },
+        {
+          "id": 31562,
+          "name": "G. Pu\u015fca\u015f",
+          "age": 27,
+          "number": null,
+          "position": "Attacker",
+          "photo": "https:\/\/media.api-sports.io\/football\/players\/31562.png"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "get": "teams",
+  "parameters": {
+    "id": "9"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 9,
+        "name": "Spain",
+        "code": "SPA",
+        "country": "Spain",
+        "founded": 1913,
+        "national": true,
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/9.png"
+      },
+      "venue": {
+        "id": 1456,
+        "name": "Estadio Santiago Bernab\u00e9u",
+        "address": "Avenida de Concha Espina 1, Chamart\u00edn",
+        "city": "Madrid",
+        "capacity": 85454,
+        "surface": "grass",
+        "image": "https:\/\/media.api-sports.io\/football\/venues\/1456.png"
+      }
+    }
+  ]
+}

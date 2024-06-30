@@ -1,0 +1,34 @@
+{
+  "get": "teams",
+  "parameters": {
+    "id": "24"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 24,
+        "name": "Poland",
+        "code": "POL",
+        "country": "Poland",
+        "founded": 1919,
+        "national": true,
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/24.png"
+      },
+      "venue": {
+        "id": 1245,
+        "name": "Stadion Narodowy",
+        "address": "Aleja Ksi\u0119cia J. Poniatowskiego 1",
+        "city": "Warszawa",
+        "capacity": 58145,
+        "surface": "grass",
+        "image": "https:\/\/media.api-sports.io\/football\/venues\/1245.png"
+      }
+    }
+  ]
+}

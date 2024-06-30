@@ -1,0 +1,34 @@
+{
+  "get": "teams",
+  "parameters": {
+    "id": "10"
+  },
+  "errors": [],
+  "results": 1,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 10,
+        "name": "England",
+        "code": "ENG",
+        "country": "England",
+        "founded": 1863,
+        "national": true,
+        "logo": "https:\/\/media.api-sports.io\/football\/teams\/10.png"
+      },
+      "venue": {
+        "id": 489,
+        "name": "Wembley Stadium",
+        "address": "Stadium Way, Wembley, Brent",
+        "city": "London",
+        "capacity": 90000,
+        "surface": "grass",
+        "image": "https:\/\/media.api-sports.io\/football\/venues\/489.png"
+      }
+    }
+  ]
+}
