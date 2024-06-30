@@ -1,4 +1,10 @@
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
   quartz:
     job-store-type: jdbc
     jdbc:
