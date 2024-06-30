@@ -22,7 +22,6 @@ public class IndexPageController {
         String path = "https://static.gyechunsik.site/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("main Page");
-
         return ResponseEntity.ok()
                 .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
                 .body(html);

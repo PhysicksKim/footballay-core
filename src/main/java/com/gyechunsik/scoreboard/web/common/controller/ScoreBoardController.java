@@ -20,7 +20,6 @@ public class ScoreBoardController {
         String path = "https://static.gyechunsik.site/scoreboard/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("test/template called");
-
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(html);
