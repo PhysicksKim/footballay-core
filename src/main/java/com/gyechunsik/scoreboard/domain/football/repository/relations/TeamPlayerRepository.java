@@ -15,9 +15,9 @@ public interface TeamPlayerRepository extends JpaRepository<TeamPlayer, Long>{
 
     void deleteByTeamAndPlayer(Team team, Player player);
 
-    // Optional<LeagueTeam> findByLeagueAndTeam(League league, Team team);
+    // Optional<LeagueTeam> findByLeagueAndTeam(_League league, _Team team);
 
     Optional<TeamPlayer> findByTeamAndPlayer(Team team, Player player);
 
-    // void deleteByPlayer(Player player);
+    // void deleteByPlayer(_Player player);
 }

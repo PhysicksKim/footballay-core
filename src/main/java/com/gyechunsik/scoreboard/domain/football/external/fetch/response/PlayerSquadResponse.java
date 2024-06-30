@@ -8,21 +8,21 @@ import java.util.List;
 @Setter
 public class PlayerSquadResponse extends ApiFootballResponse {
 
-    private List<TeamSquad> response;
+    private List<_TeamSquad> response;
 
     @Getter
     @Setter
     @ToString
-    public static class TeamSquad {
-        private ResponseTeam team;
+    public static class _TeamSquad {
+        private _ResponseTeam team;
         @ToString.Exclude
-        private List<PlayerData> players;
+        private List<_PlayerData> players;
     }
 
     @Getter
     @Setter
     @ToString
-    public static class ResponseTeam {
+    public static class _ResponseTeam {
         private long id;
         private String name;
         private String logo;
@@ -33,7 +33,7 @@ public class PlayerSquadResponse extends ApiFootballResponse {
     @ToString
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class PlayerData {
+    public static class _PlayerData {
         private long id;
         private String name;
         private int age;

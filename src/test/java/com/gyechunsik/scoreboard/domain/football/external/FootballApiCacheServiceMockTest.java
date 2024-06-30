@@ -59,15 +59,15 @@ class FootballApiCacheServiceMockTest {
     @Test
     public void whenPlayerExistsInApiAndDb_thenUpdatePlayer() {
         // Mock API 데이터 생성
-        PlayerData playerData1 = new PlayerData(1L, "Player One", 25, 10, "Defender", "url1");
+        _PlayerData playerData1 = new _PlayerData(1L, "_Player One", 25, 10, "Defender", "url1");
         PlayerSquadResponse mockPlayerSquadResponse = createMockPlayerSquadResponse(playerData1);
         when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
 
         // DB에 선수 데이터 사전 등록
-        // Player existingPlayer = new Player(1L, "Player One", null, "photoUrl", "Midfielder",);
+        // _Player existingPlayer = new _Player(1L, "_Player One", null, "photoUrl", "Midfielder",);
         Player existingPlayer = Player.builder()
                 .id(1L)
-                .name("Player One")
+                .name("_Player One")
                 .photoUrl("photoUrl")
                 .position("Midfielder")
                 .build();
@@ -81,7 +81,7 @@ class FootballApiCacheServiceMockTest {
         // 검증
         Player updatedPlayer = playerRepository.findById(1L).get();
         assertEquals("Defender", updatedPlayer.getPosition());
-        assertEquals("Player One", updatedPlayer.getName());
+        assertEquals("_Player One", updatedPlayer.getName());
     }
 
 
@@ -89,7 +89,7 @@ class FootballApiCacheServiceMockTest {
     @Test
     public void whenPlayerExistsInApiAndNotInDb_thenAddPlayerToDb() {
         // Mock API 데이터 생성
-        PlayerData newPlayerData = new PlayerData(2L, "Player Two", 22, 9, "Midfielder", "url2");
+        _PlayerData newPlayerData = new _PlayerData(2L, "_Player Two", 22, 9, "Midfielder", "url2");
         PlayerSquadResponse mockPlayerSquadResponse = createMockPlayerSquadResponse(newPlayerData);
         when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
 
@@ -99,7 +99,7 @@ class FootballApiCacheServiceMockTest {
         // 검증
         Optional<Player> newPlayerOptional = playerRepository.findById(2L);
         assertTrue(newPlayerOptional.isPresent());
-        assertEquals("Player Two", newPlayerOptional.get().getName());
+        assertEquals("_Player Two", newPlayerOptional.get().getName());
         assertEquals("Midfielder", newPlayerOptional.get().getPosition());
     }
 
@@ -109,7 +109,7 @@ class FootballApiCacheServiceMockTest {
         // DB에 선수 데이터 사전 등록
         Player existingPlayer = Player.builder()
                 .id(3L)
-                .name("Player Three")
+                .name("_Player Three")
                 .koreanName(null)
                 .photoUrl("photoUrl")
                 .position("Defender")
@@ -130,18 +130,18 @@ class FootballApiCacheServiceMockTest {
         assertNull(disconnectedPlayerOptional.get().getTeamPlayers());
     }
 
-    private PlayerSquadResponse createMockPlayerSquadResponse(PlayerData... playerDatas) {
-        // PlayerData 객체들을 리스트로 변환
-        List<PlayerData> playerDataList = Arrays.asList(playerDatas);
+    private PlayerSquadResponse createMockPlayerSquadResponse(_PlayerData... playerData) {
+        // _PlayerData 객체들을 리스트로 변환
+        List<_PlayerData> playerDataList = Arrays.asList(playerData);
 
-        // TeamSquad 객체 생성 및 PlayerData 리스트 설정
-        TeamSquad teamSquad = new TeamSquad();
+        // _TeamSquad 객체 생성 및 _PlayerData 리스트 설정
+        _TeamSquad teamSquad = new _TeamSquad();
         teamSquad.setPlayers(playerDataList);
 
-        // TeamSquad 리스트 생성 및 TeamSquad 객체 추가
-        List<TeamSquad> teamSquads = Collections.singletonList(teamSquad);
+        // _TeamSquad 리스트 생성 및 _TeamSquad 객체 추가
+        List<_TeamSquad> teamSquads = Collections.singletonList(teamSquad);
 
-        // PlayerSquadResponse 객체 생성 및 TeamSquad 리스트 설정
+        // PlayerSquadResponse 객체 생성 및 _TeamSquad 리스트 설정
         PlayerSquadResponse mockResponse = new PlayerSquadResponse();
         mockResponse.setResponse(teamSquads);
 

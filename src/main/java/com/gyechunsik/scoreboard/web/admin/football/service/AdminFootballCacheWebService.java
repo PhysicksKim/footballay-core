@@ -60,7 +60,7 @@ public class AdminFootballCacheWebService {
             log.error("error while caching team :: teamId={}", teamId);
             return apiCommonResponseService.createFailureResponse("팀 캐싱 실패", requestUrl);
         }
-        log.info("api teamId {} cached. Team and CurrentLeagues of the team", teamId);
+        log.info("api teamId {} cached. _Team and CurrentLeagues of the team", teamId);
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 
@@ -90,7 +90,7 @@ public class AdminFootballCacheWebService {
             log.error("error while caching fixtures by league and season :: leagueId={}", leagueId);
             return apiCommonResponseService.createFailureResponse("리그 일정 캐싱 실패", requestUrl);
         }
-        log.info("Fixtures of league {} cached successfully.", leagueId);
+        log.info("_Fixtures of league {} cached successfully.", leagueId);
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 

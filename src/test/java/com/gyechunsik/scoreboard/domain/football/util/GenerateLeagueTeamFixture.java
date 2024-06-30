@@ -14,9 +14,9 @@ import java.util.List;
 
 public class GenerateLeagueTeamFixture {
 
-    // League
+    // _League
     public static final Long leagueId = 39L;
-    public static final String name = "Premier League";
+    public static final String name = "Premier _League";
     public static final String koreanName = "프리미어리그";
     public static final String logo = "https://media.api-sports.io/football/leagues/39.png";
     public static final Integer currentSeason = 2023;
@@ -27,7 +27,7 @@ public class GenerateLeagueTeamFixture {
     public static final String logo2 = "https://media.api-sports.io/football/leagues/4.png";
     public static final Integer currentSeason2 = 2024;
 
-    // Team
+    // _Team
     public static final Long homeId = 33L;
     public static final String homeName = "Manchester United";
     public static final String homeKoreanName = "맨체스터 유나이티드";
@@ -55,13 +55,13 @@ public class GenerateLeagueTeamFixture {
     public static final String awayKoreanName3 = "프랑스";
     public static final String awayLogo3 = "https://media.api-sports.io/football/teams/2.png";
 
-    // Fixture
+    // _Fixture
     public static final Long fixtureId = 123456L;
     public static final String referee = "Anthony Taylor";
     public static final String timezone = "UTC";
     public static final LocalDateTime date = LocalDateTime.parse("2024-06-14T19:00:00+00:00", DateTimeFormatter.ISO_DATE_TIME);
     public static final Long timestamp = ZonedDateTime.of(date, ZoneId.of(timezone)).toInstant().toEpochMilli();
-    // public static final Fixture.Status status = Fixture.Status.builder()
+    // public static final _Fixture._Status status = _Fixture._Status.builder()
     //         .longStatus("Not Started")
     //         .shortStatus("NS")
     //         .elapsed(null)

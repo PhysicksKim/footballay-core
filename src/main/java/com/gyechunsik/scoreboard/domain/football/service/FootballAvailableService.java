@@ -5,9 +5,11 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +27,9 @@ public class FootballAvailableService {
     private final LeagueRepository leagueRepository;
     private final FixtureRepository fixtureRepository;
     private final StartLineupJobSchedulerService startLineupJobSchedulerService;
+    private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
 
-    private final int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
+    private final static int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
 
     public void updateAvailableLeague(long leagueId, boolean isAvailable) {
         log.info("updateAvailableLeague :: leagueId={}, isAvailable={}", leagueId, isAvailable);
@@ -52,9 +55,10 @@ public class FootballAvailableService {
         );
         // TODO : 향후 summer time 적용된 리그인지 체크해서 서머타임 보정 해야함
         ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
-        log.info("try to add LineupJob schedule of fixtureId={} Start At lineupAnnounceTime={}",
-                fixtureId, lineupAnnounceTime);
+        log.info("Add Scheduler Job :: fixtureId={}, kickoffTime={}, lineupAnnounceTime={}",
+                fixtureId, kickOffTime, lineupAnnounceTime);
         startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        liveFixtureJobSchedulerService.addJob(fixtureId, kickOffTime);
         fixture.setAvailable(true);
         fixtureRepository.save(fixture);
     }
@@ -64,7 +68,9 @@ public class FootballAvailableService {
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 
+        log.info("Remove Scheduler Job :: fixtureId={}", fixtureId);
         startLineupJobSchedulerService.removeJob(fixtureId);
+        liveFixtureJobSchedulerService.removeJob(fixtureId);
         fixture.setAvailable(false);
         fixtureRepository.save(fixture);
     }
@@ -81,7 +87,9 @@ public class FootballAvailableService {
     public List<Fixture> getAvailableFixturesFromDate(long leagueId, ZonedDateTime matchDateFrom) {
         log.info("getAvailableFixturesFromDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
         ZonedDateTime truncated = matchDateFrom.truncatedTo(ChronoUnit.DAYS);
-        return fixtureRepository.findAvailableFixturesByLeagueIdAndDate(leagueId, truncated);
+        LocalDateTime localDateTime = truncated.toLocalDateTime();
+        log.info("truncated time zoned={} local={}", truncated, localDateTime);
+        return fixtureRepository.findAvailableFixturesByLeagueIdAndDate(leagueId, localDateTime);
     }
 
     private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {

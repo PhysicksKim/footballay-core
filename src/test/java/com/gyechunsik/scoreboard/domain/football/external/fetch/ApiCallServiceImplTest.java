@@ -62,9 +62,9 @@ class ApiCallServiceImplTest {
         TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(epl, currentSeason);
 
         // then
-        for (TeamInfoResponse.TeamInfo teamInfo : teamInfoResponse.getResponse()) {
-            TeamInfoResponse.TeamResponse team = teamInfo.getTeam();
-            log.info("Team :: {}", team);
+        for (TeamInfoResponse._TeamInfo teamInfo : teamInfoResponse.getResponse()) {
+            TeamInfoResponse._TeamResponse team = teamInfo.getTeam();
+            log.info("_Team :: {}", team);
         }
     }
 
@@ -96,8 +96,8 @@ class ApiCallServiceImplTest {
         PlayerSquadResponse playerSquadResponse = apiCallService.playerSquad(manutd);
 
         // then
-        PlayerSquadResponse.PlayerData playerData = playerSquadResponse.getResponse().get(0).getPlayers().get(0);
-        List<PlayerSquadResponse.PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
+        PlayerSquadResponse._PlayerData playerData = playerSquadResponse.getResponse().get(0).getPlayers().get(0);
+        List<PlayerSquadResponse._PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
         log.info("response : {}", objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(playerSquadResponse));
@@ -113,7 +113,7 @@ class ApiCallServiceImplTest {
         assertThat(playerSquadResponse.getGet()).isEqualTo("players/squads");
     }
 
-    @DisplayName("실제 API : teamId 로 해당 팀이 현재 참여중인 League 정보들을 가져옵니다")
+    @DisplayName("실제 API : teamId 로 해당 팀이 현재 참여중인 _League 정보들을 가져옵니다")
     @Test
     void success_currentTeamLeaguesInfo() throws JsonProcessingException {
         // given

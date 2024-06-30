@@ -86,5 +86,19 @@ public class FixtureEvent {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_assist_id", nullable = true)
     private Player assist;
-    
+
+    @Override
+    public String toString() {
+        return "FixtureEvent{" +
+                "sequence=" + sequence +
+                ", timeElapsed=" + timeElapsed +
+                ", extraTime=" + extraTime +
+                ", type=" + type +
+                ", detail='" + detail + '\'' +
+                ", comments='" + comments + '\'' +
+                ", team=" + team +
+                ", player=" + player +
+                ", assist=" + assist +
+                '}';
+    }
 }

@@ -10,7 +10,7 @@ public class GeneratePlayersOfTeam {
 
     /**
      * 주어진 팀에 속하는 선수 11명을 생성합니다.
-     * @param team 영속상태의 Team 객체
+     * @param team 영속상태의 _Team 객체
      * @return 11명의 선수 리스트
      */
     public static List<Player> generatePlayersOfTeam(Team team) {
@@ -25,7 +25,7 @@ public class GeneratePlayersOfTeam {
             players.add(
                     Player.builder()
                             .id((long) i)
-                            .name("Player" + i)
+                            .name("_Player" + i)
                             .koreanName("선수" + i)
                             .photoUrl("https://cdn.com/photo" + i)
                             .position(position)

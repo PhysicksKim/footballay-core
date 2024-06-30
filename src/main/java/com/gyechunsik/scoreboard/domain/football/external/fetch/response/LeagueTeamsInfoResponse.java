@@ -8,18 +8,18 @@ import java.util.List;
 @Getter
 @Setter
 public class LeagueTeamsInfoResponse extends ApiFootballResponse {
-    private List<Response> response;
+    private List<_Response> response;
 
     @Getter
     @Setter
-    public static class Response {
-        private TeamResponse team;
-        private Venue venue;
+    public static class _Response {
+        private _TeamResponse team;
+        private _Venue venue;
     }
 
     @Getter
     @Setter
-    public static class TeamResponse {
+    public static class _TeamResponse {
         private int id;
         private String name;
         private String code;
@@ -31,7 +31,7 @@ public class LeagueTeamsInfoResponse extends ApiFootballResponse {
 
     @Getter
     @Setter
-    public static class Venue {
+    public static class _Venue {
         private int id;
         private String name;
         private String address;

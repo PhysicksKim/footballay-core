@@ -5,21 +5,35 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
+import com.gyechunsik.scoreboard.domain.football.util.DevInitData;
 import com.gyechunsik.scoreboard.web.admin.football.response.AvailableFixtureDto;
 import com.gyechunsik.scoreboard.web.admin.football.response.AvailableLeagueDto;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 
 /**
  * <h3>mockapi profile</h3>
@@ -31,14 +45,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @ActiveProfiles({"mockapi","dev"})
 @SpringBootTest
+@Transactional
 class AdminFootballDataWebServiceTest {
 
     @Autowired
     AdminFootballDataWebService adminFootballDataWebService;
+
     @Autowired
     private FootballAvailableService footballAvailableService;
+
+    @Autowired
+    private DevInitData devInitData;
+
     @Autowired
     private ObjectMapper jacksonObjectMapper;
+
+    @Autowired
+    private Scheduler scheduler;
+
+    @MockBean
+    private StartLineupJobSchedulerService startLineupJobSchedulerService;
+
+    @MockBean
+    private LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
+
+    @BeforeEach
+    void setup() throws SchedulerException {
+        doNothing().when(startLineupJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
+        doNothing().when(liveFixtureJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
+        devInitData.addData();
+    }
 
     @DisplayName("이용가능 리그 명단 조회 성공")
     @Test

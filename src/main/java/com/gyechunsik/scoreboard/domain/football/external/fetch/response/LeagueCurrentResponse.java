@@ -12,23 +12,24 @@ import java.util.List;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LeagueCurrentResponse extends ApiFootballResponse {
-    private List<CurrentLeagueData> response;
+
+    private List<_CurrentLeagueData> response;
 
     @Getter
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class CurrentLeagueData {
-        private League league;
-        private Country country;
-        private List<Season> seasons;
+    public static class _CurrentLeagueData {
+        private _League league;
+        private _Country country;
+        private List<_Season> seasons;
     }
 
     @Getter
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class League {
+    public static class _League {
         private Long id;
         private String name;
         private String type;
@@ -39,7 +40,7 @@ public class LeagueCurrentResponse extends ApiFootballResponse {
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Country {
+    public static class _Country {
         private String name;
         private String code;
         private String flag;
@@ -49,20 +50,20 @@ public class LeagueCurrentResponse extends ApiFootballResponse {
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Season {
+    public static class _Season {
         private int year;
         private String start;
         private String end;
         private boolean current;
-        private Coverage coverage;
+        private _Coverage coverage;
     }
 
     @Getter
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Coverage {
-        private Fixtures fixtures;
+    public static class _Coverage {
+        private _Fixtures fixtures;
         private boolean standings;
         private boolean players;
         private boolean topScorers;
@@ -77,7 +78,7 @@ public class LeagueCurrentResponse extends ApiFootballResponse {
     @Setter
     @NoArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Fixtures {
+    public static class _Fixtures {
         private boolean events;
         private boolean lineups;
         private boolean statisticsFixtures;

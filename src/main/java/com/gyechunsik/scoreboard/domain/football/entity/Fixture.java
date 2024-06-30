@@ -82,7 +82,7 @@ public class Fixture {
 
     @Override
     public String toString() {
-        return "Fixture{" +
+        return "_Fixture{" +
                 "fixtureId=" + fixtureId +
                 ", referee='" + referee + '\'' +
                 ", timezone='" + timezone + '\'' +

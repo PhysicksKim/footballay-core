@@ -81,7 +81,7 @@ class FootballRootTest {
 
         // then
         List<LeagueTeam> all = leagueTeamRepository.findAll();
-        log.info("All League Team Relations : League={}, teams=[{}]",
+        log.info("All _League _Team Relations : _League={}, teams=[{}]",
                 all.get(0).getLeague().getName(),
                 all.stream().map(lt -> lt.getTeam().getName()).toList());
 
@@ -108,7 +108,7 @@ class FootballRootTest {
 
         // then
         playerRepository.findAllByTeam(teamId).forEach(player -> {
-            log.info("Player : {}", player);
+            log.info("_Player : {}", player);
             assertThat(player.getName()).isNotNull();
             player.getTeamPlayers().forEach(teamPlayer -> assertThat(teamPlayer.getTeam().getName()).isNotNull());
         });

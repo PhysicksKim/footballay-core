@@ -1,9 +1,5 @@
-package com.gyechunsik.scoreboard.runner;
+package com.gyechunsik.scoreboard.domain.football.util;
 
-import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
-import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
-import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.Streamer;
@@ -14,40 +10,27 @@ import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultMatchRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultTeamRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.StreamerRepository;
+import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
+import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * 개발 환경에서 mockapi 저장된 json 을 사용해 초기 데이터를 저장하는 Runner
- */
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
-@Profile("mockapi")
-public class DevInitRunner implements ApplicationRunner {
+public class DevInitData {
 
+    private final FootballRoot footballRoot;
     private final StreamerRepository streamerRepository;
     private final DefaultMatchRepository defaultMatchRepository;
     private final DefaultTeamRepository defaultTeamRepository;
 
-    private final FootballRoot footballRoot;
-
-    private static final boolean WANT_TO_ADD_DATA = false;
-
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
-        if(WANT_TO_ADD_DATA) {
-            addData();
-        }
-    }
-
-    private void addData() {
+    public void addData() {
         // Save Streamer "gyechunhoe"
         Streamer gyechunhoe = saveStreamer();
 

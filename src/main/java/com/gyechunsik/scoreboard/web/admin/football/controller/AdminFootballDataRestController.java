@@ -27,7 +27,7 @@ public class AdminFootballDataRestController {
      * GET : 가능 리그 조회
      * POST : 가능 리그 추가
      * DELETE : 가능 리그 삭제
-     * - Available Fixtures 조회
+     * - Available _Fixtures 조회
      * GET : 가능 팀 조회
      * POST : 가능 팀 추가
      * DELETE : 가능 팀 삭제

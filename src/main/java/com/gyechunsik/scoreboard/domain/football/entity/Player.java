@@ -5,7 +5,6 @@ import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerS
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -33,14 +32,14 @@ public class Player {
     @OneToMany(mappedBy = "player")
     private List<TeamPlayer> teamPlayers;
 
-    public Player(PlayerSquadResponse.PlayerData playerData) {
+    public Player(PlayerSquadResponse._PlayerData playerData) {
         this.id = playerData.getId();
         this.name = playerData.getName();
         this.photoUrl = playerData.getPhoto();
         this.position = playerData.getPosition();
     }
 
-    public void updateFromApiData(PlayerSquadResponse.PlayerData apiData) {
+    public void updateFromApiData(PlayerSquadResponse._PlayerData apiData) {
         this.name = apiData.getName();
         this.photoUrl = apiData.getPhoto();
         this.position = apiData.getPosition();

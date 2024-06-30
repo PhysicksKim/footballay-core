@@ -124,7 +124,7 @@ public class AdminFootballCacheRestController {
         log.info("From : {}", from);
         log.info("To : {}", to);
 
-        return ResponseEntity.ok().body("(Not Implemented) Fixtures from " + from + " to " + to + " cached successfully.");
+        return ResponseEntity.ok().body("(Not Implemented) _Fixtures from " + from + " to " + to + " cached successfully.");
     }
 
 }

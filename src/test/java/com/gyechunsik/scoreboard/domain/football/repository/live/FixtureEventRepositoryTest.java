@@ -1,0 +1,111 @@
+package com.gyechunsik.scoreboard.domain.football.repository.live;
+
+import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
+import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.entity.live.EventType;
+import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
+import com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam;
+import jakarta.persistence.EntityManager;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import java.util.List;
+
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
+import static org.assertj.core.api.Assertions.*;
+
+@Slf4j
+@DataJpaTest
+class FixtureEventRepositoryTest {
+
+    @Autowired
+    private LeagueRepository leagueRepository;
+    @Autowired
+    private TeamRepository teamRepository;
+    @Autowired
+    private FixtureRepository fixtureRepository;
+    @Autowired
+    private LeagueTeamRepository leagueTeamRepository;
+    @Autowired
+    private FixtureEventRepository fixtureEventRepository;
+    @Autowired
+    private PlayerRepository playerRepository;
+
+    @Autowired
+    private EntityManager em;
+
+    @DisplayName("Fixture 의 Event 를 sequence 순서대로 조회한다")
+    @Test
+    void FixtureEventSequenceDESC() {
+        // given
+        LeagueTeamFixture generate = generate();
+        League league = generate.league;
+        Team home = generate.home;
+        Team away = generate.away;
+        Fixture fixture = generate.fixture;
+
+        League saveLeague = leagueRepository.save(league);
+        Team saveHome = teamRepository.save(home);
+        Team saveAway = teamRepository.save(away);
+        leagueTeamRepository.save(LeagueTeam.builder().league(saveLeague).team(saveHome).build());
+        leagueTeamRepository.save(LeagueTeam.builder().league(saveLeague).team(saveAway).build());
+        Fixture saveFixture = fixtureRepository.save(fixture);
+
+        List<Player> players = GeneratePlayersOfTeam.generatePlayersOfTeam(saveHome);
+        List<Player> savePlayers = playerRepository.saveAll(players);
+
+        em.flush();
+        em.clear();
+
+        // when
+        FixtureEvent seq0_normalGoal = FixtureEvent.builder()
+                .fixture(saveFixture)
+                .team(home)
+                .player(savePlayers.get(0))
+                .sequence(0)
+                .timeElapsed(10)
+                .extraTime(0)
+                .type(EventType.GOAL)
+                .detail("Normal Goal")
+                .build();
+        FixtureEvent seq1_substitution = FixtureEvent.builder()
+                .fixture(saveFixture)
+                .team(home)
+                .player(savePlayers.get(1))
+                .assist(savePlayers.get(2))
+                .sequence(1)
+                .timeElapsed(15)
+                .extraTime(0)
+                .type(EventType.SUBST)
+                .detail("Substitution 1")
+                .build();
+        fixtureEventRepository.saveAll(List.of(seq0_normalGoal, seq1_substitution));
+
+        em.flush();
+        em.clear();
+
+        List<FixtureEvent> findFixtureEvents = fixtureEventRepository.findByFixtureOrderBySequenceDesc(saveFixture);
+        for (FixtureEvent findFixtureEvent : findFixtureEvents) {
+            log.info("findFixtureEvent Elapsed={},Type={},sequence={}",
+                    findFixtureEvent.getTimeElapsed(),
+                    findFixtureEvent.getType(),
+                    findFixtureEvent.getSequence());
+        }
+
+        // then
+        assertThat(findFixtureEvents.get(0).getSequence()).isEqualTo(0);
+        assertThat(findFixtureEvents.get(1).getSequence()).isEqualTo(1);
+        assertThat(findFixtureEvents.get(0).getTeam().getId()).isEqualTo(home.getId());
+    }
+}

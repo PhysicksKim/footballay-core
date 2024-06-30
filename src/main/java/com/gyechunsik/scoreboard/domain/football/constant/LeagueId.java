@@ -6,5 +6,4 @@ public class LeagueId {
     public static final long UEFA_CHAMPIONS = 2;
     public static final long EURO = 4;
 
-
 }

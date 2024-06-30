@@ -53,40 +53,40 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FixtureResponse extends ApiFootballResponse {
 
-    private List<Response> response;
+    private List<_Response> response;
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Response {
-        private Fixture fixture;
-        private League league;
-        private Teams teams;
-        private Goals goals;
-        private Score score;
+    public static class _Response {
+        private _Fixture fixture;
+        private _League league;
+        private _Teams teams;
+        private _Goals goals;
+        private _Score score;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Fixture {
+    public static class _Fixture {
         private Long id;
         private String referee;
         private String timezone;
         private String date;
         private Long timestamp;
-        private Periods periods;
-        private Venue venue;
-        private Status status;
+        private _Periods periods;
+        private _Venue venue;
+        private _Status status;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Periods {
+    public static class _Periods {
         private Long first;
         private Long second;
     }
@@ -95,7 +95,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Venue {
+    public static class _Venue {
         private Long id;
         private String name;
         private String city;
@@ -105,7 +105,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Status {
+    public static class _Status {
         @JsonProperty("long")
         private String longStatus;
         @JsonProperty("short")
@@ -117,7 +117,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class League {
+    public static class _League {
         private Long id;
         private String name;
         private String country;
@@ -131,16 +131,16 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Teams {
-        private Team home;
-        private Team away;
+    public static class _Teams {
+        private _Team home;
+        private _Team away;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Team {
+    public static class _Team {
         private Long id;
         private String name;
         private String logo;
@@ -151,7 +151,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Goals {
+    public static class _Goals {
         private Integer home;
         private Integer away;
     }
@@ -160,18 +160,18 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Score {
-        private Halftime halftime;
-        private Fulltime fulltime;
-        private Extratime extratime;
-        private Penalty penalty;
+    public static class _Score {
+        private _Halftime halftime;
+        private _Fulltime fulltime;
+        private _Extratime extratime;
+        private _Penalty penalty;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Halftime {
+    public static class _Halftime {
         private Integer home;
         private Integer away;
     }
@@ -180,7 +180,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Fulltime {
+    public static class _Fulltime {
         private Integer home;
         private Integer away;
     }
@@ -189,7 +189,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Extratime {
+    public static class _Extratime {
         private Integer home;
         private Integer away;
     }
@@ -198,7 +198,7 @@ public class FixtureResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Penalty {
+    public static class _Penalty {
         private Integer home;
         private Integer away;
     }

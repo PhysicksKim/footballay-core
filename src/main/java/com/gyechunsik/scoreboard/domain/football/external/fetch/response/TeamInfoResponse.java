@@ -11,20 +11,20 @@ import java.util.List;
 @ToString
 public class TeamInfoResponse extends ApiFootballResponse {
 
-    private List<TeamInfo> response;
+    private List<_TeamInfo> response;
 
     @Getter
     @Setter
     @ToString
-    public static class TeamInfo {
-        private TeamResponse team;
-        private Venue venue;
+    public static class _TeamInfo {
+        private _TeamResponse team;
+        private _Venue venue;
     }
 
     @Getter
     @Setter
     @ToString
-    public static class TeamResponse {
+    public static class _TeamResponse {
         private long id;
         private String name;
         private String code;
@@ -37,7 +37,7 @@ public class TeamInfoResponse extends ApiFootballResponse {
     @Getter
     @Setter
     @ToString
-    public static class Venue {
+    public static class _Venue {
         private long id;
         private String name;
         private String address;

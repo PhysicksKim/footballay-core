@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -78,10 +79,13 @@ public class FootballDataService {
     }
 
     public List<Fixture> getFixturesOfLeagueAfterDate(long leagueId, ZonedDateTime zonedDateTime) {
+        log.info("getFixturesOfLeagueAfterDate :: leagueId={}, zonedDateTime={}", leagueId, zonedDateTime);
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
         ZonedDateTime truncatedZonedDateTime = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return fixtureRepository.findNextFixturesAfterDate(truncatedZonedDateTime);
+        LocalDateTime localDateTime = truncatedZonedDateTime.toLocalDateTime();
+        log.info("truncated time zoned={} local={}", truncatedZonedDateTime, localDateTime);
+        return fixtureRepository.findNextFixturesAfterDate(localDateTime);
     }
 
     public Player getPlayerById(long playerId) {

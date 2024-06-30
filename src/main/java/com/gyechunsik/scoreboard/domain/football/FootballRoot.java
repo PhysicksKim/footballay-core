@@ -52,7 +52,7 @@ public class FootballRoot {
             teams = footballDataService.getTeamsByLeagueId(leagueId);
             log.info("getTeamsOfLeague :: {}", teams);
         } catch (Exception e) {
-            log.error("error while getting Teams by LeagueId :: {}", e.getMessage());
+            log.error("error while getting _Teams by LeagueId :: {}", e.getMessage());
             return List.of();
         }
         return teams;
@@ -76,7 +76,7 @@ public class FootballRoot {
             player = footballDataService.getPlayerById(playerId);
             log.info("getPlayer :: {}", player);
         } catch (Exception e) {
-            log.error("error while getting Player by Id :: {}", e.getMessage());
+            log.error("error while getting _Player by Id :: {}", e.getMessage());
             return null;
         }
         return player;
@@ -93,7 +93,7 @@ public class FootballRoot {
             fixtures = footballDataService.getFixturesOfLeague(leagueId);
             log.info("getFixturesByLeagueId :: {}", fixtures);
         } catch (Exception e) {
-            log.error("error while getting Fixtures by LeagueId :: {}", e.getMessage());
+            log.error("error while getting _Fixtures by LeagueId :: {}", leagueId, e);
             return List.of();
         }
         return fixtures;
@@ -110,7 +110,7 @@ public class FootballRoot {
             fixtures = footballDataService.getFixturesOfLeagueAfterDate(leagueId, zonedDateTime);
             log.info("getNextFixturesFromDate :: {}", fixtures);
         } catch (Exception e) {
-            log.error("error while getting Fixtures by LeagueId :: {}", e.getMessage());
+            log.error("error while getting _Fixtures by LeagueId :: {}", e.getMessage());
             return List.of();
         }
         return fixtures;
@@ -138,7 +138,7 @@ public class FootballRoot {
         try {
             footballAvailableService.updateAvailableLeague(leagueId, false);
         } catch (Exception e) {
-            log.error("error while removing Available League :: {}", e.getMessage());
+            log.error("error while removing Available _League :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -164,7 +164,7 @@ public class FootballRoot {
         try {
             footballAvailableService.removeAvailableFixture(fixtureId);
         } catch (Exception e) {
-            log.error("error while removing Available Fixture :: {}", e.getMessage());
+            log.error("error while removing Available _Fixture :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -186,7 +186,7 @@ public class FootballRoot {
             League cachedLeague = footballApiCacheService.cacheLeague(leagueId);
             log.info("cachedLeague :: {}", cachedLeague);
         } catch (Exception e) {
-            log.error("error while caching League :: {}", e.getMessage());
+            log.error("error while caching _League :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -195,10 +195,10 @@ public class FootballRoot {
     public boolean cacheTeamsOfLeague(long leagueId) {
         try {
             List<Team> teams = footballApiCacheService.cacheTeamsOfLeague(leagueId);
-            log.info("cached Teams LeagueId :: {}", leagueId);
-            log.info("cached Teams :: {}", teams.stream().map(Team::getName).toList());
+            log.info("cached _Teams LeagueId :: {}", leagueId);
+            log.info("cached _Teams :: {}", teams.stream().map(Team::getName).toList());
         } catch (Exception e) {
-            log.error("error while caching Teams of League :: {}", e.getMessage());
+            log.error("error while caching _Teams of _League :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -209,7 +209,7 @@ public class FootballRoot {
             footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
             log.info("cachedTeamAndCurrentLeagues :: {}", teamId);
         } catch (Exception e) {
-            log.error("error while caching Team and Current Leagues :: {}", e.getMessage());
+            log.error("error while caching _Team and Current Leagues :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -222,14 +222,14 @@ public class FootballRoot {
             log.info("cached players :: {}",
                     players.stream().map(Player::getName).toList());
         } catch (Exception e) {
-            log.error("error while caching Squad of Team :: {}", e.getMessage());
+            log.error("error while caching Squad of _Team :: {}", e.getMessage());
             return false;
         }
         return true;
     }
 
     /**
-     * 해당 League 의 current season 값을 바탕으로 모든 경기 일정을 캐싱합니다.
+     * 해당 _League 의 current season 값을 바탕으로 모든 경기 일정을 캐싱합니다.
      * @param leagueId
      * @return
      */
@@ -240,7 +240,7 @@ public class FootballRoot {
             log.info("cached fixtures :: {}",
                     fixtures.stream().map(Fixture::getFixtureId).toList());
         } catch (Exception e) {
-            log.error("error while caching All Fixtures of League :: {}", e.getMessage());
+            log.error("error while caching All _Fixtures of _League :: {}", e.getMessage());
             return false;
         }
         return true;

@@ -12,30 +12,23 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LeagueInfoResponse extends ApiFootballResponse {
 
-    private List<Response> response;
+    private List<_Response> response;
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Response {
-        private LeagueResponse league;
-        private Country country;
-        private List<Season> seasons;
+    public static class _Response {
+        private _LeagueResponse league;
+        private _Country country;
+        private List<_Season> seasons;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class LeagueResponseInner extends LeagueResponse {
-    }
-
-    @Getter
-    @Setter
-    @ToString
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Country {
+    public static class _Country {
         private String name;
         private String code;
         @JsonProperty("flag")
@@ -46,20 +39,20 @@ public class LeagueInfoResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Season {
+    public static class _Season {
         private int year;
         private String start;
         private String end;
         private boolean current;
-        private Coverage coverage;
+        private _Coverage coverage;
     }
 
     @Getter
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Coverage {
-        private FixturesSupport fixtures;
+    public static class _Coverage {
+        private _FixturesSupport fixtures;
         private boolean standings;
         private boolean players;
         @JsonProperty("top_scorers")
@@ -77,7 +70,7 @@ public class LeagueInfoResponse extends ApiFootballResponse {
     @Setter
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class FixturesSupport {
+    public static class _FixturesSupport {
         private boolean events;
         private boolean lineups;
         @JsonProperty("statistics_fixtures")

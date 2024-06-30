@@ -29,7 +29,7 @@ class MockApiCallServiceImplTest {
     @Autowired
     private ObjectMapper jacksonObjectMapper;
 
-    @DisplayName("Mock Api 로 LeagueResponse 반환")
+    @DisplayName("Mock Api 로 _LeagueResponse 반환")
     @Test
     void success_league() {
         // given
@@ -42,8 +42,8 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse).isNotNull();
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
 
-        LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
-        log.info("LeagueResponse FixtureSingle : {}", leagueResponse);
+        _LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
+        log.info("_LeagueResponse _FixtureSingle : {}", leagueResponse);
     }
 
 
@@ -60,12 +60,12 @@ class MockApiCallServiceImplTest {
         assertThat(leagueInfoResponse).isNotNull();
         assertThat(leagueInfoResponse.getResponse()).size().isGreaterThan(2);
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
-        for (LeagueInfoResponse.Response response : leagueInfoResponse.getResponse()) {
-            log.info("LeagueResponse FixtureSingle : {}", response);
+        for (LeagueInfoResponse._Response response : leagueInfoResponse.getResponse()) {
+            log.info("_LeagueResponse _FixtureSingle : {}", response);
         }
     }
 
-    @DisplayName("Mock Api 로 Team 반환")
+    @DisplayName("Mock Api 로 _Team 반환")
     @Test
     void success_team() {
         // given
@@ -78,8 +78,8 @@ class MockApiCallServiceImplTest {
         assertThat(teamInfoResponse).isNotNull();
         assertThat(teamInfoResponse.getResponse().get(0)).isNotNull();
 
-        TeamInfoResponse.TeamResponse team = teamInfoResponse.getResponse().get(0).getTeam();
-        log.info("Team FixtureSingle : {}", team);
+        TeamInfoResponse._TeamResponse team = teamInfoResponse.getResponse().get(0).getTeam();
+        log.info("_Team _FixtureSingle : {}", team);
     }
 
     @DisplayName("LeagueId 와 CurrentSeason 으로 해당 리그의 팀들을 조회한다")
@@ -111,8 +111,8 @@ class MockApiCallServiceImplTest {
         assertThat(playerSquadResponse).isNotNull();
         assertThat(playerSquadResponse.getResponse().get(0)).isNotNull();
 
-        List<PlayerSquadResponse.PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
-        for (PlayerSquadResponse.PlayerData player : players) {
+        List<PlayerSquadResponse._PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
+        for (PlayerSquadResponse._PlayerData player : players) {
             log.info("player : {}", player);
         }
     }

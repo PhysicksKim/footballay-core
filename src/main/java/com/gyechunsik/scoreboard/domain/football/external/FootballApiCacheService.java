@@ -48,12 +48,12 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
 /*
  # 캐싱시 3가지 케이스를 나눠서 처리해야 합니다
  새로 캐싱, 이미 캐싱, 연관관계 끊어짐 처리 3가지 케이스가 있습니다.
- 예를 들어 Team 이 UEFA league 에 속했다가 다음 시즌에 UEFA 에 속하지 않는 경우 연관관계를 끊어줘야 한다.
- Cache Teams Of League 메서드에서는 리그에 속한 팀들을 캐싱한다. 이 때 3가지 경우로 나뉠 수 있다.
+ 예를 들어 _Team 이 UEFA league 에 속했다가 다음 시즌에 UEFA 에 속하지 않는 경우 연관관계를 끊어줘야 한다.
+ Cache _Teams Of _League 메서드에서는 리그에 속한 팀들을 캐싱한다. 이 때 3가지 경우로 나뉠 수 있다.
  1. api 있고 db 있음 : 해당 team 에 대한 leagueTeam 생성 스킵
  2. api 있고 db 없음 : 새롭게 leagueTeam 생성하여 db에 값을 넣음
  3. api 없고 db 있음 : 해당 leagueTeam 삭제
- 따라서 League 또는 Team 을 캐싱하는 경우,
+ 따라서 _League 또는 _Team 을 캐싱하는 경우,
  LeagueTeam 에서 leagueId 일치하는 모든 항목을, TeamPlayer 에서 teamId 일치하는 모든 항목을 찾아서
  3가지 경우를 나눠서 처리해 줘야 한다.
 */
@@ -82,7 +82,7 @@ public class FootballApiCacheService {
      */
     public League cacheLeague(long leagueId) {
         LeagueInfoResponse leagueInfoResponse = apiCallService.leagueInfo(leagueId);
-        Response response = leagueInfoResponse.getResponse().get(0);
+        _Response response = leagueInfoResponse.getResponse().get(0);
 
         League league = null;
         league = saveSingleLeague(leagueId, response);
@@ -99,30 +99,30 @@ public class FootballApiCacheService {
      * 현재 시즌 값은 this.cacheLeague(leagueId) 에 의해서 자동으로 캐싱되지만, 데이터 무결성을 위해서 검사를 거칩니다.
      * @param leagueId
      */
-    public List<Team> cacheTeamsOfLeague(Long leagueId) {
+    public List<Team> cacheTeamsOfLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다"));
         if (league.getCurrentSeason() == null) {
-            throw new RuntimeException("아직 current Season 이 캐싱되어있지 않습니다");
+            throw new RuntimeException("아직 current _Season 이 캐싱되어있지 않습니다");
         }
 
         TeamInfoResponse teamInfoResponse = apiCallService.teamsInfo(leagueId, league.getCurrentSeason());
 
-        Map<Long, TeamResponse> apiTeamsSet = teamInfoResponse.getResponse().stream()
-                .collect(Collectors.toMap(teamInfo -> teamInfo.getTeam().getId(), TeamInfo::getTeam));
+        Map<Long, _TeamResponse> apiTeamsSet = teamInfoResponse.getResponse().stream()
+                .collect(Collectors.toMap(teamInfo -> teamInfo.getTeam().getId(), _TeamInfo::getTeam));
         List<Team> findTeams = teamRepository.findTeamsByLeague(league);
 
         List<Team> bothExistTeams = new ArrayList<>(); // CASE 1. db 존재 api 없음. 일부 필드 업데이트
-        List<TeamResponse> bothExistTeamResponses = new ArrayList<>(); // CASE 1. db 존재 api 없음. 일부 필드 업데이트
+        List<_TeamResponse> bothExistTeamRespons = new ArrayList<>(); // CASE 1. db 존재 api 없음. 일부 필드 업데이트
         List<Team> dbOnlyExistTeams = new ArrayList<>(); // CASE 2. db 존재 api 없음. leagueTeam 연관관계 끊어줌
-        List<TeamResponse> apiOnlyExistTeamResponses = new ArrayList<>(); // CASE 3. db 없음 api 존재. 새로운 팀 추가
+        List<_TeamResponse> apiOnlyExistTeamRespons = new ArrayList<>(); // CASE 3. db 없음 api 존재. 새로운 팀 추가
 
         // CASE 1 & CASE 2
         for(Team team : findTeams) {
             if (apiTeamsSet.containsKey(team.getId())) {
                 // CASE 1 : db 존재 api 존재
                 bothExistTeams.add(team);
-                bothExistTeamResponses.add(apiTeamsSet.get(team.getId()));
+                bothExistTeamRespons.add(apiTeamsSet.get(team.getId()));
                 apiTeamsSet.remove(team.getId());
             } else {
                 // CASE 2 : db 존재 api 없음
@@ -130,12 +130,12 @@ public class FootballApiCacheService {
             }
         }
         // CASE 3
-        apiOnlyExistTeamResponses.addAll(apiTeamsSet.values());
+        apiOnlyExistTeamRespons.addAll(apiTeamsSet.values());
 
         // CASE 1 : 일부 필드 업데이트
         for (int i = 0; i < bothExistTeams.size(); i++) {
             Team team = bothExistTeams.get(i);
-            TeamResponse teamResponse = bothExistTeamResponses.get(i);
+            _TeamResponse teamResponse = bothExistTeamRespons.get(i);
             team.updateCompare(toTeamEntity(teamResponse));
             teamRepository.save(team);
         }
@@ -146,7 +146,7 @@ public class FootballApiCacheService {
         }
 
         // CASE 3 : 새로운 팀 추가
-        List<Team> newTeams = apiOnlyExistTeamResponses.stream()
+        List<Team> newTeams = apiOnlyExistTeamRespons.stream()
                 .map(FootballApiCacheService::toTeamEntity)
                 .toList();
         List<Team> savedNewTeams = teamRepository.saveAll(newTeams);
@@ -163,7 +163,7 @@ public class FootballApiCacheService {
         log.info("CASE 2 ; DB only exist teams : {}", dbOnlyExistTeams.stream().map(Team::getName).toList());
         log.info("CASE 3 ; API only exist teams : {}", savedNewTeams.stream().map(Team::getName).toList());
 
-        log.info("Teams of [leagueId={},name={}] is cached", league.getLeagueId(), league.getName());
+        log.info("_Teams of [leagueId={},name={}] is cached", league.getLeagueId(), league.getName());
 
         lastCacheLogService.saveApiCache(ApiCacheType.LEAGUE_TEAMS, Map.of("leagueId", leagueId), ZonedDateTime.now());
 
@@ -192,7 +192,7 @@ public class FootballApiCacheService {
         }
 
         LeagueInfoResponse leagueInfoResponse = apiCallService.teamCurrentLeaguesInfo(teamId);
-        for (Response response : leagueInfoResponse.getResponse()) {
+        for (_Response response : leagueInfoResponse.getResponse()) {
             long leagueId = response.getLeague().getId();
             Optional<League> findLeague = leagueRepository.findById(leagueId);
 
@@ -222,7 +222,7 @@ public class FootballApiCacheService {
     public Team cacheSingleTeam(long teamId) {
         Optional<Team> findTeam = teamRepository.findById(teamId);
         TeamInfoResponse teamInfoResponse = apiCallService.teamInfo(teamId);
-        TeamResponse teamResponse = teamInfoResponse.getResponse().get(0).getTeam();
+        _TeamResponse teamResponse = teamInfoResponse.getResponse().get(0).getTeam();
 
         Team build = Team.builder()
                 .id(teamResponse.getId())
@@ -268,9 +268,9 @@ public class FootballApiCacheService {
 
         PlayerSquadResponse playerSquadResponse = apiCallService.playerSquad(teamId);
 
-        List<PlayerData> apiPlayers = playerSquadResponse.getResponse().get(0).getPlayers();
+        List<_PlayerData> apiPlayers = playerSquadResponse.getResponse().get(0).getPlayers();
         Set<Long> apiPlayerIds = apiPlayers.stream()
-                .map(PlayerData::getId)
+                .map(_PlayerData::getId)
                 .collect(Collectors.toSet());
 
         List<Player> dbPlayers = playerRepository.findAllByTeam(teamId);
@@ -281,7 +281,7 @@ public class FootballApiCacheService {
         List<Player> cachedPlayers = new ArrayList<>();
 
         // case 1 & 2 : API의 선수를 DB에 업데이트하거나 추가
-        for (PlayerData apiPlayer : apiPlayers) {
+        for (_PlayerData apiPlayer : apiPlayers) {
             Player cachedPlayer = playerRepository.findById(apiPlayer.getId())
                     .map(player -> {
                         // API 데이터로 업데이트
@@ -302,7 +302,7 @@ public class FootballApiCacheService {
         dbPlayers.stream()
                 .filter(player -> dbPlayerIds.contains(player.getId()))
                 .forEach(player -> {
-                    log.info("Player [{},{}] team relationship disconnected", player.getId(), player.getName());
+                    log.info("_Player [{},{}] team relationship disconnected", player.getId(), player.getName());
                     // TeamId 연관관계 끊기
                     teamPlayerRepository.deleteByTeamAndPlayer(team, player);
                     playerRepository.save(player);
@@ -332,7 +332,7 @@ public class FootballApiCacheService {
         LeagueInfoResponse response = apiCallService.allLeagueCurrent();
         List<League> leagues = new ArrayList<>();
 
-        for (LeagueInfoResponse.Response leagueResponse : response.getResponse()) {
+        for (_Response leagueResponse : response.getResponse()) {
             League league = saveSingleLeague(leagueResponse.getLeague().getId(), leagueResponse);
             leagues.add(league);
         }
@@ -356,7 +356,7 @@ public class FootballApiCacheService {
         List<LiveStatus> liveStatusList = new ArrayList<>();
         List<Fixture> fixtures = new ArrayList<>();
 
-        for (FixtureResponse.Response response : fixtureResponse.getResponse()) {
+        for (FixtureResponse._Response response : fixtureResponse.getResponse()) {
             Optional<Fixture> optionalFixture = fixtureRepository.findById(response.getFixture().getId());
 
             if(optionalFixture.isEmpty()) {
@@ -381,8 +381,8 @@ public class FootballApiCacheService {
         return fixtures;
     }
 
-    private static League toLeagueEntity(LeagueInfoResponse.Response leagueResponse) {
-        LeagueResponse leagueInfo = leagueResponse.getLeague();
+    private static League toLeagueEntity(_Response leagueResponse) {
+        _LeagueResponse leagueInfo = leagueResponse.getLeague();
         int currentSeason = extractCurrentSeason(leagueResponse);
 
         return League.builder()
@@ -394,7 +394,7 @@ public class FootballApiCacheService {
                 .build();
     }
 
-    private static Team toTeamEntity(TeamResponse teamResponse) {
+    private static Team toTeamEntity(_TeamResponse teamResponse) {
         return Team.builder()
                 .id(teamResponse.getId())
                 .name(teamResponse.getName())
@@ -403,15 +403,15 @@ public class FootballApiCacheService {
                 .build();
     }
 
-    private static int extractCurrentSeason(Response info) {
+    private static int extractCurrentSeason(_Response info) {
         return info.getSeasons().stream()
-                .filter(Season::isCurrent)
+                .filter(_Season::isCurrent)
                 .findAny()
                 .orElseThrow(() -> new IllegalStateException("Current season not found"))
                 .getYear();
     }
 
-    private LiveStatus toLiveStatusEntity(FixtureResponse.Response response) {
+    private LiveStatus toLiveStatusEntity(FixtureResponse._Response response) {
         return LiveStatus.builder()
                 .longStatus(response.getFixture().getStatus().getLongStatus())
                 .shortStatus(response.getFixture().getStatus().getShortStatus())
@@ -438,7 +438,7 @@ public class FootballApiCacheService {
         timestamp: 1719446400
      */
 
-    private Fixture toFixtureEntity(FixtureResponse.Response response, LiveStatus status) {
+    private Fixture toFixtureEntity(FixtureResponse._Response response, LiveStatus status) {
         final ZoneId ZONE_ID_SEOUL = ZoneId.of("Asia/Seoul");
 
         ZonedDateTime zonedDateTime = ZonedDateTime.parse(response.getFixture().getDate(), DateTimeFormatter.ISO_DATE_TIME)
@@ -452,19 +452,19 @@ public class FootballApiCacheService {
         Optional<League> findLeague = leagueRepository.findById(response.getLeague().getId());
 
         Team home = findHome.orElseThrow(
-                () -> new IllegalStateException("Home team not found : " +
+                () -> new IllegalStateException("_Home team not found : " +
                         response.getTeams().getHome().getId() +
                         " , team name : " +
                         response.getTeams().getHome().getName())
         );
         Team away = findAway.orElseThrow(
-                () -> new IllegalStateException("Away team not found : " +
+                () -> new IllegalStateException("_Away team not found : " +
                         response.getTeams().getAway().getId() +
                         " , team name : " +
                         response.getTeams().getAway().getName())
         );
         League league = findLeague.orElseThrow(
-                () -> new IllegalStateException("League not found : " +
+                () -> new IllegalStateException("_League not found : " +
                         response.getLeague().getId() +
                         " , league name : " +
                         response.getLeague().getName())
@@ -483,7 +483,7 @@ public class FootballApiCacheService {
                 .build();
     }
 
-    private @NotNull League saveSingleLeague(long leagueId, Response response) {
+    private @NotNull League saveSingleLeague(long leagueId, _Response response) {
         League build = toLeagueEntity(response);
         League league;
 

@@ -5,7 +5,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-public class LeagueResponse {
+public class _LeagueResponse {
     protected long id;
     protected String name;
     protected String type;
