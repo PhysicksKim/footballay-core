@@ -86,51 +86,51 @@ public class AdminFootballDataWebService {
     }
 
     // teams, player, fixtures 조회
-    public ApiResponse<TeamDto> getTeamsOfLeague(long leagueId, String requestUrl) {
-        TeamDto[] teamDtos;
+    public ApiResponse<TeamResponse> getTeamsOfLeague(long leagueId, String requestUrl) {
+        TeamResponse[] teamResponses;
         try {
-            teamDtos = footballRoot.getTeamsOfLeague(leagueId).stream()
+            teamResponses = footballRoot.getTeamsOfLeague(leagueId).stream()
                     .map(FootballDtoMapper::toTeamDto)
-                    .toArray(TeamDto[]::new);
+                    .toArray(TeamResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting teams of league :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("팀 조회 실패", requestUrl);
         }
-        return apiCommonResponseService.createSuccessResponse(teamDtos, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(teamResponses, requestUrl);
     }
 
-    public ApiResponse<PlayerDto> getSquadOfTeam(long teamId, String requestUrl) {
-        PlayerDto[] playerDtos;
+    public ApiResponse<PlayerResponse> getSquadOfTeam(long teamId, String requestUrl) {
+        PlayerResponse[] playerResponses;
         try {
-            playerDtos = footballRoot.getSquadOfTeam(teamId).stream()
+            playerResponses = footballRoot.getSquadOfTeam(teamId).stream()
                     .map(FootballDtoMapper::toPlayerDto)
-                    .toArray(PlayerDto[]::new);
+                    .toArray(PlayerResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting squad of team :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl);
         }
-        return apiCommonResponseService.createSuccessResponse(playerDtos, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(playerResponses, requestUrl);
     }
 
-    public ApiResponse<PlayerDto> getPlayerInfo(long playerId, String requestUrl) {
-        PlayerDto playerDto;
+    public ApiResponse<PlayerResponse> getPlayerInfo(long playerId, String requestUrl) {
+        PlayerResponse playerResponse;
         try {
-            playerDto = FootballDtoMapper.toPlayerDto(footballRoot.getPlayer(playerId));
+            playerResponse = FootballDtoMapper.toPlayerDto(footballRoot.getPlayer(playerId));
         } catch (Exception e) {
             log.error("error while getting player info :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl);
         }
-        return apiCommonResponseService.createSuccessResponse(new PlayerDto[]{playerDto}, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(new PlayerResponse[]{playerResponse}, requestUrl);
     }
 
-    public ApiResponse<FixtureDto> getFixturesFromDate(long leagueId, ZonedDateTime date, String requestUrl) {
+    public ApiResponse<FixtureResponse> getFixturesFromDate(long leagueId, ZonedDateTime date, String requestUrl) {
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
-        FixtureDto[] fixtures;
+        FixtureResponse[] fixtures;
         try {
             fixtures = footballRoot.getNextFixturesFromDate(leagueId, date).stream()
                     .map(FootballDtoMapper::toFixtureDto)
-                    .sorted(Comparator.comparing(FixtureDto::date))
-                    .toArray(FixtureDto[]::new);
+                    .sorted(Comparator.comparing(FixtureResponse::date))
+                    .toArray(FixtureResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting fixture info :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl);

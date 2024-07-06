@@ -10,6 +10,7 @@ import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteC
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
@@ -33,6 +34,7 @@ public class AutoRemoteService {
      * @param autoRemoteGroup
      * @return
      */
+    @Transactional
     public AnonymousUser createAndSaveAnonymousUser(AutoRemoteGroup autoRemoteGroup) {
         if(autoRemoteGroup == null) {
             throw new IllegalArgumentException("noshow:AutoRemoteGroup 이 존재하지 않습니다.");
@@ -105,6 +107,7 @@ public class AutoRemoteService {
      * @param principal
      * @param userUUID
      */
+    @Transactional
     public void validateAndCacheUserToRedis(Principal principal, String userUUID) {
         if (principal == null || !StringUtils.hasText(userUUID)) {
             log.info("Principal: {}", principal);
@@ -122,6 +125,7 @@ public class AutoRemoteService {
         findUser.setLastConnectedAt(LocalDateTime.now());
     }
 
+    @Transactional
     public AutoRemoteGroup createAutoRemoteGroup() {
         AutoRemoteGroup created = new AutoRemoteGroup();
         created.setLastActiveAt(LocalDateTime.now());

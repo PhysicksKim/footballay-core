@@ -2,15 +2,15 @@ package com.gyechunsik.scoreboard.web.admin.football.response;
 
 import java.time.ZonedDateTime;
 
-public record FixtureDto(
+public record FixtureResponse(
         long fixtureId,
         String referee,
         String timezone,
         ZonedDateTime date,
         long timestamp,
-        LiveStatusDto liveStatus,
-        LeagueDto league,
-        TeamDto homeTeam,
-        TeamDto awayTeam
+        LiveStatusResponse liveStatus,
+        LeagueResponse league,
+        TeamResponse homeTeam,
+        TeamResponse awayTeam
 ) {
 }

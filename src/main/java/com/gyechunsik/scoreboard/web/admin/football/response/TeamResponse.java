@@ -1,10 +1,9 @@
 package com.gyechunsik.scoreboard.web.admin.football.response;
 
-public record PlayerDto(
-        long playerId,
+public record TeamResponse(
+        long teamId,
         String name,
         String koreanName,
-        String photoUrl,
-        String position
-        ) {
+        String logo
+) {
 }

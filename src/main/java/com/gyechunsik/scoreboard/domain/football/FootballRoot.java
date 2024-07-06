@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Football 과 관련된 DomainRoot 에 해당합니다. <br>
@@ -244,5 +245,16 @@ public class FootballRoot {
             return false;
         }
         return true;
+    }
+
+    public Optional<Fixture> getFixture(long fixtureId) {
+        try {
+            Fixture findFixture = footballDataService.getFixtureById(fixtureId);
+            log.info("getFixture :: {}", findFixture);
+            return Optional.of(findFixture);
+        } catch (Exception e) {
+            log.warn("error while getting _Fixture by Id :: {}", e.getMessage());
+            return Optional.empty();
+        }
     }
 }

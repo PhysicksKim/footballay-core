@@ -18,6 +18,7 @@ public class HelloStompController {
             Principal principal
     ) {
         log.info("principal : {}", principal);
+        log.info("stomp principal name : {}", principal.getName());
         log.info("hello");
         return new HelloResponse("hello hi " + principal.getName());
     }

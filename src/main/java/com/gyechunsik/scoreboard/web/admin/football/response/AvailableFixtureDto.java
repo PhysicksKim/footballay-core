@@ -9,9 +9,9 @@ public record AvailableFixtureDto(
         ZonedDateTime date,
         Long timestamp,
         boolean available,
-        LiveStatusDto liveStatus,
-        LeagueDto league,
-        TeamDto homeTeam,
-        TeamDto awayTeam
+        LiveStatusResponse liveStatus,
+        LeagueResponse league,
+        TeamResponse homeTeam,
+        TeamResponse awayTeam
         ) {
 }

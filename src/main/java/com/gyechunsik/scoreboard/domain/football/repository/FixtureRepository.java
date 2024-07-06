@@ -35,8 +35,14 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
      * 해당 리그의 date 이후의 이용 가능한 fixture 를 조회합니다.
      * 이를 위해 Index ( leagueId , isAvailable , date ) 로 생성합니다.
      */
-    @Query("SELECT f FROM Fixture f WHERE f.league.leagueId = :leagueId AND f.available = true AND f.date >= :date")
-    List<Fixture> findAvailableFixturesByLeagueIdAndDate(@Param("leagueId") Long leagueId, @Param("date") LocalDateTime date);
+    @Query("SELECT f FROM Fixture f " +
+            "JOIN FETCH f.liveStatus ls " +
+            "JOIN FETCH f.league l " +
+            "JOIN FETCH f.homeTeam ht " +
+            "JOIN FETCH f.awayTeam at " +
+            "WHERE f.league.leagueId = :leagueId AND f.available = true AND f.date >= :date")
+    List<Fixture> findAvailableFixturesByLeagueIdAndDate(@Param("leagueId") Long leagueId,
+                                                         @Param("date") LocalDateTime date);
 
     @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
     Optional<Fixture> findById(Long fixtureId);

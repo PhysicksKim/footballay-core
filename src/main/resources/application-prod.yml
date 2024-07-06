@@ -24,7 +24,6 @@ spring:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5
 
-
 server:
   error:
     whitelabel:

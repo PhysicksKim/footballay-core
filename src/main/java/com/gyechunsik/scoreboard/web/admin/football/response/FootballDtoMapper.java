@@ -11,16 +11,16 @@ import java.time.ZonedDateTime;
 
 public class FootballDtoMapper {
 
-    public static LiveStatusDto toLiveStatusDto(LiveStatus liveStatus) {
-        return new LiveStatusDto(
+    public static LiveStatusResponse toLiveStatusDto(LiveStatus liveStatus) {
+        return new LiveStatusResponse(
                 liveStatus.getLongStatus(),
                 liveStatus.getShortStatus(),
                 liveStatus.getElapsed()
         );
     }
 
-    public static LeagueDto toLeagueDto(League league) {
-        return new LeagueDto(
+    public static LeagueResponse toLeagueDto(League league) {
+        return new LeagueResponse(
                 league.getLeagueId(),
                 league.getName(),
                 league.getKoreanName(),
@@ -28,8 +28,8 @@ public class FootballDtoMapper {
         );
     }
 
-    public static TeamDto toTeamDto(Team team) {
-        return new TeamDto(
+    public static TeamResponse toTeamDto(Team team) {
+        return new TeamResponse(
                 team.getId(),
                 team.getName(),
                 team.getKoreanName(),
@@ -37,8 +37,8 @@ public class FootballDtoMapper {
         );
     }
 
-    public static PlayerDto toPlayerDto(Player player) {
-        return new PlayerDto(
+    public static PlayerResponse toPlayerDto(Player player) {
+        return new PlayerResponse(
                 player.getId(),
                 player.getName(),
                 player.getKoreanName(),
@@ -47,8 +47,8 @@ public class FootballDtoMapper {
         );
     }
 
-    public static FixtureDto toFixtureDto(Fixture fixture) {
-        return new FixtureDto(
+    public static FixtureResponse toFixtureDto(Fixture fixture) {
+        return new FixtureResponse(
                 fixture.getFixtureId(),
                 fixture.getReferee(),
                 fixture.getTimezone(),

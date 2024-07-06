@@ -11,13 +11,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 @Slf4j
-@RestController
 @RequiredArgsConstructor
+@RestController
 @RequestMapping("/api/admin/football")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminFootballDataRestController {
@@ -93,32 +91,32 @@ public class AdminFootballDataRestController {
      * league, team, player, fixtures 조회
      */
     @GetMapping("/teams")
-    public ResponseEntity<ApiResponse<TeamDto>> getTeamsOfLeague(long leagueId) {
+    public ResponseEntity<ApiResponse<TeamResponse>> getTeamsOfLeague(long leagueId) {
         String requestUrl = "/api/admin/football/teams";
-        ApiResponse<TeamDto> response = adminFootballDataWebService.getTeamsOfLeague(leagueId, requestUrl);
+        ApiResponse<TeamResponse> response = adminFootballDataWebService.getTeamsOfLeague(leagueId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/teams/squad")
-    public ResponseEntity<ApiResponse<PlayerDto>> getSquadOfTeam(long teamId) {
+    public ResponseEntity<ApiResponse<PlayerResponse>> getSquadOfTeam(long teamId) {
         String requestUrl = "/api/admin/football/teams/squad";
-        ApiResponse<PlayerDto> response = adminFootballDataWebService.getSquadOfTeam(teamId, requestUrl);
+        ApiResponse<PlayerResponse> response = adminFootballDataWebService.getSquadOfTeam(teamId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/players")
-    public ResponseEntity<ApiResponse<PlayerDto>> getPlayerInfo(long playerId) {
+    public ResponseEntity<ApiResponse<PlayerResponse>> getPlayerInfo(long playerId) {
         String requestUrl = "/api/admin/football/players";
-        ApiResponse<PlayerDto> response = adminFootballDataWebService.getPlayerInfo(playerId, requestUrl);
+        ApiResponse<PlayerResponse> response = adminFootballDataWebService.getPlayerInfo(playerId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/fixtures")
-    public ResponseEntity<ApiResponse<FixtureDto>> getFixturesInfo(long leagueId,
-                                                                   ZonedDateTime date
+    public ResponseEntity<ApiResponse<FixtureResponse>> getFixturesInfo(long leagueId,
+                                                                        ZonedDateTime date
     ) {
         String requestUrl = "/api/admin/football/fixtures";
-        ApiResponse<FixtureDto> response = adminFootballDataWebService.getFixturesFromDate(leagueId, date, requestUrl);
+        ApiResponse<FixtureResponse> response = adminFootballDataWebService.getFixturesFromDate(leagueId, date, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
