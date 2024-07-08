@@ -10,6 +10,7 @@ import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteC
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class AutoRemoteService {
 
     private final RedisRemoteCodeService remoteCodeService;
@@ -84,6 +86,8 @@ public class AutoRemoteService {
                     .generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
+
+        autoRemoteGroup.setLastActiveAt(LocalDateTime.now());
         return remoteCode;
     }
 
