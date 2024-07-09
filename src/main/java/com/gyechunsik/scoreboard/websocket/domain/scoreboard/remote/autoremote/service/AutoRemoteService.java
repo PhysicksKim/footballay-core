@@ -21,6 +21,7 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class AutoRemoteService {
 
     private final RedisRemoteCodeService remoteCodeService;
@@ -86,6 +87,8 @@ public class AutoRemoteService {
                     .generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
+
+        autoRemoteGroup.setLastActiveAt(LocalDateTime.now());
         return remoteCode;
     }
 
