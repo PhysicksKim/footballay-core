@@ -245,8 +245,8 @@ public class FixtureSingleResponse extends ApiFootballResponse {
     public static class _Lineups {
         private _Team team;
         private String formation;
-        private List<_StartXI> startXI;
-        private List<_Substitute> substitutes;
+        private List<_StartPlayer> startXI;
+        private List<_StartPlayer> substitutes;
         private _Coach coach;
 
         @Getter
@@ -306,37 +306,27 @@ public class FixtureSingleResponse extends ApiFootballResponse {
         public static class _StartXI {
             private _Player player;
 
-            @Getter
-            @Setter
-            @ToString
-            @JsonIgnoreProperties(ignoreUnknown = true)
-            public static class _Player {
-                private Long id;
-                private String name;
-                private String number;
-                private String pos; // ex. "G" "D" "M" "F"
-                private String grid; // ex. "2:3"
-            }
         }
 
         @Getter
         @Setter
         @ToString
         @JsonIgnoreProperties(ignoreUnknown = true)
-        public static class _Substitute {
+        public static class _StartPlayer {
             private _Player player;
 
-            @Getter
-            @Setter
-            @ToString
-            @JsonIgnoreProperties(ignoreUnknown = true)
-            public static class _Player {
-                private Long id;
-                private String name;
-                private String number;
-                private String pos;
-                private String grid;
-            }
+        }
+
+        @Getter
+        @Setter
+        @ToString
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class _Player {
+            private Long id;
+            private String name;
+            private String number;
+            private String pos;
+            private String grid;
         }
     }
 

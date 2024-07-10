@@ -4,6 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.swing.text.html.Option;
@@ -12,5 +13,9 @@ import java.util.Optional;
 @Repository
 public interface StartLineupRepository extends JpaRepository<StartLineup, Long> {
 
+    @Query("SELECT sl FROM StartLineup sl " +
+            "JOIN FETCH sl.startPlayers sp " +
+            "JOIN FETCH sp.player p " +
+            "WHERE sl.fixture = :fixture AND sl.team = :team")
     Optional<StartLineup> findByFixtureAndTeam(Fixture fixture, Team team);
 }

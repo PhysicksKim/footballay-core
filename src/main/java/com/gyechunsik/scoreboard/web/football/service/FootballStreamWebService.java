@@ -6,7 +6,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
-import com.gyechunsik.scoreboard.web.football.response.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper;
 import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -48,7 +49,11 @@ public class FootballStreamWebService {
 
     public ApiResponse<FixtureInfoResponse> getFixtureInfo(String requestUrl, long fixtureId) {
         log.info("getFixtureInfo. fixtureId : {}", fixtureId);
-        footballRoot.getFixture(fixtureId);
+        Optional<Fixture> fixtureWithEager = footballRoot.getFixtureWithEager(fixtureId);
+        if (fixtureWithEager.isEmpty()) {
+            return apiCommonResponseService.createFailureResponse("존재하지 않는 fixture 입니다",requestUrl);
+        }
+
         // Fixture fixture = footballRoot.getFixture(fixtureId);
         // FixtureInfoResponse response = FootballStreamDtoMapper.toFixtureInfoResponse(fixture);
         // return apiCommonResponseService.createSuccessResponse(response, requestUrl);

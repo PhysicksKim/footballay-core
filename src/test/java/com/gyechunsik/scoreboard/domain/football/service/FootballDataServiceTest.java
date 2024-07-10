@@ -34,6 +34,7 @@ class FootballDataServiceTest {
 
     @Autowired
     private FootballDataService footballDataService;
+
     @Autowired
     private LeagueRepository leagueRepository;
     @Autowired
@@ -151,6 +152,16 @@ class FootballDataServiceTest {
         assertThat(squad).isNotEmpty();
         assertThat(squad.get(0).getId()).isNotNull();
         assertThat(squad.get(0).getName()).isNotNull();
+    }
+
+    @DisplayName("리그 아이디로 리그에 속한 경기들을 모두 찾습니다")
+    @Test
+    void FixtureInfoEager() {
+        // given
+
+        // when
+
+        // then
     }
 
 }

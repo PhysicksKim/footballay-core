@@ -51,7 +51,7 @@ public class StartPlayer {
     public String toString() {
         return "StartPlayer{" +
                 "id=" + id +
-                ", startLineup=" + startLineup +
+                ", startLineup=" + startLineup.getId() +
                 ", player=" + player +
                 ", position='" + position + '\'' +
                 ", grid='" + grid + '\'' +

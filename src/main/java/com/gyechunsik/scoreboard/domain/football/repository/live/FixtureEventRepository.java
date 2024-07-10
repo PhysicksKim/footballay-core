@@ -11,7 +11,12 @@ import java.util.List;
 @Repository
 public interface FixtureEventRepository extends JpaRepository<FixtureEvent, Long> {
 
-    @Query("SELECT fe FROM FixtureEvent fe WHERE fe.fixture = :fixture ORDER BY fe.sequence ASC")
+    @Query("SELECT fe FROM FixtureEvent fe " +
+            "JOIN FETCH fe.team t " +
+            "JOIN FETCH fe.player p " +
+            "LEFT JOIN FETCH fe.assist a " +
+            "WHERE fe.fixture = :fixture " +
+            "ORDER BY fe.sequence ASC")
     List<FixtureEvent> findByFixtureOrderBySequenceDesc(Fixture fixture);
 
 }

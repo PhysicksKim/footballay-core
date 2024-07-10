@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football;
 
+import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
@@ -7,11 +8,14 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupProcessor;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
@@ -51,6 +55,12 @@ class FootballRootTest {
     private EntityManager em;
     @Autowired
     private TeamRepository teamRepository;
+    @Autowired
+    private FootballApiCacheService footballApiCacheService;
+    @Autowired
+    private StartLineupProcessor startLineupProcessor;
+    @Autowired
+    private LiveFixtureProcessor liveFixtureProcessor;
 
     @Test
     @DisplayName("리그를 ID로 캐싱합니다")
@@ -358,6 +368,36 @@ class FootballRootTest {
         fixtureRepository.findById(fixture.getFixtureId()).ifPresent(f -> {
             assertThat(f.isAvailable()).isFalse();
         });
+    }
+
+    @DisplayName("라이브 정보를 포함한 경기 정보를 모두 채워서 가져오는 조회에 성공합니다")
+    @Test
+    void getFixtureInfos() {
+        // given
+        footballApiCacheService.cacheLeague(LeagueId.EURO);
+        footballApiCacheService.cacheTeamsOfLeague(LeagueId.EURO);
+        footballApiCacheService.cacheTeamSquad(TeamId.SPAIN);
+        footballApiCacheService.cacheTeamSquad(TeamId.CROATIA);
+        footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
+        startLineupProcessor.requestAndSaveLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
+        liveFixtureProcessor.requestAndSaveLiveFixtureData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
+
+        em.flush();
+        em.clear();
+
+        // when
+        Fixture eagerFixture = footballRoot.getFixtureWithEager(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+
+        em.detach(eagerFixture);
+
+        // then
+        assertThat(eagerFixture.getHomeTeam().getName()).isNotNull();
+        assertThat(eagerFixture.getAwayTeam().getName()).isNotNull();
+        assertThat(eagerFixture.getLiveStatus()).isNotNull();
+        assertThat(eagerFixture.getLineups()).isNotNull().isNotEmpty();
+        assertThat(eagerFixture.getEvents()).isNotNull().isNotEmpty();
+
     }
 
 }

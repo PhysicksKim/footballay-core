@@ -102,15 +102,18 @@ public class LineupService {
                 fixtureIdResponse, awayTeam.getId(), awayStartPlayerList.size(), awaySubstitutePlayerList.size());
     }
 
-    private List<StartPlayer> buildAndSaveStartPlayerEntity(_Lineups lineups, StartLineup homeStartLineup, boolean isSubstitute) {
-        Map<Long, _Lineups._StartXI._Player> playerResponseMap = lineups.getStartXI().stream()
+    private List<StartPlayer> buildAndSaveStartPlayerEntity(_Lineups lineups, StartLineup startLineup, boolean isSubstitute) {
+        List<StartPlayer> startPlayerList = new ArrayList<>();
+
+        List<_Lineups._StartPlayer> startPlayers = (isSubstitute ? lineups.getSubstitutes() : lineups.getStartXI());
+        Map<Long, _Lineups._Player> playerResponseMap = startPlayers.stream()
                 .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player.getPlayer()));
         List<Player> findPlayers = playerRepository.findAllById(playerResponseMap.keySet());
-        List<StartPlayer> startPlayerList = new ArrayList<>();
+
         findPlayers.forEach(player -> {
-            _Lineups._StartXI._Player playerResponse = playerResponseMap.get(player.getId());
+            _Lineups._Player playerResponse = playerResponseMap.get(player.getId());
             StartPlayer startPlayer = StartPlayer.builder()
-                    .startLineup(homeStartLineup)
+                    .startLineup(startLineup)
                     .player(player)
                     .position(playerResponse.getPos())
                     .grid(playerResponse.getGrid())
@@ -119,32 +122,6 @@ public class LineupService {
             startPlayerList.add(startPlayer);
         });
         return startPlayerRepository.saveAll(startPlayerList);
-    }
-
-    @Getter
-    @AllArgsConstructor
-    private static class PlayerResponse {
-        long id;
-        String position;
-        String grid;
-        boolean substitute;
-
-        @Setter
-        Player playerEntity;
-
-        public PlayerResponse(_Lineups._StartXI player, boolean substitute) {
-            this.id = player.getPlayer().getId();
-            this.position = player.getPlayer().getPos();
-            this.grid = player.getPlayer().getGrid();
-            this.substitute = substitute;
-        }
-
-        public PlayerResponse(_Lineups._Substitute player, boolean substitute) {
-            this.id = player.getPlayer().getId();
-            this.position = player.getPlayer().getPos();
-            this.grid = player.getPlayer().getGrid();
-            this.substitute = substitute;
-        }
     }
 
 }

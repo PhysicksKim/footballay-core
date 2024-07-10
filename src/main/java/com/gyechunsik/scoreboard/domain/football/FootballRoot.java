@@ -4,6 +4,10 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
+import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
@@ -15,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -254,6 +259,43 @@ public class FootballRoot {
             return Optional.of(findFixture);
         } catch (Exception e) {
             log.warn("error while getting _Fixture by Id :: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Fixture Entity 를 연관관계들을 모두 채워서 재공합니다. <br>
+     * 트랜잭션 범위 밖에서 Lazy Loading 에러가 발생하지 않도록, Fixture 관련 연관관계 엔티티 필드들을 채워서 제공해줍니다.
+     * @see Fixture
+     * @see StartLineup
+     * @see StartPlayer
+     * @see FixtureEvent
+     * @see LiveStatus
+     * @see Player
+     * @see Team
+     * @see League
+     * @param fixtureId 조회할 fixtureId
+     * @return 연관관계들이 모두 채워져 있는 fixture entity
+     */
+    public Optional<Fixture> getFixtureWithEager(long fixtureId) {
+        try {
+            Fixture findFixture = footballDataService.getFixtureWithEager(fixtureId);
+            Team home = findFixture.getHomeTeam();
+            Team away = findFixture.getAwayTeam();
+
+            List<StartLineup> lineups = new ArrayList<>();
+            Optional<StartLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
+            Optional<StartLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
+            homeLineup.ifPresent(lineups::add);
+            awayLineup.ifPresent(lineups::add);
+            findFixture.setLineups(lineups);
+
+            List<FixtureEvent> events = footballDataService.getFixtureEvents(findFixture);
+            findFixture.setEvents(events);
+
+            return Optional.of(findFixture);
+        } catch (Exception e) {
+            log.warn("error while getting _Fixture with Eager by Id :: {}", e.getMessage());
             return Optional.empty();
         }
     }

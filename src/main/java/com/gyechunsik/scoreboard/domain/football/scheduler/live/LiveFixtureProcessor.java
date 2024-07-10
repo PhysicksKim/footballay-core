@@ -16,8 +16,10 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
     private final LiveFixtureEventService liveFixtureService;
 
     // TODO : 여기 부터 해나가면됨 6월29일 점심부터. 테스트 코드부터 작성
+
     /**
      * fixtureId 를 받아서 해당 경기의 라이브 정보를 캐싱한다.
+     *
      * @param fixtureId 경기 ID
      * @return live status 에 따라서 경기가 끝났는지 여부. 끝나면 true
      */
@@ -39,7 +41,7 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
     private FixtureSingleResponse requestData(long fixtureId) {
         FixtureSingleResponse response = apiCallService.fixtureSingle(fixtureId);
         log.info("Successfully got API Response FROM 'ApiCallService' of fixtureId={}", fixtureId);
-        if(response.getResponse().isEmpty()) {
+        if (response.getResponse().isEmpty()) {
             throw new IllegalArgumentException("FixtureSingle 응답에 Response 데이터가 없습니다. :: \n\n" + response.getResponse());
         }
         return response;
@@ -47,7 +49,7 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
 
     private boolean saveDataAndIsFinished(FixtureSingleResponse response) {
         log.info("Data Saving is Started");
-        try{
+        try {
             saveFixtureEvents(response);
         } catch (Exception e) {
             log.error("Unexpected error while saving LiveFixtureEvent :: FixtureId={}", response.getResponse().get(0).getFixture().getId(), e);
@@ -70,9 +72,9 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
         }
     }
 
-    // TODO : 여기 구현하고 위 메서드에 집어넣어줘야함. processor 가 수행할 때마다 호출되어야함 (종료 여부 확인)
     /**
      * 라이브 상태의 fixture 에 대한 처리 작업을 수행합니다.
+     *
      * @return isFinished 경기 종료시 true
      */
     private boolean updateLiveStatusAndIsFinished(FixtureSingleResponse response) {

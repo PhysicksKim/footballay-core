@@ -46,4 +46,12 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
 
     @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
     Optional<Fixture> findById(Long fixtureId);
+
+    @Query("SELECT f FROM Fixture f " +
+            "JOIN FETCH f.league l " +
+            "JOIN FETCH f.homeTeam ht " +
+            "JOIN FETCH f.awayTeam at " +
+            "JOIN FETCH f.liveStatus ls " +
+            "WHERE f.fixtureId = :fixtureId")
+    Optional<Fixture> findFixtureByIdWithDetails(long fixtureId);
 }

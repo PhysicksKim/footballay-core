@@ -96,9 +96,9 @@ public class FixtureEvent {
                 ", type=" + type +
                 ", detail='" + detail + '\'' +
                 ", comments='" + comments + '\'' +
-                ", team=" + team +
-                ", player=" + player +
-                ", assist=" + assist +
+                ", team=" + team.getId() +
+                ", player=" + player.getId() +
+                ", assist=" + (assist == null ? "null" : assist.getId()) +
                 '}';
     }
 }

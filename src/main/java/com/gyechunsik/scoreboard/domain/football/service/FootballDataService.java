@@ -4,10 +4,14 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -35,6 +40,8 @@ public class FootballDataService {
             = () -> new IllegalArgumentException("존재하지 않는 리그입니다.");
     private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
+    private final FixtureEventRepository fixtureEventRepository;
+    private final StartLineupRepository startLineupRepository;
 
     /*
     1) get leagues
@@ -46,6 +53,7 @@ public class FootballDataService {
 
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
+     *
      * @param numOfLeagues 조회할 리그 수 (page size)
      * @return 조회된 리그 리스트
      */
@@ -92,4 +100,18 @@ public class FootballDataService {
         return playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
     }
+
+    public Fixture getFixtureWithEager(long fixtureId) {
+        return fixtureRepository.findFixtureByIdWithDetails(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+    }
+
+    public List<FixtureEvent> getFixtureEvents(Fixture fixture) {
+        return fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
+    }
+
+    public Optional<StartLineup> getStartLineup(Fixture fixture, Team team) {
+        return startLineupRepository.findByFixtureAndTeam(fixture, team);
+    }
+
 }
