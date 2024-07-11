@@ -286,13 +286,13 @@ public class FootballApiCacheService {
                     .map(player -> {
                         // API 데이터로 업데이트
                         log.info("Updating player [{} - {}] with new API data.", player.getId(), player.getName());
-                        player.updateFromApiData(apiPlayer);
+                        updatePlayer(player, apiPlayer);
                         return playerRepository.save(player);
                     })
                     .orElseGet(() -> {
                         // DB에 없는 경우 새로 추가
                         log.info("Adding new player [{} - {}] to DB.", apiPlayer.getId(), apiPlayer.getName());
-                        return playerRepository.save(new Player(apiPlayer));
+                        return playerRepository.save(toPlayer(apiPlayer));
                     });
             cachedPlayers.add(cachedPlayer);
         }
@@ -417,6 +417,24 @@ public class FootballApiCacheService {
                 .shortStatus(response.getFixture().getStatus().getShortStatus())
                 .elapsed(response.getFixture().getStatus().getElapsed())
                 .build();
+    }
+
+    private Player toPlayer(PlayerSquadResponse._PlayerData playerData) {
+        Player player = new Player();
+        player.setId(playerData.getId());
+        player.setName(playerData.getName());
+        player.setPhotoUrl(playerData.getPhoto());
+        player.setPosition(playerData.getPosition());
+        player.setNumber(playerData.getNumber());
+        log.info("DEBUG :: number is null? = {}", playerData.getNumber());
+        return player;
+    }
+
+    private void updatePlayer(Player player, _PlayerData apiData) {
+        player.setName(apiData.getName());
+        player.setPhotoUrl(apiData.getPhoto());
+        player.setPosition(apiData.getPosition());
+        player.setNumber(apiData.getNumber());
     }
 
     /*

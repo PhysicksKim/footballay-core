@@ -9,9 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,17 +29,20 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     List<Fixture> findNextFixturesAfterDate(@Param("date") LocalDateTime date);
 
     /**
-     * 이용 가능한 fixture 를 조회합니다. leagueId , isAvailable , date 로 조회
+     * 이용 가능한 fixture 를 조회합니다. league , isAvailable , date 로 조회
      * 해당 리그의 date 이후의 이용 가능한 fixture 를 조회합니다.
-     * 이를 위해 Index ( leagueId , isAvailable , date ) 로 생성합니다.
+     * 이를 위해 Index ( league , isAvailable , date ) 로 생성합니다.
      */
     @Query("SELECT f FROM Fixture f " +
-            "JOIN FETCH f.liveStatus ls " +
+            "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
             "JOIN FETCH f.awayTeam at " +
-            "WHERE f.league.leagueId = :leagueId AND f.available = true AND f.date >= :date")
-    List<Fixture> findAvailableFixturesByLeagueIdAndDate(@Param("leagueId") Long leagueId,
+            "WHERE f.league = :league " +
+            "AND f.available = true " +
+            "AND f.date >= :date"
+    )
+    List<Fixture> findAvailableFixturesByLeagueAndDate(@Param("league") League league,
                                                          @Param("date") LocalDateTime date);
 
     @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})

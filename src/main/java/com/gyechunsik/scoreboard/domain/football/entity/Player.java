@@ -28,22 +28,12 @@ public class Player {
     private String photoUrl;
     private String position;
 
+    @Column(nullable = true)
+    private Integer number;
+
     @ToString.Exclude
     @OneToMany(mappedBy = "player")
     private List<TeamPlayer> teamPlayers;
-
-    public Player(PlayerSquadResponse._PlayerData playerData) {
-        this.id = playerData.getId();
-        this.name = playerData.getName();
-        this.photoUrl = playerData.getPhoto();
-        this.position = playerData.getPosition();
-    }
-
-    public void updateFromApiData(PlayerSquadResponse._PlayerData apiData) {
-        this.name = apiData.getName();
-        this.photoUrl = apiData.getPhoto();
-        this.position = apiData.getPosition();
-    }
 
     public TeamPlayer toTeamPlayer(Team team) {
         return TeamPlayer.builder().player(this).team(team).build();

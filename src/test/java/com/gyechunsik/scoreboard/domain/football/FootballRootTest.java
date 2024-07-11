@@ -7,12 +7,14 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupProcessor;
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
@@ -61,6 +63,8 @@ class FootballRootTest {
     private StartLineupProcessor startLineupProcessor;
     @Autowired
     private LiveFixtureProcessor liveFixtureProcessor;
+    @Autowired
+    private LiveStatusRepository liveStatusRepository;
 
     @Test
     @DisplayName("리그를 ID로 캐싱합니다")
@@ -317,16 +321,25 @@ class FootballRootTest {
         LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
         LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
         leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
-        fixtureRepository.save(fixture);
+        Fixture savedFixture = fixtureRepository.save(fixture);
+        LiveStatus liveStatus = LiveStatus.builder()
+                .fixture(savedFixture)
+                .longStatus("Not started")
+                .shortStatus("NS")
+                .elapsed(0)
+                .build();
+        liveStatusRepository.save(liveStatus);
 
         em.flush();
         em.clear();
 
         // when
         Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+
         List<Fixture> availableFixtures = footballRoot.getAvailableFixtures(
                 league.getLeagueId(),
-                ZonedDateTime.of(2023,1,1,0,0,0,0, ZoneId.systemDefault()));
+                ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
+        log.info("available fixtures = {}", availableFixtures);
 
         // then
         assertThat(addAvailableFixture.isAvailable()).isTrue();

@@ -73,6 +73,7 @@ public record FixtureInfoResponse(
             long id,
             String koreanName,
             String name,
+            Integer number,
             String photo,
             String position,
             String grid,

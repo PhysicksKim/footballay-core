@@ -7,6 +7,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
 import com.gyechunsik.scoreboard.utils.TimeConverter;
 import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +23,8 @@ import java.util.Optional;
 
 import static com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse.*;
 
+@Slf4j
 public class FootballStreamDtoMapper {
-
-    private static final Logger log = LoggerFactory.getLogger(FootballStreamDtoMapper.class);
 
     public static LeagueResponse toLeagueResponse(League league) {
         return new LeagueResponse(
@@ -170,7 +170,6 @@ public class FootballStreamDtoMapper {
                 events,
                 lineup
         );
-
         return response;
     }
 
@@ -180,6 +179,7 @@ public class FootballStreamDtoMapper {
                     findAwayPlayer.getPlayer().getId(),
                     findAwayPlayer.getPlayer().getKoreanName(),
                     findAwayPlayer.getPlayer().getName(),
+                    findAwayPlayer.getPlayer().getNumber(),
                     findAwayPlayer.getPlayer().getPhotoUrl(),
                     findAwayPlayer.getPosition(),
                     findAwayPlayer.getGrid(),
@@ -202,7 +202,9 @@ public class FootballStreamDtoMapper {
             if (!targetIsSub && referenceIsSub) return -1;
             if (targetIsSub && !referenceIsSub) return 1;
 
-            if (targetIsSub && referenceIsSub) return Long.compare(target.id(), reference.id());
+            if (targetIsSub
+                    // && referenceIsSub // This is ALWAYS TRUE
+            ) return Long.compare(target.id(), reference.id());
 
             String[] grid1 = target.grid().split(":");
             String[] grid2 = reference.grid().split(":");

@@ -9,7 +9,6 @@ import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSc
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,7 +88,8 @@ public class FootballAvailableService {
         ZonedDateTime truncated = matchDateFrom.truncatedTo(ChronoUnit.DAYS);
         LocalDateTime localDateTime = truncated.toLocalDateTime();
         log.info("truncated time zoned={} local={}", truncated, localDateTime);
-        return fixtureRepository.findAvailableFixturesByLeagueIdAndDate(leagueId, localDateTime);
+        League league = leagueRepository.findById(leagueId).orElseThrow();
+        return fixtureRepository.findAvailableFixturesByLeagueAndDate(league, localDateTime);
     }
 
     private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {
