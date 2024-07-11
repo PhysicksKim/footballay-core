@@ -299,4 +299,14 @@ public class FootballRoot {
             return Optional.empty();
         }
     }
+
+    public List<FixtureEvent> getFixtureEvents(long fixtureId) {
+        try {
+            Fixture fixture = footballDataService.getFixtureById(fixtureId);
+            return footballDataService.getFixtureEvents(fixture);
+        } catch (Exception e) {
+            log.error("error while getting _FixtureEvents by Id :: {}", e.getMessage());
+            return List.of();
+        }
+    }
 }

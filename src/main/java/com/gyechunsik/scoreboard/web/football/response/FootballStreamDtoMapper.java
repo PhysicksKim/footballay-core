@@ -6,6 +6,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
 import com.gyechunsik.scoreboard.utils.TimeConverter;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -159,7 +160,7 @@ public class FootballStreamDtoMapper {
             }
         }
 
-        FixtureInfoResponse response = new FixtureInfoResponse(
+        return new FixtureInfoResponse(
                 fixture.getFixtureId(),
                 fixture.getReferee(),
                 offsetDateTime.toString(),
@@ -170,8 +171,41 @@ public class FootballStreamDtoMapper {
                 events,
                 lineup
         );
-        return response;
     }
+
+    public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events) {
+        List<FixtureEventsResponse._Events> eventsList = new ArrayList<>();
+        for (FixtureEvent event : events) {
+            FixtureEventsResponse._Events _event = new FixtureEventsResponse._Events(
+                    event.getSequence(),
+                    event.getTimeElapsed(),
+                    event.getExtraTime(),
+                    new FixtureEventsResponse._Team(
+                            event.getTeam().getId(),
+                            event.getTeam().getName(),
+                            event.getTeam().getKoreanName()
+                    ),
+                    new FixtureEventsResponse._Player(
+                            event.getPlayer().getId(),
+                            event.getPlayer().getName(),
+                            event.getPlayer().getKoreanName(),
+                            event.getPlayer().getNumber()
+                    ),
+                    event.getAssist() == null ? null : new FixtureEventsResponse._Player(
+                            event.getAssist().getId(),
+                            event.getAssist().getName(),
+                            event.getAssist().getKoreanName(),
+                            event.getAssist().getNumber()
+                    ),
+                    event.getType().toString(),
+                    event.getDetail(),
+                    event.getComments()
+            );
+            eventsList.add(_event);
+        }
+        return new FixtureEventsResponse(fixtureId, eventsList);
+    }
+
 
     private static void toLineupPlayerList(List<StartPlayer> findAwayPlayers, List<_StartPlayer> awayStartXI, List<_StartPlayer> awaySubstitutes) {
         for (StartPlayer findAwayPlayer : findAwayPlayers) {
@@ -192,6 +226,7 @@ public class FootballStreamDtoMapper {
             }
         }
     }
+
 
     private static class LineupComparator implements Comparator<_StartPlayer> {
         @Override
