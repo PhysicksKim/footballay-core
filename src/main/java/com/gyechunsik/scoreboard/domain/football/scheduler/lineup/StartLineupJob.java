@@ -18,7 +18,7 @@ public class StartLineupJob implements Job {
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         long fixtureId = jobExecutionContext.getMergedJobDataMap().getLong("fixtureId");
-        log.info("StartLineupJob executed at {} , fixture ID : {}", LocalDateTime.now(), fixtureId);
+        log.info("StartLineupJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
         boolean isSuccess = lineupTask.requestAndSaveLineup(fixtureId);
         if(isSuccess) {
             log.info("StartLineup is Saved. Deleting job");

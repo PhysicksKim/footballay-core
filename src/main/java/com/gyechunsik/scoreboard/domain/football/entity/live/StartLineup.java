@@ -38,4 +38,14 @@ public class StartLineup {
     @OneToMany(mappedBy = "startLineup", fetch = FetchType.LAZY)
     private List<StartPlayer> startPlayers;
 
+    @Override
+    public String toString() {
+        return "StartLineup{" +
+                "id=" + id +
+                ", fixtureId=" + fixture.getFixtureId() +
+                ", teamName=" + team.getName() +
+                ", formation='" + formation + '\'' +
+                ", startPlayers=" + startPlayers.stream().map(startPlayer -> startPlayer.getPlayer().getName()).toList() +
+                '}';
+    }
 }

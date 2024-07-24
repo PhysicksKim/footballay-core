@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import javax.swing.text.html.Option;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,4 +19,6 @@ public interface StartLineupRepository extends JpaRepository<StartLineup, Long> 
             "JOIN FETCH sp.player p " +
             "WHERE sl.fixture = :fixture AND sl.team = :team")
     Optional<StartLineup> findByFixtureAndTeam(Fixture fixture, Team team);
+
+    List<StartLineup> findAllByFixture(Fixture fixture);
 }

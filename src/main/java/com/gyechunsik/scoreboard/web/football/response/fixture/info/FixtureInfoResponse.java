@@ -15,7 +15,7 @@ public record FixtureInfoResponse(
 ) {
 
     public record _LiveStatus(
-            int elapsed,
+            Integer elapsed,
             String shortStatus,
             String longStatus
     ) {
@@ -51,7 +51,8 @@ public record FixtureInfoResponse(
             _Player assist,
             long elapsed,
             String type,
-            String detail
+            String detail,
+            String comments
     ) {
     }
 

@@ -1,8 +1,9 @@
 package com.gyechunsik.scoreboard.web.football.controller;
 
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
+import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
+import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/football/stream")
+@RequestMapping("/api/football")
 public class FootballStreamDataController {
 
     private final FootballStreamWebService footballStreamWebService;
@@ -35,10 +36,16 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getLeagueList(requestUrl));
     }
 
+    @GetMapping("/leagues/teams")
+    public ResponseEntity<ApiResponse<TeamsOfLeagueResponse>> teamsOfLeague(@ModelAttribute TeamsOfLeagueRequest request) {
+        final String requestUrl = "/api/football/stream/leagues/teams";
+        return ResponseEntity.ok(footballStreamWebService.getTeamsOfLeague(requestUrl, request));
+    }
+
     /**
      * 리그에 속한 이용 가능한 경기 일정 조회
      *
-     * @param request 리그 ID
+     * @param request { leagueId : 리그 ID }
      * @return ApiResponse<FixtureOfLeagueResponse> 리그에 속한 경기 일정
      */
     @GetMapping("/fixtures/available")
@@ -70,4 +77,5 @@ public class FootballStreamDataController {
         final String requestUrl = "/api/football/stream/fixtures/events";
         return ResponseEntity.ok(footballStreamWebService.getFixtureEvents(requestUrl, fixtureId));
     }
+
 }

@@ -37,7 +37,7 @@ public class StartLineupJobSchedulerService {
                 .withSchedule(SimpleScheduleBuilder.simpleSchedule()
                         .withIntervalInSeconds(INTERVAL_SEC)
                         .withRepeatCount(MAX_REPEAT_COUNT)
-                        .withMisfireHandlingInstructionNextWithRemainingCount())
+                        .withMisfireHandlingInstructionNowWithRemainingCount())
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);

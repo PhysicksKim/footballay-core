@@ -30,11 +30,11 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
         try {
             FixtureSingleResponse fixtureSingleResponse = requestData(fixtureId);
             isFinished = saveDataAndIsFinished(fixtureSingleResponse);
+            log.info("fixtureId={} live fixture cache done. isFinished={}", fixtureId, isFinished);
         } catch (Exception e) {
             isFinished = false;
-            log.error("fixtureId={} live fixture cache FAILED", fixtureId, e);
+            log.error("fixtureId={} live fixture cache FAILED. isFinished={}", fixtureId, isFinished, e);
         }
-        log.info("fixtureId={} live fixture cache done", fixtureId);
         return isFinished;
     }
 

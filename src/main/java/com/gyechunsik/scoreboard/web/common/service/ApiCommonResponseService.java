@@ -2,6 +2,8 @@ package com.gyechunsik.scoreboard.web.common.service;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 
+import java.util.Map;
+
 public interface ApiCommonResponseService {
 
     int CODE_SUCCESS = 200;
@@ -12,8 +14,12 @@ public interface ApiCommonResponseService {
 
     String VERSION = "1.0";
 
-    public <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl);
+    <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl);
 
-    public <T> ApiResponse<T> createFailureResponse(String message, String requestUrl);
+    <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl, Map<String, String> params);
+
+    <T> ApiResponse<T> createFailureResponse(String message, String requestUrl);
+
+    <T> ApiResponse<T> createFailureResponse(String message, String requestUrl, Map<String, String> params);
 
 }

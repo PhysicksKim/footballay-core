@@ -107,6 +107,7 @@ public class LiveFixtureEventService {
                         .extraTime(event.getTime().getExtra() == null ? 0 : event.getTime().getExtra())
                         .type(EventType.valueOf(event.getType().toUpperCase()))
                         .detail(event.getDetail())
+                        .comments(event.getComments())
                         .build();
                 fixtureEventRepository.save(fixtureEvent);
             } catch (Exception e) {

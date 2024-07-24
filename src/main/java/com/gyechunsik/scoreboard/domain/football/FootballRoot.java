@@ -44,7 +44,6 @@ public class FootballRoot {
         List<League> leagues;
         try {
             leagues = footballDataService.getLeagues(10);
-            log.info("getLeagues :: {}", leagues);
         } catch (Exception e) {
             log.error("error while getting Leagues :: {}", e.getMessage());
             return List.of();
@@ -56,7 +55,6 @@ public class FootballRoot {
         List<Team> teams;
         try {
             teams = footballDataService.getTeamsByLeagueId(leagueId);
-            log.info("getTeamsOfLeague :: {}", teams);
         } catch (Exception e) {
             log.error("error while getting _Teams by LeagueId :: {}", e.getMessage());
             return List.of();
@@ -68,7 +66,6 @@ public class FootballRoot {
         List<Player> squad;
         try {
             squad = footballDataService.getSquadOfTeam(teamId);
-            log.info("squad players :: {}", squad.stream().map(Player::getName).toList());
         } catch (Exception e) {
             log.error("error while getting Squad by TeamId :: {}", e.getMessage());
             return List.of();
@@ -80,7 +77,6 @@ public class FootballRoot {
         Player player;
         try {
             player = footballDataService.getPlayerById(playerId);
-            log.info("getPlayer :: {}", player);
         } catch (Exception e) {
             log.error("error while getting _Player by Id :: {}", e.getMessage());
             return null;
@@ -97,7 +93,6 @@ public class FootballRoot {
         List<Fixture> fixtures;
         try {
             fixtures = footballDataService.getFixturesOfLeague(leagueId);
-            log.info("getFixturesByLeagueId :: {}", fixtures);
         } catch (Exception e) {
             log.error("error while getting _Fixtures by LeagueId :: {}", leagueId, e);
             return List.of();
@@ -280,19 +275,24 @@ public class FootballRoot {
     public Optional<Fixture> getFixtureWithEager(long fixtureId) {
         try {
             Fixture findFixture = footballDataService.getFixtureWithEager(fixtureId);
+            log.info("get Fixture With Eager id={}", findFixture.getFixtureId());
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
 
             List<StartLineup> lineups = new ArrayList<>();
+            log.info("before start lineup");
+            log.info("아 스타트 라인업이 중복됐구나");
             Optional<StartLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
             Optional<StartLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
 
+            log.info("before fixture events");
             List<FixtureEvent> events = footballDataService.getFixtureEvents(findFixture);
             findFixture.setEvents(events);
 
+            log.info("before return");
             return Optional.of(findFixture);
         } catch (Exception e) {
             log.warn("error while getting _Fixture with Eager by Id :: {}", e.getMessage());

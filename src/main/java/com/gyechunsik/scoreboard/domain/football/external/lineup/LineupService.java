@@ -11,10 +11,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.StartPlayerRepository;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -122,6 +119,25 @@ public class LineupService {
             startPlayerList.add(startPlayer);
         });
         return startPlayerRepository.saveAll(startPlayerList);
+    }
+
+    /**
+     * 이전에 해당 fixture 에 이미 Lineup 이 저장되어있다면, StartLineup 과 StartPlayer 가 중복으로 저장될 수 있습니다.
+     * 이미 fixture 의 Start Lineup and Player 가 저장되어 있다면, 기존에 저장된 선발 관련 정보를 삭제합니다.
+     * @param fixtureId 경기 ID
+     */
+    public void cleanupPreviousLineup(long fixtureId) {
+        log.info("previous start lineup clean up for fixtureId={}", fixtureId);
+        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow();
+        List<StartLineup> lineups = startLineupRepository.findAllByFixture(fixture);
+        if(!lineups.isEmpty()) {
+            log.info("이미 저장된 lineup 정보가 있어, 기존 데이터를 삭제합니다. 기존에 저장된 StartLineup count : {}", lineups.size());
+            int deletedPlayerCount = startPlayerRepository.deleteByStartLineupIn(lineups);
+            startLineupRepository.deleteAllInBatch(lineups);
+            log.info("fixtureId={} 라인업 정보 삭제 완료. 삭제된 player count = {}", fixtureId,deletedPlayerCount);
+        } else {
+            log.info("fixtureId={} 라인업 정보가 없어, prevCleanup 할 데이터가 없습니다.", fixtureId);
+        }
     }
 
 }

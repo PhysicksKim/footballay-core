@@ -12,4 +12,6 @@ public interface StartPlayerRepository extends JpaRepository<StartPlayer, Long> 
 
     List<StartPlayer> findByStartLineup(StartLineup startLineup);
 
+    int deleteByStartLineupIn(List<StartLineup> lineups);
+
 }

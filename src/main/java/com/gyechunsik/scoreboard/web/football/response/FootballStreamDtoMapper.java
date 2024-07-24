@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.web.football.response;
 
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
@@ -103,14 +104,15 @@ public class FootballStreamDtoMapper {
                     assist,
                     findEvent.getTimeElapsed(),
                     findEvent.getType().toString(),
-                    findEvent.getDetail()
+                    findEvent.getDetail(),
+                    findEvent.getComments()
             );
             events.add(event);
         }
 
         // _Lineup -> _StartLineup -> _StartPlayer
         _Lineup lineup = null;
-        if (fixture.getLineups() != null) {
+        if (fixture.getLineups() != null && !fixture.getLineups().isEmpty()) {
             try {
                 List<StartLineup> lineups = fixture.getLineups();
                 final long homeTeamId = fixture.getHomeTeam().getId();
@@ -225,6 +227,20 @@ public class FootballStreamDtoMapper {
                 awayStartXI.add(awayPlayer);
             }
         }
+    }
+
+    public static List<TeamsOfLeagueResponse> toTeamsOfLeagueResponseList(List<Team> teamsOfLeague) {
+        List<TeamsOfLeagueResponse> responseList = new ArrayList<>();
+        for (Team team : teamsOfLeague) {
+            TeamsOfLeagueResponse response = new TeamsOfLeagueResponse(
+                    team.getId(),
+                    team.getName(),
+                    team.getKoreanName(),
+                    team.getLogo()
+            );
+            responseList.add(response);
+        }
+        return responseList;
     }
 
 

@@ -3,6 +3,8 @@ package com.gyechunsik.scoreboard.web.common.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 /**
  * <h2>api 응답 메타데이터</h2>
  * @param requestId UUID
@@ -20,6 +22,7 @@ public record MetaData(
         int responseCode,
         String message,
         String requestUrl,
+        Map<String, String> params,
         String version
 ) {
 }
