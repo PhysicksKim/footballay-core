@@ -9,6 +9,9 @@ import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSc
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,13 +86,41 @@ public class FootballAvailableService {
      * @param matchDateFrom 포함하여 가장 가까운 날짜에 있는 모든 경기일정 조회
      * @return 해당 날짜에 있는 모든 경기일정
      */
-    public List<Fixture> getAvailableFixturesFromDate(long leagueId, ZonedDateTime matchDateFrom) {
-        log.info("getAvailableFixturesFromDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
+    public List<Fixture> findClosestFixturesFromDate(long leagueId, ZonedDateTime matchDateFrom) {
         ZonedDateTime truncated = matchDateFrom.truncatedTo(ChronoUnit.DAYS);
         LocalDateTime localDateTime = truncated.toLocalDateTime();
-        log.info("truncated time zoned={} local={}", truncated, localDateTime);
         League league = leagueRepository.findById(leagueId).orElseThrow();
-        return fixtureRepository.findAvailableFixturesByLeagueAndDate(league, localDateTime);
+        log.info("findClosestFixturesFromDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
+        log.info("truncated time zoned={} local={}", truncated, localDateTime);
+
+        // Find the first fixture after the given date
+        fixtureRepository.findAvailableFixturesByLeagueAndDate(league, localDateTime);
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateAfter(
+                league,
+                localDateTime,
+                getClosestFixturePageRequest()
+        );
+
+        if(fixturesByLeagueAndDate.isEmpty()) {
+            return List.of();
+        }
+
+        // Get the date of the closest fixture
+        Fixture closestFixture = fixturesByLeagueAndDate.get(0);
+        LocalDateTime closestDate = closestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
+        List<Fixture> closestDateFixtures = fixtureRepository.findFixturesByLeagueAndDateRange(
+                league,
+                closestDate,
+                closestDate.plusDays(1).minusSeconds(1)
+        );
+        log.info("closestDateFixtures={}", closestDateFixtures);
+        return closestDateFixtures;
+    }
+
+    // TODO : findFixturesByDate(), findClosestAvailableFixturesFromDate(), findAvailableFixturesByDate() 3가지 구현해야함
+
+    private static Pageable getClosestFixturePageRequest() {
+        return PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
     }
 
     private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {

@@ -208,7 +208,6 @@ public class FootballStreamDtoMapper {
         return new FixtureEventsResponse(fixtureId, eventsList);
     }
 
-
     private static void toLineupPlayerList(List<StartPlayer> findAwayPlayers, List<_StartPlayer> awayStartXI, List<_StartPlayer> awaySubstitutes) {
         for (StartPlayer findAwayPlayer : findAwayPlayers) {
             _StartPlayer awayPlayer = new _StartPlayer(
@@ -242,7 +241,6 @@ public class FootballStreamDtoMapper {
         }
         return responseList;
     }
-
 
     private static class LineupComparator implements Comparator<_StartPlayer> {
         @Override

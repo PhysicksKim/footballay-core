@@ -156,9 +156,19 @@ public class FootballRoot {
         return fixture;
     }
 
-    public List<Fixture> getAvailableFixtures(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<Fixture> getClosestDateAvailableFixtures(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.getAvailableFixturesFromDate(leagueId, truncated);
+        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
+    }
+
+    public List<Fixture> getClosestDateFixtures(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
+    }
+
+    public List<Fixture> getFixturesSpecificDate(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
     }
 
     public boolean removeAvailableFixture(long fixtureId) {

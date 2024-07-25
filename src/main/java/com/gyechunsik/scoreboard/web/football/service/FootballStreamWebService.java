@@ -19,10 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Array;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,21 +49,37 @@ public class FootballStreamWebService {
         }
     }
 
+    /**
+     * 리그에 속한 이용 가능한 경기 일정 조회
+     * Date 가 주어지지 않은 경우 현재 날짜를 기준으로 조회
+     * @param requestUrl
+     * @param request
+     * @return
+     */
     public ApiResponse<FixtureOfLeagueResponse> getFixturesOfLeague(String requestUrl, FixtureOfLeagueRequest request) {
-        final long leagueId = request.leagueId();
-        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
-        log.info("getFixturesOfLeague parameters={}", params);
-        ZonedDateTime today = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
+        return getFixturesOfLeague(requestUrl, request, ZonedDateTime.now());
+    }
+
+    public ApiResponse<FixtureOfLeagueResponse> getFixturesOfLeague(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+        ZonedDateTime date = paramDate.truncatedTo(ChronoUnit.DAYS);
+        long leagueId = request.leagueId();
+        return getFixtureOfLeague(requestUrl, leagueId, date);
+    }
+
+    private ApiResponse<FixtureOfLeagueResponse> getFixtureOfLeague(String requestUrl, final long leagueId, ZonedDateTime paramDate) {
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId), "date", paramDate.toString());
+        ZonedDateTime dateTime = paramDate.truncatedTo(ChronoUnit.DAYS);
+        log.info("getFixturesOfLeague parameters={}, find fixture after date={}", params, dateTime);
 
         try {
-            List<Fixture> fixturesOfLeague = footballRoot.getAvailableFixtures(leagueId, today);
+            List<Fixture> fixturesOfLeague = footballRoot.getClosestDateAvailableFixtures(leagueId, dateTime);
             FixtureOfLeagueResponse[] array = fixturesOfLeague.stream()
                     .map(FootballStreamDtoMapper::toFixtureOfLeagueResponse)
                     .toArray(FixtureOfLeagueResponse[]::new);
 
             return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
         } catch (Exception e) {
-            log.error("Error occurred while calling method getFixturesOfLeague() leagueId : {}", request.leagueId(), e);
+            log.error("Error occurred while calling method getFixturesOfLeague() leagueId : {}", leagueId, e);
             return apiCommonResponseService.createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }

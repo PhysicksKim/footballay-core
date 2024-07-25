@@ -41,7 +41,8 @@ public class League extends BaseDateAuditEntity {
     public void updateCompare(League other) {
         if(this.getLeagueId() != other.getLeagueId()) return;
         if(!Objects.equals(this.getName(), other.getName())) this.setName(other.getName());
-        if(!Objects.equals(this.getLogo(), other.getLogo())) this.setLogo(other.getLogo());
+        // 로고는 업데이트 하지 않음. 다른 로고를 사용할 수 있기 때문임
+        // if(!Objects.equals(this.getLogo(), other.getLogo())) this.setLogo(other.getLogo());
         if(!Objects.equals(this.getCurrentSeason(), other.getCurrentSeason())) this.setCurrentSeason(other.getCurrentSeason());
     }
 

@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.web.football.controller;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
+import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueWithDateRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
@@ -11,8 +12,11 @@ import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoR
 import com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.ZonedDateTime;
 
 /**
  * Rest API 로 football stream 데이터 제공.
@@ -27,7 +31,6 @@ public class FootballStreamDataController {
 
     /**
      * 이용 가능한 리그 목록 조회
-     *
      * @return ApiResponse<LeagueResponse> 리그 목록
      */
     @GetMapping("/leagues/available")
@@ -44,19 +47,28 @@ public class FootballStreamDataController {
 
     /**
      * 리그에 속한 이용 가능한 경기 일정 조회
-     *
      * @param request { leagueId : 리그 ID }
      * @return ApiResponse<FixtureOfLeagueResponse> 리그에 속한 경기 일정
      */
     @GetMapping("/fixtures/available")
-    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOfLeague(@ModelAttribute FixtureOfLeagueRequest request) {
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOfLeague(
+            @ModelAttribute FixtureOfLeagueRequest request
+    ) {
         final String requestUrl = "/api/football/stream/fixtures/available";
         return ResponseEntity.ok(footballStreamWebService.getFixturesOfLeague(requestUrl, request));
     }
 
+    @GetMapping("/fixtures/available/date")
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOfLeagueByDate(
+            @ModelAttribute FixtureOfLeagueRequest request,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime date
+    ) {
+        final String requestUrl = "/api/football/stream/fixtures/available/date";
+        return ResponseEntity.ok(footballStreamWebService.getFixturesOfLeague(requestUrl, request, date));
+    }
+
     /**
      * {@link FixtureInfoResponse} 라이브 상태 및 이벤트 정보를 포함하여 Fixture 정보를 제공합니다.
-     *
      * @param fixtureId 경기 ID
      * @return ApiResponse<FixtureInfoResponse> 경기 정보
      */
