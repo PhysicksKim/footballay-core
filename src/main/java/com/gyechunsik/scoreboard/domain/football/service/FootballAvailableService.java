@@ -55,7 +55,6 @@ public class FootballAvailableService {
         ZonedDateTime kickOffTime = toSeoulZonedDateTime(
                 fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
         );
-        // TODO : 향후 summer time 적용된 리그인지 체크해서 서머타임 보정 해야함
         ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
         log.info("Add Scheduler Job :: fixtureId={}, kickoffTime={}, lineupAnnounceTime={}",
                 fixtureId, kickOffTime, lineupAnnounceTime);
@@ -82,45 +81,58 @@ public class FootballAvailableService {
      * 예를 들어 2024/06/13 에 최초로 fixture 가 2개 있고, 2024/06/14 에 fixture 가 3개 있다면  <br>
      * 1) 2024/06/01 로 요청하는 경우 2024/06/13 에 있는 2개의 fixture 를 제공합니다.  <br>
      * 2) 2024/06/13 의 아무 시간 으로 요청하는 경우 2024/06/13 에 있는 2개의 fixture 를 제공합니다 <br>
-     * @param leagueId 리그 아이디
+     *
+     * @param leagueId      리그 아이디
      * @param matchDateFrom 포함하여 가장 가까운 날짜에 있는 모든 경기일정 조회
      * @return 해당 날짜에 있는 모든 경기일정
      */
-    public List<Fixture> findClosestFixturesFromDate(long leagueId, ZonedDateTime matchDateFrom) {
-        ZonedDateTime truncated = matchDateFrom.truncatedTo(ChronoUnit.DAYS);
-        LocalDateTime localDateTime = truncated.toLocalDateTime();
-        League league = leagueRepository.findById(leagueId).orElseThrow();
-        log.info("findClosestFixturesFromDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
-        log.info("truncated time zoned={} local={}", truncated, localDateTime);
+    public List<Fixture> findAvailableFixturesOnClosestDate(long leagueId, ZonedDateTime matchDateFrom) {
+        LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDateFrom);
+        League league = getLeagueById(leagueId);
+        log.info("findAvailableFixturesOnClosestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
 
         // Find the first fixture after the given date
-        fixtureRepository.findAvailableFixturesByLeagueAndDate(league, localDateTime);
-        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateAfter(
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateAfter(
                 league,
                 localDateTime,
-                getClosestFixturePageRequest()
+                PageRequestForOnlyOneClosest()
         );
-
-        if(fixturesByLeagueAndDate.isEmpty()) {
+        if (fixturesByLeagueAndDate.isEmpty()) {
             return List.of();
         }
 
         // Get the date of the closest fixture
         Fixture closestFixture = fixturesByLeagueAndDate.get(0);
         LocalDateTime closestDate = closestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
-        List<Fixture> closestDateFixtures = fixtureRepository.findFixturesByLeagueAndDateRange(
+        List<Fixture> availableFixturesOfClosestDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
                 league,
                 closestDate,
                 closestDate.plusDays(1).minusSeconds(1)
         );
-        log.info("closestDateFixtures={}", closestDateFixtures);
-        return closestDateFixtures;
+        log.info("date of closest fixture={}, size of availableFixturesOfClosestDate={}", closestDate, availableFixturesOfClosestDate.size());
+        return availableFixturesOfClosestDate;
     }
 
-    // TODO : findFixturesByDate(), findClosestAvailableFixturesFromDate(), findAvailableFixturesByDate() 3가지 구현해야함
+    public List<Fixture> findAvailableFixturesOnDate(long leagueId, ZonedDateTime matchDate) {
+        LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDate);
+        League league = getLeagueById(leagueId);
+        log.info("findAvailableFixturesOnDate :: leagueId={}, matchDate={}", leagueId, matchDate);
 
-    private static Pageable getClosestFixturePageRequest() {
+        List<Fixture> availableFixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
+                league,
+                localDateTime,
+                localDateTime.plusDays(1).minusSeconds(1)
+        );
+        log.info("size of availableFixturesOfTheDay={}", availableFixturesByLeagueAndDate.size());
+        return availableFixturesByLeagueAndDate;
+    }
+
+    private static Pageable PageRequestForOnlyOneClosest() {
         return PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
+    }
+
+    private static LocalDateTime toLocalDateTimeTruncated(ZonedDateTime dateTime) {
+        return dateTime.truncatedTo(ChronoUnit.DAYS).toLocalDateTime();
     }
 
     private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {
@@ -132,6 +144,10 @@ public class FootballAvailableService {
             Instant instant = Instant.ofEpochSecond(timestamp);
             return ZonedDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
         }
+    }
+
+    private League getLeagueById(long leagueId) {
+        return leagueRepository.findById(leagueId).orElseThrow();
     }
 
 }

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,17 +44,8 @@ public class FootballDataService {
     private final FixtureEventRepository fixtureEventRepository;
     private final StartLineupRepository startLineupRepository;
 
-    /*
-    1) get leagues
-    2) get teams by league id
-    3) get squads by team id
-    4) get fixtures by league id order by date asc limit 10 offset n
-    5) add favorite league by league id
-     */
-
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
-     *
      * @param numOfLeagues 조회할 리그 수 (page size)
      * @return 조회된 리그 리스트
      */
@@ -77,23 +69,50 @@ public class FootballDataService {
         return playerRepository.findAllByTeam(teamId);
     }
 
-    public List<Fixture> getFixturesOfLeague(long leagueId) {
-        return this.getFixturesOfLeagueAfterDate(leagueId, ZonedDateTime.now());
-    }
-
     public Fixture getFixtureById(long fixtureId) {
         return fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
     }
 
-    public List<Fixture> getFixturesOfLeagueAfterDate(long leagueId, ZonedDateTime zonedDateTime) {
-        log.info("getFixturesOfLeagueAfterDate :: leagueId={}, zonedDateTime={}", leagueId, zonedDateTime);
-        League league = leagueRepository.findById(leagueId)
-                .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
-        ZonedDateTime truncatedZonedDateTime = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        LocalDateTime localDateTime = truncatedZonedDateTime.toLocalDateTime();
-        log.info("truncated time zoned={} local={}", truncatedZonedDateTime, localDateTime);
-        return fixtureRepository.findNextFixturesAfterDate(localDateTime);
+    public List<Fixture> findFixturesOnClosestDate(long leagueId, ZonedDateTime matchDateFrom) {
+        LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDateFrom);
+        League league = getLeagueById(leagueId);
+        log.info("findFixturesOnClosestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
+
+        // Find the first fixture after the given date
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateAfter(
+                league,
+                localDateTime,
+                PageRequestForOnlyOneClosest()
+        );
+        if (fixturesByLeagueAndDate.isEmpty()) {
+            return List.of();
+        }
+
+        // Get the date of the closest fixture
+        Fixture closestFixture = fixturesByLeagueAndDate.get(0);
+        LocalDateTime closestDate = closestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
+        List<Fixture> fixturesOfClosestDate = fixtureRepository.findFixturesByLeagueAndDateRange(
+                league,
+                closestDate,
+                closestDate.plusDays(1).minusSeconds(1)
+        );
+        log.info("date of closest fixture={}, size of closestDateFixtures={}", closestDate, fixturesOfClosestDate.size());
+        return fixturesOfClosestDate;
+    }
+
+    public List<Fixture> findFixturesOnDate(long leagueId, ZonedDateTime matchDate) {
+        LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDate);
+        League league = getLeagueById(leagueId);
+        log.info("findFixturesOnDate :: leagueId={}, matchDate={}", leagueId, matchDate);
+
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateRange(
+                league,
+                localDateTime,
+                localDateTime.plusDays(1).minusSeconds(1)
+        );
+        log.info("size of fixturesOfTheDay={}", fixturesByLeagueAndDate.size());
+        return fixturesByLeagueAndDate;
     }
 
     public Player getPlayerById(long playerId) {
@@ -112,6 +131,19 @@ public class FootballDataService {
 
     public Optional<StartLineup> getStartLineup(Fixture fixture, Team team) {
         return startLineupRepository.findByFixtureAndTeam(fixture, team);
+    }
+
+    private static Pageable PageRequestForOnlyOneClosest() {
+        return PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
+    }
+
+    private static LocalDateTime toLocalDateTimeTruncated(ZonedDateTime dateTime) {
+        return dateTime.truncatedTo(ChronoUnit.DAYS).toLocalDateTime();
+    }
+
+    private League getLeagueById(long leagueId) {
+        return leagueRepository.findById(leagueId)
+                .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
     }
 
 }

@@ -50,37 +50,66 @@ public class FootballStreamWebService {
     }
 
     /**
-     * 리그에 속한 이용 가능한 경기 일정 조회
-     * Date 가 주어지지 않은 경우 현재 날짜를 기준으로 조회
-     * @param requestUrl
-     * @param request
-     * @return
+     * 해당 리그에서 특정 날짜의 모든 경기 일정을 조회합니다.
      */
-    public ApiResponse<FixtureOfLeagueResponse> getFixturesOfLeague(String requestUrl, FixtureOfLeagueRequest request) {
-        return getFixturesOfLeague(requestUrl, request, ZonedDateTime.now());
-    }
-
-    public ApiResponse<FixtureOfLeagueResponse> getFixturesOfLeague(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
-        ZonedDateTime date = paramDate.truncatedTo(ChronoUnit.DAYS);
-        long leagueId = request.leagueId();
-        return getFixtureOfLeague(requestUrl, leagueId, date);
-    }
-
-    private ApiResponse<FixtureOfLeagueResponse> getFixtureOfLeague(String requestUrl, final long leagueId, ZonedDateTime paramDate) {
-        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId), "date", paramDate.toString());
-        ZonedDateTime dateTime = paramDate.truncatedTo(ChronoUnit.DAYS);
-        log.info("getFixturesOfLeague parameters={}, find fixture after date={}", params, dateTime);
-
+    public ApiResponse<FixtureOfLeagueResponse> getFixturesOnDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+        Map<String, String> params = createParams(request.leagueId(), paramDate);
         try {
-            List<Fixture> fixturesOfLeague = footballRoot.getClosestDateAvailableFixtures(leagueId, dateTime);
-            FixtureOfLeagueResponse[] array = fixturesOfLeague.stream()
-                    .map(FootballStreamDtoMapper::toFixtureOfLeagueResponse)
-                    .toArray(FixtureOfLeagueResponse[]::new);
-
-            return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
+            validateRequest(request, requestUrl, params);
+            ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
+            List<Fixture> fixturesOfLeague = footballRoot.getFixturesOnDate(request.leagueId(), dateTime);
+            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
-            log.error("Error occurred while calling method getFixturesOfLeague() leagueId : {}", leagueId, e);
-            return apiCommonResponseService.createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
+            log.error("Error occurred while calling getFixturesOnDate() leagueId : {}", request.leagueId(), e);
+            return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
+    /**
+     * 해당 리그에서 주어진 날짜로 부터 가장 가까운 경기가 있는 날의 모든 경기를 조회합니다.
+     */
+    public ApiResponse<FixtureOfLeagueResponse> getFixturesOnClosestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+        Map<String, String> params = createParams(request.leagueId(), paramDate);
+        try {
+            validateRequest(request, requestUrl, params);
+            ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
+            List<Fixture> fixturesOfLeague = footballRoot.getFixturesOnClosestDate(request.leagueId(), dateTime);
+            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling getFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
+            return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
+    /**
+     * 해당 리그에서 특정 날짜의 모든 Available 경기 일정을 조회합니다.
+     */
+    public ApiResponse<FixtureOfLeagueResponse> getAvailableFixturesOnDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+        Map<String, String> params = createParams(request.leagueId(), paramDate);
+        try {
+            validateRequest(request, requestUrl, params);
+            ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
+            List<Fixture> fixturesOfLeague = footballRoot.getAvailableFixturesOnDate(request.leagueId(), dateTime);
+            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling getAvailableFixturesOnDate() leagueId : {}", request.leagueId(), e);
+            return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
+    /**
+     * 해당 리그에서 주어진 날짜로 부터 가장 가까운 경기가 있는 날의 모든 Available 경기를 조회합니다.
+     */
+    public ApiResponse<FixtureOfLeagueResponse> getAvailableFixturesOnClosestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+        Map<String, String> params = createParams(request.leagueId(), paramDate);
+        try {
+            validateRequest(request, requestUrl, params);
+            ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
+            List<Fixture> fixturesOfLeague = footballRoot.getAvailableFixturesOnClosestDate(request.leagueId(), dateTime);
+            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling getAvailableFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
+            return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
 
@@ -142,4 +171,33 @@ public class FootballStreamWebService {
             return apiCommonResponseService.createFailureResponse("팀 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
+
+    private ApiResponse<FixtureOfLeagueResponse> createFailureResponse(String message, String requestUrl, Map<String, String> params) {
+        return apiCommonResponseService.createFailureResponse(message, requestUrl, params);
+    }
+
+    private Map<String, String> createParams(long leagueId, ZonedDateTime dateTime) {
+        return Map.of("leagueId", String.valueOf(leagueId), "date", dateTime.toString());
+    }
+
+    private void validateRequest(FixtureOfLeagueRequest request, String requestUrl, Map<String, String> params) {
+        if (request == null) {
+            throw new IllegalArgumentException("리그 정보가 없습니다");
+        }
+    }
+
+    private ZonedDateTime validateAndTruncateDate(ZonedDateTime paramDate, String requestUrl, Map<String, String> params) {
+        if (paramDate == null) {
+            throw new IllegalArgumentException("날짜 정보가 없습니다");
+        }
+        return paramDate.truncatedTo(ChronoUnit.DAYS);
+    }
+
+    private ApiResponse<FixtureOfLeagueResponse> createSuccessResponse(List<Fixture> fixturesOfLeague, String requestUrl, Map<String, String> params) {
+        FixtureOfLeagueResponse[] array = fixturesOfLeague.stream()
+                .map(FootballStreamDtoMapper::toFixtureOfLeagueResponse)
+                .toArray(FixtureOfLeagueResponse[]::new);
+        return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
+    }
+
 }

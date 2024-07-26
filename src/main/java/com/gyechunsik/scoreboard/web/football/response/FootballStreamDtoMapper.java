@@ -47,6 +47,7 @@ public class FootballStreamDtoMapper {
                 fixture.getFixtureId(),
                 fixture.getDate().toString(),
                 fixture.getLiveStatus().getShortStatus(),
+                fixture.isAvailable(),
                 homeTeamName,
                 awayTeamName
         );

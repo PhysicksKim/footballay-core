@@ -2,7 +2,6 @@ package com.gyechunsik.scoreboard.web.football.controller;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
-import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueWithDateRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
@@ -16,6 +15,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 /**
@@ -35,14 +36,32 @@ public class FootballStreamDataController {
      */
     @GetMapping("/leagues/available")
     public ResponseEntity<ApiResponse<LeagueResponse>> leagueList() {
-        final String requestUrl = "/api/football/stream/leagues/available";
+        final String requestUrl = "/api/football/leagues/available";
         return ResponseEntity.ok(footballStreamWebService.getLeagueList(requestUrl));
     }
 
     @GetMapping("/leagues/teams")
     public ResponseEntity<ApiResponse<TeamsOfLeagueResponse>> teamsOfLeague(@ModelAttribute TeamsOfLeagueRequest request) {
-        final String requestUrl = "/api/football/stream/leagues/teams";
+        final String requestUrl = "/api/football/leagues/teams";
         return ResponseEntity.ok(footballStreamWebService.getTeamsOfLeague(requestUrl, request));
+    }
+
+    @GetMapping("/fixtures")
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOnClosestDateFromNow(
+            @ModelAttribute FixtureOfLeagueRequest request
+    ) {
+        final String requestUrl = "/api/football/fixtures/";
+        return ResponseEntity.ok(footballStreamWebService.getFixturesOnClosestDate(requestUrl, request, ZonedDateTime.now()));
+    }
+
+    @GetMapping("/fixtures/date")
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOnDate(
+            @ModelAttribute FixtureOfLeagueRequest request,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        final String requestUrl = "/api/football/fixtures/date";
+        ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        return ResponseEntity.ok(footballStreamWebService.getFixturesOnDate(requestUrl, request, seoulDateTime));
     }
 
     /**
@@ -51,30 +70,32 @@ public class FootballStreamDataController {
      * @return ApiResponse<FixtureOfLeagueResponse> 리그에 속한 경기 일정
      */
     @GetMapping("/fixtures/available")
-    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOfLeague(
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> availableFixturesOnClosestDateFromNow(
             @ModelAttribute FixtureOfLeagueRequest request
     ) {
-        final String requestUrl = "/api/football/stream/fixtures/available";
-        return ResponseEntity.ok(footballStreamWebService.getFixturesOfLeague(requestUrl, request));
+        final String requestUrl = "/api/football/fixtures/available";
+        return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnClosestDate(requestUrl, request, ZonedDateTime.now()));
     }
 
     @GetMapping("/fixtures/available/date")
-    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOfLeagueByDate(
+    public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> availableFixturesOnDate(
             @ModelAttribute FixtureOfLeagueRequest request,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) ZonedDateTime date
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        final String requestUrl = "/api/football/stream/fixtures/available/date";
-        return ResponseEntity.ok(footballStreamWebService.getFixturesOfLeague(requestUrl, request, date));
+        final String requestUrl = "/api/football/fixtures/available/date";
+        ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnDate(requestUrl, request, seoulDateTime));
     }
 
+    // TODO : URL 변경되었으므로, electron-app 이랑 adminpage 에서 이 url 쓰는 곳 있는지 검사 필요
     /**
      * {@link FixtureInfoResponse} 라이브 상태 및 이벤트 정보를 포함하여 Fixture 정보를 제공합니다.
      * @param fixtureId 경기 ID
      * @return ApiResponse<FixtureInfoResponse> 경기 정보
      */
-    @GetMapping("/fixtures")
+    @GetMapping("/fixtures/info")
     public ResponseEntity<ApiResponse<FixtureInfoResponse>> fixturesInfo(@RequestParam long fixtureId) {
-        final String requestUrl = "/api/football/stream/fixtures";
+        final String requestUrl = "/api/football/fixtures";
         return ResponseEntity.ok(footballStreamWebService.getFixtureInfo(requestUrl, fixtureId));
     }
 
@@ -86,7 +107,7 @@ public class FootballStreamDataController {
      */
     @GetMapping("/fixtures/events")
     public ResponseEntity<ApiResponse<FixtureEventsResponse>> fixturesEvents(@RequestParam long fixtureId) {
-        final String requestUrl = "/api/football/stream/fixtures/events";
+        final String requestUrl = "/api/football/fixtures/events";
         return ResponseEntity.ok(footballStreamWebService.getFixtureEvents(requestUrl, fixtureId));
     }
 

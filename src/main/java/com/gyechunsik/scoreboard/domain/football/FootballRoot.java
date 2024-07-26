@@ -85,22 +85,6 @@ public class FootballRoot {
     }
 
     /**
-     * 해당 리그의 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
-     * @param leagueId
-     * @return
-     */
-    public List<Fixture> getNextFixturesFromToday(long leagueId) {
-        List<Fixture> fixtures;
-        try {
-            fixtures = footballDataService.getFixturesOfLeague(leagueId);
-        } catch (Exception e) {
-            log.error("error while getting _Fixtures by LeagueId :: {}", leagueId, e);
-            return List.of();
-        }
-        return fixtures;
-    }
-
-    /**
      * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
      * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
      * @return
@@ -108,7 +92,7 @@ public class FootballRoot {
     public List<Fixture> getNextFixturesFromDate(long leagueId, ZonedDateTime zonedDateTime) {
         List<Fixture> fixtures;
         try {
-            fixtures = footballDataService.getFixturesOfLeagueAfterDate(leagueId, zonedDateTime);
+            fixtures = footballDataService.findFixturesOnClosestDate(leagueId, zonedDateTime);
             log.info("getNextFixturesFromDate :: {}", fixtures);
         } catch (Exception e) {
             log.error("error while getting _Fixtures by LeagueId :: {}", e.getMessage());
@@ -156,19 +140,24 @@ public class FootballRoot {
         return fixture;
     }
 
-    public List<Fixture> getClosestDateAvailableFixtures(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<Fixture> getFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
+        return footballDataService.findFixturesOnClosestDate(leagueId, truncated);
     }
 
-    public List<Fixture> getClosestDateFixtures(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<Fixture> getAvailableFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
+        return footballAvailableService.findAvailableFixturesOnClosestDate(leagueId, truncated);
     }
 
-    public List<Fixture> getFixturesSpecificDate(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<Fixture> getFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.findClosestFixturesFromDate(leagueId, truncated);
+        return footballDataService.findFixturesOnDate(leagueId, truncated);
+    }
+
+    public List<Fixture> getAvailableFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        return footballAvailableService.findAvailableFixturesOnDate(leagueId, truncated);
     }
 
     public boolean removeAvailableFixture(long fixtureId) {
