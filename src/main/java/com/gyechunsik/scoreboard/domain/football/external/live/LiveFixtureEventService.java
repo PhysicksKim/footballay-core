@@ -45,6 +45,7 @@ public class LiveFixtureEventService {
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
 
+    // TODO : 만약 존재하지 않는 선수가 이벤트에 있다면, 해당 선수를 새롭게 캐싱하는 명령 먼저 수행
     public void saveLiveEvent(FixtureSingleResponse response) {
         if (response.getResponse().isEmpty()) {
             throw new IllegalArgumentException("API _Response 데이터가 없습니다.");
@@ -147,21 +148,24 @@ public class LiveFixtureEventService {
         _FixtureSingle fixtureSingle = response.getResponse().get(0);
         Long fixtureId = fixtureSingle.getFixture().getId();
         _Status status = fixtureSingle.getFixture().getStatus();
+        _Goals goals = fixtureSingle.getGoals();
         log.info("started to update live status. fixtureId={}, status={}", fixtureId, status.getShortStatus());
 
         Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow();
         LiveStatus liveStatus = liveStatusRepository.findLiveStatusByFixture(fixture).orElseThrow();
-        updateLiveStatusEntity(liveStatus, status);
+        updateLiveStatusEntity(liveStatus, status, goals);
         status.getElapsed();
         log.info("updated live status. fixtureId={}, status={}, timeElapsed={}",
                 fixtureId, status.getShortStatus(), status.getElapsed());
         return isFixtureFinished(status.getShortStatus());
     }
 
-    private void updateLiveStatusEntity(LiveStatus liveStatus, _Status status) {
+    private void updateLiveStatusEntity(LiveStatus liveStatus, _Status status, _Goals goals) {
         liveStatus.setElapsed(status.getElapsed());
         liveStatus.setLongStatus(status.getLongStatus());
         liveStatus.setShortStatus(status.getShortStatus());
+        liveStatus.setHomeScore(goals.getHome());
+        liveStatus.setAwayScore(goals.getAway());
     }
 
     private boolean isFixtureFinished(String shortStatus) {

@@ -6,6 +6,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -42,6 +43,9 @@ public class Fixture {
     @Builder.Default
     private boolean isSummerTime = false;
 
+    @Builder.Default
+    private String round = "";
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "live_status_id")
     private LiveStatus liveStatus;
@@ -73,6 +77,9 @@ public class Fixture {
         this.timezone = other.getTimezone();
         this.date = other.getDate();
         this.timestamp = other.getTimestamp();
+        if(!StringUtils.hasText(this.round)) {
+            this.round = other.getRound();
+        }
     }
 
     public OffsetDateTime getDateAsOffsetDateTime() {

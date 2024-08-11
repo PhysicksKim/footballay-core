@@ -416,6 +416,8 @@ public class FootballApiCacheService {
                 .longStatus(response.getFixture().getStatus().getLongStatus())
                 .shortStatus(response.getFixture().getStatus().getShortStatus())
                 .elapsed(response.getFixture().getStatus().getElapsed())
+                .homeScore(response.getGoals().getHome() == null ? 0 : response.getGoals().getHome())
+                .awayScore(response.getGoals().getAway() == null ? 0 : response.getGoals().getAway())
                 .build();
     }
 
@@ -494,6 +496,7 @@ public class FootballApiCacheService {
                 .timezone(zoneId)
                 .date(dateTime)
                 .timestamp(response.getFixture().getTimestamp())
+                .round(response.getLeague().getRound())
                 .liveStatus(status)
                 .league(league)
                 .homeTeam(home)

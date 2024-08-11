@@ -22,10 +22,24 @@ public class LiveStatus {
     private String shortStatus;
     private Integer elapsed;
 
+    private Integer homeScore = 0;
+    private Integer awayScore = 0;
+
     public void updateCompare(LiveStatus other) {
         this.longStatus = other.getLongStatus();
         this.shortStatus = other.getShortStatus();
         this.elapsed = other.getElapsed();
+
+        try {
+            this.homeScore = other.getHomeScore();
+        } catch (NullPointerException e) {
+            this.homeScore = 0;
+        }
+        try {
+            this.awayScore = other.getAwayScore();
+        } catch (NullPointerException e) {
+            this.awayScore = 0;
+        }
     }
 
 }

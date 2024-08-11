@@ -1,29 +1,29 @@
 package com.gyechunsik.scoreboard.web.football.response;
 
+import com.gyechunsik.scoreboard.domain.football.comparator.StartLineupComparator;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
 import com.gyechunsik.scoreboard.utils.TimeConverter;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
-import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse._Lineup;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
-import static com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse.*;
+import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse.*;
+
+// import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse.*;
 
 @Slf4j
 public class FootballStreamDtoMapper {
@@ -39,22 +39,51 @@ public class FootballStreamDtoMapper {
     }
 
     public static FixtureOfLeagueResponse toFixtureOfLeagueResponse(Fixture fixture) {
-        final String homeTeamName = fixture.getHomeTeam().getKoreanName() != null ?
-                fixture.getHomeTeam().getKoreanName() : fixture.getHomeTeam().getName();
-        final String awayTeamName = fixture.getAwayTeam().getKoreanName() != null ?
-                fixture.getAwayTeam().getKoreanName() : fixture.getAwayTeam().getName();
+        if(fixture.getHomeTeam() == null || fixture.getAwayTeam() == null) {
+            throw new IllegalArgumentException("홈팀 또는 어웨이팀 정보가 존재하지 않습니다. homeTeamIsNull:" + (fixture.getHomeTeam()==null) + ", awayTeamIsNull:" + (fixture.getAwayTeam()==null));
+        }
+        if(fixture.getLiveStatus() == null) {
+            throw new IllegalArgumentException("라이브 상태 정보가 존재하지 않습니다.");
+        }
+
+        LiveStatus liveStatus = fixture.getLiveStatus();
+        FixtureOfLeagueResponse._Match match = new FixtureOfLeagueResponse._Match(
+                fixture.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                fixture.getRound()
+        );
+        FixtureOfLeagueResponse._Team home = new FixtureOfLeagueResponse._Team(
+                fixture.getHomeTeam().getName(),
+                fixture.getHomeTeam().getLogo(),
+                fixture.getHomeTeam().getKoreanName()
+        );
+        FixtureOfLeagueResponse._Team away = new FixtureOfLeagueResponse._Team(
+                fixture.getAwayTeam().getName(),
+                fixture.getAwayTeam().getLogo(),
+                fixture.getAwayTeam().getKoreanName()
+        );
+        FixtureOfLeagueResponse._Status status = new FixtureOfLeagueResponse._Status(
+                liveStatus.getLongStatus(),
+                liveStatus.getShortStatus(),
+                liveStatus.getElapsed(),
+                new FixtureOfLeagueResponse._Score(
+                        liveStatus.getHomeScore(),
+                        liveStatus.getAwayScore()
+                )
+        );
+
         return new FixtureOfLeagueResponse(
                 fixture.getFixtureId(),
-                fixture.getDate().toString(),
-                fixture.getLiveStatus().getShortStatus(),
-                fixture.isAvailable(),
-                homeTeamName,
-                awayTeamName
+                match,
+                home,
+                away,
+                status,
+                fixture.isAvailable()
         );
     }
 
     public static FixtureInfoResponse toFixtureInfoResponse(Fixture fixture) {
         OffsetDateTime offsetDateTime = TimeConverter.toOffsetDateTime(fixture.getDate(), fixture.getTimezone());
+        String dateStr = offsetDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         _League league = new _League(
                 fixture.getLeague().getLeagueId(),
                 fixture.getLeague().getName(),
@@ -73,106 +102,13 @@ public class FootballStreamDtoMapper {
                 fixture.getAwayTeam().getKoreanName(),
                 fixture.getAwayTeam().getLogo()
         );
-
-        _LiveStatus liveStatus = new _LiveStatus(
-                fixture.getLiveStatus().getElapsed(),
-                fixture.getLiveStatus().getShortStatus(),
-                fixture.getLiveStatus().getLongStatus()
-        );
-
-        List<_FixtureEventResponse> events = new ArrayList<>();
-        List<FixtureEvent> findEvents = fixture.getEvents();
-        for (FixtureEvent findEvent : findEvents) {
-            _Player player = new _Player(
-                    findEvent.getPlayer().getId(),
-                    findEvent.getPlayer().getName(),
-                    findEvent.getPlayer().getKoreanName(),
-                    findEvent.getPlayer().getPhotoUrl()
-            );
-            _Player assist = null;
-            if (findEvent.getAssist() != null) {
-                assist = new _Player(
-                        findEvent.getAssist().getId(),
-                        findEvent.getAssist().getName(),
-                        findEvent.getAssist().getKoreanName(),
-                        findEvent.getAssist().getPhotoUrl()
-                );
-            }
-
-            _FixtureEventResponse event = new _FixtureEventResponse(
-                    findEvent.getTeam().getId(),
-                    player,
-                    assist,
-                    findEvent.getTimeElapsed(),
-                    findEvent.getType().toString(),
-                    findEvent.getDetail(),
-                    findEvent.getComments()
-            );
-            events.add(event);
-        }
-
-        // _Lineup -> _StartLineup -> _StartPlayer
-        _Lineup lineup = null;
-        if (fixture.getLineups() != null && !fixture.getLineups().isEmpty()) {
-            try {
-                List<StartLineup> lineups = fixture.getLineups();
-                final long homeTeamId = fixture.getHomeTeam().getId();
-
-                StartLineup findHomeLineup = lineups.stream()
-                        .filter(l -> l.getTeam().getId() == homeTeamId).findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("홈팀 라인업이 존재하지 않습니다."));
-                StartLineup findAwayLineup = lineups.stream()
-                        .filter(l -> l.getTeam().getId() != homeTeamId).findFirst()
-                        .orElseThrow(() -> new IllegalArgumentException("어웨이팀 라인업이 존재하지 않습니다."));
-
-                List<StartPlayer> findHomePlayers = findHomeLineup.getStartPlayers();
-                List<_StartPlayer> homeStartXI = new ArrayList<>();
-                List<_StartPlayer> homeSubstitutes = new ArrayList<>();
-                toLineupPlayerList(findHomePlayers, homeStartXI, homeSubstitutes);
-
-                List<StartPlayer> findAwayPlayers = findAwayLineup.getStartPlayers();
-                List<_StartPlayer> awayStartXI = new ArrayList<>();
-                List<_StartPlayer> awaySubstitutes = new ArrayList<>();
-                toLineupPlayerList(findAwayPlayers, awayStartXI, awaySubstitutes);
-
-                LineupComparator comparator = new LineupComparator();
-                homeStartXI.sort(comparator);
-                homeSubstitutes.sort(comparator);
-                awayStartXI.sort(comparator);
-                awaySubstitutes.sort(comparator);
-
-                _StartLineup homeLineup = new _StartLineup(
-                        findHomeLineup.getTeam().getId(),
-                        findHomeLineup.getFormation(),
-                        homeStartXI,
-                        homeSubstitutes
-                );
-                _StartLineup awayLineup = new _StartLineup(
-                        findAwayLineup.getTeam().getId(),
-                        findAwayLineup.getFormation(),
-                        awayStartXI,
-                        awaySubstitutes
-                );
-
-                lineup = new _Lineup(
-                        homeLineup,
-                        awayLineup
-                );
-            } catch (Exception e) {
-                log.error("라인업 Response Mapping 중 오류 발생 : {}", e.getMessage(), e);
-            }
-        }
-
         return new FixtureInfoResponse(
                 fixture.getFixtureId(),
                 fixture.getReferee(),
-                offsetDateTime.toString(),
-                liveStatus,
+                dateStr,
                 league,
                 home,
-                away,
-                events,
-                lineup
+                away
         );
     }
 
@@ -209,24 +145,78 @@ public class FootballStreamDtoMapper {
         return new FixtureEventsResponse(fixtureId, eventsList);
     }
 
-    private static void toLineupPlayerList(List<StartPlayer> findAwayPlayers, List<_StartPlayer> awayStartXI, List<_StartPlayer> awaySubstitutes) {
-        for (StartPlayer findAwayPlayer : findAwayPlayers) {
-            _StartPlayer awayPlayer = new _StartPlayer(
-                    findAwayPlayer.getPlayer().getId(),
-                    findAwayPlayer.getPlayer().getKoreanName(),
-                    findAwayPlayer.getPlayer().getName(),
-                    findAwayPlayer.getPlayer().getNumber(),
-                    findAwayPlayer.getPlayer().getPhotoUrl(),
-                    findAwayPlayer.getPosition(),
-                    findAwayPlayer.getGrid(),
-                    findAwayPlayer.getSubstitute()
-            );
-            if (awayPlayer.substitute()) {
-                awaySubstitutes.add(awayPlayer);
-            } else {
-                awayStartXI.add(awayPlayer);
+    public static FixtureLiveStatusResponse toFixtureLiveStatusResponse(long fixtureId, LiveStatus liveStatus) {
+        return new FixtureLiveStatusResponse(
+                fixtureId,
+                new FixtureLiveStatusResponse._LiveStatus(
+                        liveStatus.getElapsed(),
+                        liveStatus.getShortStatus(),
+                        liveStatus.getLongStatus()
+                )
+        );
+    }
+
+    /**
+     * Fixture -> Lineup -> StartLineup -> StartPlayer
+     * @param fixture
+     * @return
+     */
+    public static FixtureLineupResponse toFixtureLineupResponse(Fixture fixture) {
+        _Lineup lineup = null;
+        if (fixture.getLineups() != null && !fixture.getLineups().isEmpty()) {
+            try {
+                List<StartLineup> lineups = fixture.getLineups();
+                final long homeTeamId = fixture.getHomeTeam().getId();
+
+                StartLineup findHomeLineup = lineups.stream()
+                        .filter(l -> l.getTeam().getId() == homeTeamId).findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("홈팀 라인업이 존재하지 않습니다."));
+                StartLineup findAwayLineup = lineups.stream()
+                        .filter(l -> l.getTeam().getId() != homeTeamId).findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("어웨이팀 라인업이 존재하지 않습니다."));
+
+                List<StartPlayer> findHomePlayers = findHomeLineup.getStartPlayers().stream().sorted(new StartLineupComparator()).toList();
+                List<FixtureLineupResponse._StartPlayer> homeStartXI = new ArrayList<>();
+                List<FixtureLineupResponse._StartPlayer> homeSubstitutes = new ArrayList<>();
+                toLineupPlayerList(findHomePlayers, homeStartXI, homeSubstitutes);
+
+                List<StartPlayer> findAwayPlayers = findAwayLineup.getStartPlayers().stream().sorted(new StartLineupComparator()).toList();
+                List<FixtureLineupResponse._StartPlayer> awayStartXI = new ArrayList<>();
+                List<FixtureLineupResponse._StartPlayer> awaySubstitutes = new ArrayList<>();
+                toLineupPlayerList(findAwayPlayers, awayStartXI, awaySubstitutes);
+
+                Team homeTeam = findHomeLineup.getTeam();
+                Team awayTeam = findAwayLineup.getTeam();
+
+                FixtureLineupResponse._StartLineup homeLineup = new FixtureLineupResponse._StartLineup(
+                        homeTeam.getId(),
+                        homeTeam.getName(),
+                        homeTeam.getKoreanName(),
+                        findHomeLineup.getFormation(),
+                        homeStartXI,
+                        homeSubstitutes
+                );
+                FixtureLineupResponse._StartLineup awayLineup = new FixtureLineupResponse._StartLineup(
+                        awayTeam.getId(),
+                        awayTeam.getName(),
+                        awayTeam.getKoreanName(),
+                        findAwayLineup.getFormation(),
+                        awayStartXI,
+                        awaySubstitutes
+                );
+
+                lineup = new _Lineup(
+                        homeLineup,
+                        awayLineup
+                );
+            } catch (Exception e) {
+                log.error("라인업 Response Mapping 중 오류 발생 : {}", e.getMessage(), e);
             }
         }
+        return new FixtureLineupResponse(
+                fixture.getFixtureId(),
+                lineup
+        );
     }
 
     public static List<TeamsOfLeagueResponse> toTeamsOfLeagueResponseList(List<Team> teamsOfLeague) {
@@ -243,24 +233,27 @@ public class FootballStreamDtoMapper {
         return responseList;
     }
 
-    private static class LineupComparator implements Comparator<_StartPlayer> {
-        @Override
-        public int compare(_StartPlayer target, _StartPlayer reference) {
-            boolean targetIsSub = target.substitute();
-            boolean referenceIsSub = reference.substitute();
-
-            if (!targetIsSub && referenceIsSub) return -1;
-            if (targetIsSub && !referenceIsSub) return 1;
-
-            if (targetIsSub
-                    // && referenceIsSub // This is ALWAYS TRUE
-            ) return Long.compare(target.id(), reference.id());
-
-            String[] grid1 = target.grid().split(":");
-            String[] grid2 = reference.grid().split(":");
-            int xCompare = Integer.compare(Integer.parseInt(grid1[0]), Integer.parseInt(grid2[0]));
-            return xCompare != 0 ? xCompare : Integer.compare(Integer.parseInt(grid1[1]), Integer.parseInt(grid2[1]));
+    private static void toLineupPlayerList(
+            List<StartPlayer> findAwayPlayers,
+                                           List<FixtureLineupResponse._StartPlayer> awayStartXI,
+                                           List<FixtureLineupResponse._StartPlayer> awaySubstitutes
+    ) {
+        for (StartPlayer findAwayPlayer : findAwayPlayers) {
+            FixtureLineupResponse._StartPlayer awayPlayer = new FixtureLineupResponse._StartPlayer(
+                    findAwayPlayer.getPlayer().getId(),
+                    findAwayPlayer.getPlayer().getKoreanName(),
+                    findAwayPlayer.getPlayer().getName(),
+                    findAwayPlayer.getPlayer().getNumber(),
+                    findAwayPlayer.getPlayer().getPhotoUrl(),
+                    findAwayPlayer.getPosition(),
+                    findAwayPlayer.getGrid(),
+                    findAwayPlayer.getSubstitute()
+            );
+            if (awayPlayer.substitute()) {
+                awaySubstitutes.add(awayPlayer);
+            } else {
+                awayStartXI.add(awayPlayer);
+            }
         }
     }
-
 }

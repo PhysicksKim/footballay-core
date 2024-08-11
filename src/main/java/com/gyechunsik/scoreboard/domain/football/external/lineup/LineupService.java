@@ -11,15 +11,18 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.StartPlayerRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
@@ -35,6 +38,8 @@ public class LineupService {
     private final FixtureRepository fixtureRepository;
     private final StartLineupRepository startLineupRepository;
     private final StartPlayerRepository startPlayerRepository;
+
+    private final EntityManager entityManager;
 
     public boolean hasLineupData(FixtureSingleResponse response) {
         return !response.getResponse().get(0).getLineups().isEmpty();
@@ -66,6 +71,10 @@ public class LineupService {
                 .filter(lineup -> lineup.getTeam().getId().equals(awayResponse.getId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("일치하는 어웨이팀 라인업 정보가 없습니다."));
+
+        // 라인업 정보를 이용해, 존재하지 않는 player 를 저장하거나, 존재한다면 number 정보를 업데이트 해줍니다.
+        cacheAndUpdateFromLineupPlayers(homeLineupResponse);
+        cacheAndUpdateFromLineupPlayers(awayLineupResponse);
 
         // 1. StartLineup Entity 생성
         Fixture fixture = fixtureRepository.findById(fixtureIdResponse)
@@ -99,12 +108,78 @@ public class LineupService {
                 fixtureIdResponse, awayTeam.getId(), awayStartPlayerList.size(), awaySubstitutePlayerList.size());
     }
 
+    /**
+     * 선발 라인업에 존재하지만 아직 캐싱되지 않은 선수들이 있다면 선수 정보를 캐싱합니다. <br>
+     * 라인업 정보에 있는 데이터만으로 캐싱을 진행합니다. <br>
+     * lineup 에 제공되지 않은 photo 와 같은 추가 정보는 별도로 캐싱을 진행해야 하며, <br>
+     * TeamPlayer 와 같은 연관관계 맵핑 정보는 캐싱되지 않습니다.
+     * @param lineupResponse 라인업 정보
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected void cacheAndUpdateFromLineupPlayers(_Lineups lineupResponse) {
+        List<_Lineups._StartPlayer> startXI = lineupResponse.getStartXI();
+        List<_Lineups._StartPlayer> substitutes = lineupResponse.getSubstitutes();
+
+        Map<Long, _Lineups._StartPlayer> playerResponseMap = startXI.stream()
+                .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player));
+        playerResponseMap.putAll(substitutes.stream()
+                .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
+
+        Set<Long> playerIds = playerResponseMap.keySet();
+        Set<Long> findPlayers = playerRepository.findAllById(playerIds).stream()
+                .map(Player::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> existPlayerIds = playerIds.stream()
+                .filter(findPlayers::contains)
+                .collect(Collectors.toSet());
+        updateExistPlayers(playerResponseMap, existPlayerIds);
+
+        Set<Long> missingPlayerIds = playerIds.stream()
+                .filter(playerId -> !findPlayers.contains(playerId))
+                .collect(Collectors.toSet());
+        if(missingPlayerIds.isEmpty()) {
+            return;
+        }
+        List<_Lineups._StartPlayer> missingPlayers = playerResponseMap.entrySet().stream()
+                .filter(entry -> missingPlayerIds.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+        convertAndCacheMissingPlayers(missingPlayers);
+        log.info("라인업 선수 중 아직 캐싱되지 않은 선수를 임시로 저장했습니다. missingPlayers={}", missingPlayerIds);
+    }
+
+    private void updateExistPlayers(Map<Long, _Lineups._StartPlayer> playerResponseMap, Set<Long> existPlayerIds) {
+        List<Player> existPlayers = playerRepository.findAllById(existPlayerIds);
+        existPlayers.forEach(player -> {
+            _Lineups._StartPlayer playerResponse = playerResponseMap.get(player.getId());
+            if (player.getNumber() == null && playerResponse.getPlayer().getNumber() != null) {
+                player.setNumber(playerResponse.getPlayer().getNumber());
+                log.info("선수 번호 정보를 업데이트 했습니다. player={}", player);
+            }
+        });
+        playerRepository.saveAll(existPlayers);
+    }
+
+    private void convertAndCacheMissingPlayers(List<_Lineups._StartPlayer> missingPlayers) {
+        List<Player> players = missingPlayers.stream()
+                .map(playerResponse -> Player.builder()
+                        .id(playerResponse.getPlayer().getId())
+                        .name(playerResponse.getPlayer().getName())
+                        .number(playerResponse.getPlayer().getNumber())
+                        .build())
+                .toList();
+        playerRepository.saveAll(players);
+        log.info("캐싱되지 않은 선수들을 라인업 데이터로 저장했습니다. players={}", players);
+    }
+
     private List<StartPlayer> buildAndSaveStartPlayerEntity(_Lineups lineups, StartLineup startLineup, boolean isSubstitute) {
         List<StartPlayer> startPlayerList = new ArrayList<>();
 
         List<_Lineups._StartPlayer> startPlayers = (isSubstitute ? lineups.getSubstitutes() : lineups.getStartXI());
         Map<Long, _Lineups._Player> playerResponseMap = startPlayers.stream()
                 .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player.getPlayer()));
+
         List<Player> findPlayers = playerRepository.findAllById(playerResponseMap.keySet());
 
         findPlayers.forEach(player -> {
@@ -124,20 +199,25 @@ public class LineupService {
     /**
      * 이전에 해당 fixture 에 이미 Lineup 이 저장되어있다면, StartLineup 과 StartPlayer 가 중복으로 저장될 수 있습니다.
      * 이미 fixture 의 Start Lineup and Player 가 저장되어 있다면, 기존에 저장된 선발 관련 정보를 삭제합니다.
+     *
      * @param fixtureId 경기 ID
      */
     public void cleanupPreviousLineup(long fixtureId) {
         log.info("previous start lineup clean up for fixtureId={}", fixtureId);
         Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow();
         List<StartLineup> lineups = startLineupRepository.findAllByFixture(fixture);
-        if(!lineups.isEmpty()) {
+        if (!lineups.isEmpty()) {
             log.info("이미 저장된 lineup 정보가 있어, 기존 데이터를 삭제합니다. 기존에 저장된 StartLineup count : {}", lineups.size());
             int deletedPlayerCount = startPlayerRepository.deleteByStartLineupIn(lineups);
+            // Force immediate database delete to prevent foreign key constraint violations
+            entityManager.flush();
+            log.info("삭제된 player count = {}", deletedPlayerCount);
             startLineupRepository.deleteAllInBatch(lineups);
-            log.info("fixtureId={} 라인업 정보 삭제 완료. 삭제된 player count = {}", fixtureId,deletedPlayerCount);
+            log.info("fixtureId={} 라인업 정보 삭제 완료", fixtureId);
         } else {
             log.info("fixtureId={} 라인업 정보가 없어, prevCleanup 할 데이터가 없습니다.", fixtureId);
         }
     }
+
 
 }

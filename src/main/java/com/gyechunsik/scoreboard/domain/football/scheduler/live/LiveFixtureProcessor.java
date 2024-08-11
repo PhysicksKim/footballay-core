@@ -15,8 +15,6 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
     private final ApiCallService apiCallService;
     private final LiveFixtureEventService liveFixtureService;
 
-    // TODO : 여기 부터 해나가면됨 6월29일 점심부터. 테스트 코드부터 작성
-
     /**
      * fixtureId 를 받아서 해당 경기의 라이브 정보를 캐싱한다.
      *

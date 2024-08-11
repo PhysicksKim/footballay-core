@@ -7,10 +7,13 @@ import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballDataWeb
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 @Slf4j
@@ -112,11 +115,13 @@ public class AdminFootballDataRestController {
     }
 
     @GetMapping("/fixtures")
-    public ResponseEntity<ApiResponse<FixtureResponse>> getFixturesInfo(long leagueId,
-                                                                        ZonedDateTime date
+    public ResponseEntity<ApiResponse<FixtureResponse>> getFixturesInfo(
+            long leagueId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         String requestUrl = "/api/admin/football/fixtures";
-        ApiResponse<FixtureResponse> response = adminFootballDataWebService.getFixturesFromDate(leagueId, date, requestUrl);
+        ZonedDateTime zonedDateTime = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        ApiResponse<FixtureResponse> response = adminFootballDataWebService.getFixturesFromDate(leagueId, zonedDateTime, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 

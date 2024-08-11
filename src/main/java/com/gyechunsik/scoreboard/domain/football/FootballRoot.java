@@ -240,7 +240,7 @@ public class FootballRoot {
             log.info("cached fixtures :: {}",
                     fixtures.stream().map(Fixture::getFixtureId).toList());
         } catch (Exception e) {
-            log.error("error while caching All _Fixtures of _League :: {}", e.getMessage());
+            log.error("error while caching All _Fixtures of _League :: {}", e.getMessage(), e);
             return false;
         }
         return true;
@@ -253,6 +253,17 @@ public class FootballRoot {
             return Optional.of(findFixture);
         } catch (Exception e) {
             log.warn("error while getting _Fixture by Id :: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public Optional<LiveStatus> getFixtureLiveStatus(long fixtureId) {
+        try {
+            LiveStatus liveStatus = footballDataService.getFixtureLiveStatus(fixtureId);
+            log.info("getFixtureLiveStatus :: {}", liveStatus);
+            return Optional.of(liveStatus);
+        } catch (Exception e) {
+            log.warn("error while getting _FixtureLiveStatus by Id :: {}", e.getMessage());
             return Optional.empty();
         }
     }
@@ -273,25 +284,21 @@ public class FootballRoot {
      */
     public Optional<Fixture> getFixtureWithEager(long fixtureId) {
         try {
+            log.info("try fixture eager loading :: {}", fixtureId);
             Fixture findFixture = footballDataService.getFixtureWithEager(fixtureId);
-            log.info("get Fixture With Eager id={}", findFixture.getFixtureId());
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
 
             List<StartLineup> lineups = new ArrayList<>();
-            log.info("before start lineup");
-            log.info("아 스타트 라인업이 중복됐구나");
             Optional<StartLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
             Optional<StartLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
 
-            log.info("before fixture events");
             List<FixtureEvent> events = footballDataService.getFixtureEvents(findFixture);
             findFixture.setEvents(events);
-
-            log.info("before return");
+            log.info("fixture eager loaded :: {}", findFixture.getFixtureId());
             return Optional.of(findFixture);
         } catch (Exception e) {
             log.warn("error while getting _Fixture with Eager by Id :: {}", e.getMessage());

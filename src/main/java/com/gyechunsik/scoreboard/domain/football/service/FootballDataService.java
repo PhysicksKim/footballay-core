@@ -5,6 +5,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
@@ -72,6 +73,12 @@ public class FootballDataService {
     public Fixture getFixtureById(long fixtureId) {
         return fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+    }
+
+    public LiveStatus getFixtureLiveStatus(long fixtureId) {
+        return fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."))
+                .getLiveStatus();
     }
 
     public List<Fixture> findFixturesOnClosestDate(long leagueId, ZonedDateTime matchDateFrom) {

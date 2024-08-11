@@ -42,10 +42,10 @@ public class StartLineup {
     public String toString() {
         return "StartLineup{" +
                 "id=" + id +
-                ", fixtureId=" + fixture.getFixtureId() +
-                ", teamName=" + team.getName() +
+                ", fixtureId=" + (fixture != null ? fixture.getFixtureId() : "null") +
+                ", teamName=" + (team != null ? team.getName() : "null") +
                 ", formation='" + formation + '\'' +
-                ", startPlayers=" + startPlayers.stream().map(startPlayer -> startPlayer.getPlayer().getName()).toList() +
+                ", startPlayers=" + (startPlayers != null ? startPlayers.stream().map(startPlayer -> startPlayer.getPlayer().getName()).toList() : "null") +
                 '}';
     }
 }

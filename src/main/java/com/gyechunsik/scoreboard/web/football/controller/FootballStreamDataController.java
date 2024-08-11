@@ -1,23 +1,32 @@
 package com.gyechunsik.scoreboard.web.football.controller;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
-import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
 import com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Rest API 로 football stream 데이터 제공.
@@ -29,6 +38,7 @@ import java.time.ZonedDateTime;
 public class FootballStreamDataController {
 
     private final FootballStreamWebService footballStreamWebService;
+    private final ApiCommonResponseService apiCommonResponseService;
 
     /**
      * 이용 가능한 리그 목록 조회
@@ -48,18 +58,23 @@ public class FootballStreamDataController {
 
     @GetMapping("/fixtures")
     public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOnClosestDateFromNow(
-            @ModelAttribute FixtureOfLeagueRequest request
+            @ModelAttribute FixtureOfLeagueRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/";
-        return ResponseEntity.ok(footballStreamWebService.getFixturesOnClosestDate(requestUrl, request, ZonedDateTime.now()));
+        ZonedDateTime paramDate = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        return ResponseEntity.ok(footballStreamWebService.getFixturesOnClosestDate(requestUrl, request, paramDate));
     }
 
     @GetMapping("/fixtures/date")
     public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> fixturesOnDate(
             @ModelAttribute FixtureOfLeagueRequest request,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/date";
+        if(date == null) {
+            return ResponseEntity.ok(apiCommonResponseService.createFailureResponse("Parameter 'date' is required", requestUrl));
+        }
         ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
         return ResponseEntity.ok(footballStreamWebService.getFixturesOnDate(requestUrl, request, seoulDateTime));
     }
@@ -71,23 +86,28 @@ public class FootballStreamDataController {
      */
     @GetMapping("/fixtures/available")
     public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> availableFixturesOnClosestDateFromNow(
-            @ModelAttribute FixtureOfLeagueRequest request
+            @ModelAttribute FixtureOfLeagueRequest request,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/available";
-        return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnClosestDate(requestUrl, request, ZonedDateTime.now()));
+        ZonedDateTime paramDate = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnClosestDate(requestUrl, request, paramDate));
     }
 
     @GetMapping("/fixtures/available/date")
     public ResponseEntity<ApiResponse<FixtureOfLeagueResponse>> availableFixturesOnDate(
             @ModelAttribute FixtureOfLeagueRequest request,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/available/date";
+        if(date == null) {
+            return ResponseEntity.ok(apiCommonResponseService.createFailureResponse("Parameter 'date' is required", requestUrl));
+        }
         ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
         return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnDate(requestUrl, request, seoulDateTime));
     }
 
-    // TODO : URL 변경되었으므로, electron-app 이랑 adminpage 에서 이 url 쓰는 곳 있는지 검사 필요
+    // TODO : URL 변경되었으므로, electron-app 이랑 admin page 에서 이 url 쓰는 곳 있는지 검사 필요
     /**
      * {@link FixtureInfoResponse} 라이브 상태 및 이벤트 정보를 포함하여 Fixture 정보를 제공합니다.
      * @param fixtureId 경기 ID
@@ -99,9 +119,14 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getFixtureInfo(requestUrl, fixtureId));
     }
 
+    @GetMapping("/fixtures/live-status")
+    public ResponseEntity<ApiResponse<FixtureLiveStatusResponse>> fixturesLiveStatus(@RequestParam long fixtureId) {
+        final String requestUrl = "/api/football/fixtures/live-status";
+        return ResponseEntity.ok(footballStreamWebService.getFixtureLiveStatus(requestUrl, fixtureId));
+    }
+
     /**
      * 경기 이벤트 정보를 제공합니다.
-     *
      * @param fixtureId 경기 ID
      * @return ApiResponse<FixtureEvent> 경기 이벤트 정보
      */
@@ -111,4 +136,72 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getFixtureEvents(requestUrl, fixtureId));
     }
 
+    @GetMapping("/fixtures/lineup")
+    public ResponseEntity<ApiResponse<FixtureLineupResponse>> fixturesLineup(@RequestParam long fixtureId) {
+        final String requestUrl = "/api/football/fixtures/lineup";
+        return ResponseEntity.ok(footballStreamWebService.getFixtureLineup(requestUrl, fixtureId));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request
+    ) {
+        String requestUrl = request.getRequestURL().toString();
+        Map<String, String> requestParams = request.getParameterMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.join(",", entry.getValue())));
+
+        log.info("Request Parameter Exception occurred");
+        log.info("Request URL : {} , Params : {}", requestUrl, requestParams);
+        log.info("Exception: ", ex);
+
+        ApiResponse<Void> failureResponse = apiCommonResponseService.createFailureResponse(
+                "Required request parameter is missing: " + ex.getParameterName(),
+                requestUrl,
+                requestParams
+        );
+        return ResponseEntity.badRequest().body(failureResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        String requestUrl = request.getRequestURL().toString();
+        Map<String, String> requestParams = request.getParameterMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.join(",", entry.getValue())));
+
+        log.info("Method Argument Type Mismatch Exception occurred");
+        log.info("Request URL : {} , Params : {}", requestUrl, requestParams);
+        log.info("Exception: ", ex);
+
+        ApiResponse<Void> failureResponse = apiCommonResponseService.createFailureResponse(
+                "Invalid request parameter: " + ex.getName() + " with value " + ex.getValue(),
+                requestUrl,
+                requestParams
+        );
+        return ResponseEntity.badRequest().body(failureResponse);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        String requestUrl = request.getRequestURL().toString();
+        Map<String, String> requestParams = request.getParameterMap().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> String.join(",", entry.getValue())));
+
+        log.info("Unexpected Exception occurred");
+        log.info("Request URL : {} , Params : {}", requestUrl, requestParams);
+        log.error("Exception: ", ex);
+
+        ApiResponse<Void> failureResponse = apiCommonResponseService.createFailureResponse(
+                "An unexpected error occurred",
+                requestUrl,
+                requestParams
+        );
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(failureResponse);
+    }
 }

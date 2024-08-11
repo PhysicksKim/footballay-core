@@ -5,16 +5,19 @@ import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
-import com.gyechunsik.scoreboard.web.football.response.fixture.info.FixtureInfoResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper;
 import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
+import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -113,17 +116,25 @@ public class FootballStreamWebService {
         }
     }
 
+    // TODO : 아직 lineup 이나 event 가 cache 되지 않은 경우에는 해당 부분을 null 로 두도록 수정 필요
+    /*
+    java.lang.NullPointerException: Cannot invoke "java.lang.Integer.intValue()" because the return value of "com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus.getElapsed()" is null
+        at com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper.toFixtureInfoResponse(FootballStreamDtoMapper.java:77) ~[main/:na]
+        at com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService.getFixtureInfo(FootballStreamWebService.java:84) ~[main/:na]
+        at com.gyechunsik.scoreboard.web.football.controller.FootballStreamDataController.fixturesInfo(FootballStreamDataController.java:66) ~[main/:na]
+     */
+
+    // info, liveStatus, events, lineup, matchStatistics, playerRatings, playerStatistcs(one player)
+    /**
+     *
+     * @param requestUrl
+     * @param fixtureId
+     * @return
+     */
     public ApiResponse<FixtureInfoResponse> getFixtureInfo(String requestUrl, long fixtureId) {
         Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         log.info("getFixtureInfo. params={}", params);
 
-        // TODO : 아직 lineup 이나 event 가 cache 되지 않은 경우에는 해당 부분을 null 로 두도록 수정 필요
-        /*
-        java.lang.NullPointerException: Cannot invoke "java.lang.Integer.intValue()" because the return value of "com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus.getElapsed()" is null
-            at com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper.toFixtureInfoResponse(FootballStreamDtoMapper.java:77) ~[main/:na]
-            at com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService.getFixtureInfo(FootballStreamWebService.java:84) ~[main/:na]
-            at com.gyechunsik.scoreboard.web.football.controller.FootballStreamDataController.fixturesInfo(FootballStreamDataController.java:66) ~[main/:na]
-         */
         try {
             Optional<Fixture> optionalFixtureWithEager = footballRoot.getFixtureWithEager(fixtureId);
             if (optionalFixtureWithEager.isEmpty()) {
@@ -139,6 +150,24 @@ public class FootballStreamWebService {
         }
     }
 
+    public ApiResponse<FixtureLiveStatusResponse> getFixtureLiveStatus(String requestUrl, long fixtureId) {
+        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
+        log.info("getFixtureLiveStatus. params={}", params);
+
+        try {
+            Optional<LiveStatus> optionalLiveStatus = footballRoot.getFixtureLiveStatus(fixtureId);
+            if (optionalLiveStatus.isEmpty()) {
+                return apiCommonResponseService.createFailureResponse("존재하지 않는 fixture 입니다", requestUrl, params);
+            }
+            LiveStatus liveStatus = optionalLiveStatus.get();
+            FixtureLiveStatusResponse response = FootballStreamDtoMapper.toFixtureLiveStatusResponse(fixtureId, liveStatus);
+            return apiCommonResponseService.createSuccessResponse(new FixtureLiveStatusResponse[]{response}, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling method getFixtureLiveStatus() fixtureId : {}", fixtureId, e);
+            return apiCommonResponseService.createFailureResponse("라이브 상태 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
     public ApiResponse<FixtureEventsResponse> getFixtureEvents(String requestUrl, long fixtureId) {
         Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         log.info("getFixtureEvents. params={}", params);
@@ -151,6 +180,21 @@ public class FootballStreamWebService {
         } catch (Exception e) {
             log.error("Error occurred while calling method getFixtureEvents() fixtureId : {}", fixtureId, e);
             return apiCommonResponseService.createFailureResponse("이벤트 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
+    public ApiResponse<FixtureLineupResponse> getFixtureLineup(String requestUrl, long fixtureId) {
+        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
+        log.info("getFixtureLineup. params={}", params);
+
+        try {
+            Fixture fixture = footballRoot.getFixtureWithEager(fixtureId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+            FixtureLineupResponse response = FootballStreamDtoMapper.toFixtureLineupResponse(fixture);
+            return apiCommonResponseService.createSuccessResponse(new FixtureLineupResponse[]{response}, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling method getFixtureLineup() fixtureId : {}", fixtureId, e);
+            return apiCommonResponseService.createFailureResponse("라인업 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
 

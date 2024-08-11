@@ -10,7 +10,6 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -61,5 +60,17 @@ public class Player {
         result = 31 * result + Objects.hashCode(getPosition());
         result = 31 * result + Objects.hashCode(getTeamPlayers());
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "number=" + number +
+                ", position='" + position + '\'' +
+                ", photoUrl='" + photoUrl + '\'' +
+                ", koreanName='" + koreanName + '\'' +
+                ", name='" + name + '\'' +
+                ", id=" + id +
+                '}';
     }
 }

@@ -132,8 +132,8 @@ public class FixtureSingleResponse extends ApiFootballResponse {
     @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _Goals {
-        private Long home;
-        private Long away;
+        private Integer home;
+        private Integer away;
     }
 
     @Getter
@@ -324,7 +324,7 @@ public class FixtureSingleResponse extends ApiFootballResponse {
         public static class _Player {
             private Long id;
             private String name;
-            private String number;
+            private Integer number;
             private String pos;
             private String grid;
         }
