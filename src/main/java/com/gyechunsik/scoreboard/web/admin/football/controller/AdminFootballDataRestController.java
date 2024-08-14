@@ -1,5 +1,8 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
+import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
+import com.gyechunsik.scoreboard.domain.football.service.FootballExcelService;
 import com.gyechunsik.scoreboard.web.admin.football.request.FixtureIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
@@ -7,14 +10,22 @@ import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballDataWeb
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +45,8 @@ public class AdminFootballDataRestController {
      * DELETE : 가능 팀 삭제
      */
     private final AdminFootballDataWebService adminFootballDataWebService;
+    private final FootballExcelService excelService;
+    private final FootballDataService footballDataService;
 
     @GetMapping("/leagues/available")
     public ResponseEntity<ApiResponse<AvailableLeagueDto>> getAvailableLeagues() {
@@ -123,6 +136,32 @@ public class AdminFootballDataRestController {
         ZonedDateTime zonedDateTime = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
         ApiResponse<FixtureResponse> response = adminFootballDataWebService.getFixturesFromDate(leagueId, zonedDateTime, requestUrl);
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/players/export/{teamId}")
+    public ResponseEntity<InputStreamResource> exportPlayersToExcel(@PathVariable long teamId) throws IOException {
+        List<Player> players = footballDataService.getSquadOfTeam(teamId);
+        log.info("controller :: players : {}", players);
+        ByteArrayInputStream in = excelService.createPlayerExcel(players);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=players.xlsx");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(in));
+    }
+
+    @PostMapping("/players/import")
+    public ResponseEntity<?> importPlayersFromExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            excelService.updatePlayerKoreanNames(file);
+            return ResponseEntity.ok("Players updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing file: " + e.getMessage());
+        }
     }
 
 }

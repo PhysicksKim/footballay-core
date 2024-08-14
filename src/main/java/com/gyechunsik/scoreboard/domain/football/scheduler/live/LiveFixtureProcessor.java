@@ -59,7 +59,7 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
         assert !response.getResponse().isEmpty();
         long fixtureId = response.getResponse().get(0).getFixture().getId();
         try {
-            log.info("fixtureId={} has live fixture data. 'LiveFixture' caching will be started", fixtureId);
+            log.info("fixtureId={} has live fixture data. caching events will be started", fixtureId);
             liveFixtureService.saveLiveEvent(response);
         } catch (Exception e) {
             // 저장된 fixture 의 live Event Entity 들을 다시 삭제하고, response 를 기반을 전부 다시 저장 시도

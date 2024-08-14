@@ -54,6 +54,10 @@ dependencies {
     // Quartz
     implementation 'org.springframework.boot:spring-boot-starter-quartz'
 
+    // Apache POI
+    implementation 'org.apache.poi:poi:5.2.4'
+    implementation 'org.apache.poi:poi-ooxml:5.2.4'
+
     // 테스트 관련
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 

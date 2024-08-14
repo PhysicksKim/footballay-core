@@ -57,6 +57,8 @@ public class LiveFixtureEventService {
         Long homeId = fixtureSingle.getTeams().getHome().getId();
         Long awayId = fixtureSingle.getTeams().getAway().getId();
 
+        log.info("started to save live event fixtureId={}", fixtureId);
+
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("_Fixture 정보가 없습니다. fixtureId=" + fixtureId));
         League league = leagueRepository.findById(leagueId)
@@ -68,6 +70,7 @@ public class LiveFixtureEventService {
 
         List<_Events> events = fixtureSingle.getEvents();
         if (events.isEmpty()) {
+            log.info("이벤트가 없습니다. fixtureId={}", fixtureId);
             return;
         }
 
@@ -90,6 +93,11 @@ public class LiveFixtureEventService {
             try{
                 Team team = teamRepository.findById(event.getTeam().getId())
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
+                if(event.getPlayer().getId() == null) {
+                    log.error("Fixture Event 에서 선수 id 가 null 입니다. fixtureId={}, event={}", fixtureId, event);
+                    throw new IllegalArgumentException("Fixture Event 에서 선수 id 가 null 입니다.");
+                }
+
                 Player player = playerRepository.findById(event.getPlayer().getId())
                         .orElseThrow(() -> new IllegalArgumentException("선수 정보가 없습니다. playerId=" + event.getPlayer().getId()));
                 Long assistId = event.getAssist().getId();
