@@ -162,11 +162,14 @@ public class LineupService {
     }
 
     private void convertAndCacheMissingPlayers(List<_Lineups._StartPlayer> missingPlayers) {
+        final String photoUrl_prefix = "https://media.api-sports.io/football/players/";
+        final String photoUrl_suffix = ".png";
         List<Player> players = missingPlayers.stream()
                 .map(playerResponse -> Player.builder()
                         .id(playerResponse.getPlayer().getId())
                         .name(playerResponse.getPlayer().getName())
                         .number(playerResponse.getPlayer().getNumber())
+                        .photoUrl(photoUrl_prefix + playerResponse.getPlayer().getId() + photoUrl_suffix)
                         .build())
                 .toList();
         playerRepository.saveAll(players);
