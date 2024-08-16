@@ -24,7 +24,7 @@ public class AdminController {
     public ResponseEntity<String> adminIndexPage(Authentication authentication) {
         log.info("auth details : {}, isAuth : {}, role : {}",
                 authentication.getDetails(), authentication.isAuthenticated(), authentication.getAuthorities());
-        String path = "https://static.gyechunsik.site/scoreboard/admin/index.html";
+        String path = "https://static.gyechunsik.site/chuncity/admin/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("admin Page");
 
