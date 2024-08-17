@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
@@ -149,11 +146,17 @@ public class LineupService {
         log.info("라인업 선수 중 아직 캐싱되지 않은 선수를 임시로 저장했습니다. missingPlayers={}", missingPlayerIds);
     }
 
+    /**
+     * 기존에 존재하는 선수의 유니폼 번호를 업데이트 합니다. <br>
+     * 기존에 저장된 번호가 없거나 다르다면 라인업에서 제공된 번호로 변경합니다. <br>
+     * @param playerResponseMap
+     * @param existPlayerIds
+     */
     private void updateExistPlayers(Map<Long, _Lineups._StartPlayer> playerResponseMap, Set<Long> existPlayerIds) {
         List<Player> existPlayers = playerRepository.findAllById(existPlayerIds);
         existPlayers.forEach(player -> {
             _Lineups._StartPlayer playerResponse = playerResponseMap.get(player.getId());
-            if (player.getNumber() == null && playerResponse.getPlayer().getNumber() != null) {
+            if (playerResponse.getPlayer().getNumber() != null && !Objects.equals(player.getNumber(), playerResponse.getPlayer().getNumber())) {
                 player.setNumber(playerResponse.getPlayer().getNumber());
                 log.info("선수 번호 정보를 업데이트 했습니다. player={}", player);
             }
