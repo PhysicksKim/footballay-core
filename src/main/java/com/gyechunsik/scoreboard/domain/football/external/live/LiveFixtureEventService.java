@@ -18,11 +18,13 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepos
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.weaver.ast.Or;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
 
@@ -45,7 +47,6 @@ public class LiveFixtureEventService {
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
 
-    // TODO : 만약 존재하지 않는 선수가 이벤트에 있다면, 해당 선수를 새롭게 캐싱하는 명령 먼저 수행
     public void saveLiveEvent(FixtureSingleResponse response) {
         if (response.getResponse().isEmpty()) {
             throw new IllegalArgumentException("API _Response 데이터가 없습니다.");
@@ -76,20 +77,70 @@ public class LiveFixtureEventService {
 
         List<FixtureEvent> fixtureEventList
                 = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
-        // 이벤트 수가 저장된 수보다 적어졌다면 데이터 문제 발생으로 인식
         if (events.size() < fixtureEventList.size()) {
-            throw new IllegalArgumentException("이벤트 수가 감소되는 경우는 없습니다. " +
-                    "API 응답 사이즈=" + events.size() + ", 저장된 Event 사이즈=" + fixtureEventList.size() + ",fixtureId=" + fixtureId);
+            log.warn("이벤트 수 감소: API 응답 사이즈={}, 저장된 Event 사이즈={}, fixtureId={}",
+                    events.size(), fixtureEventList.size(), fixtureId);
+            // API 응답에 맞춰서 응답보다 더 많은 이벤트들은 삭제
+            for(int i = events.size() ; i < fixtureEventList.size() ; i++) {
+                fixtureEventRepository.delete(fixtureEventList.get(i));
+            }
+            // fixtureEventList 를 size 에 맞게 초과하는 이벤트들은 삭제
+            fixtureEventList = fixtureEventList.subList(0, events.size());
         }
-        // 이전 캐싱과 이벤트 수가 동일하면 새로운 이벤트가 없는 것으로 판단
-        if (events.size() == fixtureEventList.size()) {
-            return;
-        }
-
+        updateExistingEvents(events, fixtureEventList);
         int startSequence = fixtureEventList.size();
+        saveEventsFromStartSequence(startSequence, events, fixtureId, fixture);
+    }
+
+    private void updateExistingEvents(List<_Events> events, List<FixtureEvent> fixtureEventList) {
+        for(int i = 0 ; i < fixtureEventList.size() ; i++) {
+            _Events event = events.get(i);
+            FixtureEvent fixtureEvent = fixtureEventList.get(i);
+            // 이벤트가 다르다면 업데이트
+            if(!isSameEvent(event, fixtureEvent)) {
+                Team team = teamRepository.findById(event.getTeam().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
+                Player player = playerRepository.findById(event.getPlayer().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("선수 정보가 없습니다. playerId=" + event.getPlayer().getId()));
+                Long assistId = event.getAssist().getId();
+                Player assist = null;
+                if(assistId != null && assistId > 0) {
+                    assist = playerRepository.findById(assistId)
+                            .orElseThrow(() -> new IllegalArgumentException("어시스트 선수가 주어졌으나 캐싱되어있지 않습니다. assistId=" + assistId));
+                }
+                updateEvent(event, fixtureEvent, team, player, assist);
+            }
+        }
+    }
+
+    private boolean isSameEvent(_Events event, FixtureEvent fixtureEvent) {
+        return Objects.equals(event.getTime().getElapsed(), fixtureEvent.getTimeElapsed())
+                && Objects.equals(event.getTime().getExtra(), fixtureEvent.getExtraTime())
+                && event.getType().equalsIgnoreCase(fixtureEvent.getType().name())
+                && event.getDetail().equalsIgnoreCase(fixtureEvent.getDetail())
+                && Objects.equals(event.getComments(), fixtureEvent.getComments())
+                && event.getTeam().getId().equals(fixtureEvent.getTeam().getId())
+                && event.getPlayer().getId().equals(fixtureEvent.getPlayer().getId())
+                && (Objects.equals(event.getAssist() == null ? null : event.getAssist().getId(),
+                    fixtureEvent.getAssist() == null ? null : fixtureEvent.getAssist().getId()));
+    }
+
+    private void updateEvent(_Events event, FixtureEvent fixtureEvent, Team team, Player player, @Nullable Player assist) {
+        fixtureEvent.setTeam(team);
+        fixtureEvent.setPlayer(player);
+        fixtureEvent.setAssist(assist);
+        fixtureEvent.setTimeElapsed(event.getTime().getElapsed());
+        fixtureEvent.setExtraTime(event.getTime().getExtra() == null ? 0 : event.getTime().getExtra());
+        fixtureEvent.setType(EventType.valueOf(event.getType().toUpperCase()));
+        fixtureEvent.setDetail(event.getDetail());
+        fixtureEvent.setComments(event.getComments());
+    }
+
+    private void saveEventsFromStartSequence(int startSequence, List<_Events> events, Long fixtureId, Fixture fixture) {
         for (int sequence = startSequence; sequence < events.size(); sequence++) {
             _Events event = events.get(sequence);
             FixtureEvent fixtureEvent;
+
             try{
                 Team team = teamRepository.findById(event.getTeam().getId())
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));

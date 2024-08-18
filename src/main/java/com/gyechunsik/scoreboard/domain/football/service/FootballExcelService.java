@@ -89,7 +89,12 @@ public class FootballExcelService {
         }
     }
 
-    public void updatePlayerKoreanNames(MultipartFile file) throws IOException {
+    /**
+     * 엑셀 데이터로 선수 한글 이름과 등번호를 업데이트 합니다.
+     * @param file
+     * @throws IOException
+     */
+    public void updatePlayerDetails(MultipartFile file) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
             log.info("sheet row count : {}", sheet.getPhysicalNumberOfRows());
@@ -100,9 +105,16 @@ public class FootballExcelService {
 
                 Long playerId = (long) row.getCell(0).getNumericCellValue();
                 String koreanName = row.getCell(2).getStringCellValue();
+                String number = row.getCell(3).getStringCellValue();
 
                 Player player = playerRepository.findById(playerId).orElseThrow(() -> new RuntimeException("Player not found"));
-                player.setKoreanName(koreanName);
+                if(koreanName != null && !koreanName.isEmpty()) {
+                    player.setKoreanName(koreanName);
+                }
+                if(number != null && !number.isEmpty() && !number.equals("0")) {
+                    int uniformNum = Integer.parseInt(number);
+                    player.setNumber(uniformNum);
+                }
                 playerRepository.save(player);
             }
         }

@@ -157,7 +157,7 @@ public class AdminFootballDataRestController {
     @PostMapping("/players/import")
     public ResponseEntity<?> importPlayersFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            excelService.updatePlayerKoreanNames(file);
+            excelService.updatePlayerDetails(file);
             return ResponseEntity.ok("Players updated successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing file: " + e.getMessage());
