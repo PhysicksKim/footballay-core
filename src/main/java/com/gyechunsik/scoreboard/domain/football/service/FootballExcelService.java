@@ -16,7 +16,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -96,27 +98,82 @@ public class FootballExcelService {
      */
     public void updatePlayerDetails(MultipartFile file) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            List<Integer> processedRows = new ArrayList<>();
+            List<String> processedKoreanName = new ArrayList<>();
             Sheet sheet = workbook.getSheetAt(0);
             log.info("sheet row count : {}", sheet.getPhysicalNumberOfRows());
             for (Row row : sheet) {
                 if (row.getRowNum() == 0) {
                     continue; // Skip header row
                 }
-
-                Long playerId = (long) row.getCell(0).getNumericCellValue();
-                String koreanName = row.getCell(2).getStringCellValue();
-                String number = row.getCell(3).getStringCellValue();
-
-                Player player = playerRepository.findById(playerId).orElseThrow(() -> new RuntimeException("Player not found"));
-                if(koreanName != null && !koreanName.isEmpty()) {
-                    player.setKoreanName(koreanName);
+                if(row.getCell(0) == null) {
+                    continue;
                 }
-                if(number != null && !number.isEmpty() && !number.equals("0")) {
-                    int uniformNum = Integer.parseInt(number);
-                    player.setNumber(uniformNum);
+                String koreanName;
+                try{
+                    Long playerId;
+                    if (row.getCell(0).getCellType() == CellType.NUMERIC) {
+                        playerId = (long) row.getCell(0).getNumericCellValue();
+                    } else {
+                        playerId = Long.parseLong(row.getCell(0).getStringCellValue());
+                    }
+
+                    String name = getCellValue(row.getCell(1));
+                    koreanName = getCellValue(row.getCell(2));
+                    String number = getCellValue(row.getCell(3));
+
+                    if(playerId != 0) {
+                        log.info("playerId: {}, name: {}, koreanName: {}, number: {}", playerId, name, koreanName, number);
+                    }
+                    Player player = playerRepository.findById(playerId).orElseThrow(() -> new RuntimeException("Player not found"));
+
+                    if(koreanName != null && !koreanName.isEmpty()) {
+                        player.setKoreanName(koreanName);
+                    }
+                    if(number != null && !number.isEmpty() && !number.equals("0")) {
+                        int uniformNum = Integer.parseInt(number);
+                        player.setNumber(uniformNum);
+                    }
+                    playerRepository.save(player);
+                } catch (Exception e) {
+                    log.error("Error while processing row: {}", row.getRowNum());
+                    e.printStackTrace();
+                    continue;
                 }
-                playerRepository.save(player);
+                processedRows.add(row.getRowNum());
+                processedKoreanName.add(row.getCell(2).getStringCellValue());
             }
+            log.info("Processed rows: {}", processedRows);
+            log.info("Processed korean names: {}", processedKoreanName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getCellValue(Cell cell) {
+        if (cell == null) {
+            return "";
+        }
+
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                // 숫자가 날짜일 수 있으므로, 날짜 포맷인지 확인
+                if (DateUtil.isCellDateFormatted(cell)) {
+                    return cell.getDateCellValue().toString();
+                } else {
+                    return String.valueOf((long) cell.getNumericCellValue()); // 숫자값을 문자열로 변환
+                }
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                // 수식 셀의 경우 수식을 평가한 결과를 가져옵니다.
+                return cell.getCellFormula();
+            case BLANK:
+                return "";
+            default:
+                return "";
         }
     }
 }
