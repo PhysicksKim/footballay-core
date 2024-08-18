@@ -4,10 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.comparator.StartLineupComparato
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.entity.live.*;
 import com.gyechunsik.scoreboard.utils.TimeConverter;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
@@ -112,34 +109,99 @@ public class FootballStreamDtoMapper {
         );
     }
 
+
     public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events) {
+        return toFixtureEventsResponse(fixtureId, events, false);
+    }
+
+    // TODO : db 에서 playerSubIn = ture / false 따라서
+    public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events, boolean isSubIn) {
         List<FixtureEventsResponse._Events> eventsList = new ArrayList<>();
         for (FixtureEvent event : events) {
-            FixtureEventsResponse._Events _event = new FixtureEventsResponse._Events(
-                    event.getSequence(),
-                    event.getTimeElapsed(),
-                    event.getExtraTime(),
-                    new FixtureEventsResponse._Team(
-                            event.getTeam().getId(),
-                            event.getTeam().getName(),
-                            event.getTeam().getKoreanName()
-                    ),
-                    new FixtureEventsResponse._Player(
-                            event.getPlayer().getId(),
-                            event.getPlayer().getName(),
-                            event.getPlayer().getKoreanName(),
-                            event.getPlayer().getNumber()
-                    ),
-                    event.getAssist() == null ? null : new FixtureEventsResponse._Player(
-                            event.getAssist().getId(),
-                            event.getAssist().getName(),
-                            event.getAssist().getKoreanName(),
-                            event.getAssist().getNumber()
-                    ),
-                    event.getType().toString(),
-                    event.getDetail(),
-                    event.getComments()
-            );
+            FixtureEventsResponse._Events _event;
+            if(event.getType() == EventType.SUBST) {
+                if(isSubIn) {
+                    // player 가 out player 기준으로 코딩되어있으므로
+                    // playerisSUbIn 인 경우 response 의 player 를 out 에 넣어줘야함
+                    _event = new FixtureEventsResponse._Events(
+                            event.getSequence(),
+                            event.getTimeElapsed(),
+                            event.getExtraTime(),
+                            new FixtureEventsResponse._Team(
+                                    event.getTeam().getId(),
+                                    event.getTeam().getName(),
+                                    event.getTeam().getKoreanName()
+                            ),
+                            event.getAssist() == null ? null : new FixtureEventsResponse._Player(
+                                    event.getAssist().getId(),
+                                    event.getAssist().getName(),
+                                    event.getAssist().getKoreanName(),
+                                    event.getAssist().getNumber()
+                            ),
+                            new FixtureEventsResponse._Player(
+                                    event.getPlayer().getId(),
+                                    event.getPlayer().getName(),
+                                    event.getPlayer().getKoreanName(),
+                                    event.getPlayer().getNumber()
+                            ),
+                            event.getType().toString(),
+                            event.getDetail(),
+                            event.getComments()
+                    );
+                } else {
+                    _event = new FixtureEventsResponse._Events(
+                            event.getSequence(),
+                            event.getTimeElapsed(),
+                            event.getExtraTime(),
+                            new FixtureEventsResponse._Team(
+                                    event.getTeam().getId(),
+                                    event.getTeam().getName(),
+                                    event.getTeam().getKoreanName()
+                            ),
+                            new FixtureEventsResponse._Player(
+                                    event.getPlayer().getId(),
+                                    event.getPlayer().getName(),
+                                    event.getPlayer().getKoreanName(),
+                                    event.getPlayer().getNumber()
+                            ),
+                            event.getAssist() == null ? null : new FixtureEventsResponse._Player(
+                                    event.getAssist().getId(),
+                                    event.getAssist().getName(),
+                                    event.getAssist().getKoreanName(),
+                                    event.getAssist().getNumber()
+                            ),
+                            event.getType().toString(),
+                            event.getDetail(),
+                            event.getComments()
+                    );
+                }
+            } else {
+                _event = new FixtureEventsResponse._Events(
+                        event.getSequence(),
+                        event.getTimeElapsed(),
+                        event.getExtraTime(),
+                        new FixtureEventsResponse._Team(
+                                event.getTeam().getId(),
+                                event.getTeam().getName(),
+                                event.getTeam().getKoreanName()
+                        ),
+                        new FixtureEventsResponse._Player(
+                                event.getPlayer().getId(),
+                                event.getPlayer().getName(),
+                                event.getPlayer().getKoreanName(),
+                                event.getPlayer().getNumber()
+                        ),
+                        event.getAssist() == null ? null : new FixtureEventsResponse._Player(
+                                event.getAssist().getId(),
+                                event.getAssist().getName(),
+                                event.getAssist().getKoreanName(),
+                                event.getAssist().getNumber()
+                        ),
+                        event.getType().toString(),
+                        event.getDetail(),
+                        event.getComments()
+                );
+            }
             eventsList.add(_event);
         }
         return new FixtureEventsResponse(fixtureId, eventsList);

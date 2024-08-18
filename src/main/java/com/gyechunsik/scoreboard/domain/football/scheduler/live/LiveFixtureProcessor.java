@@ -72,7 +72,6 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
 
     /**
      * 라이브 상태의 fixture 에 대한 처리 작업을 수행합니다.
-     *
      * @return isFinished 경기 종료시 true
      */
     private boolean updateLiveStatusAndIsFinished(FixtureSingleResponse response) {
