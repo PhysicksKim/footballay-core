@@ -102,12 +102,13 @@ class LiveFixtureEventServiceTest {
         assertThat(savedEventCount).isEqualTo(eventCount);
     }
 
-    @DisplayName("저장된 이벤트 수 보다 적은 수의 요청이 들어온다면 예외 발생")
+    @DisplayName("저장된 이벤트 수 보다 적은 수의 요청이 들어온다면 오버된 이벤트는 삭제")
     @Test
-    void 응답의이벤트가저장된수보다적을때예외발생() {
+    void 응답의이벤트가저장된수보다적을때() {
         // given
-        FixtureSingleResponse initialResponse = apiCallService.fixtureSingle(FIXTURE_ID);
-        liveFixtureEventService.saveLiveEvent(initialResponse);
+        FixtureSingleResponse prevResponse = apiCallService.fixtureSingle(FIXTURE_ID);
+        List<_Events> eventsOfPrevResponse = prevResponse.getResponse().get(0).getEvents();
+        liveFixtureEventService.saveLiveEvent(prevResponse);
         em.flush();
         em.clear();
 
@@ -117,15 +118,18 @@ class LiveFixtureEventServiceTest {
         events.remove(events.size()-1);
         subsequentResponse.getResponse().get(0).setEvents(events);
 
-        assertThatThrownBy(() -> liveFixtureEventService.saveLiveEvent(subsequentResponse))
-                .isInstanceOf(IllegalArgumentException.class);
+        liveFixtureEventService.saveLiveEvent(subsequentResponse);
 
         // then
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
         List<FixtureEvent> savedEvents = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
+
+        int prevEventsCount = eventsOfPrevResponse.size();
         int savedEventCount = savedEvents.size();
         int eventCount = events.size();
 
-        assertThat(savedEventCount).isGreaterThan(eventCount);
+        assertThat(prevEventsCount).isNotEqualTo(eventCount);
+        assertThat(savedEventCount).isEqualTo(eventCount);
+        assertThat(savedEventCount).isLessThan(prevEventsCount);
     }
 }
