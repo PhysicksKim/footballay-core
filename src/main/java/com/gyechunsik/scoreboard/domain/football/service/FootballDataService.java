@@ -7,12 +7,14 @@ import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
+import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,6 +46,7 @@ public class FootballDataService {
     private final FixtureRepository fixtureRepository;
     private final FixtureEventRepository fixtureEventRepository;
     private final StartLineupRepository startLineupRepository;
+    private final TeamPlayerRepository teamPlayerRepository;
 
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
@@ -122,9 +125,8 @@ public class FootballDataService {
         return fixturesByLeagueAndDate;
     }
 
-    public Player getPlayerById(long playerId) {
-        return playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+    public Optional<Player> findPlayerById(long playerId) {
+        return playerRepository.findById(playerId);
     }
 
     public Fixture getFixtureWithEager(long fixtureId) {
@@ -138,6 +140,40 @@ public class FootballDataService {
 
     public Optional<StartLineup> getStartLineup(Fixture fixture, Team team) {
         return startLineupRepository.findByFixtureAndTeam(fixture, team);
+    }
+
+    public Player addTeamPlayerRelationManually(long teamId, long playerId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+        TeamPlayer teamPlayer = TeamPlayer.builder()
+                .player(player)
+                .team(team)
+                .build();
+        teamPlayerRepository.save(teamPlayer);
+        log.info("TeamPlayer relation added manually :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
+        setPreventUnlink(playerId, true);
+        return player;
+    }
+
+    public Player removeTeamPlayerRelationManually(long teamId, long playerId) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+        teamPlayerRepository.deleteByTeamAndPlayer(team, player);
+        log.info("TeamPlayer relation removed manually :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
+        setPreventUnlink(playerId, true);
+        return player;
+    }
+
+    public void setPreventUnlink(long playerId, boolean preventUnlink) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+        player.setPreventUnlink(preventUnlink);
+        playerRepository.save(player);
+        log.info("PreventUnlink set to {} for player=[{},{}]", preventUnlink, playerId, player.getName());
     }
 
     private static Pageable PageRequestForOnlyOneClosest() {

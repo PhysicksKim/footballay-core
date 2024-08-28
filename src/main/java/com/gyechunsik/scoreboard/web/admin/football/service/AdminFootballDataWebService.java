@@ -138,4 +138,24 @@ public class AdminFootballDataWebService {
         return apiCommonResponseService.createSuccessResponse(fixtures, requestUrl);
     }
 
+    public ApiResponse<Void> addTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
+        boolean isSuccess = footballRoot.addTeamPlayerRelation(teamId, playerId);
+        if (!isSuccess) {
+            log.error("error while adding team-player relation :: teamId={}, playerId={}", teamId, playerId);
+            return apiCommonResponseService.createFailureResponse("팀-선수 관계 추가 실패", requestUrl);
+        }
+        log.info("team-player relation added :: teamId={}, playerId={}", teamId, playerId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> removeTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
+        boolean isSuccess = footballRoot.removeTeamPlayerRelation(teamId, playerId);
+        if (!isSuccess) {
+            log.error("error while removing team-player relation :: teamId={}, playerId={}", teamId, playerId);
+            return apiCommonResponseService.createFailureResponse("팀-선수 관계 삭제 실패", requestUrl);
+        }
+        log.info("team-player relation removed :: teamId={}, playerId={}", teamId, playerId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
 }

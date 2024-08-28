@@ -106,6 +106,12 @@ public class MockApiCallServiceImpl
         }
     }
 
+    // TODO : MOCK playerSingle() api 요청 구현필요
+    @Override
+    public PlayerInfoResponse playerSingle(long playerId, long leagueId, int season) {
+        return null;
+    }
+
     private String readFile(String path) {
         try {
             // 클래스 로더를 통해 실제 경로에 접근

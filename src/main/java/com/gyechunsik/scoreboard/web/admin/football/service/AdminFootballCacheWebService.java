@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.domain.football.entity.Player;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import lombok.RequiredArgsConstructor;
@@ -15,15 +16,6 @@ public class AdminFootballCacheWebService {
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
 
-    /**
-     * 1. cache league
-     * 2. cache all current leagues
-     * 3. cache team and current leagues
-     * 4. cache team
-     * 5. cache teams by league id
-     * 6. cache squad
-     * 7. cache fixtures of league current season
-     */
     public ApiResponse<Void> cacheLeague(Long leagueId, String requestUrl) {
         boolean isSuccess = footballRoot.cacheLeagueById(leagueId);
         if(!isSuccess) {
@@ -60,7 +52,7 @@ public class AdminFootballCacheWebService {
             log.error("error while caching team :: teamId={}", teamId);
             return apiCommonResponseService.createFailureResponse("팀 캐싱 실패", requestUrl);
         }
-        log.info("api teamId {} cached. _Team and CurrentLeagues of the team", teamId);
+        log.info("api teamId {} cached. _eam and CurrentLeagues of the team", teamId);
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 
@@ -90,7 +82,35 @@ public class AdminFootballCacheWebService {
             log.error("error while caching fixtures by league and season :: leagueId={}", leagueId);
             return apiCommonResponseService.createFailureResponse("리그 일정 캐싱 실패", requestUrl);
         }
-        log.info("_Fixtures of league {} cached successfully.", leagueId);
+        log.info("Fixtures of league {} cached successfully.", leagueId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    public ApiResponse<Void> cachePlayerSingle(long playerId, long leagueId, int season, String requestUrl) {
+        boolean isSuccess = footballRoot.cachePlayerSingle(playerId, leagueId, season);
+        if(!isSuccess) {
+            log.error("error while caching player :: playerId={}", playerId);
+            return apiCommonResponseService.createFailureResponse("선수 캐싱 실패", requestUrl);
+        }
+        log.info("api playerId {} cached", playerId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
+    /**
+     * 선수 Prevent Unlink 설정 <br>
+     * @see Player#getPreventUnlink()
+     * @param playerId
+     * @param preventUnlink
+     * @param requestUrl
+     * @return
+     */
+    public ApiResponse<Void> setPlayerPreventUnlink(long playerId, boolean preventUnlink, String requestUrl) {
+        boolean isSuccess = footballRoot.setPlayerPreventUnlink(playerId, preventUnlink);
+        if(!isSuccess) {
+            log.error("error while setting player prevent unlink :: playerId={}", playerId);
+            return apiCommonResponseService.createFailureResponse("playerId="+playerId+" Prevent Unlink 설정 실패", requestUrl);
+        }
+        log.info("api playerId {} Prevent Unlink={} 설정 성공", playerId, preventUnlink);
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 

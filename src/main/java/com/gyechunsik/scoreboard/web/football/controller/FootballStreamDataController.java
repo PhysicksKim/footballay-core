@@ -107,7 +107,6 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getAvailableFixturesOnDate(requestUrl, request, seoulDateTime));
     }
 
-    // TODO : URL 변경되었으므로, electron-app 이랑 admin page 에서 이 url 쓰는 곳 있는지 검사 필요
     /**
      * {@link FixtureInfoResponse} 라이브 상태 및 이벤트 정보를 포함하여 Fixture 정보를 제공합니다.
      * @param fixtureId 경기 ID

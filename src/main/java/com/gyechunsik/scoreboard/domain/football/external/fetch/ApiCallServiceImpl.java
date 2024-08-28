@@ -27,7 +27,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
         Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/leagues?id="+leagueId+"&current=true")
+                .url("https://v3.football.api-sports.io/leagues?id=" + leagueId + "&current=true")
                 .get()
                 .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
                 .addHeader("X-RapidAPI-Key", key)
@@ -50,7 +50,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     @Override
     public LeagueInfoResponse teamCurrentLeaguesInfo(long teamId) {
         Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/leagues?team="+teamId+"&current=true")
+                .url("https://v3.football.api-sports.io/leagues?team=" + teamId + "&current=true")
                 .get()
                 .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
                 .addHeader("X-RapidAPI-Key", key)
@@ -73,7 +73,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     @Override
     public TeamInfoResponse teamsInfo(long leagueId, int currentSeason) {
         Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/teams?league="+leagueId+"&season="+currentSeason)
+                .url("https://v3.football.api-sports.io/teams?league=" + leagueId + "&season=" + currentSeason)
                 .get()
                 .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
                 .addHeader("X-RapidAPI-Key", key)
@@ -166,7 +166,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     @Override
     public FixtureResponse fixturesOfLeagueSeason(long leagueId, int season) {
         Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/fixtures?league="+leagueId+"&season="+season)
+                .url("https://v3.football.api-sports.io/fixtures?league=" + leagueId + "&season=" + season)
                 .get()
                 .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
                 .addHeader("X-RapidAPI-Key", key)
@@ -189,7 +189,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     @Override
     public FixtureSingleResponse fixtureSingle(long fixtureId) {
         Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/fixtures?id="+fixtureId)
+                .url("https://v3.football.api-sports.io/fixtures?id=" + fixtureId)
                 .get()
                 .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
                 .addHeader("X-RapidAPI-Key", key)
@@ -208,5 +208,30 @@ public class ApiCallServiceImpl implements ApiCallService {
             throw new RuntimeException("Api-Football call error :: fixtureId=" + fixtureId, exception);
         }
     }
+
+    // Response | GET : https://v3.football.api-sports.io/players?id=629&league=39&season=2024
+    @Override
+    public PlayerInfoResponse playerSingle(long playerId, long leagueId, int season) {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/players?id=" + playerId + "&league=" + leagueId + "&season=" + season)
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("player single body is null for player ID " + playerId);
+            }
+            return objectMapper.readValue(responseBody.string(), PlayerInfoResponse.class);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: playerId={},leagueId={},season={} ", playerId, leagueId, season, exception);
+            throw new RuntimeException("Api-Football call error :: playerId=" + playerId + ",leagueId="+leagueId+",season="+season, exception);
+        }
+    }
+
 
 }

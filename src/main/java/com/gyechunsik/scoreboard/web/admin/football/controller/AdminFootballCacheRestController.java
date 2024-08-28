@@ -1,9 +1,12 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
+import com.gyechunsik.scoreboard.web.admin.football.request.CachePlayerSingleRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.TeamIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballCacheWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.service.ApiV1CommonResponseService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,6 +24,7 @@ import java.time.LocalDate;
 public class AdminFootballCacheRestController {
 
     private final AdminFootballCacheWebService adminFootballCacheWebService;
+    private final ApiV1CommonResponseService apiV1CommonResponseService;
 
     /**
      * 1. 리그 : 단일 리그 - leagueId
@@ -52,6 +56,7 @@ public class AdminFootballCacheRestController {
 
     /**
      * 팀을 캐싱하고, 해당 팀이 속한 모든 현재 리그를 캐싱합니다.
+     *
      * @param teamIdRequest 팀 아이디
      * @return 캐싱 결과
      */
@@ -67,6 +72,7 @@ public class AdminFootballCacheRestController {
 
     /**
      * 팀의 정보만 캐싱합니다.
+     *
      * @param teamIdRequest 팀 아이디
      * @return 캐싱 결과
      */
@@ -101,6 +107,23 @@ public class AdminFootballCacheRestController {
     }
 
     /**
+     * 선수 한 명을 캐싱합니다. 팀 아이디가 같이 주어진다면 연관관계 정보도 함께 캐싱합니다.
+     * @param cachePlayerSingleRequest 선수 아이디와 팀 아이디 배열. 팀 아이디가 없다면 빈 배열로 처리하며 연관관계 정보는 캐싱하지 않습니다.
+     * @return
+     */
+    @PostMapping("/players")
+    public ResponseEntity<ApiResponse<Void>> cachePlayer(@RequestBody CachePlayerSingleRequest cachePlayerSingleRequest) {
+        final String requestUrl = "/api/admin/football/cache/player";
+        Long playerId = cachePlayerSingleRequest.playerId();
+        Long leagueId = cachePlayerSingleRequest.leagueId();
+        Integer season = cachePlayerSingleRequest.season();
+        log.info("cache player :: playerId={}, leagueId={}, season={}", playerId, leagueId, season);
+        return ResponseEntity.ok().body(
+                adminFootballCacheWebService.cachePlayerSingle(playerId, leagueId, season, requestUrl)
+        );
+    }
+
+    /**
      * 리그 아이디와 시즌을 받아서 해당 리그의 시즌 정보를 캐싱합니다.
      */
     @PostMapping("/fixtures/league")
@@ -127,4 +150,19 @@ public class AdminFootballCacheRestController {
         return ResponseEntity.ok().body("(Not Implemented) _Fixtures from " + from + " to " + to + " cached successfully.");
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e, HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        log.warn("error occurred in URI:{}", requestURI);
+        ApiResponse<Void> failureResponse = apiV1CommonResponseService.createFailureResponse(
+                "요청 처리 중 오류가 발생했습니다.",
+                requestURI
+        );
+        String requestId = failureResponse.metaData().requestId();
+        log.error("error while processing request : requestId={}", requestId, e);
+        log.error("error meta data : {}", failureResponse.metaData());
+        return ResponseEntity.badRequest().body(
+                failureResponse
+        );
+    }
 }

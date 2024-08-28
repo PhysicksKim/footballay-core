@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -97,6 +98,7 @@ public class FootballApiCacheService {
      * 리그에 속한 팀들을 캐싱합니다.
      * 팀들을 캐싱 가능한 리그의 조건은 이미 캐싱되어 있고 해당 리그의 현재 시즌 값이 설정되어 있어야 합니다.
      * 현재 시즌 값은 this.cacheLeague(leagueId) 에 의해서 자동으로 캐싱되지만, 데이터 무결성을 위해서 검사를 거칩니다.
+     *
      * @param leagueId
      */
     public List<Team> cacheTeamsOfLeague(long leagueId) {
@@ -118,7 +120,7 @@ public class FootballApiCacheService {
         List<_TeamResponse> apiOnlyExistTeamRespons = new ArrayList<>(); // CASE 3. db 없음 api 존재. 새로운 팀 추가
 
         // CASE 1 & CASE 2
-        for(Team team : findTeams) {
+        for (Team team : findTeams) {
             if (apiTeamsSet.containsKey(team.getId())) {
                 // CASE 1 : db 존재 api 존재
                 bothExistTeams.add(team);
@@ -178,6 +180,7 @@ public class FootballApiCacheService {
      * 따라서 팀 아이디를 기반으로 여러 리그에 속하도록 합니다.
      * 리그가 존재하지 않는 경우만 새롭게 엔티티를 추가하며,
      * 리그가 기존에 존재한다면 캐싱 데이터를 업데이트 하지 않고 연관관계만 추가해줍니다.
+     *
      * @param teamId
      */
     public void cacheTeamAndCurrentLeagues(long teamId) {
@@ -216,6 +219,7 @@ public class FootballApiCacheService {
      * 팀 아이디로 하나의 팀 정보를 캐싱합니다.
      * 선수단 정보는 이 메서드에 의해서 캐싱되지 않습니다.
      * LeagueTeam 연관관계는 자동으로 저장되지 않습니다.
+     *
      * @param teamId
      * @return
      */
@@ -249,7 +253,7 @@ public class FootballApiCacheService {
     /**
      * <h1>Cases</h1>
      * <pre>
-     * 1. api 있고 db 있음 : db에서 api 와 일치하지 않는 값을 업데이트
+     * 1. api 있고 db 있음 : db 에서 api 와 일치하지 않는 값을 업데이트
      * 2. api 있고 db 없음 : 새롭게 db에 값을 넣음
      * 3. api 없고 db 있음 : db 에서 teamId 값을 null 로 지움(연관관계 끊음)
      * </pre>
@@ -280,7 +284,7 @@ public class FootballApiCacheService {
 
         List<Player> cachedPlayers = new ArrayList<>();
 
-        // case 1 & 2 : API의 선수를 DB에 업데이트하거나 추가
+        // case 1 & 2 : API 응답의 선수를 DB에 업데이트하거나 추가
         for (_PlayerData apiPlayer : apiPlayers) {
             Player cachedPlayer = playerRepository.findById(apiPlayer.getId())
                     .map(player -> {
@@ -297,21 +301,24 @@ public class FootballApiCacheService {
             cachedPlayers.add(cachedPlayer);
         }
 
-        // case 3 : DB에만 존재하는 선수의 teamId 연관관계 끊기
+        // case 3 : DB 에만 존재하는 선수의 teamId 연관관계 끊기
         dbPlayerIds.removeAll(apiPlayerIds);
         dbPlayers.stream()
                 .filter(player -> dbPlayerIds.contains(player.getId()))
                 .forEach(player -> {
+                    // TeamPlayer 연관관계 끊기
+                    if (player.getPreventUnlink()) {
+                        return;
+                    }
                     log.info("_Player [{},{}] team relationship disconnected", player.getId(), player.getName());
-                    // TeamId 연관관계 끊기
                     teamPlayerRepository.deleteByTeamAndPlayer(team, player);
                     playerRepository.save(player);
                 });
 
-        // TeamPlayer 연관관계 설정
+        // TeamPlayer 연관관계 추가
         cachedPlayers.forEach(player -> {
             Optional<TeamPlayer> findTeamPlayer = teamPlayerRepository.findByTeamAndPlayer(team, player);
-            if(findTeamPlayer.isEmpty()) {
+            if (findTeamPlayer.isEmpty()) {
                 teamPlayerRepository.save(player.toTeamPlayer(team));
             }
         });
@@ -344,6 +351,7 @@ public class FootballApiCacheService {
 
     /**
      * 캐싱된 리그의 currentSeason 모든 경기 일정을 캐싱합니다.
+     *
      * @param leagueId
      */
     public List<Fixture> cacheFixturesOfLeague(long leagueId) {
@@ -359,7 +367,7 @@ public class FootballApiCacheService {
         for (FixtureResponse._Response response : fixtureResponse.getResponse()) {
             Optional<Fixture> optionalFixture = fixtureRepository.findById(response.getFixture().getId());
 
-            if(optionalFixture.isEmpty()) {
+            if (optionalFixture.isEmpty()) {
                 LiveStatus liveStatus = toLiveStatusEntity(response);
                 liveStatusList.add(liveStatusRepository.save(liveStatus));
                 Fixture fixture = toFixtureEntity(response, liveStatus);
@@ -380,6 +388,46 @@ public class FootballApiCacheService {
 
         return fixtures;
     }
+
+    /**
+     * playerId, leagueId, season 값으로 선수를 지정하여 정보를 가져옵니다. <br>
+     * leagueId 로 특정하는 경우 여러 팀이 있을 수 있습니다. 예를 들어 시즌 중에 같은 리그의 다른 팀으로 이적한 경우 <br>
+     * playerId, leagueId, season 값으로 조회하더라도 2개의 statistics 가 조회될 수 있습니다. <br>
+     * @param playerId
+     * @param leagueId
+     * @param season
+     * @return 캐싱된 Player Entity
+     */
+    public Player cachePlayerSingle(long playerId, long leagueId, int season) {
+        PlayerInfoResponse response = apiCallService.playerSingle(playerId, leagueId, season);
+        PlayerInfoResponse._Player responsePlayer = response.getResponse().get(0).getPlayer();
+
+        List<PlayerInfoResponse._Statistics> statisticsList = response.getResponse().get(0).getStatistics();
+        PlayerInfoResponse._Statistics statistics = statisticsList.get(0);
+        PlayerInfoResponse._League responseLeague = statistics.getLeague();
+
+        if (!(leagueId == responseLeague.getId() && season == responseLeague.getSeason())) {
+            log.error("parameter 와 API 응답의 leagueId, season 값이 일치하지 않습니다");
+            log.error("parameter playerId : {}, leagueId : {}, season : {}", playerId, leagueId, season);
+            log.error("API response leagueId : {}, season : {}", responseLeague.getId(), responseLeague.getSeason());
+            throw new RuntimeException("parameter 와 API 응답의 leagueId, season 값이 일치하지 않습니다");
+        }
+
+        long id = (long) responsePlayer.getId();
+        String name = responsePlayer.getName();
+        String photo = responsePlayer.getPhoto();
+
+        Player player = Player.builder()
+                .id(id)
+                .name(name)
+                .photoUrl(photo)
+                .build();
+
+        Player savedPlayer = playerRepository.save(player);
+        log.info("playerId: {} is cached", savedPlayer.getId());
+        return savedPlayer;
+    }
+
 
     private static League toLeagueEntity(_Response leagueResponse) {
         _LeagueResponse leagueInfo = leagueResponse.getLeague();

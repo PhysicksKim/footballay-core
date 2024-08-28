@@ -10,6 +10,9 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,9 @@ public class FootballRoot {
     private final FootballDataService footballDataService;
     private final FootballAvailableService footballAvailableService;
     private final LeagueRepository leagueRepository;
+    private final TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
+    private final TeamPlayerRepository teamPlayerRepository;
 
     public List<League> getLeagues() {
         List<League> leagues;
@@ -76,7 +82,7 @@ public class FootballRoot {
     public Player getPlayer(long playerId) {
         Player player;
         try {
-            player = footballDataService.getPlayerById(playerId);
+            player = footballDataService.findPlayerById(playerId).orElseThrow();
         } catch (Exception e) {
             log.error("error while getting _Player by Id :: {}", e.getMessage());
             return null;
@@ -164,7 +170,7 @@ public class FootballRoot {
         try {
             footballAvailableService.removeAvailableFixture(fixtureId);
         } catch (Exception e) {
-            log.error("error while removing Available _Fixture :: {}", e.getMessage());
+            log.error("error while removing Available Fixture :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -186,7 +192,7 @@ public class FootballRoot {
             League cachedLeague = footballApiCacheService.cacheLeague(leagueId);
             log.info("cachedLeague :: {}", cachedLeague);
         } catch (Exception e) {
-            log.error("error while caching _League :: {}", e.getMessage());
+            log.error("error while caching League :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -198,7 +204,7 @@ public class FootballRoot {
             log.info("cached _Teams LeagueId :: {}", leagueId);
             log.info("cached _Teams :: {}", teams.stream().map(Team::getName).toList());
         } catch (Exception e) {
-            log.error("error while caching _Teams of _League :: {}", e.getMessage());
+            log.error("error while caching Teams of League :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -209,7 +215,7 @@ public class FootballRoot {
             footballApiCacheService.cacheTeamAndCurrentLeagues(teamId);
             log.info("cachedTeamAndCurrentLeagues :: {}", teamId);
         } catch (Exception e) {
-            log.error("error while caching _Team and Current Leagues :: {}", e.getMessage());
+            log.error("error while caching Team and Current Leagues :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -222,14 +228,14 @@ public class FootballRoot {
             log.info("cached players :: {}",
                     players.stream().map(Player::getName).toList());
         } catch (Exception e) {
-            log.error("error while caching Squad of _Team :: {}", e.getMessage());
+            log.error("error while caching Squad of Team :: {}", e.getMessage());
             return false;
         }
         return true;
     }
 
     /**
-     * 해당 _League 의 current season 값을 바탕으로 모든 경기 일정을 캐싱합니다.
+     * 해당 League 의 current season 값을 바탕으로 모든 경기 일정을 캐싱합니다.
      * @param leagueId
      * @return
      */
@@ -240,7 +246,91 @@ public class FootballRoot {
             log.info("cached fixtures :: {}",
                     fixtures.stream().map(Fixture::getFixtureId).toList());
         } catch (Exception e) {
-            log.error("error while caching All _Fixtures of _League :: {}", e.getMessage(), e);
+            log.error("error while caching All Fixtures of League :: {}", e.getMessage(), e);
+            return false;
+        }
+        return true;
+    }
+
+    // TODO : 웹레이어 구현필요 - 선수 단일 캐싱 추가
+    /**
+     * 해당 playerId 의 선수 정보를 캐싱합니다.
+     * @param playerId
+     * @param leagueId
+     * @param season
+     * @return 캐싱이 이루어 졌는지 여부. 만약 이미 존재하는 선수라면 캐싱 요청을 보내지 않고 false 를 반환합니다.
+     */
+    public boolean cachePlayerSingle(long playerId, long leagueId, int season) {
+        Optional<Player> findPlayer = footballDataService.findPlayerById(playerId);
+        if(findPlayer.isPresent()) {
+            log.info("player already exists :: {}", findPlayer);
+            return false;
+        }
+        return cacheNewPlayer(playerId, leagueId, season);
+    }
+
+    private boolean cacheNewPlayer(long playerId, long leagueId, int season) {
+        try {
+            Player player = footballApiCacheService.cachePlayerSingle(playerId, leagueId, season);
+            log.info("cachedPlayerSingle :: {}", player);
+            return true;
+        } catch (Exception e) {
+            log.error("error while caching new Player :: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    // TODO : 웹레이어 구현필요 - 팀-선수 연관관계 추가
+    /**
+     * 팀-선수 연관관계를 추가합니다. <br>
+     * 수동으로 relation 을 지정해 주고 해당 relation 이 보존되도록 하기 위해서 해당 player 의 preventUnlink 를 true 로 같이 지정해줍니다. <br>
+     * @param teamId
+     * @param playerId
+     * @return
+     */
+    public boolean addTeamPlayerRelation(long teamId, long playerId) {
+        try{
+            Player player = footballDataService.addTeamPlayerRelationManually(teamId, playerId);
+            log.info("addTeamPlayerRelation :: teamId={}, player={}", teamId, player);
+        } catch (Exception e) {
+            log.error("error while adding Team-Player relation :: {}", e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    // TODO : 웹레이어 구현필요 - 팀-선수 연관관계 삭제
+    /**
+     * 팀-선수 연관관계를 삭제합니다. <br>
+     * 수동으로 relation 을 지정해 주고 해당 relation 이 보존되도록 하기 위해서 해당 player 의 preventUnlink 를 true 로 같이 지정해줍니다. <br>
+     * @param teamId
+     * @param playerId
+     * @return 성공 여부
+     */
+    public boolean removeTeamPlayerRelation(long teamId, long playerId) {
+        try {
+            Player player = footballDataService.removeTeamPlayerRelationManually(teamId, playerId);
+            log.info("removeTeamPlayerRelation :: teamId={}, player={}", teamId, player);
+        } catch (Exception e) {
+            log.error("error while removing Team-Player relation :: {}", e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    // TODO : 웹레이어 구현필요 - preventUnlink 설정
+    /**
+     * 해당 playerId 의 preventUnlink 값을 설정합니다. <br>
+     * @see Player#getPreventUnlink()
+     * @param playerId
+     * @param preventUnlink
+     * @return 성공 여부
+     */
+    public boolean setPlayerPreventUnlink(long playerId, boolean preventUnlink) {
+        try {
+            footballDataService.setPreventUnlink(playerId, preventUnlink);
+        } catch (Exception e) {
+            log.error("error while setting Player PreventUnlink :: {}", e.getMessage());
             return false;
         }
         return true;

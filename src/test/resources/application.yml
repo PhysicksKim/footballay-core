@@ -10,6 +10,10 @@ spring:
       name: admin
       password: admin
 
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
 
   quartz:
     job-store-type: jdbc

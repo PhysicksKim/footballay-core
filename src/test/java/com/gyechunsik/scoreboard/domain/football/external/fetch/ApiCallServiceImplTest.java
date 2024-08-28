@@ -1,11 +1,9 @@
 package com.gyechunsik.scoreboard.domain.football.external.fetch;
 
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
+import com.gyechunsik.scoreboard.domain.football.constant.PlayerId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -146,5 +144,27 @@ class ApiCallServiceImplTest {
 
         // then
         assertThat(fixtureResponse).isNotNull();
+    }
+
+    @DisplayName("실제 API : 선수 한 명의 정보를 가져오기 위해 playerId, leagueId, season 으로 선수 정보를 가져옵니다")
+    @Test
+    void success_playerSingle() throws JsonProcessingException {
+        // given
+        // id: "629"
+        // league: "39"
+        // season: "2024"
+        long player = PlayerId.De_Bruyne;
+        long league = LeagueId.EPL;
+        int season = 2024;
+
+        // when
+        PlayerInfoResponse playerSingle = apiCallService.playerSingle(player, league, season);
+        log.info("player single response : {}", objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(playerSingle)
+        );
+
+        // then
+        assertThat(playerSingle).isNotNull();
     }
 }

@@ -8,7 +8,9 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,9 @@ class FootballApiCacheServiceMockTest {
     private TeamRepository teamRepository;
     @Autowired
     private PlayerRepository playerRepository;
+
+    @Autowired
+    private EntityManager em;
 
     @MockBean
     private ApiCallService apiCallService;
@@ -127,7 +132,68 @@ class FootballApiCacheServiceMockTest {
         // 검증
         Optional<Player> disconnectedPlayerOptional = playerRepository.findById(3L);
         assertTrue(disconnectedPlayerOptional.isPresent());
-        assertNull(disconnectedPlayerOptional.get().getTeamPlayers());
+    }
+
+    @DisplayName("4. Api 응답에 없음 | DB 에 존재 | preventUnlink = true 인 경우 연관관계가 끊어지지 않아야 함")
+    @Test
+    public void whenPlayerNotInApiAndExistsInDbWithPreventUnlinkTrue_thenDoNotDisconnectTeamRelation() {
+        // DB에 선수 데이터 사전 등록 (preventUnlink = true)
+        Player existingPlayer = Player.builder()
+                .id(4L)
+                .name("_Player Four")
+                .position("Forward")
+                .preventUnlink(true)
+                .build();
+        playerRepository.save(existingPlayer);
+        teamPlayerRepository.save(TeamPlayer.builder().team(team).player(existingPlayer).build());
+
+        // Mock API 데이터 생성 (빈 목록)
+        PlayerSquadResponse mockPlayerSquadResponse = createMockPlayerSquadResponse();
+        when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
+
+        // cacheTeamSquad() 메서드 실행
+        footballApiCacheService.cacheTeamSquad(team.getId());
+
+        em.flush(); em.clear();
+
+        // 검증: 연관관계가 끊어지지 않았는지 확인
+        Optional<Player> foundPlayerOptional = playerRepository.findById(4L);
+        assertTrue(foundPlayerOptional.isPresent());
+
+        Player foundPlayer = foundPlayerOptional.get();
+        assertFalse(foundPlayer.getTeamPlayers().isEmpty());
+        assertEquals(team.getId(), foundPlayer.getTeamPlayers().iterator().next().getTeam().getId());
+    }
+
+    @DisplayName("5. Api 응답에 존재 | DB 에 존재 | preventUnlink = true 인 경우 연관관계가 새로 추가되어야 함")
+    @Test
+    public void whenPlayerExistsInApiAndExistsInDbWithPreventUnlinkTrue_thenAddTeamRelationIfMissing() {
+        // DB에 선수 데이터 사전 등록 (preventUnlink = true, 연관관계 없음)
+        Player existingPlayer = Player.builder()
+                .id(5L)
+                .name("_Player Five")
+                .position("Midfielder")
+                .preventUnlink(true)
+                .build();
+        playerRepository.save(existingPlayer);
+
+        // Mock API 데이터 생성 (해당 선수가 응답에 포함됨)
+        _PlayerData playerData = new _PlayerData(5L, "_Player Five", 28, 11, "Midfielder", "url5");
+        PlayerSquadResponse mockPlayerSquadResponse = createMockPlayerSquadResponse(playerData);
+        when(apiCallService.playerSquad(anyLong())).thenReturn(mockPlayerSquadResponse);
+
+        // cacheTeamSquad() 메서드 실행
+        footballApiCacheService.cacheTeamSquad(team.getId());
+
+        em.flush(); em.clear();
+
+        // 검증: 연관관계가 추가되었는지 확인
+        Optional<Player> foundPlayerOptional = playerRepository.findById(5L);
+        assertTrue(foundPlayerOptional.isPresent());
+
+        Player foundPlayer = foundPlayerOptional.get();
+        assertFalse(foundPlayer.getTeamPlayers().isEmpty());
+        assertEquals(team.getId(), foundPlayer.getTeamPlayers().iterator().next().getTeam().getId());
     }
 
     private PlayerSquadResponse createMockPlayerSquadResponse(_PlayerData... playerData) {

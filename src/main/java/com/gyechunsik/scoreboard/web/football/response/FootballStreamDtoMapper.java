@@ -114,7 +114,6 @@ public class FootballStreamDtoMapper {
         return toFixtureEventsResponse(fixtureId, events, false);
     }
 
-    // TODO : db 에서 playerSubIn = ture / false 따라서
     public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events, boolean isSubIn) {
         List<FixtureEventsResponse._Events> eventsList = new ArrayList<>();
         for (FixtureEvent event : events) {
