@@ -189,4 +189,13 @@ public class FootballDataService {
                 .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
     }
 
+    public List<Team> getTeamsOfPlayer(long playerId) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+        List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream()
+                .map(TeamPlayer::getTeam)
+                .toList();
+        log.info("teams of player=[{},{}]={}", playerId, player.getName(), teamsOfPlayer);
+        return teamsOfPlayer;
+    }
 }

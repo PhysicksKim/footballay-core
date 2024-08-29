@@ -3,6 +3,8 @@ package com.gyechunsik.scoreboard.web.admin.football.service;
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
 import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
@@ -158,4 +160,15 @@ public class AdminFootballDataWebService {
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 
+    public ApiResponse<TeamsOfPlayerResponse> getTeamsOfPlayer(long playerId, String requestUrl) {
+        try{
+            Player player = footballRoot.getPlayer(playerId);
+            List<Team> teamsOfPlayer = footballRoot.getTeamsOfPlayer(playerId);
+            TeamsOfPlayerResponse response = FootballDtoMapper.toTeamsOfPlayer(player, teamsOfPlayer);
+            return apiCommonResponseService.createSuccessResponse(new TeamsOfPlayerResponse[]{response}, requestUrl);
+        } catch (Exception e) {
+            log.error("error while getting teams of player :: {}", e.getMessage());
+            return apiCommonResponseService.createFailureResponse("선수의 팀 조회 실패", requestUrl);
+        }
+    }
 }

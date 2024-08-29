@@ -25,7 +25,7 @@ public class ApiV1CommonResponseService implements ApiCommonResponseService {
     @Override
     public <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl, Map<String, String> params) {
         String successUUID = UUID.randomUUID().toString();
-        log.info("success request UUID :: {}", successUUID);
+        log.info("success request UUID={}, requestUrl={}, params={}", successUUID, requestUrl, params.toString());
 
         MetaData metaData = new MetaData(
                 successUUID,
@@ -48,7 +48,7 @@ public class ApiV1CommonResponseService implements ApiCommonResponseService {
     @Override
     public <T> ApiResponse<T> createFailureResponse(String message, String requestUrl, Map<String, String> params) {
         String failureUUID = UUID.randomUUID().toString();
-        log.info("failure request UUID :: {}", failureUUID);
+        log.info("failure request UUID={}, requestUrl={}, params={}", failureUUID, requestUrl, params.toString());
 
         MetaData metaData = new MetaData(
                 failureUUID,

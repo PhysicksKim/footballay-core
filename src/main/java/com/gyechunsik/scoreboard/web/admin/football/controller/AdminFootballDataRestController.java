@@ -60,14 +60,14 @@ public class AdminFootballDataRestController {
     @PostMapping("/leagues/available")
     public ResponseEntity<ApiResponse<AvailableLeagueDto>> addAvailableLeague(@RequestBody LeagueIdRequest leagueIdRequest) {
         final long leagueId = leagueIdRequest.leagueId();
-        String requestUrl = "/api/admin/football/leagues/available";
+        final String requestUrl = "/api/admin/football/leagues/available";
         ApiResponse<AvailableLeagueDto> response = adminFootballDataWebService.addAvailableLeague(leagueId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/leagues/available")
     public ResponseEntity<ApiResponse<String>> deleteAvailableLeague(@RequestParam long leagueId) {
-        String requestUrl = "/api/admin/football/leagues/available";
+        final String requestUrl = "/api/admin/football/leagues/available";
         ApiResponse<String> response = adminFootballDataWebService.deleteAvailableLeague(leagueId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
@@ -77,7 +77,7 @@ public class AdminFootballDataRestController {
             @RequestParam long leagueId,
             @RequestParam ZonedDateTime date
     ) {
-        String requestUrl = "/api/admin/football/fixtures/available";
+        final String requestUrl = "/api/admin/football/fixtures/available";
         ZonedDateTime now = ZonedDateTime.now();
         log.info("now : {}", now);
         ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.getAvailableFixtures(leagueId, date, requestUrl);
@@ -98,7 +98,7 @@ public class AdminFootballDataRestController {
     @DeleteMapping("/fixtures/available")
     public ResponseEntity<ApiResponse<String>> deleteAvailableFixture(@RequestParam long fixtureId) {
         log.info("Delete available fixture :: fixtureId : {}", fixtureId);
-        String requestUrl = "/api/admin/football/fixtures/available";
+        final String requestUrl = "/api/admin/football/fixtures/available";
         ApiResponse<String> response = adminFootballDataWebService.deleteAvailableFixture(fixtureId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
@@ -108,22 +108,29 @@ public class AdminFootballDataRestController {
      */
     @GetMapping("/teams")
     public ResponseEntity<ApiResponse<TeamResponse>> getTeamsOfLeague(long leagueId) {
-        String requestUrl = "/api/admin/football/teams";
+        final String requestUrl = "/api/admin/football/teams";
         ApiResponse<TeamResponse> response = adminFootballDataWebService.getTeamsOfLeague(leagueId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/teams/squad")
     public ResponseEntity<ApiResponse<PlayerResponse>> getSquadOfTeam(long teamId) {
-        String requestUrl = "/api/admin/football/teams/squad";
+        final String requestUrl = "/api/admin/football/teams/squad";
         ApiResponse<PlayerResponse> response = adminFootballDataWebService.getSquadOfTeam(teamId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/players")
     public ResponseEntity<ApiResponse<PlayerResponse>> getPlayerInfo(long playerId) {
-        String requestUrl = "/api/admin/football/players";
+        final String requestUrl = "/api/admin/football/players";
         ApiResponse<PlayerResponse> response = adminFootballDataWebService.getPlayerInfo(playerId, requestUrl);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping("/players/teams")
+    public ResponseEntity<ApiResponse<TeamsOfPlayerResponse>> getPlayerRelations(long playerId) {
+        final String requestUrl = "/api/admin/football/players/teams";
+        ApiResponse<TeamsOfPlayerResponse> response = adminFootballDataWebService.getTeamsOfPlayer(playerId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
@@ -162,6 +169,26 @@ public class AdminFootballDataRestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing file: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/players/{playerId}/teams/{teamId}")
+    public ResponseEntity<ApiResponse<Void>> addTeamPlayerRelation(
+            @PathVariable final long playerId,
+            @PathVariable final long teamId
+    ) {
+        final String requestUrl = "/api/admin/football/players/"+playerId+"/teams/"+teamId;
+        ApiResponse<Void> response = adminFootballDataWebService.addTeamPlayerRelation(teamId, playerId, requestUrl);
+        return ResponseEntity.ok().body(response);
+    }
+
+    @DeleteMapping("/players/{playerId}/teams/{teamId}")
+    public ResponseEntity<ApiResponse<Void>> removeTeamPlayerRelation(
+            @PathVariable final long playerId,
+            @PathVariable final long teamId
+    ) {
+        final String requestUrl = "/api/admin/football/players/"+playerId+"/teams/"+teamId;
+        ApiResponse<Void> response = adminFootballDataWebService.removeTeamPlayerRelation(teamId, playerId, requestUrl);
+        return ResponseEntity.ok().body(response);
     }
 
 }

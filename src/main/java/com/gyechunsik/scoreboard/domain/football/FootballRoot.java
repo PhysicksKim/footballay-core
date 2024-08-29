@@ -8,6 +8,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
 import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -402,6 +403,17 @@ public class FootballRoot {
             return footballDataService.getFixtureEvents(fixture);
         } catch (Exception e) {
             log.error("error while getting _FixtureEvents by Id :: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    public List<Team> getTeamsOfPlayer(long playerId) {
+        try {
+            List<Team> teamPlayer = footballDataService.getTeamsOfPlayer(playerId);
+            log.info("getPlayerTeamRelations :: {}", teamPlayer);
+            return teamPlayer;
+        } catch (Exception e) {
+            log.error("error while getting _PlayerTeamRelations by Id :: {}", e.getMessage());
             return List.of();
         }
     }

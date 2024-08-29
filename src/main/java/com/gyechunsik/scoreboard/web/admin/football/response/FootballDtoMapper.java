@@ -8,6 +8,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 public class FootballDtoMapper {
 
@@ -87,4 +88,22 @@ public class FootballDtoMapper {
         );
     }
 
+    public static TeamsOfPlayerResponse toTeamsOfPlayer(Player player, List<Team> teams) {
+        TeamsOfPlayerResponse._Player _player = new TeamsOfPlayerResponse._Player(
+                player.getId(),
+                player.getName(),
+                player.getKoreanName(),
+                player.getPhotoUrl(),
+                player.getPosition()
+        );
+        TeamsOfPlayerResponse._Team[] _teams = teams.stream()
+                .map(team -> new TeamsOfPlayerResponse._Team(
+                        team.getId(),
+                        team.getName(),
+                        team.getKoreanName(),
+                        team.getLogo()
+                ))
+                .toArray(TeamsOfPlayerResponse._Team[]::new);
+        return new TeamsOfPlayerResponse(_player, _teams);
+    }
 }

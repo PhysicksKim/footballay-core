@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.web.admin.football.controller;
 
 import com.gyechunsik.scoreboard.web.admin.football.request.CachePlayerSingleRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
+import com.gyechunsik.scoreboard.web.admin.football.request.PreventUnlinkRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.TeamIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballCacheWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
@@ -108,18 +109,29 @@ public class AdminFootballCacheRestController {
 
     /**
      * 선수 한 명을 캐싱합니다. 팀 아이디가 같이 주어진다면 연관관계 정보도 함께 캐싱합니다.
-     * @param cachePlayerSingleRequest 선수 아이디와 팀 아이디 배열. 팀 아이디가 없다면 빈 배열로 처리하며 연관관계 정보는 캐싱하지 않습니다.
+     * @param request 선수 아이디와 팀 아이디 배열. 팀 아이디가 없다면 빈 배열로 처리하며 연관관계 정보는 캐싱하지 않습니다.
      * @return
      */
     @PostMapping("/players")
-    public ResponseEntity<ApiResponse<Void>> cachePlayer(@RequestBody CachePlayerSingleRequest cachePlayerSingleRequest) {
+    public ResponseEntity<ApiResponse<Void>> cachePlayer(@RequestBody CachePlayerSingleRequest request) {
         final String requestUrl = "/api/admin/football/cache/player";
-        Long playerId = cachePlayerSingleRequest.playerId();
-        Long leagueId = cachePlayerSingleRequest.leagueId();
-        Integer season = cachePlayerSingleRequest.season();
+        Long playerId = request.playerId();
+        Long leagueId = request.leagueId();
+        Integer season = request.season();
         log.info("cache player :: playerId={}, leagueId={}, season={}", playerId, leagueId, season);
         return ResponseEntity.ok().body(
                 adminFootballCacheWebService.cachePlayerSingle(playerId, leagueId, season, requestUrl)
+        );
+    }
+
+    @PostMapping("/players/prevent")
+    public ResponseEntity<ApiResponse<Void>> setPreventUnlink(@RequestBody PreventUnlinkRequest request) {
+        final String requestUrl = "/api/admin/football/cache/players/prevent";
+        Long playerId = request.playerId();
+        Boolean preventUnlink = request.preventUnlink();
+        log.info("set prevent unlink :: playerId={}, preventUnlink={}", playerId, preventUnlink);
+        return ResponseEntity.ok().body(
+                adminFootballCacheWebService.setPlayerPreventUnlink(playerId, preventUnlink, requestUrl)
         );
     }
 
