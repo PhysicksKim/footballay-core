@@ -147,6 +147,12 @@ public class FootballDataService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+        Optional<TeamPlayer> findTeamPlayer = teamPlayerRepository.findByTeamAndPlayer(team, player);
+        if(findTeamPlayer.isPresent()) {
+            log.info("TeamPlayer relation already exists :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
+            return player;
+        }
+
         TeamPlayer teamPlayer = TeamPlayer.builder()
                 .player(player)
                 .team(team)

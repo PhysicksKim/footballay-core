@@ -8,6 +8,7 @@ import com.gyechunsik.scoreboard.domain.football.entity.Team;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
+import io.jsonwebtoken.lang.Maps;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,61 +36,75 @@ public class AdminFootballDataWebService {
     }
 
     public ApiResponse<AvailableLeagueDto> addAvailableLeague(long leagueId, String requestUrl) {
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
         League league;
         try {
             league = footballRoot.addAvailableLeague(leagueId);
         } catch (Exception e) {
             log.error("error while adding available league :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("리그 추가 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("리그 추가 실패", requestUrl, params);
         }
         AvailableLeagueDto leagueDto = FootballDtoMapper.toAvailableLeagueDto(league);
         AvailableLeagueDto[] response = {leagueDto};
-        return apiCommonResponseService.createSuccessResponse(response, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(response, requestUrl, params);
     }
 
     public ApiResponse<String> deleteAvailableLeague(long leagueId, String requestUrl) {
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
         boolean isSuccess = footballRoot.removeAvailableLeague(leagueId);
         if (!isSuccess) {
             log.error("error while deleting available league :: leagueId={}", leagueId);
-            return apiCommonResponseService.createFailureResponse("리그 삭제 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("리그 삭제 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new String[]{"리그 삭제 성공"}, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(new String[]{"리그 삭제 성공"}, requestUrl, params);
     }
 
     public ApiResponse<AvailableFixtureDto> getAvailableFixtures(long leagueId, ZonedDateTime date, String requestUrl) {
-        date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
-        List<Fixture> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(leagueId, date);
-        AvailableFixtureDto[] array = availableFixtures.stream()
-                .map(FootballDtoMapper::toAvailableFixtureDto)
-                .sorted(Comparator.comparing(AvailableFixtureDto::date))
-                .toArray(AvailableFixtureDto[]::new);
-        return apiCommonResponseService.createSuccessResponse(array, requestUrl);
+        Map<String, String> params = Map.of(
+                "leagueId", String.valueOf(leagueId),
+                "date", date.toString()
+        );
+        try {
+            date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
+            List<Fixture> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(leagueId, date);
+            AvailableFixtureDto[] array = availableFixtures.stream()
+                    .map(FootballDtoMapper::toAvailableFixtureDto)
+                    .sorted(Comparator.comparing(AvailableFixtureDto::date))
+                    .toArray(AvailableFixtureDto[]::new);
+            return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
+        } catch (Exception e) {
+            log.error("error while getting available fixtures :: {}", e.getMessage());
+            return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl, params);
+        }
     }
 
     public ApiResponse<AvailableFixtureDto> addAvailableFixture(long fixtureId, String requestUrl) {
+        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         Fixture fixture;
         try {
             fixture = footballRoot.addAvailableFixture(fixtureId);
         } catch (Exception e) {
             log.error("error while adding available fixture :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("경기 추가 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("경기 추가 실패", requestUrl, params);
         }
         AvailableFixtureDto fixtureDto = FootballDtoMapper.toAvailableFixtureDto(fixture);
         AvailableFixtureDto[] response = {fixtureDto};
-        return apiCommonResponseService.createSuccessResponse(response, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(response, requestUrl, params);
     }
 
     public ApiResponse<String> deleteAvailableFixture(long fixtureId, String requestUrl) {
+        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         boolean isSuccess = footballRoot.removeAvailableFixture(fixtureId);
         if (!isSuccess) {
             log.error("error while deleting available fixture :: fixtureId={}", fixtureId);
-            return apiCommonResponseService.createFailureResponse("경기 삭제 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("경기 삭제 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new String[]{"경기 삭제 성공"}, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(new String[]{"경기 삭제 성공"}, requestUrl, params);
     }
 
     // teams, player, fixtures 조회
     public ApiResponse<TeamResponse> getTeamsOfLeague(long leagueId, String requestUrl) {
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
         TeamResponse[] teamResponses;
         try {
             teamResponses = footballRoot.getTeamsOfLeague(leagueId).stream()
@@ -96,12 +112,13 @@ public class AdminFootballDataWebService {
                     .toArray(TeamResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting teams of league :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("팀 조회 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("팀 조회 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(teamResponses, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(teamResponses, requestUrl, params);
     }
 
     public ApiResponse<PlayerResponse> getSquadOfTeam(long teamId, String requestUrl) {
+        Map<String, String> params = Map.of("teamId", String.valueOf(teamId));
         PlayerResponse[] playerResponses;
         try {
             playerResponses = footballRoot.getSquadOfTeam(teamId).stream()
@@ -109,23 +126,28 @@ public class AdminFootballDataWebService {
                     .toArray(PlayerResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting squad of team :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(playerResponses, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(playerResponses, requestUrl, params);
     }
 
     public ApiResponse<PlayerResponse> getPlayerInfo(long playerId, String requestUrl) {
+        Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         PlayerResponse playerResponse;
         try {
             playerResponse = FootballDtoMapper.toPlayerDto(footballRoot.getPlayer(playerId));
         } catch (Exception e) {
             log.error("error while getting player info :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new PlayerResponse[]{playerResponse}, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(new PlayerResponse[]{playerResponse}, requestUrl, params);
     }
 
     public ApiResponse<FixtureResponse> getFixturesFromDate(long leagueId, ZonedDateTime date, String requestUrl) {
+        Map<String, String> params = Map.of(
+                "leagueId", String.valueOf(leagueId),
+                "date", date.toString()
+        );
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;
         try {
@@ -135,40 +157,49 @@ public class AdminFootballDataWebService {
                     .toArray(FixtureResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting fixture info :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(fixtures, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(fixtures, requestUrl, params);
     }
 
     public ApiResponse<Void> addTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
+        Map<String, String> params = Map.of(
+                "teamId", String.valueOf(teamId),
+                "playerId", String.valueOf(playerId)
+        );
         boolean isSuccess = footballRoot.addTeamPlayerRelation(teamId, playerId);
         if (!isSuccess) {
             log.error("error while adding team-player relation :: teamId={}, playerId={}", teamId, playerId);
-            return apiCommonResponseService.createFailureResponse("팀-선수 관계 추가 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("팀-선수 관계 추가 실패", requestUrl, params);
         }
         log.info("team-player relation added :: teamId={}, playerId={}", teamId, playerId);
-        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl, params);
     }
 
     public ApiResponse<Void> removeTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
+        Map<String, String> params = Map.of(
+                "teamId", String.valueOf(teamId),
+                "playerId", String.valueOf(playerId)
+        );
         boolean isSuccess = footballRoot.removeTeamPlayerRelation(teamId, playerId);
         if (!isSuccess) {
             log.error("error while removing team-player relation :: teamId={}, playerId={}", teamId, playerId);
-            return apiCommonResponseService.createFailureResponse("팀-선수 관계 삭제 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("팀-선수 관계 삭제 실패", requestUrl, params);
         }
         log.info("team-player relation removed :: teamId={}, playerId={}", teamId, playerId);
-        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl, params);
     }
 
     public ApiResponse<TeamsOfPlayerResponse> getTeamsOfPlayer(long playerId, String requestUrl) {
+        Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try{
             Player player = footballRoot.getPlayer(playerId);
             List<Team> teamsOfPlayer = footballRoot.getTeamsOfPlayer(playerId);
             TeamsOfPlayerResponse response = FootballDtoMapper.toTeamsOfPlayer(player, teamsOfPlayer);
-            return apiCommonResponseService.createSuccessResponse(new TeamsOfPlayerResponse[]{response}, requestUrl);
+            return apiCommonResponseService.createSuccessResponse(new TeamsOfPlayerResponse[]{response}, requestUrl, params);
         } catch (Exception e) {
             log.error("error while getting teams of player :: {}", e.getMessage());
-            return apiCommonResponseService.createFailureResponse("선수의 팀 조회 실패", requestUrl);
+            return apiCommonResponseService.createFailureResponse("선수의 팀 조회 실패", requestUrl, params);
         }
     }
 }

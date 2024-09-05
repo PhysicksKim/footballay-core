@@ -8,6 +8,8 @@ import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballDataWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.service.ApiV1CommonResponseService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -34,19 +36,10 @@ import java.util.List;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminFootballDataRestController {
 
-    /**
-     * - Available Leagues 조회
-     * GET : 가능 리그 조회
-     * POST : 가능 리그 추가
-     * DELETE : 가능 리그 삭제
-     * - Available _Fixtures 조회
-     * GET : 가능 팀 조회
-     * POST : 가능 팀 추가
-     * DELETE : 가능 팀 삭제
-     */
     private final AdminFootballDataWebService adminFootballDataWebService;
     private final FootballExcelService excelService;
     private final FootballDataService footballDataService;
+    private final ApiV1CommonResponseService apiV1CommonResponseService;
 
     @GetMapping("/leagues/available")
     public ResponseEntity<ApiResponse<AvailableLeagueDto>> getAvailableLeagues() {
@@ -75,12 +68,11 @@ public class AdminFootballDataRestController {
     @GetMapping("/fixtures/available")
     public ResponseEntity<ApiResponse<AvailableFixtureDto>> getAvailableFixtures(
             @RequestParam long leagueId,
-            @RequestParam ZonedDateTime date
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/admin/football/fixtures/available";
-        ZonedDateTime now = ZonedDateTime.now();
-        log.info("now : {}", now);
-        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.getAvailableFixtures(leagueId, date, requestUrl);
+        ZonedDateTime zonedDateTime = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.getAvailableFixtures(leagueId, zonedDateTime, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
@@ -173,20 +165,20 @@ public class AdminFootballDataRestController {
 
     @PostMapping("/players/{playerId}/teams/{teamId}")
     public ResponseEntity<ApiResponse<Void>> addTeamPlayerRelation(
-            @PathVariable final long playerId,
-            @PathVariable final long teamId
+            @PathVariable(name = "playerId") final long playerId,
+            @PathVariable(name = "teamId") final long teamId
     ) {
-        final String requestUrl = "/api/admin/football/players/"+playerId+"/teams/"+teamId;
+        final String requestUrl = "/api/admin/football/players/" + playerId + "/teams/" + teamId;
         ApiResponse<Void> response = adminFootballDataWebService.addTeamPlayerRelation(teamId, playerId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping("/players/{playerId}/teams/{teamId}")
     public ResponseEntity<ApiResponse<Void>> removeTeamPlayerRelation(
-            @PathVariable final long playerId,
-            @PathVariable final long teamId
+            @PathVariable(name = "playerId") final long playerId,
+            @PathVariable(name = "teamId") final long teamId
     ) {
-        final String requestUrl = "/api/admin/football/players/"+playerId+"/teams/"+teamId;
+        final String requestUrl = "/api/admin/football/players/" + playerId + "/teams/" + teamId;
         ApiResponse<Void> response = adminFootballDataWebService.removeTeamPlayerRelation(teamId, playerId, requestUrl);
         return ResponseEntity.ok().body(response);
     }
