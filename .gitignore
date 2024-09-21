@@ -45,3 +45,6 @@ application-devsecret.yml
 application-api.yml
 
 dev/
+
+!docker/**
+!docker/dev/**
