@@ -351,7 +351,6 @@ public class FootballApiCacheService {
 
     /**
      * 캐싱된 리그의 currentSeason 모든 경기 일정을 캐싱합니다.
-     *
      * @param leagueId
      */
     public List<Fixture> cacheFixturesOfLeague(long leagueId) {
