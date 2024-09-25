@@ -26,4 +26,14 @@ public class IndexPageController {
                 .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
                 .body(html);
     }
+
+    @GetMapping("/iframe-test")
+    public ResponseEntity<String> scoreboardIndexPage_iframeTest() {
+        String path = "https://static.gyechunsik.site/indexpage/index.html";
+        String html = restTemplate.getForObject(path, String.class);
+        return ResponseEntity.ok()
+                .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
+                .header("Content-Security-Policy", "frame-ancestors https://cafe.naver.com")
+                .body(html);
+    }
 }
