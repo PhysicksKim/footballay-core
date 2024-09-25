@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -152,16 +153,19 @@ public class TeamStatisticsService {
 
 
     private void addXgToList(List<ExpectedGoals> xgList, _Statistics homeStatisticsResponse, Integer elapsed, TeamStatistics teamStatistics) {
-        for (_Statistics._StatisticsData statData : homeStatisticsResponse.getStatistics()) {
-            if (statData.getType().equals("expectedgoals")) {
-                ExpectedGoals xg = ExpectedGoals.builder()
-                        .elapsed(elapsed)
-                        .xg(statData.getValue())
-                        .teamStatistics(teamStatistics)
-                        .build();
-                xgList.add(xg);
-            }
+        String xgValue = extractXgValue(homeStatisticsResponse);
+
+        if (xgValue == null) {
+            log.warn("Expected goals data not found for team {}", homeStatisticsResponse.getTeam().getId());
+            return;
         }
+
+        ExpectedGoals xg = ExpectedGoals.builder()
+                .elapsed(elapsed)
+                .xg(xgValue)
+                .teamStatistics(teamStatistics)
+                .build();
+        xgList.add(xg);
     }
 
     private TeamStatistics createTeamStatistics(_Statistics statistics, Fixture fixture, Team team) {
@@ -192,6 +196,12 @@ public class TeamStatisticsService {
                 case "blockedshots":
                     teamStatistics.setBlockedShots(parseIntegerValue(value));
                     break;
+                case "shotsinsidebox":
+                    teamStatistics.setShotsInsideBox(parseIntegerValue(value));
+                    break;
+                case "shotsoutsidebox":
+                    teamStatistics.setShotsOutsideBox(parseIntegerValue(value));
+                    break;
                 case "fouls":
                     teamStatistics.setFouls(parseIntegerValue(value));
                     break;
@@ -219,7 +229,7 @@ public class TeamStatisticsService {
                 case "passesaccurate":
                     teamStatistics.setPassesAccurate(parseIntegerValue(value));
                     break;
-                case "passes%":
+                case "passes":
                     teamStatistics.setPassesAccuracyPercentage(parsePercentageValue(value));
                     break;
                 case "expectedgoals":
@@ -241,6 +251,7 @@ public class TeamStatisticsService {
                 return statData.getValue();
             }
         }
+        log.warn("xgValue: not found");
         return null;
     }
 
@@ -264,6 +275,12 @@ public class TeamStatisticsService {
         }
     }
 
+    /**
+     * 팀 통계 타입을 정규화합니다. <br>
+     * 모든 영문자를 소문자로 변경하고 알파벳 소문자 이외의 모든 문자(다른 언어, 공백, 특수문자 등) 제거합니다.
+     * @param type
+     * @return 소문자로 변환 후 알파벳만 남긴 문자열
+     */
     private String normalizeStatType(String type) {
         return type.toLowerCase().replaceAll("[^a-z]", "");
     }

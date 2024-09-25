@@ -6,7 +6,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.relational.core.sql.In;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Builder
 @NoArgsConstructor
@@ -53,6 +56,18 @@ public class TeamStatistics {
     private Integer blockedShots;
 
     /**
+     * 박스 안에서의 슛 수 (Shots Inside Box)
+     * <br>예시: 8
+     */
+    private Integer shotsInsideBox;
+
+    /**
+     * 박스 밖에서의 슛 수 (Shots Outside Box)
+     * <br>예시: 6
+     */
+    private Integer shotsOutsideBox;
+
+    /**
      * 파울 수 (Fouls)
      * <br>예시: 12
      */
@@ -71,7 +86,8 @@ public class TeamStatistics {
     private Integer offsides;
 
     /**
-     * 볼 점유율 퍼센트 (Ball Possession) 이 값은 % 입니다
+     * 볼 점유율 퍼센트 (Ball Possession) <br>
+     * 이 값은 % 입니다
      * <br>예시: 71
      */
     private Integer ballPossession;
@@ -122,6 +138,35 @@ public class TeamStatistics {
      * 시간별 xG 값 리스트 (Expected Goals)
      * <br>예시: [0.1, 0.2, 0.3, 0.4, 0.5]
      */
+    @Builder.Default
     @OneToMany(mappedBy = "teamStatistics", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<ExpectedGoals> expectedGoalsList;
+    private List<ExpectedGoals> expectedGoalsList = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return "TeamStatistics{" +
+                " shotsOnGoal=" + shotsOnGoal +
+                ", shotsOffGoal=" + shotsOffGoal +
+                ", totalShots=" + totalShots +
+                ", blockedShots=" + blockedShots +
+                ", fouls=" + fouls +
+                ", cornerKicks=" + cornerKicks +
+                ", offsides=" + offsides +
+                ", ballPossession=" + ballPossession +
+                ", yellowCards=" + yellowCards +
+                ", redCards=" + redCards +
+                ", goalkeeperSaves=" + goalkeeperSaves +
+                ", totalPasses=" + totalPasses +
+                ", passesAccurate=" + passesAccurate +
+                ", passesAccuracyPercentage=" + passesAccuracyPercentage +
+                ", goalsPrevented=" + goalsPrevented +
+                '}';
+    }
+
+    public String getXgString() {
+        return this.getExpectedGoalsList().stream()
+                .sorted(Comparator.comparing(ExpectedGoals::getElapsed))  // 시간순으로 정렬
+                .map(goal -> String.format("{ time: %d, xg: %s }", goal.getElapsed(), goal.getXg()))
+                .collect(Collectors.joining(", "));  // 리스트의 각 요소를 쉼표로 연결
+    }
 }
