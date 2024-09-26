@@ -32,4 +32,13 @@ public class ExpectedGoals {
      */
     private String xg;
 
+    @Override
+    public String toString() {
+        return "ExpectedGoals{" +
+                "id=" + id +
+                ", teamStatistics id =" + teamStatistics.getId() +
+                ", elapsed=" + elapsed +
+                ", xg='" + xg + '\'' +
+                '}';
+    }
 }

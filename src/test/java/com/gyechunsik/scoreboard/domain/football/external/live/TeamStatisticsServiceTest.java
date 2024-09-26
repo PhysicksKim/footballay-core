@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
+import com.gyechunsik.scoreboard.domain.football.entity.live.ExpectedGoals;
 import com.gyechunsik.scoreboard.domain.football.entity.live.TeamStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
@@ -147,6 +148,7 @@ class TeamStatisticsServiceTest {
         em.flush();
         em.clear();
 
+        response = null;
         response = apiCallService.fixtureSingle(FIXTURE_ID);
         updateFixtureElapsed(response, NEW_ELAPSED);
         response = updateExpectedGoals(response, NEW_XG);

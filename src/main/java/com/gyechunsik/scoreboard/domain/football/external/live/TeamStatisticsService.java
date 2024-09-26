@@ -11,9 +11,11 @@ import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.ExpectedGoalsRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,8 +47,11 @@ public class TeamStatisticsService {
     private final FixtureEventRepository fixtureEventRepository;
     private final LiveStatusRepository liveStatusRepository;
 
+    private final EntityManager em;
+
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
+    private final ExpectedGoalsRepository expectedGoalsRepository;
 
     private Map<Long, _Statistics> mapStatisticsByTeamId(List<_Statistics> statisticsList) {
         return statisticsList.stream()
@@ -101,41 +106,32 @@ public class TeamStatisticsService {
         if (optionalAwayStatistics.isEmpty() || optionalHomeStatistics.isEmpty()) {
             homeStatistics = createTeamStatistics(homeStatisticsResponse, fixture, homeTeam);
             awayStatistics = createTeamStatistics(awayStatisticsResponse, fixture, awayTeam);
-            // 새롭게 xg 엔티티 저장
-            List<ExpectedGoals> homeXGList = homeStatistics.getExpectedGoalsList();
-            List<ExpectedGoals> awayXGList = awayStatistics.getExpectedGoalsList();
-
-            addXgToList(homeXGList, homeStatisticsResponse, elapsed, homeStatistics);
-            addXgToList(awayXGList, awayStatisticsResponse, elapsed, awayStatistics);
-
-            TeamStatistics savedHomeStatistics = teamStatisticsRepository.save(homeStatistics);
-            TeamStatistics savedAwayStatistics = teamStatisticsRepository.save(awayStatistics);
-            log.info("new team statistics saved: home: {}, away: {}", savedHomeStatistics, savedAwayStatistics);
+            log.info("new team statistics saved: elapsed : {}, home: {}, away: {}", elapsed, homeStatistics, awayStatistics);
         } else {
             homeStatistics = optionalHomeStatistics.get();
             awayStatistics = optionalAwayStatistics.get();
             updateTeamStatistics(homeStatisticsResponse, homeStatistics);
             updateTeamStatistics(awayStatisticsResponse, awayStatistics);
-
-            // 마지막 xg 엔티티의 elapsed 보고, elapsed 가 동일하면 업데이트, 아니면 새로 저장
-            List<ExpectedGoals> homeXGList = homeStatistics.getExpectedGoalsList();
-            List<ExpectedGoals> awayXGList = awayStatistics.getExpectedGoalsList();
-
-            addOrUpdateXgToList(homeXGList, homeStatisticsResponse, elapsed, homeStatistics);
-            addOrUpdateXgToList(awayXGList, awayStatisticsResponse, elapsed, awayStatistics);
-
             log.info("team statistics updated: elapsed : {}, home: {}, away: {}", elapsed, homeStatistics, awayStatistics);
         }
+
+        String homeXgValue = extractXgValue(homeStatisticsResponse);
+        String awayXgValue = extractXgValue(awayStatisticsResponse);
+
+        addOrUpdateXgToList(homeXgValue, elapsed, homeStatistics);
+        addOrUpdateXgToList(awayXgValue, elapsed, awayStatistics);
+
+        teamStatisticsRepository.save(homeStatistics);
+        teamStatisticsRepository.save(awayStatistics);
     }
 
-    private void addOrUpdateXgToList(List<ExpectedGoals> xgList, _Statistics statisticsResponse, Integer elapsed, TeamStatistics teamStatistics) {
-        String xgValue = extractXgValue(statisticsResponse);
-
+    private void addOrUpdateXgToList(String xgValue, Integer elapsed, TeamStatistics teamStatistics) {
         if (xgValue == null) {
-            log.warn("Expected goals data not found for team {}", statisticsResponse.getTeam().getId());
+            log.warn("Expected goals data not found for team : {} {}", teamStatistics.getTeam().getId(), teamStatistics.getTeam().getName());
             return;
         }
 
+        List<ExpectedGoals> xgList = teamStatistics.getExpectedGoalsList();
         for (ExpectedGoals xg : xgList) {
             if (xg.getElapsed().equals(elapsed)) {
                 xg.setXg(xgValue);
@@ -146,11 +142,11 @@ public class TeamStatisticsService {
         ExpectedGoals newXg = ExpectedGoals.builder()
                 .elapsed(elapsed)
                 .xg(xgValue)
-                .teamStatistics(teamStatistics) // 연관 관계 설정
+                .teamStatistics(teamStatistics)
                 .build();
         xgList.add(newXg);
+        log.info("ADD NEW XG: {}", newXg);
     }
-
 
     private void addXgToList(List<ExpectedGoals> xgList, _Statistics homeStatisticsResponse, Integer elapsed, TeamStatistics teamStatistics) {
         String xgValue = extractXgValue(homeStatisticsResponse);

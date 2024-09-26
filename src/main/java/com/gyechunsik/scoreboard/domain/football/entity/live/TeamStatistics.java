@@ -139,7 +139,7 @@ public class TeamStatistics {
      * <br>예시: [0.1, 0.2, 0.3, 0.4, 0.5]
      */
     @Builder.Default
-    @OneToMany(mappedBy = "teamStatistics", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "teamStatistics", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ExpectedGoals> expectedGoalsList = new ArrayList<>();
 
     @Override
