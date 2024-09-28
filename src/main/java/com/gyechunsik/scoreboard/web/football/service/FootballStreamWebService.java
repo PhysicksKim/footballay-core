@@ -176,7 +176,6 @@ public class FootballStreamWebService {
         log.info("getFixtureEvents. params={}", params);
 
         try {
-            // TODO : playerSubIn 을 통해 player 가 in 인지 assist 가 in 인지 변경 가능하도록함
             log.info("find PlayerSubIn :: find id={}", fixtureId);
             Optional<PlayerSubIn> findPlayerSubIn = playerSubInRepository.findById(fixtureId);
             boolean playerIsSubIn;
