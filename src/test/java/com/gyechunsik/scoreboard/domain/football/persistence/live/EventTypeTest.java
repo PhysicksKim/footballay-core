@@ -1,7 +1,6 @@
-package com.gyechunsik.scoreboard.domain.football.entity.live;
+package com.gyechunsik.scoreboard.domain.football.persistence.live;
 
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

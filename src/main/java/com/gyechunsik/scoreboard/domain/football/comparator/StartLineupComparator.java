@@ -1,9 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.comparator;
 
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.StartPlayer;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.xml.crypto.Data;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;

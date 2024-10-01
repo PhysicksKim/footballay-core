@@ -1,14 +1,11 @@
 package com.gyechunsik.scoreboard.domain.football;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -20,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -253,7 +251,6 @@ public class FootballRoot {
         return true;
     }
 
-    // TODO : 웹레이어 구현필요 - 선수 단일 캐싱 추가
     /**
      * 해당 playerId 의 선수 정보를 캐싱합니다.
      * @param playerId
@@ -281,7 +278,6 @@ public class FootballRoot {
         }
     }
 
-    // TODO : 웹레이어 구현필요 - 팀-선수 연관관계 추가
     /**
      * 팀-선수 연관관계를 추가합니다. <br>
      * 수동으로 relation 을 지정해 주고 해당 relation 이 보존되도록 하기 위해서 해당 player 의 preventUnlink 를 true 로 같이 지정해줍니다. <br>
@@ -300,7 +296,6 @@ public class FootballRoot {
         return true;
     }
 
-    // TODO : 웹레이어 구현필요 - 팀-선수 연관관계 삭제
     /**
      * 팀-선수 연관관계를 삭제합니다. <br>
      * 수동으로 relation 을 지정해 주고 해당 relation 이 보존되도록 하기 위해서 해당 player 의 preventUnlink 를 true 로 같이 지정해줍니다. <br>
@@ -319,7 +314,6 @@ public class FootballRoot {
         return true;
     }
 
-    // TODO : 웹레이어 구현필요 - preventUnlink 설정
     /**
      * 해당 playerId 의 preventUnlink 값을 설정합니다. <br>
      * @see Player#getPreventUnlink()
@@ -415,6 +409,42 @@ public class FootballRoot {
         } catch (Exception e) {
             log.error("error while getting _PlayerTeamRelations by Id :: {}", e.getMessage());
             return List.of();
+        }
+    }
+
+    /**
+     * fixture, team, player 들이 transaction 내에서 eager 로 로딩되어서 반환되어야 합니다.
+     * @param fixtureId
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public MatchStatistics getMatchStatistics(long fixtureId) {
+        log.info("getMatchStatistics :: fixtureId={}", fixtureId);
+        try {
+            Fixture fixture = footballDataService.getFixtureById(fixtureId);
+            LiveStatus liveStatus = fixture.getLiveStatus();
+            Team home = fixture.getHomeTeam();
+            Team away = fixture.getAwayTeam();
+            TeamStatistics homeStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), home.getId());
+            TeamStatistics awayStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), away.getId());
+            List<PlayerStatistics> homePlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), home.getId());
+            List<PlayerStatistics> awayPlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), away.getId());
+
+            MatchStatistics matchStatistics = MatchStatistics.builder()
+                    .fixture(fixture)
+                    .liveStatus(liveStatus)
+                    .home(home)
+                    .away(away)
+                    .homeStatistics(homeStatistics)
+                    .awayStatistics(awayStatistics)
+                    .homePlayerStatistics(homePlayerStatistics)
+                    .awayPlayerStatistics(awayPlayerStatistics)
+                    .build();
+            log.info("return getMatchStatistics :: {}", matchStatistics);
+            return matchStatistics;
+        } catch (Exception e) {
+            log.error("error while getting _MatchStatistics by Id", e);
+            return null;
         }
     }
 }

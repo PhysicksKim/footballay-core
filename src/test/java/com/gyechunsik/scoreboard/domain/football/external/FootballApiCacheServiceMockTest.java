@@ -1,16 +1,15 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

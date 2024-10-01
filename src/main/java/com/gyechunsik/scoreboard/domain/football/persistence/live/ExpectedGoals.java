@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.entity.live;
+package com.gyechunsik.scoreboard.domain.football.persistence.live;
 
 import jakarta.persistence.*;
 import lombok.*;

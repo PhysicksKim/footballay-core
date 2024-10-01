@@ -1,8 +1,8 @@
-package com.gyechunsik.scoreboard.domain.football.entity.live;
+package com.gyechunsik.scoreboard.domain.football.persistence.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import jakarta.persistence.*;
 import lombok.*;
 

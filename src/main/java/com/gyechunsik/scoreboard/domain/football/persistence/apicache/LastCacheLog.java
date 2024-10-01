@@ -1,9 +1,8 @@
-package com.gyechunsik.scoreboard.domain.football.entity.apicache;
+package com.gyechunsik.scoreboard.domain.football.persistence.apicache;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Map;
 

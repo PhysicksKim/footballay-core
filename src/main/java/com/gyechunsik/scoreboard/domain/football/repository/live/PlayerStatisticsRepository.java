@@ -1,18 +1,49 @@
 package com.gyechunsik.scoreboard.domain.football.repository.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.PlayerStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PlayerStatisticsRepository extends JpaRepository<PlayerStatistics, Long> {
-    List<PlayerStatistics> findByFixtureAndTeamAndPlayerIn(Fixture fixture, Team team, List<Player> players);
 
-    List<PlayerStatistics> findByFixtureAndTeam(Fixture fixture, Team team);
+    /**
+     * fixture, team, players 를 fetch join 합니다.
+     * @param fixture
+     * @param team
+     * @param players
+     * @return
+     */
+    @Query("SELECT ps FROM PlayerStatistics ps " +
+            "JOIN FETCH ps.team " + // Fetch join team
+            "JOIN FETCH ps.player " + // Fetch join player
+            "WHERE ps.fixture = :fixture AND ps.team = :team AND ps.player IN :players")
+    List<PlayerStatistics> findByFixtureAndTeamAndPlayerIn(
+            @Param("fixture") Fixture fixture,
+            @Param("team") Team team,
+            @Param("players") List<Player> players
+    );
+
+    /**
+     * team 과 player 를 fetch join 합니다.
+     * @param fixture
+     * @param team
+     * @return
+     */
+    @Query("SELECT ps FROM PlayerStatistics ps " +
+            "JOIN FETCH ps.team " + // Fetch join team
+            "JOIN FETCH ps.player " + // Fetch join player
+            "WHERE ps.fixture = :fixture AND ps.team = :team")
+    List<PlayerStatistics> findByFixtureAndTeam(
+            @Param("fixture") Fixture fixture,
+            @Param("team") Team team
+    );
+
 }

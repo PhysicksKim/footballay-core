@@ -1,9 +1,9 @@
-package com.gyechunsik.scoreboard.domain.football.entity;
+package com.gyechunsik.scoreboard.domain.football.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.StartLineup;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.util.StringUtils;

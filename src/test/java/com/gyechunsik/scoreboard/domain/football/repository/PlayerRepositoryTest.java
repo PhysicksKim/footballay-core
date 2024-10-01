@@ -1,10 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.repository;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture;
-import com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +15,6 @@ import java.util.List;
 
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
 import static com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @Transactional

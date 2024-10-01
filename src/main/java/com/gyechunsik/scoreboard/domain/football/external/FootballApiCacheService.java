@@ -1,28 +1,27 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;

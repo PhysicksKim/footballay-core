@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.entity.relations;
+package com.gyechunsik.scoreboard.domain.football.persistence.relations;
 
 import java.io.Serializable;
 import java.util.Objects;

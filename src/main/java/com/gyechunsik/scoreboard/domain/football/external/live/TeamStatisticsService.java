@@ -1,9 +1,9 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.ExpectedGoals;
-import com.gyechunsik.scoreboard.domain.football.entity.live.TeamStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._FixtureSingle;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Statistics;
@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,7 +65,7 @@ public class TeamStatisticsService {
      *
      * @param response
      * @see TeamStatistics
-     * @see com.gyechunsik.scoreboard.domain.football.entity.live.ExpectedGoals
+     * @see com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals
      */
     public void saveTeamStatistics(FixtureSingleResponse response) {
         _FixtureSingle fixtureSingle = response.getResponse().get(0);

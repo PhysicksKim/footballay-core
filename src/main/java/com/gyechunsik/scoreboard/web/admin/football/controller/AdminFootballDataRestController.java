@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballExcelService;
 import com.gyechunsik.scoreboard.web.admin.football.request.FixtureIdRequest;
@@ -9,7 +9,6 @@ import com.gyechunsik.scoreboard.web.admin.football.response.*;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballDataWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiV1CommonResponseService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;

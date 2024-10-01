@@ -4,6 +4,7 @@ import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
+import com.gyechunsik.scoreboard.web.football.response.MatchStatisticsResponse;
 import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
@@ -139,6 +140,12 @@ public class FootballStreamDataController {
     public ResponseEntity<ApiResponse<FixtureLineupResponse>> fixturesLineup(@RequestParam long fixtureId) {
         final String requestUrl = "/api/football/fixtures/lineup";
         return ResponseEntity.ok(footballStreamWebService.getFixtureLineup(requestUrl, fixtureId));
+    }
+
+    @GetMapping("/fixtures/statistics")
+    public ResponseEntity<ApiResponse<MatchStatisticsResponse>> fixturesStatistics(@RequestParam long fixtureId) {
+        final String requestUrl = "/api/football/fixtures/statistics";
+        return ResponseEntity.ok(footballStreamWebService.getMatchStatistics(requestUrl, fixtureId));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

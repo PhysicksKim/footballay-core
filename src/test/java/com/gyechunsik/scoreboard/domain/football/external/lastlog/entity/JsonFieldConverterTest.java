@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog.entity;
 
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.entity.apicache.JsonFieldConverter;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.JsonFieldConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

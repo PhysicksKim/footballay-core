@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.repository;
 
-import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

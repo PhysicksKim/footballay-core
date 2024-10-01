@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.entity.apicache;
+package com.gyechunsik.scoreboard.domain.football.persistence.apicache;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

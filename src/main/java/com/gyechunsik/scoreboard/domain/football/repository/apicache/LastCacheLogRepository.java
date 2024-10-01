@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.repository.apicache;
 
-import com.gyechunsik.scoreboard.domain.football.entity.apicache.LastCacheLog;
-import com.gyechunsik.scoreboard.domain.football.entity.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

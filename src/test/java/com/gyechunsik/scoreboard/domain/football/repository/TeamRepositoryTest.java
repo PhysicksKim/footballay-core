@@ -1,12 +1,10 @@
 package com.gyechunsik.scoreboard.domain.football.repository;
 
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
-import com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

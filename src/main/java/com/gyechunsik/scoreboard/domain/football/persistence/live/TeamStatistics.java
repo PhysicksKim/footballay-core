@@ -1,10 +1,9 @@
-package com.gyechunsik.scoreboard.domain.football.entity.live;
+package com.gyechunsik.scoreboard.domain.football.persistence.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.relational.core.sql.In;
 
 import java.util.ArrayList;
 import java.util.Comparator;
