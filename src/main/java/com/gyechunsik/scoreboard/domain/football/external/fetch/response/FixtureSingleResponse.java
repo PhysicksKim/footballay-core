@@ -498,7 +498,7 @@ public class FixtureSingleResponse extends ApiFootballResponse {
             public static class _Passes {
                 private Integer total;
                 private Integer key;
-                private String accuracy;
+                private Integer accuracy;
             }
 
             @Getter

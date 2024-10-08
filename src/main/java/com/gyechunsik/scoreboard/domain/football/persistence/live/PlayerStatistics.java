@@ -109,10 +109,10 @@ public class PlayerStatistics {
     private Integer passesKey;
 
     /**
-     * 패스 정확도 (퍼센트로 기록됨, 예: "88%")
-     * <br>예시: "27", "95"
+     * 패스 정확도 (정확한 패스 횟수)
+     * <br>예시: 27
      */
-    private String passesAccuracy;
+    private Integer passesAccuracy;
 
     /**
      * 선수가 기록한 총 태클 수

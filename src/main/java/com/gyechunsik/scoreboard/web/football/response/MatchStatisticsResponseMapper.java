@@ -48,7 +48,7 @@ public class MatchStatisticsResponseMapper {
     private static List<MatchStatisticsResponse._XG> toXGList(List<ExpectedGoals> xgList) {
         return xgList.stream()
                 .map(xg -> new MatchStatisticsResponse._XG(
-                        xg.getElapsed(),
+                        safeInt(xg.getElapsed()),
                         xg.getXg()
                 ))
                 .toList();
@@ -75,30 +75,30 @@ public class MatchStatisticsResponseMapper {
             TeamStatistics teamStatistics,
             List<MatchStatisticsResponse._XG> xgList) {
         return new MatchStatisticsResponse._ResponseTeamStatistics(
-                teamStatistics.getShotsOnGoal(),
-                teamStatistics.getShotsOffGoal(),
-                teamStatistics.getTotalShots(),
-                teamStatistics.getBlockedShots(),
-                teamStatistics.getShotsInsideBox(),
-                teamStatistics.getShotsOutsideBox(),
-                teamStatistics.getFouls(),
-                teamStatistics.getCornerKicks(),
-                teamStatistics.getOffsides(),
-                teamStatistics.getBallPossession(),
-                teamStatistics.getYellowCards(),
-                teamStatistics.getRedCards(),
-                teamStatistics.getGoalkeeperSaves(),
-                teamStatistics.getTotalPasses(),
-                teamStatistics.getPassesAccurate(),
-                teamStatistics.getPassesAccuracyPercentage(),
-                teamStatistics.getGoalsPrevented(),
+                safeInt(teamStatistics.getShotsOnGoal()),
+                safeInt(teamStatistics.getShotsOffGoal()),
+                safeInt(teamStatistics.getTotalShots()),
+                safeInt(teamStatistics.getBlockedShots()),
+                safeInt(teamStatistics.getShotsInsideBox()),
+                safeInt(teamStatistics.getShotsOutsideBox()),
+                safeInt(teamStatistics.getFouls()),
+                safeInt(teamStatistics.getCornerKicks()),
+                safeInt(teamStatistics.getOffsides()),
+                safeInt(teamStatistics.getBallPossession()),
+                safeInt(teamStatistics.getYellowCards()),
+                safeInt(teamStatistics.getRedCards()),
+                safeInt(teamStatistics.getGoalkeeperSaves()),
+                safeInt(teamStatistics.getTotalPasses()),
+                safeInt(teamStatistics.getPassesAccurate()),
+                safeInt(teamStatistics.getPassesAccuracyPercentage()),
+                safeInt(teamStatistics.getGoalsPrevented()),
                 xgList
         );
     }
 
     private static MatchStatisticsResponse._ResponsePlayerStatistics toResponsePlayerStatistics(PlayerStatistics playerStat) {
         return new MatchStatisticsResponse._ResponsePlayerStatistics(
-                playerStat.getId(),
+                playerStat.getPlayer().getId(),
                 playerStat.getPlayer().getName(),
                 playerStat.getPlayer().getKoreanName(),
                 safeInt(playerStat.getMinutesPlayed()),
@@ -114,7 +114,7 @@ public class MatchStatisticsResponseMapper {
                 safeInt(playerStat.getSaves()),
                 safeInt(playerStat.getPassesTotal()),
                 safeInt(playerStat.getPassesKey()),
-                playerStat.getPassesAccuracy(),
+                safeInt(playerStat.getPassesAccuracy()),
                 safeInt(playerStat.getTacklesTotal()),
                 safeInt(playerStat.getInterceptions()),
                 safeInt(playerStat.getDuelsTotal()),

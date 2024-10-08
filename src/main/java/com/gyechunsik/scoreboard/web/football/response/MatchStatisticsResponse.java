@@ -50,6 +50,7 @@ public record MatchStatisticsResponse(
     ) {
     }
 
+    // TODO : PlayerStatistics 안에 한방에 넣지 말고 나누자. { 선수기본정보, 선수상세정보(키,국적 등), 선수통계 }
     public record _ResponsePlayerStatistics(
             long id,
             String name,
@@ -67,7 +68,7 @@ public record MatchStatisticsResponse(
             int saves,
             int passesTotal,
             int passesKey,
-            String passesAccuracy,
+            int passesAccuracy,
             int tacklesTotal,
             int interceptions,
             int duelsTotal,
