@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class LiveFixtureJob implements Job {
 
     private final LiveFixtureTask liveFixtureTask;
+    private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
@@ -24,7 +25,10 @@ public class LiveFixtureJob implements Job {
             try {
                 context.getScheduler().deleteJob(context.getJobDetail().getKey());
                 log.info("Job deleted :: key={}", context.getJobDetail().getKey());
+                liveFixtureJobSchedulerService.addPostFinishJob(fixtureId);
+                log.info("PostFinishJob added :: fixtureId={}", fixtureId);
             } catch (Exception e) {
+                // log.error("jobDetail {}", context.getJobDetail());
                 log.error("LiveFixtureJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
                 throw new RuntimeException(e);
             }

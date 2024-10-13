@@ -97,10 +97,16 @@ public class MatchStatisticsResponseMapper {
     }
 
     private static MatchStatisticsResponse._ResponsePlayerStatistics toResponsePlayerStatistics(PlayerStatistics playerStat) {
-        return new MatchStatisticsResponse._ResponsePlayerStatistics(
+        MatchStatisticsResponse._PlayerInfoBasic playerInfoBasic = new MatchStatisticsResponse._PlayerInfoBasic(
                 playerStat.getPlayer().getId(),
                 playerStat.getPlayer().getName(),
                 playerStat.getPlayer().getKoreanName(),
+                playerStat.getPlayer().getPhotoUrl(),
+                playerStat.getPosition(),
+                playerStat.getPlayer().getNumber()
+        );
+
+        MatchStatisticsResponse._PlayerStatistics playerStatistics = new MatchStatisticsResponse._PlayerStatistics(
                 safeInt(playerStat.getMinutesPlayed()),
                 playerStat.getPosition(),
                 playerStat.getRating(),
@@ -128,6 +134,11 @@ public class MatchStatisticsResponseMapper {
                 safeInt(playerStat.getPenaltiesScored()),
                 safeInt(playerStat.getPenaltiesMissed()),
                 safeInt(playerStat.getPenaltiesSaved())
+        );
+
+        return new MatchStatisticsResponse._ResponsePlayerStatistics(
+                playerInfoBasic,
+                playerStatistics
         );
     }
 

@@ -20,4 +20,10 @@ public class FootballSchedulerName {
     public static String liveFixtureTrigger(long fixtureId) {
         return "LiveFixtureTrigger_" + fixtureId;
     }
+    public static String postFinishJob(long fixtureId) {
+        return "PostFinishJob_" + fixtureId;
+    }
+    public static String postFinishTrigger(long fixtureId) {
+        return "PostFinishTrigger_" + fixtureId;
+    }
 }

@@ -50,11 +50,38 @@ public record MatchStatisticsResponse(
     ) {
     }
 
-    // TODO : PlayerStatistics 안에 한방에 넣지 말고 나누자. { 선수기본정보, 선수상세정보(키,국적 등), 선수통계 }
-    public record _ResponsePlayerStatistics(
+    public record _PlayerInfoBasic(
             long id,
             String name,
             String koreanName,
+            String photo,
+            String position,
+            Integer number
+    ){}
+
+    // TODO : player 상세 정보 추가 캐싱 필요
+    /*
+    player: {
+        id: 1100
+        name: "E. Haaland"
+        firstname: "Erling"
+        lastname: "Braut Haaland"
+        age: 24
+        birth: {
+            date: "2000-07-21"
+            place: "Leeds"
+            country: "England"
+        }
+        nationality: "Norway"
+        height: "194 cm"
+        weight: "88 kg"
+        injured: false
+        photo: "https://media.api-sports.io/football/players/1100.png"
+    }
+     */
+    public record _PlayerInfoDetail(){}
+
+    public record _PlayerStatistics(
             int minutesPlayed,
             String position,
             String rating,
@@ -82,6 +109,12 @@ public record MatchStatisticsResponse(
             int penaltiesScored,
             int penaltiesMissed,
             int penaltiesSaved
+    ) {
+    }
+
+    public record _ResponsePlayerStatistics(
+            _PlayerInfoBasic player,
+            _PlayerStatistics statistics
     ) {
     }
 
