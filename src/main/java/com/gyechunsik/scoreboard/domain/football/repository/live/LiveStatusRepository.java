@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.repository.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

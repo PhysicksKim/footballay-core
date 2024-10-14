@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.util;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 
 import java.util.ArrayList;
 import java.util.List;

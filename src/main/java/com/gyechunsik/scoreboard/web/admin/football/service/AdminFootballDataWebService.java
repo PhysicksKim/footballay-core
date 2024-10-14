@@ -1,14 +1,13 @@
 package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
-import io.jsonwebtoken.lang.Maps;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

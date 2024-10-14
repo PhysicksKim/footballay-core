@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.repository;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

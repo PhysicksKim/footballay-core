@@ -3,6 +3,8 @@ package com.gyechunsik.scoreboard.domain.football.scheduler.live;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.live.LiveFixtureEventService;
+import com.gyechunsik.scoreboard.domain.football.external.live.PlayerStatisticsService;
+import com.gyechunsik.scoreboard.domain.football.external.live.TeamStatisticsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,11 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
 
     private final ApiCallService apiCallService;
     private final LiveFixtureEventService liveFixtureService;
+    private final PlayerStatisticsService playerStatisticsService;
+    private final TeamStatisticsService teamStatisticsService;
 
     /**
      * fixtureId 를 받아서 해당 경기의 라이브 정보를 캐싱한다.
-     *
      * @param fixtureId 경기 ID
      * @return live status 에 따라서 경기가 끝났는지 여부. 끝나면 true
      */
@@ -67,6 +70,18 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
             liveFixtureService.resolveFixtureEventIntegrityError(response);
             log.info("Resolved Unexpected error while saving LiveFixtureEvent :: FixtureId={}", fixtureId);
             log.info("Removed Previous Saved FixtureEvent Entities and Re-Saved All Events :: FixtureId={}", fixtureId);
+        }
+        try {
+            log.info("fixtureId={} has live fixture data. caching team statistics will be started", fixtureId);
+            teamStatisticsService.saveTeamStatistics(response);
+        } catch (Exception e) {
+            log.error("Unexpected error while saving TeamStatistics :: FixtureId={}", fixtureId, e);
+        }
+        try {
+            log.info("fixtureId={} has live fixture data. caching player statistics will be started", fixtureId);
+            playerStatisticsService.savePlayerStatistics(response);
+        } catch (Exception e) {
+            log.error("Unexpected error while saving PlayerStatistics :: FixtureId={}", fixtureId, e);
         }
     }
 

@@ -1,21 +1,19 @@
 package com.gyechunsik.scoreboard.web.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
-import com.gyechunsik.scoreboard.web.football.response.TeamsOfLeagueResponse;
+import com.gyechunsik.scoreboard.web.football.response.*;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
-import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
-import com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper;
-import com.gyechunsik.scoreboard.web.football.response.LeagueResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
 import com.gyechunsik.scoreboard.web.football.response.temp.PlayerSubIn;
@@ -26,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -176,7 +175,6 @@ public class FootballStreamWebService {
         log.info("getFixtureEvents. params={}", params);
 
         try {
-            // TODO : playerSubIn 을 통해 player 가 in 인지 assist 가 in 인지 변경 가능하도록함
             log.info("find PlayerSubIn :: find id={}", fixtureId);
             Optional<PlayerSubIn> findPlayerSubIn = playerSubInRepository.findById(fixtureId);
             boolean playerIsSubIn;
@@ -229,6 +227,19 @@ public class FootballStreamWebService {
         } catch (Exception e) {
             log.error("Error occurred while calling method getTeamsOfLeague() leagueId : {}", request.leagueId(), e);
             return apiCommonResponseService.createFailureResponse("팀 정보를 가져오는데 실패했습니다", requestUrl, params);
+        }
+    }
+
+    public ApiResponse<MatchStatisticsResponse> getMatchStatistics(String requestUrl, long fixtureId) {
+        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
+        log.info("getMatchStatistics. params={}", params);
+        try {
+            MatchStatistics matchStatistics = footballRoot.getMatchStatistics(fixtureId);
+            MatchStatisticsResponse responseData = MatchStatisticsResponseMapper.toResponse(matchStatistics);
+            return apiCommonResponseService.createSuccessResponse(new MatchStatisticsResponse[]{responseData}, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Error occurred while calling method getMatchStatistics() fixtureId : {}", fixtureId, e);
+            return apiCommonResponseService.createFailureResponse("경기 통계 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
 

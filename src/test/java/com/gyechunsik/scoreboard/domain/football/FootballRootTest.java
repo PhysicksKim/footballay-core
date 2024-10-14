@@ -3,12 +3,16 @@ package com.gyechunsik.scoreboard.domain.football;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
+import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
@@ -20,8 +24,11 @@ import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupPro
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -38,11 +45,14 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 @SpringBootTest
 @Transactional
-@ActiveProfiles("mockapi")
+@ActiveProfiles({"dev","mockapi"})
 class FootballRootTest {
 
     @Autowired
     private FootballRoot footballRoot;
+
+    @Autowired
+    private Scheduler scheduler;
 
     @Autowired
     private LeagueTeamRepository leagueTeamRepository;
@@ -65,6 +75,11 @@ class FootballRootTest {
     private LiveFixtureProcessor liveFixtureProcessor;
     @Autowired
     private LiveStatusRepository liveStatusRepository;
+
+    @AfterEach
+    protected void cleanJob() throws SchedulerException {
+        scheduler.clear();
+    }
 
     @Test
     @DisplayName("리그를 ID로 캐싱합니다")
@@ -410,7 +425,6 @@ class FootballRootTest {
         assertThat(eagerFixture.getLiveStatus()).isNotNull();
         assertThat(eagerFixture.getLineups()).isNotNull().isNotEmpty();
         assertThat(eagerFixture.getEvents()).isNotNull().isNotEmpty();
-
     }
 
 }

@@ -1,12 +1,12 @@
 package com.gyechunsik.scoreboard.domain.football.repository.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.live.EventType;
-import com.gyechunsik.scoreboard.domain.football.entity.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.EventType;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;

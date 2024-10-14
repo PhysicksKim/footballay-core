@@ -1,10 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.repository.relations;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayersId;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.repository.live;
 
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartLineup;
-import com.gyechunsik.scoreboard.domain.football.entity.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.StartLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.StartPlayer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

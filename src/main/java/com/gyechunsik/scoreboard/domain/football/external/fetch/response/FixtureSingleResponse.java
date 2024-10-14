@@ -415,6 +415,19 @@ public class FixtureSingleResponse extends ApiFootballResponse {
         @JsonIgnoreProperties(ignoreUnknown = true)
         public static class _PlayerStatistics {
             private _Player player;
+
+            /**
+             * API 응답에서 LIST 로 반환하지만, 실제로는 1개의 객체만 포함되어 있습니다. <br>
+             * statistics.get(0) 으로 가져오면 됩니다.
+             * <pre>
+             * "statistics": [
+             *   {
+             *     "games": { ... }
+             *     , ...
+             *   }
+             * ]
+             * </pre>
+             */
             private List<_Statistics> statistics;
         }
 
@@ -485,7 +498,7 @@ public class FixtureSingleResponse extends ApiFootballResponse {
             public static class _Passes {
                 private Integer total;
                 private Integer key;
-                private String accuracy;
+                private Integer accuracy;
             }
 
             @Getter

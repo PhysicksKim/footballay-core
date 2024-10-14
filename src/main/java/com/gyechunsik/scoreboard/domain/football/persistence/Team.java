@@ -1,8 +1,8 @@
-package com.gyechunsik.scoreboard.domain.football.entity;
+package com.gyechunsik.scoreboard.domain.football.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import jakarta.persistence.*;
 import lombok.*;
 

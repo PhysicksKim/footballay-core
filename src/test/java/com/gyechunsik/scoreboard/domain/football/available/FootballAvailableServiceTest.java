@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.available;
 
-import com.gyechunsik.scoreboard.domain.football.entity.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import jakarta.persistence.EntityManager;

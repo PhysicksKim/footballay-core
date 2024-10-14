@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.repository;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

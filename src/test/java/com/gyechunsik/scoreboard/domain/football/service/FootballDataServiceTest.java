@@ -1,11 +1,10 @@
 package com.gyechunsik.scoreboard.domain.football.service;
 
-import com.gyechunsik.scoreboard.domain.football.entity.Fixture;
-import com.gyechunsik.scoreboard.domain.football.entity.League;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
-import com.gyechunsik.scoreboard.domain.football.entity.Team;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.entity.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
@@ -152,16 +151,6 @@ class FootballDataServiceTest {
         assertThat(squad).isNotEmpty();
         assertThat(squad.get(0).getId()).isNotNull();
         assertThat(squad.get(0).getName()).isNotNull();
-    }
-
-    @DisplayName("리그 아이디로 리그에 속한 경기들을 모두 찾습니다")
-    @Test
-    void FixtureInfoEager() {
-        // given
-
-        // when
-
-        // then
     }
 
 }

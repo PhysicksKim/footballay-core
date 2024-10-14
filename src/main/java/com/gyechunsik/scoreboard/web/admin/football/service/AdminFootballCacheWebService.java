@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.entity.Player;
+import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import lombok.RequiredArgsConstructor;

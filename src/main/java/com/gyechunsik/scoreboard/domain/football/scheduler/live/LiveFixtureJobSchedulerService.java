@@ -18,6 +18,10 @@ public class LiveFixtureJobSchedulerService {
     private static final int MAX_REPEAT_TIME_SEC = 5 * 60 * 60; // 5 hour * 60 min * 60 sec
     private static final int MAX_REPEAT_COUNT = MAX_REPEAT_TIME_SEC / INTERVAL_SEC;
 
+    private static final int POST_FINISH_INTERVAL_SEC = 60;
+    private static final int POST_FINISH_MAX_REPEAT_TIME_SEC = 60 * 60; // 60 min * 60 sec
+    private static final int POST_FINISH_MAX_REPEAT_COUNT = POST_FINISH_MAX_REPEAT_TIME_SEC / POST_FINISH_INTERVAL_SEC;
+
     private final Scheduler scheduler;
 
     public void addJob(Long fixtureId, ZonedDateTime fixtureKickoffTime) throws SchedulerException {
@@ -52,4 +56,40 @@ public class LiveFixtureJobSchedulerService {
         log.info("removeJob :: jobName={}, jobGroup={}", jobName, jobGroup);
     }
 
+    public void addPostFinishJob(long fixtureId) throws SchedulerException {
+        String jobName = FootballSchedulerName.postFinishJob(fixtureId);
+        String triggerName = FootballSchedulerName.postFinishTrigger(fixtureId);
+        String groupName = FootballSchedulerName.fixtureGroup();
+
+        JobDetail jobDetail = JobBuilder.newJob(PostFinishJob.class)
+                .withIdentity(jobName, groupName)
+                .usingJobData("fixtureId", fixtureId)
+                .build();
+
+        // start now
+        Date startTime = new Date();
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerName, groupName)
+                .startNow()
+                .withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                        .withIntervalInSeconds(POST_FINISH_INTERVAL_SEC)
+                        .withRepeatCount(POST_FINISH_MAX_REPEAT_COUNT)
+                        .withMisfireHandlingInstructionNowWithRemainingCount())
+                .build();
+
+        scheduler.scheduleJob(jobDetail, trigger);
+        log.info("addPostFinishJob :: jobName={}, triggerName={}, groupName={}, startAt={}",
+                jobName, triggerName, groupName, startTime);
+    }
+
+    public void removePostJob(long fixtureId) {
+        String jobName = FootballSchedulerName.postFinishJob(fixtureId);
+        String jobGroup = FootballSchedulerName.fixtureGroup();
+        try {
+            scheduler.deleteJob(new JobKey(jobName, jobGroup));
+            log.info("removePostJob :: jobName={}, jobGroup={}", jobName, jobGroup);
+        } catch (SchedulerException e) {
+            log.error("removePostJob :: jobName={}, jobGroup={}", jobName, jobGroup, e);
+        }
+    }
 }
