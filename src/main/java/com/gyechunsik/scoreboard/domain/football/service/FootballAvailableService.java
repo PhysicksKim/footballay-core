@@ -72,6 +72,7 @@ public class FootballAvailableService {
         log.info("Remove Scheduler Job :: fixtureId={}", fixtureId);
         startLineupJobSchedulerService.removeJob(fixtureId);
         liveFixtureJobSchedulerService.removeJob(fixtureId);
+        liveFixtureJobSchedulerService.removePostJob(fixtureId);
         fixture.setAvailable(false);
         fixtureRepository.save(fixture);
     }

@@ -82,4 +82,14 @@ public class LiveFixtureJobSchedulerService {
                 jobName, triggerName, groupName, startTime);
     }
 
+    public void removePostJob(long fixtureId) {
+        String jobName = FootballSchedulerName.postFinishJob(fixtureId);
+        String jobGroup = FootballSchedulerName.fixtureGroup();
+        try {
+            scheduler.deleteJob(new JobKey(jobName, jobGroup));
+            log.info("removePostJob :: jobName={}, jobGroup={}", jobName, jobGroup);
+        } catch (SchedulerException e) {
+            log.error("removePostJob :: jobName={}, jobGroup={}", jobName, jobGroup, e);
+        }
+    }
 }

@@ -24,8 +24,11 @@ import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupPro
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -42,11 +45,14 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 @SpringBootTest
 @Transactional
-@ActiveProfiles("mockapi")
+@ActiveProfiles({"dev","mockapi"})
 class FootballRootTest {
 
     @Autowired
     private FootballRoot footballRoot;
+
+    @Autowired
+    private Scheduler scheduler;
 
     @Autowired
     private LeagueTeamRepository leagueTeamRepository;
@@ -69,6 +75,11 @@ class FootballRootTest {
     private LiveFixtureProcessor liveFixtureProcessor;
     @Autowired
     private LiveStatusRepository liveStatusRepository;
+
+    @AfterEach
+    protected void cleanJob() throws SchedulerException {
+        scheduler.clear();
+    }
 
     @Test
     @DisplayName("리그를 ID로 캐싱합니다")
