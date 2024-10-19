@@ -74,7 +74,7 @@ public class TeamStatisticsService {
 
         List<_Statistics> statisticsList = fixtureSingle.getStatistics();
         if (statisticsList == null || statisticsList.size() < 2) {
-            log.error("Insufficient statistics data");
+            log.info("Insufficient statistics data. listSize={}", statisticsList == null ? "null" : statisticsList.size());
             return;
         }
 

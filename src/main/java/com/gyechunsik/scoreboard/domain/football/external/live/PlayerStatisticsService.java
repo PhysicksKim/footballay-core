@@ -142,7 +142,7 @@ public class PlayerStatisticsService {
                         .build())
                 .toList();
         List<Player> savedPlayers = playerRepository.saveAll(list);
-        if(!savedPlayers.isEmpty()) {
+        if (!savedPlayers.isEmpty()) {
             log.info("player statistics 에서 새롭게 캐싱한 선수 정보: {}", savedPlayers);
         }
         return savedPlayers;
@@ -161,7 +161,6 @@ public class PlayerStatisticsService {
     }
 
     /**
-     *
      * @param playerMap
      * @param fixture
      * @param team
@@ -178,7 +177,7 @@ public class PlayerStatisticsService {
             Team team,
             Player player) {
         PlayerStatistics findPlayerStat = playerIdStatsMap.get(player.getId());
-        if(findPlayerStat == null) {
+        if (findPlayerStat == null) {
             return PlayerStatistics.builder()
                     .fixture(fixture)
                     .team(team)
@@ -221,11 +220,15 @@ public class PlayerStatisticsService {
     }
 
     private List<_PlayerStatistics> extractTeamPlayerStatistics(List<_FixturePlayers> bothTeamPlayerStatistics, Long teamId) {
-        return bothTeamPlayerStatistics.stream()
+        Optional<List<_PlayerStatistics>> findFirst = bothTeamPlayerStatistics.stream()
                 .filter(playerStatistics -> playerStatistics.getTeam().getId().equals(teamId))
                 .map(_FixturePlayers::getPlayers)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("지정한 팀의 선수들 통계 정보가 없습니다."));
+                .findFirst();
+        if (findFirst.isEmpty()) {
+            log.info("teamId={} 에 해당하는 선수 통계 정보가 없습니다.", teamId);
+            return Collections.emptyList();
+        }
+        return findFirst.get();
     }
 
 }
