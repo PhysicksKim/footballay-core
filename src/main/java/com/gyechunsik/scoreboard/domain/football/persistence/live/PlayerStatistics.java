@@ -157,7 +157,7 @@ public class PlayerStatistics {
     private Integer foulsCommitted;
 
     /**
-     * 선수가 당한 파울 수
+     * 선수가 유도한 파울 수
      * <br>예시: 1
      */
     private Integer foulsDrawn;

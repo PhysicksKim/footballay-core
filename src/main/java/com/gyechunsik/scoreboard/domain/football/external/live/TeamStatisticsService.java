@@ -75,7 +75,7 @@ public class TeamStatisticsService {
         List<_Statistics> statisticsList = fixtureSingle.getStatistics();
         if (statisticsList == null || statisticsList.size() < 2) {
             log.error("Insufficient statistics data");
-            throw new IllegalArgumentException("Statistics data is incomplete");
+            return;
         }
 
         Map<Long, _Statistics> statisticsMap = mapStatisticsByTeamId(statisticsList);
@@ -126,7 +126,7 @@ public class TeamStatisticsService {
 
     private void addOrUpdateXgToList(String xgValue, Integer elapsed, TeamStatistics teamStatistics) {
         if (xgValue == null) {
-            log.warn("Expected goals data not found for team : {} {}", teamStatistics.getTeam().getId(), teamStatistics.getTeam().getName());
+            log.info("Expected goals data not found for team : {} {}", teamStatistics.getTeam().getId(), teamStatistics.getTeam().getName());
             return;
         }
 

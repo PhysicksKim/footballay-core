@@ -205,12 +205,17 @@ public class FootballStreamDtoMapper {
     }
 
     public static FixtureLiveStatusResponse toFixtureLiveStatusResponse(long fixtureId, LiveStatus liveStatus) {
+        FixtureLiveStatusResponse._Score score = new FixtureLiveStatusResponse._Score(
+                liveStatus.getHomeScore(),
+                liveStatus.getAwayScore()
+        );
         return new FixtureLiveStatusResponse(
                 fixtureId,
                 new FixtureLiveStatusResponse._LiveStatus(
                         liveStatus.getElapsed(),
                         liveStatus.getShortStatus(),
-                        liveStatus.getLongStatus()
+                        liveStatus.getLongStatus(),
+                        score
                 )
         );
     }

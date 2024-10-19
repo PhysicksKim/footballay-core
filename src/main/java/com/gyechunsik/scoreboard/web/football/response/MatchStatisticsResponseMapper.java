@@ -19,10 +19,7 @@ public class MatchStatisticsResponseMapper {
         LiveStatus liveStatus = matchStat.getLiveStatus();
         Team home = matchStat.getHome();
         Team away = matchStat.getAway();
-        TeamStatistics homeStat = matchStat.getHomeStatistics();
-        TeamStatistics awayStat = matchStat.getAwayStatistics();
-        List<ExpectedGoals> homeExpectedGoalsList = homeStat.getExpectedGoalsList();
-        List<ExpectedGoals> awayExpectedGoalsList = awayStat.getExpectedGoalsList();
+
         List<PlayerStatistics> homePlayerStats = matchStat.getHomePlayerStatistics();
         List<PlayerStatistics> awayPlayerStats = matchStat.getAwayPlayerStatistics();
 
@@ -30,20 +27,19 @@ public class MatchStatisticsResponseMapper {
         MatchStatisticsResponse._ResponseFixture responseFixture = toResponseFixture(fixture, liveStatus);
         MatchStatisticsResponse._ResponseTeam homeTeam = toResponseTeam(home);
         MatchStatisticsResponse._ResponseTeam awayTeam = toResponseTeam(away);
-        MatchStatisticsResponse._ResponseTeamStatistics homeTeamStat = toResponseTeamStatistics(homeStat, toXGList(homeExpectedGoalsList));
-        MatchStatisticsResponse._ResponseTeamStatistics awayTeamStat = toResponseTeamStatistics(awayStat, toXGList(awayExpectedGoalsList));
+
+        MatchStatisticsResponse._ResponseTeamStatistics homeTeamStat = toTeamStatisticsResponse(matchStat.getHomeStatistics());
+        MatchStatisticsResponse._ResponseTeamStatistics awayTeamStat = toTeamStatisticsResponse(matchStat.getAwayStatistics());
         List<MatchStatisticsResponse._ResponsePlayerStatistics> homePlayerStatList = toResponsePlayerStatisticsList(homePlayerStats);
         List<MatchStatisticsResponse._ResponsePlayerStatistics> awayPlayerStatList = toResponsePlayerStatisticsList(awayPlayerStats);
 
         // end RESPONSE record
-        MatchStatisticsResponse response = new MatchStatisticsResponse(
+        return new MatchStatisticsResponse(
                 responseFixture,
                 new MatchStatisticsResponse._ResponseTeamWithStatistics(homeTeam, homeTeamStat, homePlayerStatList),
                 new MatchStatisticsResponse._ResponseTeamWithStatistics(awayTeam, awayTeamStat, awayPlayerStatList)
         );
-        return response;
     }
-
 
     private static List<MatchStatisticsResponse._XG> toXGList(List<ExpectedGoals> xgList) {
         return xgList.stream()
@@ -57,7 +53,7 @@ public class MatchStatisticsResponseMapper {
     private static MatchStatisticsResponse._ResponseFixture toResponseFixture(Fixture fixture, LiveStatus liveStatus) {
         return new MatchStatisticsResponse._ResponseFixture(
                 fixture.getFixtureId(),
-                liveStatus.getElapsed(),
+                liveStatus.getElapsed() != null ? liveStatus.getElapsed() : 0,
                 liveStatus.getShortStatus()
         );
     }
@@ -71,7 +67,22 @@ public class MatchStatisticsResponseMapper {
         );
     }
 
-    private static MatchStatisticsResponse._ResponseTeamStatistics toResponseTeamStatistics(
+    private static MatchStatisticsResponse._ResponseTeamStatistics toTeamStatisticsResponse(TeamStatistics teamStat) {
+        // null 체크를 통해 기본값 반환
+        if (teamStat == null) {
+            log.info("Team statistics not available, returning empty statistics.");
+            return new MatchStatisticsResponse._ResponseTeamStatistics(
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  List.of() // 기본값으로 빈 통계 제공
+            );
+        }
+
+        List<ExpectedGoals> expectedGoalsList = teamStat.getExpectedGoalsList() != null ? teamStat.getExpectedGoalsList() : List.of();
+        List<MatchStatisticsResponse._XG> xgList = toXGList(expectedGoalsList);
+
+        return createTeamStatisticsRecord(teamStat, xgList);
+    }
+
+    private static MatchStatisticsResponse._ResponseTeamStatistics createTeamStatisticsRecord(
             TeamStatistics teamStatistics,
             List<MatchStatisticsResponse._XG> xgList) {
         return new MatchStatisticsResponse._ResponseTeamStatistics(

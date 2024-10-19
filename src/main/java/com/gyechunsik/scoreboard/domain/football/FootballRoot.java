@@ -425,8 +425,9 @@ public class FootballRoot {
             LiveStatus liveStatus = fixture.getLiveStatus();
             Team home = fixture.getHomeTeam();
             Team away = fixture.getAwayTeam();
-            TeamStatistics homeStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), home.getId());
-            TeamStatistics awayStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), away.getId());
+
+            TeamStatistics homeStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), home.getId()).orElse(null);
+            TeamStatistics awayStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), away.getId()).orElse(null);
             List<PlayerStatistics> homePlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), home.getId());
             List<PlayerStatistics> awayPlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), away.getId());
 
