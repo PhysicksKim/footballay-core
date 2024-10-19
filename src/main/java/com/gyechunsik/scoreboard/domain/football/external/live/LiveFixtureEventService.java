@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
 
@@ -98,13 +99,24 @@ public class LiveFixtureEventService {
             if(!isSameEvent(event, fixtureEvent)) {
                 Team team = teamRepository.findById(event.getTeam().getId())
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
-                Player player = playerRepository.findById(event.getPlayer().getId())
-                        .orElseThrow(() -> new IllegalArgumentException("선수 정보가 없습니다. playerId=" + event.getPlayer().getId()));
+
+                // TODO : 감독 경고가 발생할 수 있음. ex. fixtureId=1208095 맨유 텐하으 감독 경고
+                Optional<Player> optionalPlayer = playerRepository.findById(event.getPlayer().getId());
+                if(optionalPlayer.isEmpty()) {
+                    log.warn("선수 정보가 없습니다. playerId={}", event.getPlayer().getId());
+                    continue;
+                }
+
+                Player player = optionalPlayer.get();
                 Long assistId = event.getAssist().getId();
                 Player assist = null;
                 if(assistId != null && assistId > 0) {
-                    assist = playerRepository.findById(assistId)
-                            .orElseThrow(() -> new IllegalArgumentException("어시스트 선수가 주어졌으나 캐싱되어있지 않습니다. assistId=" + assistId));
+                    Optional<Player> optionalAssist = playerRepository.findById(assistId);
+                    if(optionalAssist.isEmpty()) {
+                        log.warn("어시스트 선수가 주어졌으나 캐싱되어있지 않습니다. assistId={}", assistId);
+                    } else {
+                        assist = optionalAssist.get();
+                    }
                 }
                 updateEvent(event, fixtureEvent, team, player, assist);
             }
@@ -147,13 +159,21 @@ public class LiveFixtureEventService {
                     throw new IllegalArgumentException("Fixture Event 에서 선수 id 가 null 입니다.");
                 }
 
-                Player player = playerRepository.findById(event.getPlayer().getId())
-                        .orElseThrow(() -> new IllegalArgumentException("선수 정보가 없습니다. playerId=" + event.getPlayer().getId()));
+                Optional<Player> optionalPlayer = playerRepository.findById(event.getPlayer().getId());
+                if(optionalPlayer.isEmpty()) {
+                    log.warn("선수 정보가 없습니다. playerId={}", event.getPlayer().getId());
+                    continue;
+                }
+                Player player = optionalPlayer.get();
                 Long assistId = event.getAssist().getId();
                 Player assist = null;
                 if(assistId != null && assistId > 0) {
-                    assist = playerRepository.findById(assistId)
-                            .orElseThrow(() -> new IllegalArgumentException("어시스트 선수가 주어졌으나 캐싱되어있지 않습니다. assistId=" + assistId));
+                    Optional<Player> optionalAssist = playerRepository.findById(assistId);
+                    if(optionalAssist.isEmpty()) {
+                        log.warn("어시스트 선수가 주어졌으나 캐싱되어있지 않습니다. assistId={}", assistId);
+                    } else {
+                        assist = optionalAssist.get();
+                    }
                 }
                 fixtureEvent = FixtureEvent.builder()
                         .fixture(fixture)
