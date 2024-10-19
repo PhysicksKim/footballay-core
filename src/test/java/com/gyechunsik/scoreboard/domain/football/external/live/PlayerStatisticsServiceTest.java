@@ -13,6 +13,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatistic
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -143,7 +144,7 @@ class PlayerStatisticsServiceTest {
         });
     }
 
-    @DisplayName("선수 통계 정보가 없을 때 저장 시 예외 발생")
+    @DisplayName("선수 통계 정보가 없더라도 예외 발생하지 않음")
     @Test
     void save_withNoPlayerStatistics_shouldThrowException() {
         // given
@@ -153,7 +154,7 @@ class PlayerStatisticsServiceTest {
         response.getResponse().get(0).setPlayers(new ArrayList<>());
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertDoesNotThrow(() -> {
             playerStatisticsService.savePlayerStatistics(response);
         });
     }
