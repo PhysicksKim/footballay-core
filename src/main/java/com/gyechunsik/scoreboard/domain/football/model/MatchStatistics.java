@@ -5,6 +5,7 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
+import jakarta.annotation.Nullable;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,7 +21,10 @@ public class MatchStatistics {
     private LiveStatus liveStatus;
     private Team home;
     private Team away;
+
+    @Nullable
     private TeamStatistics homeStatistics;
+    @Nullable
     private TeamStatistics awayStatistics;
 
     private List<PlayerStatistics> homePlayerStatistics;
@@ -33,8 +37,8 @@ public class MatchStatistics {
                 ", liveStatus.elapsed=" + liveStatus.getElapsed() +
                 ", home.id=" + home.getId() +
                 ", away.id=" + away.getId() +
-                ", homeStatistics.getId=" + homeStatistics.getId() +
-                ", awayStatistics.getId=" + awayStatistics.getId() +
+                (homeStatistics != null ? ", homeStatistics=" + homeStatistics.getId() : "") +
+                (awayStatistics != null ? ", awayStatistics=" + awayStatistics.getId() : "") +
                 ", List<homePlayerStatistics>.size()=" + homePlayerStatistics.size() +
                 ", List<awayPlayerStatistics>.size()=" + awayPlayerStatistics.size() +
                 '}';

@@ -209,17 +209,12 @@ public class FootballDataService {
         return teamsOfPlayer;
     }
 
-    public TeamStatistics getTeamStatistics(long fixtureId, long teamId) {
+    public Optional<TeamStatistics> getTeamStatistics(long fixtureId, long teamId) {
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
-        return teamStatisticsRepository.findByFixtureAndTeam(fixture, team).orElseThrow(
-                () -> {
-                    log.error("팀 통계가 존재하지 않습니다. fixtureId={}, teamId={}", fixtureId, teamId);
-                    return new IllegalArgumentException("팀 통계가 존재하지 않습니다.");
-                }
-        );
+        return teamStatisticsRepository.findByFixtureAndTeam(fixture, team);
     }
 
     public List<PlayerStatistics> getPlayerStatistics(long fixtureId, long teamId) {

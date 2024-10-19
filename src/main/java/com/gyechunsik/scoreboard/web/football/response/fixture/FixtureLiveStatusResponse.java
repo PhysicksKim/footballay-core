@@ -7,7 +7,14 @@ public record FixtureLiveStatusResponse(
     public record _LiveStatus(
             Integer elapsed,
             String shortStatus,
-            String longStatus
+            String longStatus,
+            _Score score
+    ) {
+    }
+
+    public record _Score(
+            Integer home,
+            Integer away
     ) {
     }
 }

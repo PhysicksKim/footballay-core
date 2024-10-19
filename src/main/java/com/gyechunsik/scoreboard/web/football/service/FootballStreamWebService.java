@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,7 +62,7 @@ public class FootballStreamWebService {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
             List<Fixture> fixturesOfLeague = footballRoot.getFixturesOnDate(request.leagueId(), dateTime);
-            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+            return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling getFixturesOnDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
@@ -79,7 +78,7 @@ public class FootballStreamWebService {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
             List<Fixture> fixturesOfLeague = footballRoot.getFixturesOnClosestDate(request.leagueId(), dateTime);
-            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+            return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling getFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
@@ -95,7 +94,7 @@ public class FootballStreamWebService {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
             List<Fixture> fixturesOfLeague = footballRoot.getAvailableFixturesOnDate(request.leagueId(), dateTime);
-            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+            return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling getAvailableFixturesOnDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
@@ -111,7 +110,7 @@ public class FootballStreamWebService {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
             List<Fixture> fixturesOfLeague = footballRoot.getAvailableFixturesOnClosestDate(request.leagueId(), dateTime);
-            return createSuccessResponse(fixturesOfLeague, requestUrl, params);
+            return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling getAvailableFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
@@ -125,8 +124,7 @@ public class FootballStreamWebService {
         at com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService.getFixtureInfo(FootballStreamWebService.java:84) ~[main/:na]
         at com.gyechunsik.scoreboard.web.football.controller.FootballStreamDataController.fixturesInfo(FootballStreamDataController.java:66) ~[main/:na]
      */
-
-    // info, liveStatus, events, lineup, matchStatistics, playerRatings, playerStatistcs(one player)
+    // info, liveStatus, events, lineup, matchStatistics, playerRatings, playerStatistics(one player)
     /**
      *
      * @param requestUrl
@@ -264,7 +262,7 @@ public class FootballStreamWebService {
         return paramDate.truncatedTo(ChronoUnit.DAYS);
     }
 
-    private ApiResponse<FixtureOfLeagueResponse> createSuccessResponse(List<Fixture> fixturesOfLeague, String requestUrl, Map<String, String> params) {
+    private ApiResponse<FixtureOfLeagueResponse> createFixtureListSuccessResponse(List<Fixture> fixturesOfLeague, String requestUrl, Map<String, String> params) {
         FixtureOfLeagueResponse[] array = fixturesOfLeague.stream()
                 .map(FootballStreamDtoMapper::toFixtureOfLeagueResponse)
                 .toArray(FixtureOfLeagueResponse[]::new);
