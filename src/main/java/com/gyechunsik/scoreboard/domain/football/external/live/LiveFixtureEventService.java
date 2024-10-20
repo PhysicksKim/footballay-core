@@ -156,7 +156,8 @@ public class LiveFixtureEventService {
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
                 if(event.getPlayer().getId() == null) {
                     log.error("Fixture Event 에서 선수 id 가 null 입니다. fixtureId={}, event={}", fixtureId, event);
-                    throw new IllegalArgumentException("Fixture Event 에서 선수 id 가 null 입니다.");
+                    // throw new IllegalArgumentException("Fixture Event 에서 선수 id 가 null 입니다.");
+                    continue;
                 }
 
                 Optional<Player> optionalPlayer = playerRepository.findById(event.getPlayer().getId());
