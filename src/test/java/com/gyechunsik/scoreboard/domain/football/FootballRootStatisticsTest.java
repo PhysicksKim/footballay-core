@@ -7,7 +7,7 @@ import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServi
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.live.PlayerStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.external.live.TeamStatisticsService;
-import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDTO;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
@@ -16,7 +16,6 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatistic
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,7 +84,7 @@ public class FootballRootStatisticsTest {
     /**
      * getMatchStatistics의 Eager 로딩 검증 테스트
      * FootballRoot.getMatchStatistics는 메서드 레벨에서 @Transactional을 사용하므로
-     * 트랜잭션 외부에서도 반환된 MatchStatistics 내부의 연관 엔티티들이 로딩되어 있어야 합니다.
+     * 트랜잭션 외부에서도 반환된 MatchStatisticsDTO 내부의 연관 엔티티들이 로딩되어 있어야 합니다.
      * 이 테스트는 이러한 Eager 로딩이 제대로 동작하는지 검증합니다.
      */
     @DisplayName("getMatchStatistics: Eager 로딩 검증")
@@ -94,35 +93,33 @@ public class FootballRootStatisticsTest {
         // given
 
         // when
-        MatchStatistics matchStatistics = footballRoot.getMatchStatistics(FIXTURE_ID);
+        MatchStatisticsDTO matchStatisticsDTO = footballRoot.getMatchStatistics(FIXTURE_ID);
 
         // then
-        assertThat(matchStatistics).isNotNull();
-        assertThat(matchStatistics.getHome()).isNotNull();
-        assertThat(matchStatistics.getAway()).isNotNull();
+        assertThat(matchStatisticsDTO).isNotNull();
+        assertThat(matchStatisticsDTO.getHome()).isNotNull();
+        assertThat(matchStatisticsDTO.getAway()).isNotNull();
 
-        TeamStatistics homeStatistics = matchStatistics.getHomeStatistics();
+        MatchStatisticsDTO.TeamStatisticsDTO homeStatistics = matchStatisticsDTO.getHomeStatistics();
         assertThat(homeStatistics).isNotNull();
-        assertThat(homeStatistics.getTeam()).isNotNull();
+        assertThat(homeStatistics.getBallPossession()).isNotNull();
         assertThat(homeStatistics.getExpectedGoalsList()).isNotEmpty();
 
-        TeamStatistics awayStatistics = matchStatistics.getAwayStatistics();
+        MatchStatisticsDTO.TeamStatisticsDTO awayStatistics = matchStatisticsDTO.getAwayStatistics();
         assertThat(awayStatistics).isNotNull();
-        assertThat(awayStatistics.getTeam()).isNotNull();
+        assertThat(awayStatistics.getBallPossession()).isNotNull();
         assertThat(awayStatistics.getExpectedGoalsList()).isNotEmpty();
 
-        List<PlayerStatistics> homePlayerStatistics = matchStatistics.getHomePlayerStatistics();
+        List<MatchStatisticsDTO.MatchPlayerStatisticsDTO> homePlayerStatistics = matchStatisticsDTO.getHomePlayerStatistics();
         assertThat(homePlayerStatistics).isNotEmpty();
         homePlayerStatistics.forEach(playerStat -> {
-            assertThat(playerStat.getTeam()).isNotNull();
-            assertThat(playerStat.getPlayer()).isNotNull();
+            assertThat(playerStat).isNotNull();
         });
 
-        List<PlayerStatistics> awayPlayerStatistics = matchStatistics.getAwayPlayerStatistics();
+        List<MatchStatisticsDTO.MatchPlayerStatisticsDTO> awayPlayerStatistics = matchStatisticsDTO.getAwayPlayerStatistics();
         assertThat(awayPlayerStatistics).isNotEmpty();
         awayPlayerStatistics.forEach(playerStat -> {
-            assertThat(playerStat.getTeam()).isNotNull();
-            assertThat(playerStat.getPlayer()).isNotNull();
+            assertThat(playerStat).isNotNull();
         });
     }
 }

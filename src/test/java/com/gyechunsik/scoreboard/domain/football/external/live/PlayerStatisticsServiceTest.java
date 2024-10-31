@@ -3,12 +3,14 @@ package com.gyechunsik.scoreboard.domain.football.external.live;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import jakarta.persistence.EntityManager;
@@ -55,6 +57,8 @@ class PlayerStatisticsServiceTest {
     private TeamStatisticsRepository teamStatisticsRepository;
     @Autowired
     private PlayerStatisticsRepository playerStatisticsRepository;
+    @Autowired
+    private MatchPlayerRepository matchPlayerRepository;
 
     @BeforeEach
     public void setup() {
@@ -88,8 +92,8 @@ class PlayerStatisticsServiceTest {
 
         // then
         Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture,true);
-        List<PlayerStatistics> awayPlayerStatisticsList = getPlayerStatistics(fixture,false);
+        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture,true);
+        List<MatchPlayer> awayPlayerStatisticsList = getPlayerStatistics(fixture,false);
 
         assertThat(homePlayerStatisticsList.size()).isGreaterThan(0);
         assertThat(awayPlayerStatisticsList.size()).isGreaterThan(0);
@@ -136,11 +140,11 @@ class PlayerStatisticsServiceTest {
 
         // then
         Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
+        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
 
         // 수정된 득점 수가 반영되었는지 확인
-        homePlayerStatisticsList.forEach(ps -> {
-            assertThat(ps.getGoals()).isEqualTo(10);
+        homePlayerStatisticsList.forEach(mp -> {
+            assertThat(mp.getPlayerStatistics().getGoals()).isEqualTo(10);
         });
     }
 
@@ -190,19 +194,19 @@ class PlayerStatisticsServiceTest {
 
         // then
         Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
+        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
 
         // 새로운 선수가 저장되었는지 확인
         boolean newPlayerSaved = homePlayerStatisticsList.stream()
-                .anyMatch(ps -> ps.getPlayer().getId().equals(9999999L));
+                .anyMatch(mp -> mp.getPlayer().getId().equals(9999999L));
 
         assertThat(newPlayerSaved).isTrue();
     }
 
-    private List<PlayerStatistics> getPlayerStatistics(Fixture fixture, boolean isHome) {
+    private List<MatchPlayer> getPlayerStatistics(Fixture fixture, boolean isHome) {
         Team team = isHome ? fixture.getHomeTeam() : fixture.getAwayTeam();
-        List<PlayerStatistics> playerStatisticsList = playerStatisticsRepository.findByFixtureAndTeam(fixture, team);
-        return playerStatisticsList;
+
+        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
     }
 
 }

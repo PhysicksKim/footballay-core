@@ -25,6 +25,18 @@ public class LiveStatus {
     private Integer homeScore = 0;
     private Integer awayScore = 0;
 
+    @Override
+    public String toString() {
+        return "LiveStatus{" +
+                ", id=" + id +
+                ", longStatus='" + longStatus + '\'' +
+                ", shortStatus='" + shortStatus + '\'' +
+                ", elapsed=" + elapsed +
+                ", homeScore=" + homeScore +
+                ", awayScore=" + awayScore +
+                '}';
+    }
+
     public void updateCompare(LiveStatus other) {
         this.longStatus = other.getLongStatus();
         this.shortStatus = other.getShortStatus();

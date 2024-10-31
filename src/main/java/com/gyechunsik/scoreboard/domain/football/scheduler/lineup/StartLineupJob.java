@@ -21,7 +21,7 @@ public class StartLineupJob implements Job {
         log.info("StartLineupJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
         boolean isSuccess = lineupTask.requestAndSaveLineup(fixtureId);
         if(isSuccess) {
-            log.info("StartLineup is Saved. Deleting job");
+            log.info("MatchLineup is Saved. Deleting job");
             JobKey key = jobExecutionContext.getJobDetail().getKey();
             try {
                 jobExecutionContext.getScheduler().deleteJob(key);

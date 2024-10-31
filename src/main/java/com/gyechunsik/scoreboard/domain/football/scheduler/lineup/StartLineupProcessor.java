@@ -39,7 +39,7 @@ public class StartLineupProcessor implements StartLineupTask {
             }
 
             // Lineup Data 가 있는 경우
-            log.info("fixtureId={} has lineup data. 'StartLineup' caching will be started", fixtureId);
+            log.info("fixtureId={} has lineup data. 'MatchLineup' caching will be started", fixtureId);
             lineupService.saveLineup(fixtureSingleResponse);
         } catch (Exception e) {
             log.error("fixtureId={} lineup cache failed", fixtureId, e);

@@ -62,7 +62,6 @@ public class TeamStatisticsService {
      * 기존에 저장된 팀통계가 있으면 업데이트하고 없으면 새로 생성해서 저장합니다.
      * ExpectedGoals 값 저장도 담당합니다.
      * </pre>
-     *
      * @param response
      * @see TeamStatistics
      * @see com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals

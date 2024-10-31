@@ -3,7 +3,7 @@ package com.gyechunsik.scoreboard.domain.football.persistence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.StartLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.util.StringUtils;
@@ -24,7 +24,7 @@ import java.util.Objects;
 public class Fixture {
 
     @Id
-    private Long fixtureId;
+    private long fixtureId;
 
     /**
      * referee 는 fixture 정보 게시보다는 느리고, Lineup 정보 보다는 빠른 시점에 업데이트 됩니다.
@@ -66,7 +66,7 @@ public class Fixture {
     private Team awayTeam;
 
     @OneToMany(mappedBy = "fixture", fetch = FetchType.LAZY)
-    private List<StartLineup> lineups;
+    private List<MatchLineup> lineups;
 
     @OneToMany(mappedBy = "fixture", fetch = FetchType.LAZY)
     private List<FixtureEvent> events;

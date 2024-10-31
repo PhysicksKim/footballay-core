@@ -18,17 +18,10 @@ public class PlayerStatistics {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fixture_id", nullable = false)
-    private Fixture fixture;
+    @OneToOne(mappedBy = "playerStatistics", fetch = FetchType.LAZY)
+    private MatchPlayer matchPlayer;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
-    private Player player;
+    // --- 아래는 통계 필드들 ---
 
     /**
      * 선수가 경기에서 뛴 총 시간(분 단위)

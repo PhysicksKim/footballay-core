@@ -4,7 +4,9 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -72,20 +74,37 @@ public class FixtureEvent {
     @Column(nullable = true)
     private String comments;
 
+    // TODO : 팀도 혹시 null인 경우가 있을 수 있는거아님? 이거도 로직 필요해보이네
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
-    private Player player;
-
+    // TODO : 감독이나 코치의 경우 coach id 로 들어오니까 이벤트의 Player 필드는 구분 필요할듯.
+    //  감독이나 코치는 player 필드로 들어오는데,
+    //  player id 와 coach id 는 따로라서 이거 구별 필요해보임
+    //  아마 id 로 찾은 다음 name 비교 해서 일치 여부 비교부터 하는 게 맞을듯?
+    //  아니면 MatchPlayer(구 MatchPlayer) 가 MatchLineup 기준으로 나오는 거니까 MatchPlayer 에 있는지로 선수인지 코치감독인지 구분해야할듯
+    // TODO : 선수 id가 null인 경우 있음. 감독이나 코치 또는 이외의 이벤트의 경우 player id null 일 수 있음. 이에 대응 가능하도록 로직 필요
     /**
-     * 이벤트 타입이 교체("subst") 인 경우, "player" 는 교체 들어가는 선수고, "assist" 는 교체되어 나오는 선수 입니다.
+     * 1) id != null 인 경우 : registered Player 인 경우 Player 연관관계를 맺은 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name != null 인 경우 : unregistered player name 을 채운 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name == null 인 경우 : null 로 남겨둡니다. <br>
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_assist_id", nullable = true)
-    private Player assist;
+    @JoinColumn(name = "match_player_id", nullable = true)
+    @Nullable
+    private MatchPlayer player;
+
+    /**
+     * 이벤트 타입이 교체("subst") 인 경우, "player" 는 교체 들어가는 선수고, "assist" 는 교체되어 나오는 선수 입니다. <br>
+     * 1) id != null 인 경우 : registered Player 인 경우 Player 연관관계를 맺은 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name != null 인 경우 : unregistered player name 을 채운 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name == null 인 경우 : null 로 남겨둡니다. <br>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "match_player_assist_id", nullable = true)
+    @Nullable
+    private MatchPlayer assist;
 
     @Override
     public String toString() {
@@ -97,8 +116,8 @@ public class FixtureEvent {
                 ", detail='" + detail + '\'' +
                 ", comments='" + comments + '\'' +
                 ", team=" + team.getId() +
-                ", player=" + player.getId() +
-                ", assist=" + (assist == null ? "null" : assist.getId()) +
+                ", matchPlayerId=" + player.getId() +
+                ", assistId=" + (assist == null ? "null" : assist.getId()) +
                 '}';
     }
 }

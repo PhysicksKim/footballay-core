@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football;
 
-import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.dto.FootballDtoMapper;
+import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDTO;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -8,11 +9,9 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
@@ -40,10 +39,8 @@ public class FootballRoot {
     private final FootballApiCacheService footballApiCacheService;
     private final FootballDataService footballDataService;
     private final FootballAvailableService footballAvailableService;
+
     private final LeagueRepository leagueRepository;
-    private final TeamRepository teamRepository;
-    private final PlayerRepository playerRepository;
-    private final TeamPlayerRepository teamPlayerRepository;
 
     public List<League> getLeagues() {
         List<League> leagues;
@@ -357,8 +354,8 @@ public class FootballRoot {
      * Fixture Entity 를 연관관계들을 모두 채워서 재공합니다. <br>
      * 트랜잭션 범위 밖에서 Lazy Loading 에러가 발생하지 않도록, Fixture 관련 연관관계 엔티티 필드들을 채워서 제공해줍니다.
      * @see Fixture
-     * @see StartLineup
-     * @see StartPlayer
+     * @see MatchLineup
+     * @see MatchPlayer
      * @see FixtureEvent
      * @see LiveStatus
      * @see Player
@@ -374,9 +371,9 @@ public class FootballRoot {
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
 
-            List<StartLineup> lineups = new ArrayList<>();
-            Optional<StartLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
-            Optional<StartLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
+            List<MatchLineup> lineups = new ArrayList<>();
+            Optional<MatchLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
+            Optional<MatchLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
@@ -418,7 +415,7 @@ public class FootballRoot {
      * @return
      */
     @Transactional(readOnly = true)
-    public MatchStatistics getMatchStatistics(long fixtureId) {
+    public MatchStatisticsDTO getMatchStatistics(long fixtureId) {
         log.info("getMatchStatistics :: fixtureId={}", fixtureId);
         try {
             Fixture fixture = footballDataService.getFixtureById(fixtureId);
@@ -426,23 +423,16 @@ public class FootballRoot {
             Team home = fixture.getHomeTeam();
             Team away = fixture.getAwayTeam();
 
-            TeamStatistics homeStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), home.getId()).orElse(null);
-            TeamStatistics awayStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), away.getId()).orElse(null);
-            List<PlayerStatistics> homePlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), home.getId());
-            List<PlayerStatistics> awayPlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), away.getId());
+            @Nullable TeamStatistics homeStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), home.getId()).orElse(null);
+            @Nullable TeamStatistics awayStatistics = footballDataService.getTeamStatistics(fixture.getFixtureId(), away.getId()).orElse(null);
+            List<MatchPlayer> homePlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), home.getId());
+            List<MatchPlayer> awayPlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), away.getId());
 
-            MatchStatistics matchStatistics = MatchStatistics.builder()
-                    .fixture(fixture)
-                    .liveStatus(liveStatus)
-                    .home(home)
-                    .away(away)
-                    .homeStatistics(homeStatistics)
-                    .awayStatistics(awayStatistics)
-                    .homePlayerStatistics(homePlayerStatistics)
-                    .awayPlayerStatistics(awayPlayerStatistics)
-                    .build();
-            log.info("return getMatchStatistics :: {}", matchStatistics);
-            return matchStatistics;
+            MatchStatisticsDTO dto = FootballDtoMapper.matchStatisticsDTOFromEntity(
+                    fixture, liveStatus, home, away, homeStatistics, awayStatistics, homePlayerStatistics, awayPlayerStatistics
+            );
+            log.debug("return getMatchStatistics :: {}", dto);
+            return dto;
         } catch (Exception e) {
             log.error("error while getting _MatchStatistics by Id", e);
             return null;

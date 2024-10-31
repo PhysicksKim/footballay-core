@@ -5,14 +5,14 @@ import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.StartLineup;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.StartPlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,12 +40,12 @@ class LineupServiceTest {
     @Autowired
     private FixtureRepository fixtureRepository;
     @Autowired
-    private StartLineupRepository startLineupRepository;
+    private MatchLineupRepository matchLineupRepository;
     @Autowired
-    private StartPlayerRepository startPlayerRepository;
+    private MatchPlayerRepository matchPlayerRepository;
 
     @Transactional
-    @DisplayName("singleFixture 응답으로 StartLineup 과 StartPlayer 저장 성공")
+    @DisplayName("singleFixture 응답으로 MatchLineup 과 MatchPlayer 저장 성공")
     @Test
     void singleFixture() {
         // given
@@ -66,13 +66,13 @@ class LineupServiceTest {
         fixtureRepository.findById(FixtureId.FIXTURE_SINGLE_1145526).ifPresent(fixture -> {
             log.info("fixture :: {}", fixture);
         });
-        List<StartLineup> all = startLineupRepository.findAll();
+        List<MatchLineup> all = matchLineupRepository.findAll();
         Fixture fixture = fixtureRepository.findById(FixtureId.FIXTURE_SINGLE_1145526).orElseThrow();
-        StartLineup homeStartLineup = startLineupRepository.findByFixtureAndTeam(fixture, fixture.getHomeTeam()).orElseThrow();
-        StartLineup awayStartLineup = startLineupRepository.findByFixtureAndTeam(fixture, fixture.getAwayTeam()).orElseThrow();
-        log.info("homeStartLineup :: {}", homeStartLineup);
+        MatchLineup homeMatchLineup = matchLineupRepository.findByFixtureAndTeam(fixture, fixture.getHomeTeam()).orElseThrow();
+        MatchLineup awayMatchLineup = matchLineupRepository.findByFixtureAndTeam(fixture, fixture.getAwayTeam()).orElseThrow();
+        log.info("homeMatchLineup :: {}", homeMatchLineup);
 
-        List<StartPlayer> homeLineupPlayers = startPlayerRepository.findByStartLineup(homeStartLineup);
+        List<MatchPlayer> homeLineupPlayers = matchPlayerRepository.findByMatchLineup(homeMatchLineup);
         homeLineupPlayers.forEach(startPlayer -> {
             log.info("startPlayer :: (id={},name={},isSub={})",
                     startPlayer.getPlayer().getId(),
@@ -80,7 +80,7 @@ class LineupServiceTest {
                     startPlayer.getSubstitute()
             );
         });
-        List<StartPlayer> awayLineupPlayers = startPlayerRepository.findByStartLineup(awayStartLineup);
+        List<MatchPlayer> awayLineupPlayers = matchPlayerRepository.findByMatchLineup(awayMatchLineup);
         awayLineupPlayers.forEach(startPlayer -> {
             log.info("startPlayer :: (id={},name={},isSub={})",
                     startPlayer.getPlayer().getId(),

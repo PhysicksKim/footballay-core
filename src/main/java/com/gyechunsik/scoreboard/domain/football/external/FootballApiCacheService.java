@@ -18,9 +18,9 @@ import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeam
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,7 +76,6 @@ public class FootballApiCacheService {
 
     /**
      * 리그 아이디로 리그 정보를 캐싱합니다. 직접 리그 아이디를 외부 API 에서 찾아와야 합니다.
-     *
      * @param leagueId
      * @return
      */
@@ -179,7 +178,6 @@ public class FootballApiCacheService {
      * 따라서 팀 아이디를 기반으로 여러 리그에 속하도록 합니다.
      * 리그가 존재하지 않는 경우만 새롭게 엔티티를 추가하며,
      * 리그가 기존에 존재한다면 캐싱 데이터를 업데이트 하지 않고 연관관계만 추가해줍니다.
-     *
      * @param teamId
      */
     public void cacheTeamAndCurrentLeagues(long teamId) {

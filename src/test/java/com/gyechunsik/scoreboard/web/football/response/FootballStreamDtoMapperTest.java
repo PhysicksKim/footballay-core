@@ -69,7 +69,7 @@ class FootballStreamDtoMapperTest {
         final long fixtureId = FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA;
         Fixture fixture = footballRoot.getFixtureWithEager(fixtureId).orElseThrow();
 
-        Integer number = fixture.getLineups().get(0).getStartPlayers().get(0).getPlayer().getNumber();
+        Integer number = fixture.getLineups().get(0).getMatchPlayers().get(0).getPlayer().getNumber();
         log.info("number :: {}", number);
 
         // when

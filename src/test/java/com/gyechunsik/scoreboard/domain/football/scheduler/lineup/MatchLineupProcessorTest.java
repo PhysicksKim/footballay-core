@@ -19,7 +19,7 @@ import static org.mockito.Mockito.*;
 @Slf4j
 @ActiveProfiles({"dev","mockapi"})
 @SpringBootTest
-class StartLineupProcessorTest {
+class MatchLineupProcessorTest {
 
     @Mock
     private ApiCallService apiCallService;

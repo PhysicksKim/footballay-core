@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.web.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
+import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDTO;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
@@ -16,8 +16,6 @@ import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResp
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
-import com.gyechunsik.scoreboard.web.football.response.temp.PlayerSubIn;
-import com.gyechunsik.scoreboard.web.football.response.temp.PlayerSubInRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +33,6 @@ public class FootballStreamWebService {
 
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
-    private final PlayerSubInRepository playerSubInRepository;
 
     public ApiResponse<LeagueResponse> getLeagueList(String requestUrl) {
         log.info("getLeagueList");
@@ -173,21 +170,9 @@ public class FootballStreamWebService {
         log.info("getFixtureEvents. params={}", params);
 
         try {
-            log.info("find PlayerSubIn :: find id={}", fixtureId);
-            Optional<PlayerSubIn> findPlayerSubIn = playerSubInRepository.findById(fixtureId);
-            boolean playerIsSubIn;
-            if(findPlayerSubIn.isEmpty()) {
-                log.info("findPlayerSubIn is empty");
-                playerIsSubIn = false;
-            } else {
-                playerIsSubIn = findPlayerSubIn.get().isSubIn;
-            }
-            log.info("playerIsSubIn={}", playerIsSubIn);
-
             List<FixtureEvent> events = footballRoot.getFixtureEvents(fixtureId);
             FixtureEventsResponse response =
-                    // FootballStreamDtoMapper.toFixtureEventsResponse(fixtureId, events);
-                    FootballStreamDtoMapper.toFixtureEventsResponse(fixtureId, events, playerIsSubIn);
+                    FootballStreamDtoMapper.toFixtureEventsResponse(fixtureId, events);
             return apiCommonResponseService.createSuccessResponse(new FixtureEventsResponse[]{response}, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling method getFixtureEvents() fixtureId : {}", fixtureId, e);
@@ -232,8 +217,8 @@ public class FootballStreamWebService {
         Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         log.info("getMatchStatistics. params={}", params);
         try {
-            MatchStatistics matchStatistics = footballRoot.getMatchStatistics(fixtureId);
-            MatchStatisticsResponse responseData = MatchStatisticsResponseMapper.toResponse(matchStatistics);
+            MatchStatisticsDTO matchStatisticsDTO = footballRoot.getMatchStatistics(fixtureId);
+            MatchStatisticsResponse responseData = MatchStatisticsResponseMapper.toResponse(matchStatisticsDTO);
             return apiCommonResponseService.createSuccessResponse(new MatchStatisticsResponse[]{responseData}, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling method getMatchStatistics() fixtureId : {}", fixtureId, e);

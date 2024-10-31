@@ -4,5 +4,6 @@ public enum EventType {
     GOAL,
     CARD,
     SUBST,
-    VAR
+    VAR,
+    UNKNOWN
 }

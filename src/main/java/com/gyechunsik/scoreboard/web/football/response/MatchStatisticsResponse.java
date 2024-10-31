@@ -51,7 +51,7 @@ public record MatchStatisticsResponse(
     }
 
     public record _PlayerInfoBasic(
-            long id,
+            Long id,
             String name,
             String koreanName,
             String photo,

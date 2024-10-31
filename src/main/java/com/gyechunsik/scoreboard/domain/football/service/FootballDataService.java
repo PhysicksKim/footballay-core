@@ -10,10 +10,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.*;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -46,10 +42,11 @@ public class FootballDataService {
     private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
     private final FixtureEventRepository fixtureEventRepository;
-    private final StartLineupRepository startLineupRepository;
+    private final MatchLineupRepository matchLineupRepository;
     private final TeamPlayerRepository teamPlayerRepository;
     private final PlayerStatisticsRepository playerStatisticsRepository;
     private final TeamStatisticsRepository teamStatisticsRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
 
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
@@ -142,8 +139,8 @@ public class FootballDataService {
         return fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
     }
 
-    public Optional<StartLineup> getStartLineup(Fixture fixture, Team team) {
-        return startLineupRepository.findByFixtureAndTeam(fixture, team);
+    public Optional<MatchLineup> getStartLineup(Fixture fixture, Team team) {
+        return matchLineupRepository.findByFixtureAndTeam(fixture, team);
     }
 
     public Player addTeamPlayerRelationManually(long teamId, long playerId) {
@@ -217,12 +214,12 @@ public class FootballDataService {
         return teamStatisticsRepository.findByFixtureAndTeam(fixture, team);
     }
 
-    public List<PlayerStatistics> getPlayerStatistics(long fixtureId, long teamId) {
+    public List<MatchPlayer> getPlayerStatistics(long fixtureId, long teamId) {
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
-        return playerStatisticsRepository.findByFixtureAndTeam(fixture, team);
+        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
     }
 
 }

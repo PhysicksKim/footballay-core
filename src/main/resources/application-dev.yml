@@ -14,7 +14,8 @@ spring:
 #              action: create
     hibernate:
       ddl-auto: update
-    show-sql: true
+#  TODO : show-sql 다시 활성화
+#    show-sql: true
 
   h2:
     console:

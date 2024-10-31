@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 @Slf4j
 @ActiveProfiles({"dev","mockapi"})
 @SpringBootTest
-class StartLineupJobSchedulerServiceTest {
+class MatchLineupJobSchedulerServiceTest {
 
     @Mock
     private Scheduler scheduler;

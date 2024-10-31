@@ -12,6 +12,7 @@ import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResp
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse._Lineup;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,10 +35,10 @@ public class FootballStreamDtoMapper {
     }
 
     public static FixtureOfLeagueResponse toFixtureOfLeagueResponse(Fixture fixture) {
-        if(fixture.getHomeTeam() == null || fixture.getAwayTeam() == null) {
-            throw new IllegalArgumentException("홈팀 또는 어웨이팀 정보가 존재하지 않습니다. homeTeamIsNull:" + (fixture.getHomeTeam()==null) + ", awayTeamIsNull:" + (fixture.getAwayTeam()==null));
+        if (fixture.getHomeTeam() == null || fixture.getAwayTeam() == null) {
+            throw new IllegalArgumentException("홈팀 또는 어웨이팀 정보가 존재하지 않습니다. homeTeamIsNull:" + (fixture.getHomeTeam() == null) + ", awayTeamIsNull:" + (fixture.getAwayTeam() == null));
         }
-        if(fixture.getLiveStatus() == null) {
+        if (fixture.getLiveStatus() == null) {
             throw new IllegalArgumentException("라이브 상태 정보가 존재하지 않습니다.");
         }
 
@@ -107,101 +108,70 @@ public class FootballStreamDtoMapper {
         );
     }
 
-
     public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events) {
-        return toFixtureEventsResponse(fixtureId, events, false);
-    }
-
-    public static FixtureEventsResponse toFixtureEventsResponse(long fixtureId, List<FixtureEvent> events, boolean isSubIn) {
         List<FixtureEventsResponse._Events> eventsList = new ArrayList<>();
         for (FixtureEvent event : events) {
-            FixtureEventsResponse._Events _event;
-            if(event.getType() == EventType.SUBST) {
-                if(isSubIn) {
-                    // player 가 out player 기준으로 코딩되어있으므로
-                    // playerisSUbIn 인 경우 response 의 player 를 out 에 넣어줘야함
-                    _event = new FixtureEventsResponse._Events(
-                            event.getSequence(),
-                            event.getTimeElapsed(),
-                            event.getExtraTime(),
-                            new FixtureEventsResponse._Team(
-                                    event.getTeam().getId(),
-                                    event.getTeam().getName(),
-                                    event.getTeam().getKoreanName()
-                            ),
-                            event.getAssist() == null ? null : new FixtureEventsResponse._Player(
-                                    event.getAssist().getId(),
-                                    event.getAssist().getName(),
-                                    event.getAssist().getKoreanName(),
-                                    event.getAssist().getNumber()
-                            ),
-                            new FixtureEventsResponse._Player(
-                                    event.getPlayer().getId(),
-                                    event.getPlayer().getName(),
-                                    event.getPlayer().getKoreanName(),
-                                    event.getPlayer().getNumber()
-                            ),
-                            event.getType().toString(),
-                            event.getDetail(),
-                            event.getComments()
-                    );
-                } else {
-                    _event = new FixtureEventsResponse._Events(
-                            event.getSequence(),
-                            event.getTimeElapsed(),
-                            event.getExtraTime(),
-                            new FixtureEventsResponse._Team(
-                                    event.getTeam().getId(),
-                                    event.getTeam().getName(),
-                                    event.getTeam().getKoreanName()
-                            ),
-                            new FixtureEventsResponse._Player(
-                                    event.getPlayer().getId(),
-                                    event.getPlayer().getName(),
-                                    event.getPlayer().getKoreanName(),
-                                    event.getPlayer().getNumber()
-                            ),
-                            event.getAssist() == null ? null : new FixtureEventsResponse._Player(
-                                    event.getAssist().getId(),
-                                    event.getAssist().getName(),
-                                    event.getAssist().getKoreanName(),
-                                    event.getAssist().getNumber()
-                            ),
-                            event.getType().toString(),
-                            event.getDetail(),
-                            event.getComments()
-                    );
-                }
-            } else {
-                _event = new FixtureEventsResponse._Events(
-                        event.getSequence(),
-                        event.getTimeElapsed(),
-                        event.getExtraTime(),
-                        new FixtureEventsResponse._Team(
-                                event.getTeam().getId(),
-                                event.getTeam().getName(),
-                                event.getTeam().getKoreanName()
-                        ),
-                        new FixtureEventsResponse._Player(
-                                event.getPlayer().getId(),
-                                event.getPlayer().getName(),
-                                event.getPlayer().getKoreanName(),
-                                event.getPlayer().getNumber()
-                        ),
-                        event.getAssist() == null ? null : new FixtureEventsResponse._Player(
-                                event.getAssist().getId(),
-                                event.getAssist().getName(),
-                                event.getAssist().getKoreanName(),
-                                event.getAssist().getNumber()
-                        ),
-                        event.getType().toString(),
-                        event.getDetail(),
-                        event.getComments()
-                );
-            }
+            MatchPlayer eventPlayer = event.getPlayer();
+            MatchPlayer eventAssist = event.getAssist();
+
+            FixtureEventsResponse._Player respPlayer = createEventResponsePerson(eventPlayer);
+            FixtureEventsResponse._Player respAssist = createEventResponsePerson(eventAssist);
+            FixtureEventsResponse._Team respTeam = createEventResponseTeam(event);
+
+            FixtureEventsResponse._Events _event = createEventResponse(event, respTeam, respPlayer, respAssist);
             eventsList.add(_event);
         }
         return new FixtureEventsResponse(fixtureId, eventsList);
+    }
+
+    private static FixtureEventsResponse._Events createEventResponse(FixtureEvent event, FixtureEventsResponse._Team respTeam, FixtureEventsResponse._Player respPlayer, FixtureEventsResponse._Player respAssist) {
+        return new FixtureEventsResponse._Events(
+                event.getSequence(),
+                event.getTimeElapsed(),
+                event.getExtraTime(),
+                respTeam,
+                respPlayer,
+                respAssist,
+                event.getType().toString(),
+                event.getDetail(),
+                event.getComments()
+        );
+    }
+
+    private static FixtureEventsResponse._Team createEventResponseTeam(FixtureEvent event) {
+        return new FixtureEventsResponse._Team(
+                event.getTeam().getId(),
+                event.getTeam().getName(),
+                event.getTeam().getKoreanName()
+        );
+    }
+
+    private static FixtureEventsResponse._Player createEventResponsePerson(MatchPlayer eventPlayer) {
+        if (eventPlayer == null) {
+            return null;
+        }
+
+        FixtureEventsResponse._Player respPlayer = null;
+        if (isUnregisteredPlayer(eventPlayer)) {
+            respPlayer = new FixtureEventsResponse._Player(
+                    null,
+                    eventPlayer.getUnregisteredPlayerName(),
+                    "",
+                    eventPlayer.getUnregisteredPlayerNumber() == null ? 0 : eventPlayer.getUnregisteredPlayerNumber()
+            );
+        } else {
+            respPlayer = new FixtureEventsResponse._Player(
+                    eventPlayer.getPlayer().getId(),
+                    eventPlayer.getPlayer().getName(),
+                    eventPlayer.getPlayer().getKoreanName(),
+                    eventPlayer.getPlayer().getNumber()
+            );
+        }
+        return respPlayer;
+    }
+
+    private static boolean isUnregisteredPlayer(MatchPlayer eventPlayer) {
+        return eventPlayer.getPlayer() == null;
     }
 
     public static FixtureLiveStatusResponse toFixtureLiveStatusResponse(long fixtureId, LiveStatus liveStatus) {
@@ -221,7 +191,8 @@ public class FootballStreamDtoMapper {
     }
 
     /**
-     * Fixture -> Lineup -> StartLineup -> StartPlayer
+     * Fixture -> Lineup -> MatchLineup -> MatchPlayer
+     *
      * @param fixture
      * @return
      */
@@ -229,22 +200,22 @@ public class FootballStreamDtoMapper {
         _Lineup lineup = null;
         if (fixture.getLineups() != null && !fixture.getLineups().isEmpty()) {
             try {
-                List<StartLineup> lineups = fixture.getLineups();
+                List<MatchLineup> lineups = fixture.getLineups();
                 final long homeTeamId = fixture.getHomeTeam().getId();
 
-                StartLineup findHomeLineup = lineups.stream()
+                MatchLineup findHomeLineup = lineups.stream()
                         .filter(l -> l.getTeam().getId() == homeTeamId).findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("홈팀 라인업이 존재하지 않습니다."));
-                StartLineup findAwayLineup = lineups.stream()
+                MatchLineup findAwayLineup = lineups.stream()
                         .filter(l -> l.getTeam().getId() != homeTeamId).findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("어웨이팀 라인업이 존재하지 않습니다."));
 
-                List<StartPlayer> findHomePlayers = findHomeLineup.getStartPlayers().stream().sorted(new StartLineupComparator()).toList();
+                List<MatchPlayer> findHomePlayers = findHomeLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
                 List<FixtureLineupResponse._StartPlayer> homeStartXI = new ArrayList<>();
                 List<FixtureLineupResponse._StartPlayer> homeSubstitutes = new ArrayList<>();
                 toLineupPlayerList(findHomePlayers, homeStartXI, homeSubstitutes);
 
-                List<StartPlayer> findAwayPlayers = findAwayLineup.getStartPlayers().stream().sorted(new StartLineupComparator()).toList();
+                List<MatchPlayer> findAwayPlayers = findAwayLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
                 List<FixtureLineupResponse._StartPlayer> awayStartXI = new ArrayList<>();
                 List<FixtureLineupResponse._StartPlayer> awaySubstitutes = new ArrayList<>();
                 toLineupPlayerList(findAwayPlayers, awayStartXI, awaySubstitutes);
@@ -269,10 +240,7 @@ public class FootballStreamDtoMapper {
                         awaySubstitutes
                 );
 
-                lineup = new _Lineup(
-                        homeLineup,
-                        awayLineup
-                );
+                lineup = new _Lineup(homeLineup, awayLineup);
             } catch (Exception e) {
                 log.error("라인업 Response Mapping 중 오류 발생 : {}", e.getMessage(), e);
             }
@@ -298,11 +266,11 @@ public class FootballStreamDtoMapper {
     }
 
     private static void toLineupPlayerList(
-            List<StartPlayer> findAwayPlayers,
-                                           List<FixtureLineupResponse._StartPlayer> awayStartXI,
-                                           List<FixtureLineupResponse._StartPlayer> awaySubstitutes
+            List<MatchPlayer> findAwayPlayers,
+            List<FixtureLineupResponse._StartPlayer> awayStartXI,
+            List<FixtureLineupResponse._StartPlayer> awaySubstitutes
     ) {
-        for (StartPlayer findAwayPlayer : findAwayPlayers) {
+        for (MatchPlayer findAwayPlayer : findAwayPlayers) {
             FixtureLineupResponse._StartPlayer awayPlayer = new FixtureLineupResponse._StartPlayer(
                     findAwayPlayer.getPlayer().getId(),
                     findAwayPlayer.getPlayer().getKoreanName(),
