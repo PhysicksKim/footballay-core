@@ -42,7 +42,7 @@ public class MatchLineup {
      */
     private String formation;
 
-    @OneToMany(mappedBy = "startLineup", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "matchLineup", fetch = FetchType.LAZY)
     private List<MatchPlayer> matchPlayers;
 
     @Override

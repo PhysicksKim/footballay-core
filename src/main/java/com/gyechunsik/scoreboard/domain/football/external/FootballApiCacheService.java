@@ -472,7 +472,6 @@ public class FootballApiCacheService {
         player.setPhotoUrl(playerData.getPhoto());
         player.setPosition(playerData.getPosition());
         player.setNumber(playerData.getNumber());
-        log.info("DEBUG :: number is null? = {}", playerData.getNumber());
         return player;
     }
 

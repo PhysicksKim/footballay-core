@@ -5,6 +5,7 @@ import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheServic
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
+import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.external.live.PlayerStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.external.live.TeamStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDTO;
@@ -57,6 +58,8 @@ public class FootballRootStatisticsTest {
     private PlayerStatisticsRepository playerStatisticsRepository;
     @Autowired
     private FootballRoot footballRoot;
+    @Autowired
+    private LineupService lineupService;
 
     @BeforeEach
     public void setup() {
@@ -73,6 +76,7 @@ public class FootballRootStatisticsTest {
         footballApiCacheService.cacheFixturesOfLeague(4L);
 
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        lineupService.saveLineup(response);
         teamStatisticsService.saveTeamStatistics(response);
         playerStatisticsService.savePlayerStatistics(response);
     }
@@ -81,9 +85,10 @@ public class FootballRootStatisticsTest {
         return fixtureRepository.findById(FIXTURE_ID).orElseThrow();
     }
 
+    // TODO : MatchLineup 캐싱이 미리 되지 않은 문제
     /**
-     * getMatchStatistics의 Eager 로딩 검증 테스트
-     * FootballRoot.getMatchStatistics는 메서드 레벨에서 @Transactional을 사용하므로
+     * getMatchStatistics 의 Eager 로딩 검증 테스트
+     * FootballRoot.getMatchStatistics 는 메서드 레벨에서 @Transactional 을 사용하므로
      * 트랜잭션 외부에서도 반환된 MatchStatisticsDTO 내부의 연관 엔티티들이 로딩되어 있어야 합니다.
      * 이 테스트는 이러한 Eager 로딩이 제대로 동작하는지 검증합니다.
      */

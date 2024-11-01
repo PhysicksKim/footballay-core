@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
@@ -54,11 +55,9 @@ class PlayerStatisticsServiceTest {
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
 
     @Autowired
-    private TeamStatisticsRepository teamStatisticsRepository;
-    @Autowired
-    private PlayerStatisticsRepository playerStatisticsRepository;
-    @Autowired
     private MatchPlayerRepository matchPlayerRepository;
+    @Autowired
+    private LineupService lineupService;
 
     @BeforeEach
     public void setup() {
@@ -79,11 +78,15 @@ class PlayerStatisticsServiceTest {
         return fixtureRepository.findById(FIXTURE_ID).orElseThrow();
     }
 
+    // TODO : playerStatisticsService.savePlayerStatistics(response); 에서 MatchLineup 에다가 lineup 부터 저장해야함
     @DisplayName("선수 통계 저장 성공")
     @Test
     void save() {
         // given
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        lineupService.saveLineup(response);
+        em.flush();
+        em.clear();
 
         // when
         playerStatisticsService.savePlayerStatistics(response);
@@ -98,7 +101,6 @@ class PlayerStatisticsServiceTest {
         assertThat(homePlayerStatisticsList.size()).isGreaterThan(0);
         assertThat(awayPlayerStatisticsList.size()).isGreaterThan(0);
     }
-
 
     @DisplayName("존재하지 않는 경기 정보 저장 시 예외 발생")
     @Test
@@ -163,31 +165,20 @@ class PlayerStatisticsServiceTest {
         });
     }
 
-    @DisplayName("새로운 선수 정보가 있을 때 캐싱 및 저장")
+    // TODO : 먼저 MatchLineup 저장 후에 선수 통계 저장해야함.
+    @DisplayName("라인업에 없고 통계에만 있는 새로운 선수 정보가 있을 때 캐싱 및 저장")
     @Test
     void save_withNewPlayer_shouldCacheAndSave() {
         // given
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        lineupService.saveLineup(response);
 
-        List<_PlayerStatistics> playerStatisticsList = response.getResponse().get(0).getPlayers().get(0).getPlayers();
-
-        // 새로운 선수로 수정
-        _PlayerStatistics newPlayerStatistics = playerStatisticsList.get(0);
-        _Player newPlayer = new _Player();
-        newPlayer.setId(9999999L);
-        newPlayer.setName("New Player");
-        newPlayer.setPhoto("http://example.com/photo.jpg");
-        newPlayerStatistics.setPlayer(newPlayer);
-
-        _Statistics statistics = newPlayerStatistics.getStatistics().get(0);
-        statistics.getGames().setMinutes(90);
-        statistics.getGames().setPosition("Forward");
-        statistics.getGames().setRating("7.5");
-        statistics.getGames().setCaptain(false);
-        statistics.getGames().setSubstitute(false);
-        statistics.getGoals().setTotal(1);
+        em.flush();
+        em.clear();
 
         // when
+        List<_PlayerStatistics> playerStatisticsList = response.getResponse().get(0).getPlayers().get(0).getPlayers();
+        addUnexpectedNewRegisteredPlayerOnlyInStatistics(playerStatisticsList);
         playerStatisticsService.savePlayerStatistics(response);
         em.flush();
         em.clear();
@@ -203,10 +194,46 @@ class PlayerStatisticsServiceTest {
         assertThat(newPlayerSaved).isTrue();
     }
 
+    /**
+     * 예상치 못하게 통계에만 새롭게 id 가 존재하는 등록선수가 추가되는 경우
+     * @param playerStatisticsList
+     */
+    private static void addUnexpectedNewRegisteredPlayerOnlyInStatistics(List<_PlayerStatistics> playerStatisticsList) {
+        _PlayerStatistics newPlayerStatistics = new _PlayerStatistics();
+
+        _Player newPlayer = new _Player();
+        newPlayer.setId(9999999L);
+        newPlayer.setName("New Player");
+        newPlayer.setPhoto("http://example.com/photo.jpg");
+
+        _Statistics statistics = new _Statistics();
+        statistics.setGames(new _Statistics._Games());
+        statistics.setShots(new _Statistics._Shots());
+        statistics.setGoals(new _Statistics._Goals());
+        statistics.setPasses(new _Statistics._Passes());
+        statistics.setTackles(new _Statistics._Tackles());
+        statistics.setDuels(new _Statistics._Duels());
+        statistics.setDribbles(new _Statistics._Dribbles());
+        statistics.setFouls(new _Statistics._Fouls());
+        statistics.setCards(new _Statistics._Cards());
+        statistics.setPenalty(new _Statistics._Penalty());
+        statistics.getGames().setMinutes(90);
+        statistics.getGames().setPosition("Forward");
+        statistics.getGames().setRating("7.5");
+        statistics.getGames().setCaptain(false);
+        statistics.getGames().setSubstitute(false);
+        statistics.getGoals().setTotal(1);
+
+        newPlayerStatistics.setPlayer(newPlayer);
+        newPlayerStatistics.setStatistics(List.of(statistics));
+        playerStatisticsList.add(newPlayerStatistics);
+    }
+
     private List<MatchPlayer> getPlayerStatistics(Fixture fixture, boolean isHome) {
         Team team = isHome ? fixture.getHomeTeam() : fixture.getAwayTeam();
 
         return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
     }
 
+    // TODO : 라인업에 없는데 통계에 미등록선수가 등장하는 경우 테스트도 추가 필요
 }
