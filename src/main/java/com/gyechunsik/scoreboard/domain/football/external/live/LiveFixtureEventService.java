@@ -1,6 +1,5 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
-import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -18,12 +17,9 @@ import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.service.FootballExcelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.internal.constraintvalidators.bv.NotNullValidator;
 import org.springframework.lang.Nullable;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -127,7 +123,6 @@ public class LiveFixtureEventService {
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
 
                 // TODO : 감독 경고가 발생할 수 있음. ex. fixtureId=1208095 맨유 텐하으 감독 경고
-                //  여기서부터 구현 시작 10월28일
                 Long eventPlayerId = event.getPlayer().getId();
                 Long eventAssistId = event.getAssist().getId();
                 long fixtureId = fixture.getFixtureId();
@@ -135,18 +130,28 @@ public class LiveFixtureEventService {
                 String eventPlayerName = event.getPlayer().getName();
                 String eventAssistName = event.getAssist().getName();
 
-                MatchPlayer eventPlayer = getMatchPlayerOfEventPlayer(
-                        eventPlayerId,
-                        eventPlayerName,
-                        fixtureId,
-                        teamId
-                );
-                MatchPlayer eventAssist = getMatchPlayerOfEventPlayer(
-                        eventAssistId,
-                        eventAssistName,
-                        fixtureId,
-                        teamId
-                );
+                MatchPlayer eventPlayer;
+                if(existEventPerson(eventPlayerId, eventPlayerName)) {
+                    eventPlayer = getOrCreateMatchPlayerFromEventPlayer(
+                            eventPlayerId,
+                            eventPlayerName,
+                            fixtureId,
+                            teamId
+                    );
+                } else {
+                    log.warn("eventPlayer 가 null 입니다. Player 가 Null 인 이벤트에 대한 조사가 필요합니다. fixtureId={}, eventsResponse={}", fixtureId, event);
+                    eventPlayer = null;
+                }
+
+                MatchPlayer eventAssist = null;
+                if(existEventPerson(eventAssistId, eventAssistName)) {
+                    eventAssist = getOrCreateMatchPlayerFromEventPlayer(
+                            eventAssistId,
+                            eventAssistName,
+                            fixtureId,
+                            teamId
+                    );
+                }
 
                 logIfEventPersonIsUnexpected(eventPlayer, eventAssist, fixtureId);
 
@@ -155,7 +160,11 @@ public class LiveFixtureEventService {
         }
     }
 
-    private void logIfEventPersonIsUnexpected(MatchPlayer eventPlayer, MatchPlayer eventAssist, long fixtureId) {
+    private static boolean existEventPerson(Long eventAssistId, String eventAssistName) {
+        return eventAssistId != null || eventAssistName != null;
+    }
+
+    private void logIfEventPersonIsUnexpected(@Nullable MatchPlayer eventPlayer, @Nullable MatchPlayer eventAssist, long fixtureId) {
         if (eventPlayer == null) {
             log.warn("eventPlayer 가 null 입니다. fixtureId={}", fixtureId);
         }
@@ -167,7 +176,7 @@ public class LiveFixtureEventService {
         }
     }
 
-    protected @Nullable MatchPlayer getMatchPlayerOfEventPlayer(
+    protected @Nullable MatchPlayer getOrCreateMatchPlayerFromEventPlayer(
             @Nullable Long playerId,
             @Nullable String playerName,
             long fixtureId,
@@ -188,7 +197,7 @@ public class LiveFixtureEventService {
                     playerName,
                     fixtureId
             );
-            return unregisteredPlayer;
+            return matchPlayerRepository.save(unregisteredPlayer);
         }
 
         Optional<Player> findPlayer = playerRepository.findById(playerId);
@@ -207,7 +216,7 @@ public class LiveFixtureEventService {
                     playerName,
                     fixtureId
             );
-            return unregisteredPlayerButIdExist;
+            return matchPlayerRepository.save(unregisteredPlayerButIdExist);
         }
 
         Player player = findPlayer.get();
@@ -240,25 +249,41 @@ public class LiveFixtureEventService {
                 playerName,
                 fixtureId
         );
-        return matchPlayerNotWithLineup;
+        return matchPlayerRepository.save(matchPlayerNotWithLineup);
     }
 
     // TODO : Test 작성. event 와 fixtureEvent 에서 각각 response 와 dbData 에서 player 와 assist 에 대해 isSame 테스트
     //  isSameEventPlayer, isSameEventAssist 메서드로 분리해서 테스트 작성
     //  둘이 등록 여부 다른 경우 테스트(하나는 unregistered player 일 때, 하나는 registered player 일 때)
     protected boolean isSameEvent(_Events event, FixtureEvent fixtureEvent) {
-        Long responsePlayerId = event.getPlayer().getId();
-        String responsePlayerName = event.getPlayer().getName();
-        MatchPlayer matchPlayer = fixtureEvent.getPlayer();
-        if (isNotSameEventPlayer(responsePlayerId, responsePlayerName, matchPlayer)) {
+        boolean isResponsePlayerNull = event.getPlayer() == null || (event.getPlayer().getId() == null && event.getPlayer().getName() == null);
+        boolean isDbEntityPlayerNull = fixtureEvent.getPlayer() == null;
+        if(isResponsePlayerNull != isDbEntityPlayerNull) {
             return false;
         }
+        boolean bothNotNullPlayer = !isResponsePlayerNull;
+        if(bothNotNullPlayer) {
+            MatchPlayer matchPlayer = fixtureEvent.getPlayer();
+            Long responsePlayerId = event.getPlayer().getId();
+            String responsePlayerName = event.getPlayer().getName();
+            if (isNotSameEventPlayer(responsePlayerId, responsePlayerName, matchPlayer)) {
+                return false;
+            }
+        }
 
-        Long responseAssistId = event.getAssist().getId();
-        String responseAssistName = event.getAssist().getName();
-        MatchPlayer matchAssist = fixtureEvent.getAssist();
-        if (isNotSameEventPlayer(responseAssistId, responseAssistName, matchAssist)) {
+        boolean isResponseAssistNull = event.getAssist() == null || (event.getAssist().getId() == null && event.getAssist().getName() == null);
+        boolean isDbEntityAssistNull = fixtureEvent.getAssist() == null;
+        if(isResponseAssistNull != isDbEntityAssistNull) {
             return false;
+        }
+        boolean bothNotNullAssist = !isResponseAssistNull;
+        if (bothNotNullAssist) {
+            MatchPlayer matchAssist = fixtureEvent.getAssist();
+            Long responseAssistId = event.getAssist().getId();
+            String responseAssistName = event.getAssist().getName();
+            if (isNotSameEventPlayer(responseAssistId, responseAssistName, matchAssist)) {
+                return false;
+            }
         }
 
         return isSameEventData(event, fixtureEvent);
@@ -281,7 +306,7 @@ public class LiveFixtureEventService {
         final boolean SAME_PLAYER = false;
         final boolean NOT_SAME_PLAYER = true;
 
-        boolean existResponsePlayer = responsePlayerId != null || responsePlayerName != null;
+        boolean existResponsePlayer = existEventPerson(responsePlayerId, responsePlayerName);
         boolean existMatchPlayer = matchPlayer != null;
 
         // 둘 다 존재하지 않는다면
@@ -315,7 +340,6 @@ public class LiveFixtureEventService {
             }
         }
         // Unreachable code
-        // return NOT_SAME_PLAYER;
     }
 
     protected boolean isSameEventData(_Events event, FixtureEvent fixtureEvent) {
@@ -327,7 +351,7 @@ public class LiveFixtureEventService {
                 && event.getTeam().getId().equals(fixtureEvent.getTeam().getId());
     }
 
-    private void updateEvent(_Events event, FixtureEvent fixtureEvent, Team team, MatchPlayer player, @Nullable MatchPlayer assist) {
+    private void updateEvent(_Events event, FixtureEvent fixtureEvent, Team team, @Nullable MatchPlayer player, @Nullable MatchPlayer assist) {
         fixtureEvent.setTeam(team);
         fixtureEvent.setPlayer(player);
         fixtureEvent.setAssist(assist);
@@ -356,7 +380,6 @@ public class LiveFixtureEventService {
             try {
                 Team team = teamRepository.findById(event.getTeam().getId())
                         .orElseThrow(() -> new IllegalArgumentException("팀 정보가 없습니다. teamId=" + event.getTeam().getId()));
-
                 Long playerId = event.getPlayer().getId();
                 String playerName = event.getPlayer().getName();
                 MatchPlayer player = createEventPlayer(playerId, playerName, fixtureId, team.getId());
@@ -364,6 +387,13 @@ public class LiveFixtureEventService {
                 Long assistId = event.getAssist().getId();
                 String assistName = event.getAssist().getName();
                 MatchPlayer assist = createEventPlayer(assistId, assistName, fixtureId, team.getId());
+
+                if(player != null) {
+                    player = matchPlayerRepository.save(player);
+                }
+                if(assist != null) {
+                    assist = matchPlayerRepository.save(assist);
+                }
 
                 fixtureEvent = FixtureEvent.builder()
                         .fixture(fixture)
@@ -379,7 +409,7 @@ public class LiveFixtureEventService {
                         .build();
                 fixtureEventRepository.save(fixtureEvent);
             } catch (Exception e) {
-                log.error("이벤트 변환 실패. 빈 FixtureEvent 로 대체합니다. fixtureId={}, sequence={}, event={}", fixtureId, sequence, event);
+                log.error("이벤트 변환 실패. 빈 FixtureEvent 로 대체합니다. fixtureId={}, sequence={}, event={}", fixtureId, sequence, event, e);
                 try {
                     fixtureEvent = FixtureEvent.builder()
                             .fixture(fixture)
@@ -404,7 +434,6 @@ public class LiveFixtureEventService {
     private @Nullable MatchPlayer createEventPlayer(@Nullable Long id, @Nullable String name, Long fixtureId, long teamId) {
         boolean isEmptyPlayer = id == null && name == null;
         if (isEmptyPlayer) {
-            log.warn("event player 가 null 입니다. fixtureId={}", fixtureId);
             return null;
         }
 
