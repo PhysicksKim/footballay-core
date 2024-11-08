@@ -4,7 +4,6 @@ import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -36,7 +35,7 @@ class MatchLineupProcessorTest {
         // Given
         FixtureSingleResponse fixtureSingleResponse = new FixtureSingleResponse();
         when(apiCallService.fixtureSingle(anyLong())).thenReturn(fixtureSingleResponse);
-        when(lineupService.hasLineupData(fixtureSingleResponse)).thenReturn(true);
+        when(lineupService.existLineupDataInResponse(fixtureSingleResponse)).thenReturn(true);
         doNothing().when(lineupService).saveLineup(fixtureSingleResponse);
 
         // When
@@ -45,7 +44,7 @@ class MatchLineupProcessorTest {
         // Then
         assertTrue(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());
-        verify(lineupService, times(1)).hasLineupData(fixtureSingleResponse);
+        verify(lineupService, times(1)).existLineupDataInResponse(fixtureSingleResponse);
         verify(lineupService, times(1)).saveLineup(fixtureSingleResponse);
         log.info("testRequestAndSaveLineupSuccess completed successfully");
     }
@@ -55,7 +54,7 @@ class MatchLineupProcessorTest {
         // Given
         FixtureSingleResponse fixtureSingleResponse = new FixtureSingleResponse();
         when(apiCallService.fixtureSingle(anyLong())).thenReturn(fixtureSingleResponse);
-        when(lineupService.hasLineupData(fixtureSingleResponse)).thenReturn(false);
+        when(lineupService.existLineupDataInResponse(fixtureSingleResponse)).thenReturn(false);
 
         // When
         boolean result = startLineupProcessor.requestAndSaveLineup(1L);
@@ -63,7 +62,7 @@ class MatchLineupProcessorTest {
         // Then
         assertFalse(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());
-        verify(lineupService, times(1)).hasLineupData(fixtureSingleResponse);
+        verify(lineupService, times(1)).existLineupDataInResponse(fixtureSingleResponse);
         verify(lineupService, never()).saveLineup(fixtureSingleResponse);
         log.info("testRequestAndSaveLineupNoData completed successfully");
     }
@@ -79,7 +78,7 @@ class MatchLineupProcessorTest {
         // Then
         assertFalse(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());
-        verify(lineupService, never()).hasLineupData(any());
+        verify(lineupService, never()).existLineupDataInResponse(any());
         verify(lineupService, never()).saveLineup(any());
         log.info("testRequestAndSaveLineupException completed successfully");
     }

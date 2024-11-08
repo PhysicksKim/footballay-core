@@ -55,13 +55,14 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
             "AND f.date >= :date"
     )
     List<Fixture> findAvailableFixturesByLeagueAndDate(@Param("league") League league,
-                                                         @Param("date") LocalDateTime date);
+                                                       @Param("date") LocalDateTime date);
 
     /**
      * 해당 리그의 date 이후의 fixture 들을 조회합니다.
      * parameter pageable 을 이용하여 fixture 를 조회합니다.
-     * @param league 리그
-     * @param date fixture 찾기 기준 날짜. 해당 dateTime 을 포함합니다.
+     *
+     * @param league   리그
+     * @param date     fixture 찾기 기준 날짜. 해당 dateTime 을 포함합니다.
      * @param pageable 날짜 이후 첫 번째 fixture 만 얻으려는 경우 PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
      * @return
      */
@@ -91,8 +92,9 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     /**
      * 해당 리그의 date 이후의 Available fixture 들을 조회합니다.
      * parameter pageable 을 이용하여 fixture 를 조회합니다.
-     * @param league 리그
-     * @param date fixture 찾기 기준 날짜. 해당 dateTime 을 포함합니다.
+     *
+     * @param league   리그
+     * @param date     fixture 찾기 기준 날짜. 해당 dateTime 을 포함합니다.
      * @param pageable 날짜 이후 첫 번째 available fixture 만 얻으려는 경우 PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
      * @return
      */
@@ -120,4 +122,29 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
             "ORDER BY f.date ASC"
     )
     List<Fixture> findAvailableFixturesByLeagueAndDateRange(League league, LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    // TODO : 테스트 및 쿼리 문제 해결 필요
+    // @Query("SELECT f FROM Fixture f " +
+    //         "LEFT JOIN FETCH f.liveStatus ls " +
+    //         "JOIN FETCH f.league l " +
+    //         "JOIN FETCH f.homeTeam ht " +
+    //         "JOIN FETCH f.awayTeam at " +
+    //         "JOIN FETCH f.lineups lu JOIN FETCH lu.matchPlayers mp " +
+    //         "JOIN FETCH f.events e " +
+    //         "JOIN FETCH e.player ep JOIN FETCH ep.matchLineup epml " +
+    //         "JOIN FETCH e.assist ea JOIN FETCH ea.matchLineup eaml " +
+    //         "JOIN FETCH f.teamStatistics ts JOIN FETCH ts.expectedGoalsList xg " +
+    //         "WHERE f.fixtureId = :fixtureId"
+    // )
+    // Optional<Fixture> findByIdWithAllAssociations(long fixtureId);
+
+    @Query("SELECT f FROM Fixture f " +
+            "LEFT JOIN FETCH f.liveStatus ls " +
+            "JOIN FETCH f.league l " +
+            "JOIN FETCH f.homeTeam ht " +
+            "JOIN FETCH f.awayTeam at " +
+            "LEFT JOIN FETCH f.lineups lu " +
+            "WHERE f.fixtureId = :fixtureId"
+    )
+    Optional<Fixture> findByIdWithAllAssociations(long fixtureId);
 }

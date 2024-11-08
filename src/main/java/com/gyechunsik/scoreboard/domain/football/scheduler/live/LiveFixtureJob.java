@@ -25,6 +25,7 @@ public class LiveFixtureJob implements Job {
             try {
                 context.getScheduler().deleteJob(context.getJobDetail().getKey());
                 log.info("Job deleted :: key={}", context.getJobDetail().getKey());
+                // TODO : 경기 끝난지 1일 이상 지났다면 PostFinishJob 을 실행하지 않는 게 좋을 듯? (추후 검토)
                 liveFixtureJobSchedulerService.addPostFinishJob(fixtureId);
                 log.info("PostFinishJob added :: fixtureId={}", fixtureId);
             } catch (Exception e) {

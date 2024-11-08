@@ -30,6 +30,8 @@ import java.util.Optional;
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
 
 // TODO : 전부 테스트 작성 재점검 필요
+// TODO : Event 저장용 UnregisteredPlayer 인 경우 Lineup 에서 해당 미등록 선수가 있는지 조사하도록 합니다.
+//  라인업에서 이름과 번호를 기반으로 매칭되는 선수가 있다면 해당 엔티티를 가져와서 연관관계를 맺도록 해주면 됩니다.
 /**
  *
  */
@@ -372,6 +374,11 @@ public class LiveFixtureEventService {
      */
     private void saveEventsFromStartSequence(int startSequence, List<_Events> events, Fixture fixture) {
         Long fixtureId = fixture.getFixtureId();
+
+        if(events.size() <= startSequence) {
+            log.info("새로운 이벤트가 없습니다. fixtureId={}", fixtureId);
+            return;
+        }
 
         for (int sequence = startSequence; sequence < events.size(); sequence++) {
             _Events event = events.get(sequence);

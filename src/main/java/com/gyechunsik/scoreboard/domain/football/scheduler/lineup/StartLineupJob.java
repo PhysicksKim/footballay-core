@@ -24,8 +24,9 @@ public class StartLineupJob implements Job {
             log.info("MatchLineup is Saved. Deleting job");
             JobKey key = jobExecutionContext.getJobDetail().getKey();
             try {
-                jobExecutionContext.getScheduler().deleteJob(key);
-                log.info("Job deleted :: key={}", key);
+                // jobExecutionContext.getScheduler().deleteJob(key);
+                // log.info("Job deleted :: key={}", key);
+                log.info("temporarily disabled deleting job");
             } catch (Exception e) {
                 log.error("StartLineupJob key=[{}] delete failed", key, e);
                 throw new RuntimeException(e);

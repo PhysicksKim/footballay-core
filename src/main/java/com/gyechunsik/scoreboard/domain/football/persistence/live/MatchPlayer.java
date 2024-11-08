@@ -6,6 +6,8 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 /**
  * {@link Fixture} 에 등장한 선수 및 사람 정보를 담습니다. <br>
  * {@link Fixture} 의 event, lineups, players(선수별 통계) 응답에 선수 정보가 player field 로 등장합니다.
@@ -60,6 +62,16 @@ public class MatchPlayer {
     @JoinColumn(name = "player_id", nullable = true)
     @Nullable
     private Player player;
+
+    /**
+     * 선수 id 가 null 인 경우 임시로 생성한 UUID id 를 사용해서 선수 데이터를 저장합니다. <br>
+     * 이 id는 해당 경기 동안만 사용됩니다. <br>
+     * uuid 는 MatchLineup - MatchPlayer 생성 시에만 부여되며, FixtureEvent 에서 등장했으나 lineup 상에서 생성되지 않은 미등록 선수에 대해서는 uuid 를 부여하지 않습니다. <br>
+     * FixtureEvent 에서는 미등록 선수 등장 시 matchLineup 에서 일치하는 선수가 있는지 찾고, 없다면 event 에서 name 값만 사용한 미등록 선수를 생성합니다. <br>
+     */
+    @Column(nullable = true)
+    @Nullable
+    private UUID temporaryId;
 
     /**
      * Player { id=null } 인 경우 대신 unregisteredPlayerName 을 사용해서 이름을 저장합니다. <br>

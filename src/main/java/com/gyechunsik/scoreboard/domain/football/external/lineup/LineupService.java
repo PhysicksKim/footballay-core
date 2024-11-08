@@ -12,6 +12,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import jakarta.persistence.EntityManager;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,8 +39,44 @@ public class LineupService {
 
     private final EntityManager entityManager;
 
-    public boolean hasLineupData(FixtureSingleResponse response) {
+    public boolean existLineupDataInResponse(FixtureSingleResponse response) {
         return !response.getResponse().get(0).getLineups().isEmpty();
+    }
+
+    public boolean isNeedToReSaveLineup(FixtureSingleResponse response) {
+        ResponseValues responseValues = new ResponseValues(response);
+
+        Fixture fixture = fixtureRepository.findById(responseValues.fixtureId).orElseThrow(
+                () -> new IllegalArgumentException("Fixture 데이터가 존재하지 않습니다. fixtureId=" + responseValues.fixtureId)
+        );
+        Team home = teamRepository.findById(responseValues.homeTeamId).orElseThrow();
+        Team away = teamRepository.findById(responseValues.awayTeamId).orElseThrow();
+
+        Optional<MatchLineup> optionalHomeLineup = matchLineupRepository.findTeamLineupByFixture(fixture, home);
+        Optional<MatchLineup> optionalAwayLineup = matchLineupRepository.findTeamLineupByFixture(fixture, away);
+
+        if(optionalHomeLineup.isEmpty() || optionalAwayLineup.isEmpty()) {
+            return true; // 저장된 라인업 정보가 없으므로 다시 저장해야 합니다.
+        }
+
+        MatchLineup homeLineup = optionalHomeLineup.get();
+        MatchLineup awayLineup = optionalAwayLineup.get();
+
+        PlayerCount homePlayerCount = countPlayers(homeLineup);
+        PlayerCount awayPlayerCount = countPlayers(awayLineup);
+
+        boolean needToResaveHome = isPlayerCountMismatch(
+                responseValues.homeTeamLineupPlayerIds.size(),
+                responseValues.homeUnregisteredPlayers.size(),
+                homePlayerCount
+        );
+        boolean needToResaveAway = isPlayerCountMismatch(
+                responseValues.awayTeamLineupPlayerIds.size(),
+                responseValues.awayUnregisteredPlayers.size(),
+                awayPlayerCount
+        );
+
+        return needToResaveHome || needToResaveAway;
     }
 
     // fixtureId response 를 받아서 Entity 로 변환하고, 변환된 entity 를 저장
@@ -250,7 +287,6 @@ public class LineupService {
         if (!lineups.isEmpty()) {
             log.info("이미 저장된 lineup 정보가 있어, 기존 데이터를 삭제합니다. 기존에 저장된 MatchLineup count : {}", lineups.size());
             int deletedPlayerCount = matchPlayerRepository.deleteByMatchLineupIn(lineups);
-            // Force immediate database delete to prevent foreign key constraint violations
             entityManager.flush();
             log.info("삭제된 player count = {}", deletedPlayerCount);
             matchLineupRepository.deleteAllInBatch(lineups);
@@ -260,5 +296,89 @@ public class LineupService {
         }
     }
 
+    private PlayerCount countPlayers(MatchLineup lineup) {
+        int registered = 0;
+        int unregistered = 0;
+        for (MatchPlayer matchPlayer : lineup.getMatchPlayers()) {
+            if (matchPlayer.getPlayer() == null) {
+                unregistered++;
+            } else {
+                registered++;
+            }
+        }
+        return new PlayerCount(registered, unregistered);
+    }
 
+    private boolean isPlayerCountMismatch(int expectedRegistered, int expectedUnregistered, PlayerCount actualCount) {
+        return actualCount.registered != expectedRegistered || actualCount.unregistered != expectedUnregistered;
+    }
+
+    private static class PlayerCount {
+        int registered;
+        int unregistered;
+
+        PlayerCount(int registered, int unregistered) {
+            this.registered = registered;
+            this.unregistered = unregistered;
+        }
+    }
+
+    private static class ResponseValues {
+        private final long fixtureId;
+        private final long homeTeamId;
+        private final long awayTeamId;
+
+        private final Set<Long> homeTeamLineupPlayerIds;
+        private final Set<Long> awayTeamLineupPlayerIds;
+        private final List<_Lineups._StartPlayer> homeUnregisteredPlayers;
+        private final List<_Lineups._StartPlayer> awayUnregisteredPlayers;
+
+        ResponseValues(FixtureSingleResponse response) {
+            try{
+                this.fixtureId = response.getResponse().get(0).getFixture().getId();
+                this.homeTeamId = response.getResponse().get(0).getTeams().getHome().getId();
+                this.awayTeamId = response.getResponse().get(0).getTeams().getAway().getId();
+                this.homeTeamLineupPlayerIds = new HashSet<>();
+                this.awayTeamLineupPlayerIds = new HashSet<>();
+                this.homeUnregisteredPlayers = new ArrayList<>();
+                this.awayUnregisteredPlayers = new ArrayList<>();
+
+                _Lineups homeLineup = null;
+                _Lineups awayLineup = null;
+                for (_Lineups lineup : response.getResponse().get(0).getLineups()) {
+                    if(lineup.getTeam().getId() == homeTeamId) {
+                        homeLineup = lineup;
+                    } else {
+                        awayLineup = lineup;
+                    }
+                }
+                if(homeLineup == null || awayLineup == null) {
+                    throw new IllegalArgumentException("홈팀 또는 어웨이팀 라인업 정보가 없습니다.");
+                }
+
+                List<_Lineups._StartPlayer> homeStartXI = homeLineup.getStartXI();
+                List<_Lineups._StartPlayer> homeSubstitutes = homeLineup.getSubstitutes();
+                List<_Lineups._StartPlayer> awayStartXI = awayLineup.getStartXI();
+                List<_Lineups._StartPlayer> awaySubstitutes = awayLineup.getSubstitutes();
+
+                addPlayerIds(homeStartXI, homeTeamLineupPlayerIds, homeUnregisteredPlayers);
+                addPlayerIds(homeSubstitutes, homeTeamLineupPlayerIds, homeUnregisteredPlayers);
+                addPlayerIds(awayStartXI, awayTeamLineupPlayerIds, awayUnregisteredPlayers);
+                addPlayerIds(awaySubstitutes, awayTeamLineupPlayerIds, awayUnregisteredPlayers);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " +
+                        "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.", e);
+            }
+        }
+
+        private void addPlayerIds(List<_Lineups._StartPlayer> playerList, Set<Long> idSet, List<_Lineups._StartPlayer> unregisteredPlayers) {
+            for (_Lineups._StartPlayer startPlayer : playerList) {
+                if(startPlayer.getPlayer().getId() == null ) {
+                    unregisteredPlayers.add(startPlayer);
+                } else {
+                    idSet.add(startPlayer.getPlayer().getId());
+                }
+            }
+        }
+    }
 }

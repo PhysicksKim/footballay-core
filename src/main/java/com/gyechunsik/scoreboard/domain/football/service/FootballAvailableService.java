@@ -4,6 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,8 @@ public class FootballAvailableService {
     private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
 
     private final static int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
+    private final FixtureJobManageService fixtureJobManageService;
+    private final FixtureEventRepository fixtureEventRepository;
 
     public void updateAvailableLeague(long leagueId, boolean isAvailable) {
         log.info("updateAvailableLeague :: leagueId={}, isAvailable={}", leagueId, isAvailable);
@@ -49,17 +52,13 @@ public class FootballAvailableService {
 
     public void addAvailableFixture(long fixtureId) throws SchedulerException {
         log.info("addAvailableFixture :: fixtureId={}", fixtureId);
-        Fixture fixture = fixtureRepository.findById(fixtureId)
+        Fixture fixture =
+                // fixtureRepository.findByIdWithAllAssociations(fixtureId)
+                fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 
-        ZonedDateTime kickOffTime = toSeoulZonedDateTime(
-                fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
-        );
-        ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
-        log.info("Add Scheduler Job :: fixtureId={}, kickoffTime={}, lineupAnnounceTime={}",
-                fixtureId, kickOffTime, lineupAnnounceTime);
-        startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
-        liveFixtureJobSchedulerService.addJob(fixtureId, kickOffTime);
+        fixtureJobManageService.addFixtureJobs(fixture);
+
         fixture.setAvailable(true);
         fixtureRepository.save(fixture);
     }
@@ -69,10 +68,8 @@ public class FootballAvailableService {
         Fixture fixture = fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 
-        log.info("Remove Scheduler Job :: fixtureId={}", fixtureId);
-        startLineupJobSchedulerService.removeJob(fixtureId);
-        liveFixtureJobSchedulerService.removeJob(fixtureId);
-        liveFixtureJobSchedulerService.removePostJob(fixtureId);
+        fixtureJobManageService.removeFixtureJobs(fixture);
+
         fixture.setAvailable(false);
         fixtureRepository.save(fixture);
     }

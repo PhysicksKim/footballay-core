@@ -4,6 +4,11 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Fixture Caching 과정과 Fixture Live Job 과정 둘에서 저장됩니다. <br>
+ * {@link LiveStatus} 는 Live Job 데이터로 분류하지 않습니다. 즉, 비라이브 데이터라고 칭합니다. <br>
+ * 라이브 데이터에 대한 정의는 {@link Fixture} 를 참조하십시오. <br>
+ */
 @Getter
 @Setter
 @NoArgsConstructor

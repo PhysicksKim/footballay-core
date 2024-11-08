@@ -2,14 +2,15 @@ package com.gyechunsik.scoreboard.domain.football.scheduler.live;
 
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
+import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.external.live.LiveFixtureEventService;
-import com.gyechunsik.scoreboard.domain.football.external.live.MatchLineupService;
 import com.gyechunsik.scoreboard.domain.football.external.live.PlayerStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.external.live.TeamStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
-import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.service.FixtureDataIntegrityService;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,8 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
     private final LiveFixtureEventService liveFixtureService;
     private final PlayerStatisticsService playerStatisticsService;
     private final TeamStatisticsService teamStatisticsService;
-    private final MatchLineupService matchLineupService;
-    private final FixtureRepository fixtureRepository;
+    private final LineupService lineupService;
+    private final FixtureDataIntegrityService fixtureDataIntegrityService;
 
     /**
      * `fixtureId` 를 받아서 해당 경기의 라이브 정보를 캐싱합니다. <br>
@@ -41,11 +42,6 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
         boolean isFinished;
         try {
             FixtureSingleResponse fixtureSingleResponse = requestData(fixtureId);
-            if(!isLineupCached(fixtureId)) {
-                log.info("fixtureId={} live fixture cache FAILED. Lineup is not cached yet", fixtureId);
-                return false;
-            }
-
             isFinished = saveDataAndIsFinished(fixtureSingleResponse);
             log.info("fixtureId={} live fixture cache done. isFinished={}", fixtureId, isFinished);
         } catch (Exception e) {
@@ -53,13 +49,6 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
             log.error("fixtureId={} live fixture cache FAILED. isFinished={}", fixtureId, isFinished, e);
         }
         return isFinished;
-    }
-
-    private boolean isLineupCached(long fixtureId) {
-        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow(
-                () -> new IllegalArgumentException("LiveFixtureData 저장 중 fixture 를 찾지 못했습니다. fixtureId=" + fixtureId + " 에 해당하는 Fixture 데이터가 없습니다.")
-        );
-        return matchLineupService.hasLineupData(fixture);
     }
 
     private FixtureSingleResponse requestData(long fixtureId) {
@@ -73,15 +62,30 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
 
     private boolean saveDataAndIsFinished(FixtureSingleResponse response) {
         log.info("Data Saving is Started");
+        long fixtureId = response.getResponse().get(0).getFixture().getId();
+        try{
+            boolean hasLineupData = lineupService.existLineupDataInResponse(response);
+            boolean needToReSaveLineup = lineupService.isNeedToReSaveLineup(response);
+            if(!hasLineupData || needToReSaveLineup) {
+                log.info("need to save Lineup. existLineupDataInResponse={}, needToReSaveLineup={}", hasLineupData, needToReSaveLineup);
+                fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
+                lineupService.saveLineup(response);
+            }
+        } catch (Exception e) {
+            log.error("Unexpected error while saving Lineup. Try to cleanUp and resave :: FixtureId={}", fixtureId, e);
+            fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
+            lineupService.saveLineup(response);
+        }
+
         try {
-            saveFixtureEventsAndStatistics(response);
+            saveFixtureLiveData(response);
         } catch (Exception e) {
             log.error("Unexpected error while saving LiveFixtureEvent :: FixtureId={}", response.getResponse().get(0).getFixture().getId(), e);
         }
         return updateLiveStatusAndIsFinished(response);
     }
 
-    private void saveFixtureEventsAndStatistics(FixtureSingleResponse response) {
+    private void saveFixtureLiveData(@NotNull FixtureSingleResponse response) {
         assert !response.getResponse().isEmpty();
         long fixtureId = response.getResponse().get(0).getFixture().getId();
         try {
