@@ -18,12 +18,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class LiveFixtureProcessor implements LiveFixtureTask {
+public class LiveMatchProcessor implements LiveMatchTask {
 
     private final ApiCallService apiCallService;
+
     private final LiveFixtureEventService liveFixtureService;
     private final PlayerStatisticsService playerStatisticsService;
     private final TeamStatisticsService teamStatisticsService;
+
     private final LineupService lineupService;
     private final FixtureDataIntegrityService fixtureDataIntegrityService;
 
@@ -37,16 +39,15 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
      * @return live status 에 따라서 경기가 끝났는지 여부. 끝나면 true
      */
     @Override
-    public boolean requestAndSaveLiveFixtureData(long fixtureId) {
+    public boolean requestAndSaveLiveMatchData(long fixtureId) {
         log.info("fixtureId={} live fixture cache started", fixtureId);
-        boolean isFinished;
+        boolean isFinished = false;
         try {
             FixtureSingleResponse fixtureSingleResponse = requestData(fixtureId);
             isFinished = saveDataAndIsFinished(fixtureSingleResponse);
-            log.info("fixtureId={} live fixture cache done. isFinished={}", fixtureId, isFinished);
+            log.info("fixtureId={} live data cache done. isFinished={}", fixtureId, isFinished);
         } catch (Exception e) {
-            isFinished = false;
-            log.error("fixtureId={} live fixture cache FAILED. isFinished={}", fixtureId, isFinished, e);
+            log.error("fixtureId={} live data cache FAILED. isFinished={}", fixtureId, isFinished, e);
         }
         return isFinished;
     }
@@ -63,26 +64,41 @@ public class LiveFixtureProcessor implements LiveFixtureTask {
     private boolean saveDataAndIsFinished(FixtureSingleResponse response) {
         log.info("Data Saving is Started");
         long fixtureId = response.getResponse().get(0).getFixture().getId();
-        try{
-            boolean hasLineupData = lineupService.existLineupDataInResponse(response);
-            boolean needToReSaveLineup = lineupService.isNeedToReSaveLineup(response);
-            if(!hasLineupData || needToReSaveLineup) {
-                log.info("need to save Lineup. existLineupDataInResponse={}, needToReSaveLineup={}", hasLineupData, needToReSaveLineup);
-                fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
-                lineupService.saveLineup(response);
-            }
-        } catch (Exception e) {
-            log.error("Unexpected error while saving Lineup. Try to cleanUp and resave :: FixtureId={}", fixtureId, e);
-            fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
-            lineupService.saveLineup(response);
-        }
-
-        try {
-            saveFixtureLiveData(response);
-        } catch (Exception e) {
-            log.error("Unexpected error while saving LiveFixtureEvent :: FixtureId={}", response.getResponse().get(0).getFixture().getId(), e);
-        }
+        checkWhetherLineupChangedAndResave(response, fixtureId);
+        saveFixtureLiveData(response);
         return updateLiveStatusAndIsFinished(response);
+    }
+
+    private void checkWhetherLineupChangedAndResave(FixtureSingleResponse response, long fixtureId) {
+        try{
+            boolean needToReSaveLineup = lineupService.isNeedToCleanUpAndReSaveLineup(response);
+            if(!needToReSaveLineup) {
+                log.info("no need to save Lineup while saving live data");
+                return;
+            }
+            log.info("need to save Lineup while saving live data");
+            cleanUpAndResaveLineup(response, fixtureId);
+        } catch (Exception e) {
+            log.error("Unexpected error while checking and saving Lineup when saving live data. Try to cleanUp and resave :: FixtureId={}", fixtureId, e);
+            cleanUpAndResaveLineup(response, fixtureId);
+        }
+    }
+
+    /**
+     * 해당 경기의 기존 라이브 데이터를 정리하고 새로운 라인업 데이터를 다시 저장합니다.
+     * <p>
+     * 기존 라인업 데이터를 새로 저장해야 할 때 호출됩니다.
+     * 먼저 경기와 관련된 기존 라이브 데이터를 정리한 후, 새로운 라인업 데이터를 저장합니다.
+     * 라인업이 완전하고(모든 선수가 등록됨) 성공적으로 저장되면 true 를 반환합니다.
+     * </p>
+     *
+     * @param response 새로운 라인업 데이터를 포함하는 FixtureSingleResponse
+     * @param fixtureId 경기의 ID
+     * @return 라인업이 완전하고 저장에 성공한 경우 true, 그렇지 않으면 false
+     */
+    private void cleanUpAndResaveLineup(FixtureSingleResponse response, long fixtureId) {
+        fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
+        lineupService.saveLineup(response);
     }
 
     private void saveFixtureLiveData(@NotNull FixtureSingleResponse response) {

@@ -1,8 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
-import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchJobSchedulerService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +20,8 @@ import java.time.zone.ZoneRulesException;
 @Slf4j
 public class FixtureJobManageService {
 
-    private final StartLineupJobSchedulerService startLineupJobSchedulerService;
-    private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
+    private final PreviousMatchJobSchedulerService previousMatchJobSchedulerService;
+    private final LiveMatchJobSchedulerService liveMatchJobSchedulerService;
 
     private final FixtureDataIntegrityService dataIntegrityService;
 
@@ -42,17 +42,23 @@ public class FixtureJobManageService {
         } catch (SchedulerException e) {
             log.error("Failed to add fixture jobs for fixtureId={}", fixtureId, e);
         }
-
     }
 
+    /**
+     * Fixture 에 대한 Job 을 등록합니다. <br>
+     * job 등록 전에 기존에 존재하던 데이터들은 삭제하기 위해 cleanup 작업을 수행합니다.
+     * @param fixture
+     * @param fixtureId
+     * @throws SchedulerException
+     */
     private void enrollFixtureJobs(Fixture fixture, long fixtureId) throws SchedulerException {
         ZonedDateTime kickOffTime = toSeoulZonedDateTime(
                 fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
         );
         ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
 
-        startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
-        liveFixtureJobSchedulerService.addJob(fixtureId, kickOffTime);
+        previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        liveMatchJobSchedulerService.addJob(fixtureId, kickOffTime);
 
         log.info("Fixture jobs added for fixtureId={}", fixtureId);
     }
@@ -60,10 +66,9 @@ public class FixtureJobManageService {
     public void removeFixtureJobs(Fixture fixture) throws SchedulerException {
         long fixtureId = fixture.getFixtureId();
 
-        // 잡 삭제
-        startLineupJobSchedulerService.removeJob(fixtureId);
-        liveFixtureJobSchedulerService.removeJob(fixtureId);
-        liveFixtureJobSchedulerService.removePostJob(fixtureId);
+        previousMatchJobSchedulerService.removeJob(fixtureId);
+        liveMatchJobSchedulerService.removeJob(fixtureId);
+        liveMatchJobSchedulerService.removePostJob(fixtureId);
 
         log.info("Fixture jobs removed for fixtureId={}", fixtureId);
         fixture.setAvailable(false);

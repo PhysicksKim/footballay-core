@@ -4,12 +4,9 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.EventType;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._FixtureSingle;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -478,18 +475,20 @@ public class LiveFixtureEventService {
      */
     public void resolveFixtureEventIntegrityError(FixtureSingleResponse response) {
         log.info("try to resolve fixture event integrity error");
-        this.deleteExisingFixtureEventsAndReSaveAllEvents(response);
+        try{
+            this.deleteExisingFixtureEventsAndReSaveAllEvents(response);
+        } catch (Exception e) {
+            log.error("failed to resolve fixture event integrity error", e);
+        }
     }
 
+    // TODO : [TEST] 이벤트 삭제 후 재저장 시 문제 발생 가능성 있는 부분들 테스트 (ex. unregistered player 가 등장하는 경우, 등록된 player 가 등장하는 경우, 라인업에도 없는 unknownPerson 이 등장하는 경우)
     private void deleteExisingFixtureEventsAndReSaveAllEvents(FixtureSingleResponse response) {
         Fixture fixture = fixtureRepository.findById(response.getResponse().get(0).getFixture().getId())
                 .orElseThrow(() -> new IllegalArgumentException("기존에 캐싱된 fixture 정보가 없습니다."));
 
-        // 기존에 저장된 fixture 의 live event 를 모두 삭제
-        List<FixtureEvent> fixtureEventList = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
-        fixtureEventRepository.deleteAll(fixtureEventList);
+        deleteEvents(fixture);
 
-        // 새로운 fixture 정보를 기반으로 live event 를 다시 저장
         saveLiveEvent(response);
     }
 
@@ -523,5 +522,29 @@ public class LiveFixtureEventService {
 
     private boolean isFixtureFinished(String shortStatus) {
         return FINISHED_STATUSES.contains(shortStatus);
+    }
+
+    private void deleteEvents(Fixture fixture) {
+        List<FixtureEvent> eventsList = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
+
+        for (FixtureEvent fixtureEvent : eventsList) {
+            MatchPlayer eventPlayer = fixtureEvent.getPlayer();
+            MatchPlayer eventAssist = fixtureEvent.getAssist();
+
+            deleteMatchPlayerIfNoRelationWithLineup(eventPlayer);
+            deleteMatchPlayerIfNoRelationWithLineup(eventAssist);
+        }
+
+        fixtureEventRepository.deleteAll(eventsList);
+    }
+
+    /**
+     * 라인업과 관계가 없는 "Unknown Player" 인 경우 MatchPlayer 까지 삭제합니다.
+     * @param matchPlayer
+     */
+    private void deleteMatchPlayerIfNoRelationWithLineup(@Nullable MatchPlayer matchPlayer) {
+        if(matchPlayer != null && matchPlayer.getMatchLineup() == null) {
+            matchPlayerRepository.delete(matchPlayer);
+        }
     }
 }

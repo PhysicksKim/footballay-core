@@ -114,14 +114,6 @@ public class FootballStreamWebService {
         }
     }
 
-    // TODO : 아직 lineup 이나 event 가 cache 되지 않은 경우에는 해당 부분을 null 로 두도록 수정 필요
-    /*
-    java.lang.NullPointerException: Cannot invoke "java.lang.Integer.intValue()" because the return value of "com.gyechunsik.scoreboard.domain.football.entity.live.LiveStatus.getElapsed()" is null
-        at com.gyechunsik.scoreboard.web.football.response.FootballStreamDtoMapper.toFixtureInfoResponse(FootballStreamDtoMapper.java:77) ~[main/:na]
-        at com.gyechunsik.scoreboard.web.football.service.FootballStreamWebService.getFixtureInfo(FootballStreamWebService.java:84) ~[main/:na]
-        at com.gyechunsik.scoreboard.web.football.controller.FootballStreamDataController.fixturesInfo(FootballStreamDataController.java:66) ~[main/:na]
-     */
-    // info, liveStatus, events, lineup, matchStatistics, playerRatings, playerStatistics(one player)
     /**
      *
      * @param requestUrl

@@ -59,28 +59,6 @@ public record MatchStatisticsResponse(
             Integer number
     ){}
 
-    // TODO : player 상세 정보 추가 캐싱 필요
-    /*
-    player: {
-        id: 1100
-        name: "E. Haaland"
-        firstname: "Erling"
-        lastname: "Braut Haaland"
-        age: 24
-        birth: {
-            date: "2000-07-21"
-            place: "Leeds"
-            country: "England"
-        }
-        nationality: "Norway"
-        height: "194 cm"
-        weight: "88 kg"
-        injured: false
-        photo: "https://media.api-sports.io/football/players/1100.png"
-    }
-     */
-    public record _PlayerInfoDetail(){}
-
     public record _PlayerStatistics(
             int minutesPlayed,
             String position,

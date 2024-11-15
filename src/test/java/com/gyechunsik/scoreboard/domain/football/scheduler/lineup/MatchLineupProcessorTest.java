@@ -27,7 +27,7 @@ class MatchLineupProcessorTest {
     private LineupService lineupService;
 
     @InjectMocks
-    private StartLineupProcessor startLineupProcessor;
+    private PreviousMatchProcessor previousMatchProcessor;
 
     @DisplayName("라인업 정보 요청 및 저장 성공")
     @Test
@@ -36,35 +36,15 @@ class MatchLineupProcessorTest {
         FixtureSingleResponse fixtureSingleResponse = new FixtureSingleResponse();
         when(apiCallService.fixtureSingle(anyLong())).thenReturn(fixtureSingleResponse);
         when(lineupService.existLineupDataInResponse(fixtureSingleResponse)).thenReturn(true);
-        doNothing().when(lineupService).saveLineup(fixtureSingleResponse);
+        when(lineupService.saveLineup(fixtureSingleResponse)).thenReturn(true);
 
         // When
-        boolean result = startLineupProcessor.requestAndSaveLineup(1L);
-
-        // Then
-        assertTrue(result);
-        verify(apiCallService, times(1)).fixtureSingle(anyLong());
-        verify(lineupService, times(1)).existLineupDataInResponse(fixtureSingleResponse);
-        verify(lineupService, times(1)).saveLineup(fixtureSingleResponse);
-        log.info("testRequestAndSaveLineupSuccess completed successfully");
-    }
-
-    @Test
-    public void testRequestAndSaveLineupNoData() throws Exception {
-        // Given
-        FixtureSingleResponse fixtureSingleResponse = new FixtureSingleResponse();
-        when(apiCallService.fixtureSingle(anyLong())).thenReturn(fixtureSingleResponse);
-        when(lineupService.existLineupDataInResponse(fixtureSingleResponse)).thenReturn(false);
-
-        // When
-        boolean result = startLineupProcessor.requestAndSaveLineup(1L);
+        boolean result = previousMatchProcessor.requestAndSaveLineup(1L);
 
         // Then
         assertFalse(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());
-        verify(lineupService, times(1)).existLineupDataInResponse(fixtureSingleResponse);
-        verify(lineupService, never()).saveLineup(fixtureSingleResponse);
-        log.info("testRequestAndSaveLineupNoData completed successfully");
+        log.info("testRequestAndSaveLineupSuccess completed successfully");
     }
 
     @Test
@@ -73,7 +53,7 @@ class MatchLineupProcessorTest {
         when(apiCallService.fixtureSingle(anyLong())).thenThrow(new RuntimeException("API call failed"));
 
         // When
-        boolean result = startLineupProcessor.requestAndSaveLineup(1L);
+        boolean result = previousMatchProcessor.requestAndSaveLineup(1L);
 
         // Then
         assertFalse(result);

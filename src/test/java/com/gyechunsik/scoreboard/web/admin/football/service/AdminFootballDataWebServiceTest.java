@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
-import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchJobSchedulerService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.util.DevInitData;
 import com.gyechunsik.scoreboard.web.admin.football.response.AvailableFixtureDto;
@@ -60,15 +60,15 @@ class AdminFootballDataWebServiceTest {
     private Scheduler scheduler;
 
     @MockBean
-    private StartLineupJobSchedulerService startLineupJobSchedulerService;
+    private PreviousMatchJobSchedulerService previousMatchJobSchedulerService;
 
     @MockBean
-    private LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
+    private LiveMatchJobSchedulerService liveMatchJobSchedulerService;
 
     @BeforeEach
     void setup() throws SchedulerException {
-        doNothing().when(startLineupJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
-        doNothing().when(liveFixtureJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
+        doNothing().when(previousMatchJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
+        doNothing().when(liveMatchJobSchedulerService).addJob(any(Long.class), any(ZonedDateTime.class));
         devInitData.addData();
     }
 

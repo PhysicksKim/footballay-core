@@ -27,7 +27,7 @@ class MatchLineupJobSchedulerServiceTest {
     private Scheduler scheduler;
 
     @InjectMocks
-    private StartLineupJobSchedulerService startLineupJobSchedulerService;
+    private PreviousMatchJobSchedulerService previousMatchJobSchedulerService;
 
     private Long fixtureId;
     private ZonedDateTime lineupAnnounceTime;
@@ -44,7 +44,7 @@ class MatchLineupJobSchedulerServiceTest {
         doReturn(null).when(scheduler).scheduleJob(any(JobDetail.class), any(Trigger.class));
 
         // Act
-        startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
 
         // Assert
         verify(scheduler, times(1)).scheduleJob(any(JobDetail.class), any(Trigger.class));
@@ -57,7 +57,7 @@ class MatchLineupJobSchedulerServiceTest {
 
         // Act & Assert
         assertThrows(SchedulerException.class, () -> {
-            startLineupJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+            previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
         });
 
         verify(scheduler, times(1)).scheduleJob(any(JobDetail.class), any(Trigger.class));
@@ -69,7 +69,7 @@ class MatchLineupJobSchedulerServiceTest {
         doReturn(true).when(scheduler).deleteJob(any(JobKey.class));
 
         // Act
-        startLineupJobSchedulerService.removeJob(fixtureId);
+        previousMatchJobSchedulerService.removeJob(fixtureId);
 
         // Assert
         verify(scheduler, times(1)).deleteJob(any(JobKey.class));
@@ -82,7 +82,7 @@ class MatchLineupJobSchedulerServiceTest {
 
         // Act & Assert
         assertThrows(SchedulerException.class, () -> {
-            startLineupJobSchedulerService.removeJob(fixtureId);
+            previousMatchJobSchedulerService.removeJob(fixtureId);
         });
 
         verify(scheduler, times(1)).deleteJob(any(JobKey.class));

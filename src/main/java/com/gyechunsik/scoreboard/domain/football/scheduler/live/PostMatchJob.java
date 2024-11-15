@@ -8,14 +8,14 @@ import org.quartz.JobExecutionException;
 
 @Slf4j
 @RequiredArgsConstructor
-public class PostFinishJob implements Job {
+public class PostMatchJob implements Job {
 
-    private final LiveFixtureTask liveFixtureTask;
+    private final LiveMatchTask liveMatchTask;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
-        log.info("PostFinishJob executed, fixture ID : {}", fixtureId);
-        liveFixtureTask.requestAndSaveLiveFixtureData(fixtureId);
+        log.info("PostMatchJob executed, fixture ID : {}", fixtureId);
+        liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
     }
 }

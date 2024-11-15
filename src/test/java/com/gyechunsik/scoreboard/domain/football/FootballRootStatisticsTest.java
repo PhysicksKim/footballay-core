@@ -43,19 +43,12 @@ public class FootballRootStatisticsTest {
     private FootballApiCacheService footballApiCacheService;
 
     @Autowired
-    private FixtureRepository fixtureRepository;
-
-    @Autowired
     private EntityManager em;
 
     private ApiCallService apiCallService;
 
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
 
-    @Autowired
-    private TeamStatisticsRepository teamStatisticsRepository;
-    @Autowired
-    private PlayerStatisticsRepository playerStatisticsRepository;
     @Autowired
     private FootballRoot footballRoot;
     @Autowired
@@ -81,11 +74,6 @@ public class FootballRootStatisticsTest {
         playerStatisticsService.savePlayerStatistics(response);
     }
 
-    private Fixture getFixture() {
-        return fixtureRepository.findById(FIXTURE_ID).orElseThrow();
-    }
-
-    // TODO : MatchLineup 캐싱이 미리 되지 않은 문제
     /**
      * getMatchStatistics 의 Eager 로딩 검증 테스트
      * FootballRoot.getMatchStatistics 는 메서드 레벨에서 @Transactional 을 사용하므로

@@ -35,49 +35,4 @@ public record FixtureInfoResponse(
     ) {
     }
 
-    // ---------------- deprecated ----------------
-    // public record _LiveStatus(
-    //         Integer elapsed,
-    //         String shortStatus,
-    //         String longStatus
-    // ) {
-    // }
-    //
-    // public record _FixtureEventResponse(
-    //         long teamId,
-    //         _Player player,
-    //         _Player assist,
-    //         long elapsed,
-    //         String type,
-    //         String detail,
-    //         String comments
-    // ) {
-    // }
-    //
-    // public record _Lineup (
-    //         _StartLineup home,
-    //         _StartLineup away
-    // ) {
-    // }
-    //
-    // public record _StartLineup(
-    //         long teamId,
-    //         String formation,
-    //         List<_StartPlayer> players,
-    //         List<_StartPlayer> substitutes
-    // ) {
-    // }
-    //
-    // public record _StartPlayer(
-    //         long id,
-    //         String koreanName,
-    //         String name,
-    //         Integer number,
-    //         String photo,
-    //         String position,
-    //         String grid,
-    //         boolean substitute
-    // ) {
-    // }
-
 }

@@ -3,7 +3,7 @@ package com.gyechunsik.scoreboard.domain.football.scheduler.lineup;
 /**
  * 라인업 정보를 요청하고 저장하는 Task. Scheduler 의 job 에서 사용합니다.
  */
-public interface StartLineupTask {
+public interface PreviousMatchTask {
 
     /**
      * 라인업 정보를 요청하고 저장한다.

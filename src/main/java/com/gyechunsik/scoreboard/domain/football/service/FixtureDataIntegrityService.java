@@ -48,7 +48,7 @@ public class FixtureDataIntegrityService {
     public void cleanUpFixtureLiveData(long fixtureId) {
         Optional<Fixture> optionalFixture = fixtureRepository.findByIdWithAllAssociations(fixtureId);
         if(optionalFixture.isEmpty()) {
-            log.info("Fail to find fixture while cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
+            log.info("can not find fixture while cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
             return;
         }
 

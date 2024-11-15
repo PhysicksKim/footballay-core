@@ -5,8 +5,8 @@ import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJobSchedulerService;
-import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchJobSchedulerService;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchJobSchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
@@ -27,14 +27,10 @@ import java.util.List;
 @Service
 public class FootballAvailableService {
 
+    private final FixtureJobManageService fixtureJobManageService;
+
     private final LeagueRepository leagueRepository;
     private final FixtureRepository fixtureRepository;
-    private final StartLineupJobSchedulerService startLineupJobSchedulerService;
-    private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
-
-    private final static int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
-    private final FixtureJobManageService fixtureJobManageService;
-    private final FixtureEventRepository fixtureEventRepository;
 
     public void updateAvailableLeague(long leagueId, boolean isAvailable) {
         log.info("updateAvailableLeague :: leagueId={}, isAvailable={}", leagueId, isAvailable);
@@ -53,7 +49,6 @@ public class FootballAvailableService {
     public void addAvailableFixture(long fixtureId) throws SchedulerException {
         log.info("addAvailableFixture :: fixtureId={}", fixtureId);
         Fixture fixture =
-                // fixtureRepository.findByIdWithAllAssociations(fixtureId)
                 fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
 

@@ -12,7 +12,7 @@ import java.util.Date;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class StartLineupJobSchedulerService {
+public class PreviousMatchJobSchedulerService {
 
     private static final int INTERVAL_SEC = 60;
     private static final int MAX_REPEAT_TIME_SEC = 5 * 60 * 60; // 5 hour * 60 min * 60 sec
@@ -21,11 +21,11 @@ public class StartLineupJobSchedulerService {
     private final Scheduler scheduler;
 
     public void addJob(Long fixtureId, ZonedDateTime lineupAnnounceTime) throws SchedulerException {
-        String jobName = FootballSchedulerName.startLineupJob(fixtureId);
-        String triggerName = FootballSchedulerName.startLineupTrigger(fixtureId);
+        String jobName = FootballSchedulerName.previousMatchJob(fixtureId);
+        String triggerName = FootballSchedulerName.previousMatchTrigger(fixtureId);
         String groupName = FootballSchedulerName.fixtureGroup();
 
-        JobDetail jobDetail = JobBuilder.newJob(StartLineupJob.class)
+        JobDetail jobDetail = JobBuilder.newJob(PreviousMatchJob.class)
                 .withIdentity(jobName, groupName)
                 .usingJobData("fixtureId", fixtureId)
                 .build();
@@ -46,7 +46,7 @@ public class StartLineupJobSchedulerService {
     }
 
     public void removeJob(long fixtureId) throws SchedulerException {
-        String jobName = FootballSchedulerName.startLineupJob(fixtureId);
+        String jobName = FootballSchedulerName.previousMatchJob(fixtureId);
         String jobGroup = FootballSchedulerName.fixtureGroup();
         scheduler.deleteJob(new JobKey(jobName, jobGroup));
         log.info("removeJob :: jobName={}, jobGroup={}", jobName, jobGroup);

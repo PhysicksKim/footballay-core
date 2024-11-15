@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.quartz;
 
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupJob;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;

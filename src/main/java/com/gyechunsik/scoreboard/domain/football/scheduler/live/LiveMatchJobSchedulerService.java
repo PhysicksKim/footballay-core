@@ -12,7 +12,7 @@ import java.util.Date;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class LiveFixtureJobSchedulerService {
+public class LiveMatchJobSchedulerService {
 
     private static final int INTERVAL_SEC = 29;
     private static final int MAX_REPEAT_TIME_SEC = 5 * 60 * 60; // 5 hour * 60 min * 60 sec
@@ -25,11 +25,11 @@ public class LiveFixtureJobSchedulerService {
     private final Scheduler scheduler;
 
     public void addJob(Long fixtureId, ZonedDateTime fixtureKickoffTime) throws SchedulerException {
-        String jobName = FootballSchedulerName.liveFixtureJob(fixtureId);
-        String triggerName = FootballSchedulerName.liveFixtureTrigger(fixtureId);
+        String jobName = FootballSchedulerName.liveMatchJob(fixtureId);
+        String triggerName = FootballSchedulerName.liveMatchTrigger(fixtureId);
         String groupName = FootballSchedulerName.fixtureGroup();
 
-        JobDetail jobDetail = JobBuilder.newJob(LiveFixtureJob.class)
+        JobDetail jobDetail = JobBuilder.newJob(LiveMatchJob.class)
                 .withIdentity(jobName, groupName)
                 .usingJobData("fixtureId", fixtureId)
                 .build();
@@ -50,18 +50,18 @@ public class LiveFixtureJobSchedulerService {
     }
 
     public void removeJob(long fixtureId) throws SchedulerException {
-        String jobName = FootballSchedulerName.liveFixtureJob(fixtureId);
+        String jobName = FootballSchedulerName.liveMatchJob(fixtureId);
         String jobGroup = FootballSchedulerName.fixtureGroup();
         scheduler.deleteJob(new JobKey(jobName, jobGroup));
         log.info("removeJob :: jobName={}, jobGroup={}", jobName, jobGroup);
     }
 
-    public void addPostFinishJob(long fixtureId) throws SchedulerException {
-        String jobName = FootballSchedulerName.postFinishJob(fixtureId);
-        String triggerName = FootballSchedulerName.postFinishTrigger(fixtureId);
+    public void addPostMatchJob(long fixtureId) throws SchedulerException {
+        String jobName = FootballSchedulerName.postMatchJob(fixtureId);
+        String triggerName = FootballSchedulerName.postMatchTrigger(fixtureId);
         String groupName = FootballSchedulerName.fixtureGroup();
 
-        JobDetail jobDetail = JobBuilder.newJob(PostFinishJob.class)
+        JobDetail jobDetail = JobBuilder.newJob(PostMatchJob.class)
                 .withIdentity(jobName, groupName)
                 .usingJobData("fixtureId", fixtureId)
                 .build();
@@ -78,12 +78,12 @@ public class LiveFixtureJobSchedulerService {
                 .build();
 
         scheduler.scheduleJob(jobDetail, trigger);
-        log.info("addPostFinishJob :: jobName={}, triggerName={}, groupName={}, startAt={}",
+        log.info("addPostMatchJob :: jobName={}, triggerName={}, groupName={}, startAt={}",
                 jobName, triggerName, groupName, startTime);
     }
 
     public void removePostJob(long fixtureId) {
-        String jobName = FootballSchedulerName.postFinishJob(fixtureId);
+        String jobName = FootballSchedulerName.postMatchJob(fixtureId);
         String jobGroup = FootballSchedulerName.fixtureGroup();
         try {
             scheduler.deleteJob(new JobKey(jobName, jobGroup));

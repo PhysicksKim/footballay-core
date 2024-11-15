@@ -16,18 +16,22 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupProcessor;
-import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchProcessor;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchProcessor;
+import com.gyechunsik.scoreboard.util.TestJobKeyUtil;
+import com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
@@ -36,6 +40,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
+import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.*;
+import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
@@ -66,9 +72,9 @@ class FootballRootTest {
     @Autowired
     private FootballApiCacheService footballApiCacheService;
     @Autowired
-    private StartLineupProcessor startLineupProcessor;
+    private PreviousMatchProcessor startLineupProcessor;
     @Autowired
-    private LiveFixtureProcessor liveFixtureProcessor;
+    private LiveMatchProcessor liveMatchProcessor;
     @Autowired
     private LiveStatusRepository liveStatusRepository;
 
@@ -312,7 +318,8 @@ class FootballRootTest {
         em.clear();
 
         // when
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+        long fixtureId = fixture.getFixtureId();
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
         // then
         assertThat(addAvailableFixture.isAvailable()).isTrue();
@@ -345,7 +352,8 @@ class FootballRootTest {
         em.clear();
 
         // when
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+        long fixtureId = fixture.getFixtureId();
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
         List<Fixture> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(
                 league.getLeagueId(),
@@ -378,13 +386,15 @@ class FootballRootTest {
         em.flush();
         em.clear();
 
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixture.getFixtureId());
+        long fixtureId = fixture.getFixtureId();
+        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
         em.flush();
         em.clear();
 
         // when
-        boolean isSuccess = footballRoot.removeAvailableFixture(fixture.getFixtureId());
+        boolean isSuccess = footballRoot.removeAvailableFixture(fixtureId);
+        waitUntilJobRemoved(fixtureId);
 
         // then
         assertThat(addAvailableFixture.isAvailable()).isTrue();
@@ -392,6 +402,14 @@ class FootballRootTest {
         fixtureRepository.findById(fixture.getFixtureId()).ifPresent(f -> {
             assertThat(f.isAvailable()).isFalse();
         });
+    }
+
+    private void waitUntilJobRemoved(long fixtureId) {
+        JobKey previousMatchJobKey = createPreviousMatchJobKey(fixtureId);
+        JobKey liveMatchJobKey = createLiveMatchJobKey(fixtureId);
+
+        waitForJobToBeRemoved(scheduler, previousMatchJobKey);
+        waitForJobToBeRemoved(scheduler, liveMatchJobKey);
     }
 
     @DisplayName("라이브 정보를 포함한 경기 정보를 모두 채워서 가져오는 조회에 성공합니다")
@@ -404,7 +422,7 @@ class FootballRootTest {
         footballApiCacheService.cacheTeamSquad(TeamId.CROATIA);
         footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
         startLineupProcessor.requestAndSaveLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
-        liveFixtureProcessor.requestAndSaveLiveFixtureData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
+        liveMatchProcessor.requestAndSaveLiveMatchData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
 
         em.flush();
         em.clear();
@@ -421,6 +439,14 @@ class FootballRootTest {
         assertThat(eagerFixture.getLiveStatus()).isNotNull();
         assertThat(eagerFixture.getLineups()).isNotNull().isNotEmpty();
         assertThat(eagerFixture.getEvents()).isNotNull().isNotEmpty();
+    }
+
+    private void waitUntilJobAdded(long fixtureId) {
+        JobKey previousMatchJobKey = createPreviousMatchJobKey(fixtureId);
+        JobKey liveMatchJobKey = createLiveMatchJobKey(fixtureId);
+
+        waitForJobToBeScheduled(scheduler, liveMatchJobKey);
+        waitForJobToBeScheduled(scheduler, previousMatchJobKey);
     }
 
 }
