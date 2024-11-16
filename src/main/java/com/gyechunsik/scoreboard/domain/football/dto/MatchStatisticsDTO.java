@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Getter
@@ -96,11 +97,13 @@ public class MatchStatisticsDTO {
     @Getter
     @AllArgsConstructor
     public static class MatchPlayerStatisticsDTO {
+
         /**
          * Player 가 Unregistered Player 인 경우 id 가 null 일 수 있습니다.
          */
         @Nullable
         private Long id;
+
         /**
          * Player 가 Unregistered Player 인 경우 name 만 존재하거나 name 도 존재하지 않을 수 있습니다.
          */
@@ -108,9 +111,12 @@ public class MatchStatisticsDTO {
         private String koreanName;
         private String photoUrl;
         private Integer number;
+
         private String position;
         private boolean substitute;
         private PlayerStatisticsDTO statistics;
+        private UUID temporaryId;
+
     }
 
     @Getter

@@ -15,8 +15,8 @@ import java.util.Optional;
 public interface MatchLineupRepository extends JpaRepository<MatchLineup, Long> {
 
     @Query("SELECT ml FROM MatchLineup ml " +
-            "JOIN FETCH ml.matchPlayers sp " +
-            "JOIN FETCH sp.player p " +
+            "JOIN FETCH ml.matchPlayers mp " +
+            "LEFT JOIN FETCH mp.player p " +
             "WHERE ml.fixture = :fixture AND ml.team = :team")
     Optional<MatchLineup> findByFixtureAndTeam(Fixture fixture, Team team);
 

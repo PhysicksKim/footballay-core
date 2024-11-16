@@ -153,25 +153,24 @@ public class FootballStreamDtoMapper {
 
         FixtureEventsResponse._Player respPlayer = null;
         if (isUnregisteredPlayer(eventPlayer)) {
+            log.info("미등록 선수 정보가 존재합니다. {}", eventPlayer);
             respPlayer = new FixtureEventsResponse._Player(
                     null,
                     eventPlayer.getUnregisteredPlayerName(),
                     "",
-                    eventPlayer.getUnregisteredPlayerNumber() == null ? 0 : eventPlayer.getUnregisteredPlayerNumber()
+                    eventPlayer.getUnregisteredPlayerNumber() == null ? 0 : eventPlayer.getUnregisteredPlayerNumber(),
+                    eventPlayer.getTemporaryId() != null ? eventPlayer.getTemporaryId().toString() : null
             );
         } else {
             respPlayer = new FixtureEventsResponse._Player(
                     eventPlayer.getPlayer().getId(),
                     eventPlayer.getPlayer().getName(),
                     eventPlayer.getPlayer().getKoreanName(),
-                    eventPlayer.getPlayer().getNumber()
+                    eventPlayer.getPlayer().getNumber(),
+                    null
             );
         }
         return respPlayer;
-    }
-
-    private static boolean isUnregisteredPlayer(MatchPlayer eventPlayer) {
-        return eventPlayer.getPlayer() == null;
     }
 
     public static FixtureLiveStatusResponse toFixtureLiveStatusResponse(long fixtureId, LiveStatus liveStatus) {
@@ -190,6 +189,7 @@ public class FootballStreamDtoMapper {
         );
     }
 
+    // TODO : [TEST] FixtureLineupResponse 맵핑에서 미등록 선수 포함 시 테스트 필요
     /**
      * Fixture -> Lineup -> MatchLineup -> MatchPlayer
      *
@@ -210,15 +210,18 @@ public class FootballStreamDtoMapper {
                         .filter(l -> l.getTeam().getId() != homeTeamId).findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("어웨이팀 라인업이 존재하지 않습니다."));
 
-                List<MatchPlayer> findHomePlayers = findHomeLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
-                List<FixtureLineupResponse._StartPlayer> homeStartXI = new ArrayList<>();
-                List<FixtureLineupResponse._StartPlayer> homeSubstitutes = new ArrayList<>();
+                List<MatchPlayer> findHomePlayers = sortWithStartLineupComparator(findHomeLineup);
+                List<FixtureLineupResponse._LineupPlayer> homeStartXI = new ArrayList<>();
+                List<FixtureLineupResponse._LineupPlayer> homeSubstitutes = new ArrayList<>();
                 toLineupPlayerList(findHomePlayers, homeStartXI, homeSubstitutes);
 
-                List<MatchPlayer> findAwayPlayers = findAwayLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
-                List<FixtureLineupResponse._StartPlayer> awayStartXI = new ArrayList<>();
-                List<FixtureLineupResponse._StartPlayer> awaySubstitutes = new ArrayList<>();
+                List<MatchPlayer> findAwayPlayers = sortWithStartLineupComparator(findAwayLineup);
+                List<FixtureLineupResponse._LineupPlayer> awayStartXI = new ArrayList<>();
+                List<FixtureLineupResponse._LineupPlayer> awaySubstitutes = new ArrayList<>();
                 toLineupPlayerList(findAwayPlayers, awayStartXI, awaySubstitutes);
+
+                log.info("findHomePlayers: {}", findHomePlayers);
+                log.info("findAwayPlayers: {}", findAwayPlayers);
 
                 Team homeTeam = findHomeLineup.getTeam();
                 Team awayTeam = findAwayLineup.getTeam();
@@ -251,6 +254,10 @@ public class FootballStreamDtoMapper {
         );
     }
 
+    private static @NotNull List<MatchPlayer> sortWithStartLineupComparator(MatchLineup findHomeLineup) {
+        return findHomeLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
+    }
+
     public static List<TeamsOfLeagueResponse> toTeamsOfLeagueResponseList(List<Team> teamsOfLeague) {
         List<TeamsOfLeagueResponse> responseList = new ArrayList<>();
         for (Team team : teamsOfLeague) {
@@ -267,11 +274,37 @@ public class FootballStreamDtoMapper {
 
     private static void toLineupPlayerList(
             List<MatchPlayer> findAwayPlayers,
-            List<FixtureLineupResponse._StartPlayer> awayStartXI,
-            List<FixtureLineupResponse._StartPlayer> awaySubstitutes
+            List<FixtureLineupResponse._LineupPlayer> awayStartXI,
+            List<FixtureLineupResponse._LineupPlayer> awaySubstitutes
     ) {
         for (MatchPlayer findAwayPlayer : findAwayPlayers) {
-            FixtureLineupResponse._StartPlayer awayPlayer = new FixtureLineupResponse._StartPlayer(
+            FixtureLineupResponse._LineupPlayer responsePlayer
+                    = lineupDataToResponseDtoElement(findAwayPlayer);
+
+            if (responsePlayer.substitute()) {
+                awaySubstitutes.add(responsePlayer);
+            } else {
+                awayStartXI.add(responsePlayer);
+            }
+        }
+    }
+
+    private static FixtureLineupResponse._LineupPlayer lineupDataToResponseDtoElement(MatchPlayer findAwayPlayer) {
+        if(isUnregisteredPlayer(findAwayPlayer)) {
+            return new FixtureLineupResponse._LineupPlayer(
+                    0,
+                    "",
+                    findAwayPlayer.getUnregisteredPlayerName(),
+                    findAwayPlayer.getUnregisteredPlayerNumber(),
+                    MatchPlayer.UNREGISTERED_PLAYER_PHOTO_URL,
+                    findAwayPlayer.getPosition(),
+                    findAwayPlayer.getGrid(),
+                    findAwayPlayer.getSubstitute(),
+                    findAwayPlayer.getTemporaryId() != null ? findAwayPlayer.getTemporaryId().toString() : ""
+            );
+        } else {
+            assert findAwayPlayer.getPlayer() != null;
+            return new FixtureLineupResponse._LineupPlayer(
                     findAwayPlayer.getPlayer().getId(),
                     findAwayPlayer.getPlayer().getKoreanName(),
                     findAwayPlayer.getPlayer().getName(),
@@ -279,13 +312,14 @@ public class FootballStreamDtoMapper {
                     findAwayPlayer.getPlayer().getPhotoUrl(),
                     findAwayPlayer.getPosition(),
                     findAwayPlayer.getGrid(),
-                    findAwayPlayer.getSubstitute()
+                    findAwayPlayer.getSubstitute(),
+                    findAwayPlayer.getTemporaryId() != null ? findAwayPlayer.getTemporaryId().toString() : ""
             );
-            if (awayPlayer.substitute()) {
-                awaySubstitutes.add(awayPlayer);
-            } else {
-                awayStartXI.add(awayPlayer);
-            }
         }
     }
+
+    private static boolean isUnregisteredPlayer(MatchPlayer mp) {
+        return mp.getPlayer() == null;
+    }
+
 }

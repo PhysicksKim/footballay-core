@@ -143,7 +143,8 @@ public class FootballDtoMapper {
                 player.getNumber(),
                 mp.getPosition(),
                 mp.getSubstitute(),
-                stats
+                stats,
+                null
         );
     }
 
@@ -156,7 +157,8 @@ public class FootballDtoMapper {
                 mp.getUnregisteredPlayerNumber(),
                 mp.getPosition(),
                 mp.getSubstitute(),
-                stats
+                stats,
+                mp.getTemporaryId()
         );
     }
 

@@ -26,7 +26,8 @@ public record FixtureEventsResponse(
             @Nullable Long playerId,
             @Nullable String name,
             @Nullable String koreanName,
-            @Nullable Integer number
+            @Nullable Integer number,
+            @Nullable String tempId
     ) {
     }
 

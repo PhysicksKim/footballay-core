@@ -49,6 +49,7 @@ public class LiveFixtureEventService {
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
     private final MatchPlayerRepository matchPlayerRepository;
 
+    // TODO : 이벤트에 미등록 선수가 있는 경우, 라인업에서 이름으로 찾아보고 일치하는 이름이 없으면 그냥 새로운 MatchPlayer 만들도록함
     public void saveLiveEvent(FixtureSingleResponse response) {
         if (response.getResponse().isEmpty()) {
             throw new IllegalArgumentException("API _Response 데이터가 없습니다.");

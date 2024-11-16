@@ -37,8 +37,8 @@ public class FixtureJobManageService {
             dataIntegrityService.cleanUpFixtureLiveData(fixture);
             enrollFixtureJobs(fixture, fixtureId);
 
-            log.info("Fixture jobs added for fixtureId={}", fixtureId);
             fixture.setAvailable(true);
+            log.info("add job finished for fixtureId={}", fixtureId);
         } catch (SchedulerException e) {
             log.error("Failed to add fixture jobs for fixtureId={}", fixtureId, e);
         }
@@ -56,11 +56,18 @@ public class FixtureJobManageService {
                 fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
         );
         ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
+        ZonedDateTime now = ZonedDateTime.now();
 
-        previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        addPreviousMatchJobIfMatchNotStarted(fixtureId, lineupAnnounceTime, now);
         liveMatchJobSchedulerService.addJob(fixtureId, kickOffTime);
 
         log.info("Fixture jobs added for fixtureId={}", fixtureId);
+    }
+
+    private void addPreviousMatchJobIfMatchNotStarted(long fixtureId, ZonedDateTime lineupAnnounceTime, ZonedDateTime now) throws SchedulerException {
+        if(now.isBefore(lineupAnnounceTime)) {
+            previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
+        }
     }
 
     public void removeFixtureJobs(Fixture fixture) throws SchedulerException {

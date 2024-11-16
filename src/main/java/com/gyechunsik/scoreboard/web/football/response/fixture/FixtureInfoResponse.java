@@ -1,7 +1,5 @@
 package com.gyechunsik.scoreboard.web.football.response.fixture;
 
-import java.util.List;
-
 public record FixtureInfoResponse(
         long fixtureId,
         String referee,
@@ -10,14 +8,6 @@ public record FixtureInfoResponse(
         _Team home,
         _Team away
 ) {
-
-    public record _Player(
-            long id,
-            String name,
-            String koreanName,
-            String photo
-    ) {
-    }
 
     public record _League(
             long id,

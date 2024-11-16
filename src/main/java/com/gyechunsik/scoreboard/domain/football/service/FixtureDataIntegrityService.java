@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Optional;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class FixtureDataIntegrityService {
 
     private final FixtureEventRepository fixtureEventRepository;
@@ -68,7 +70,9 @@ public class FixtureDataIntegrityService {
         log.info("start cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
 
         List<MatchLineup> lineups = fixture.getLineups();
+        log.info("DEV lineups={}", lineups);
         List<FixtureEvent> fixtureEvents = fixture.getEvents();
+        log.info("DEV fixtureEvents={}", fixtureEvents);
 
         removeEvents(fixtureEvents);
         removeLineups(lineups);

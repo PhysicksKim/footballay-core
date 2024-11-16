@@ -116,15 +116,20 @@ public class MatchPlayer {
     @Column(nullable = false)
     private Boolean substitute = true;
 
+    public static final String UNREGISTERED_PLAYER_PHOTO_URL = "https://media.api-sports.io/football/players/0.png";
+
     @Override
     public String toString() {
         return "MatchPlayer{" +
                 "id=" + id +
-                ", matchLineup=" + matchLineup.getId() +
+                ", matchLineup=" + (matchLineup != null ? matchLineup.getId() : "null") +
                 ", player=" + player +
                 ", position='" + position + '\'' +
                 ", grid='" + grid + '\'' +
                 ", substitute=" + substitute +
+                (unregisteredPlayerName != null ? ", unregisteredPlayerName='" + unregisteredPlayerName + '\'' : "") +
+                (unregisteredPlayerNumber != null ? ", unregisteredPlayerNumber=" + unregisteredPlayerNumber : "") +
+                (temporaryId != null ? ", temporaryId=" + temporaryId : "") +
                 '}';
     }
 }

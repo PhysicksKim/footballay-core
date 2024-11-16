@@ -111,6 +111,7 @@ public class LineupService {
      * @return 라인업이 완전하고 모든 선수가 등록된 경우 true, 그렇지 않으면 false
      * @throws IllegalArgumentException 필요한 데이터가 없거나 경기 또는 팀이 데이터베이스에 없는 경우
      */
+    // TODO : unregistered player 에 temporary ID 추가해야함
     public boolean saveLineup(FixtureSingleResponse response) {
         ResponseValues responseValues = ResponseValues.of(response);
         if(responseValues == null) {
@@ -335,11 +336,11 @@ public class LineupService {
 
         // id 존재하는 선수들은 playerRepository 에서 찾아서 저장
         List<Player> findPlayers = playerRepository.findAllById(playerResponseMap.keySet());
-        findPlayers.forEach(player -> {
-            _Lineups._Player playerResponse = playerResponseMap.get(player.getId());
+        findPlayers.forEach(playerEntity -> {
+            _Lineups._Player playerResponse = playerResponseMap.get(playerEntity.getId());
             MatchPlayer matchPlayer = MatchPlayer.builder()
                     .matchLineup(matchLineup)
-                    .player(player)
+                    .player(playerEntity)
                     .position(playerResponse.getPos())
                     .grid(playerResponse.getGrid())
                     .substitute(isSubstitute)
@@ -347,14 +348,16 @@ public class LineupService {
             matchPlayerList.add(matchPlayer);
         });
 
+        // TODO : [TEST] 미등록선수에 대해 temporaryId 가 제대로 추가되는지
         // id 가 null 인 선수들은 playerRepository 에 저장되지 않고 MatchPlayer 에만 저장
-        idNullPlayerList.forEach(player -> {
+        idNullPlayerList.forEach(responsePlayer -> {
             MatchPlayer matchPlayer = MatchPlayer.builder()
                     .matchLineup(matchLineup)
-                    .unregisteredPlayerName(player.getName())
-                    .unregisteredPlayerNumber(player.getNumber())
-                    .position(player.getPos())
-                    .grid(player.getGrid())
+                    .unregisteredPlayerName(responsePlayer.getName())
+                    .unregisteredPlayerNumber(responsePlayer.getNumber())
+                    .temporaryId(UUID.randomUUID())
+                    .position(responsePlayer.getPos())
+                    .grid(responsePlayer.getGrid())
                     .substitute(isSubstitute)
                     .build();
             matchPlayerList.add(matchPlayer);

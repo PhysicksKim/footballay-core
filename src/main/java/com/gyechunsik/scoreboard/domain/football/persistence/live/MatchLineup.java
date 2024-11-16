@@ -52,7 +52,7 @@ public class MatchLineup {
                 ", fixtureId=" + (fixture != null ? fixture.getFixtureId() : "null") +
                 ", teamName=" + (team != null ? team.getName() : "null") +
                 ", formation='" + formation + '\'' +
-                ", matchPlayers=" + (matchPlayers != null ? matchPlayers.stream().map(startPlayer -> startPlayer.getPlayer().getName()).toList() : "null") +
+                ", matchPlayers.size=" + matchPlayers.size() +
                 '}';
     }
 }

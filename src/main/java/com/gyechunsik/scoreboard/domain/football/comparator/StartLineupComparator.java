@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 public class StartLineupComparator implements Comparator<MatchPlayer> {
@@ -60,7 +61,7 @@ public class StartLineupComparator implements Comparator<MatchPlayer> {
                     return -1;
                 }
 
-                int numberComp = Integer.compare(targetNumber, referenceNumber);
+                int numberComp = safeNumberCompare(targetNumber, referenceNumber);
                 if (numberComp != 0) {
                     return numberComp;
                 }
@@ -85,30 +86,7 @@ public class StartLineupComparator implements Comparator<MatchPlayer> {
         }
     }
 
-    /**
-     * 선수의 등번호를 반환합니다. <br>
-     * 선수가 null 인 경우 unregisteredPlayerNumber 를 사용합니다.
-     *
-     * @param matchPlayer 경기 선수
-     * @return 선수의 등번호
-     */
-    public static @Nullable Integer getSafeNumber(MatchPlayer matchPlayer) {
-        if (matchPlayer.getPlayer() != null) {
-            return matchPlayer.getPlayer().getNumber();
-        } else {
-            return matchPlayer.getUnregisteredPlayerNumber();
-        }
-    }
-
-    public static String getSafePositionToUpperCase(MatchPlayer matchPlayer) {
-        if (matchPlayer.getPosition() == null) {
-            return "F";
-        } else {
-            return matchPlayer.getPosition().toUpperCase();
-        }
-    }
-
-    public static int compareSafePlayerId(MatchPlayer target, MatchPlayer reference) {
+    private static int compareSafePlayerId(MatchPlayer target, MatchPlayer reference) {
         Player targetPlayer = target.getPlayer();
         Player referencePlayer = reference.getPlayer();
 
@@ -116,10 +94,50 @@ public class StartLineupComparator implements Comparator<MatchPlayer> {
             return Long.compare(targetPlayer.getId(), referencePlayer.getId());
         }
 
+        if(targetPlayer == null && referencePlayer == null) {
+            UUID targetUuid = target.getTemporaryId();
+            UUID referenceUuid = reference.getTemporaryId();
+            if(targetUuid != null && referenceUuid != null) {
+                return targetUuid.compareTo(referenceUuid);
+            }
+        }
+
         if (targetPlayer == null && referencePlayer != null) {
             return 1;
-        } else { // targetPlayer != null && referencePlayer == null
+        } else if(targetPlayer != null && referencePlayer == null){ // targetPlayer != null && referencePlayer == null
             return -1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * 선수의 등번호를 반환합니다. <br>
+     * 선수가 null 인 경우 unregisteredPlayerNumber 를 사용합니다.
+     *
+     * @param matchPlayer 경기 선수
+     * @return 선수의 등번호
+     */
+    private static @Nullable Integer getSafeNumber(MatchPlayer matchPlayer) {
+        if (matchPlayer.getPlayer() != null) {
+            return matchPlayer.getPlayer().getNumber();
+        } else {
+            return matchPlayer.getUnregisteredPlayerNumber();
+        }
+    }
+
+    private static int safeNumberCompare(Integer targetNumber, Integer referenceNumber) {
+        if(targetNumber != null && referenceNumber != null) {
+            return Integer.compare(targetNumber, referenceNumber);
+        }
+        return 0;
+    }
+
+    private static String getSafePositionToUpperCase(MatchPlayer matchPlayer) {
+        if (matchPlayer.getPosition() == null) {
+            return "F";
+        } else {
+            return matchPlayer.getPosition().toUpperCase();
         }
     }
 
