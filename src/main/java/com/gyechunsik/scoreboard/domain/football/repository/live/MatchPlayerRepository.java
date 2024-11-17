@@ -4,7 +4,6 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,4 +43,10 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
             "JOIN FETCH mp.playerStatistics ps " +
             "WHERE ml.fixture = :fixture AND ml.team = :team")
     List<MatchPlayer> findMatchPlayerByFixtureAndTeam(Fixture fixture, Team team);
+
+    @Query("SELECT mp FROM MatchPlayer mp " +
+            "WHERE mp.matchLineup.fixture.fixtureId = :fixtureId " +
+            "AND mp.matchLineup.team = :teamId " +
+            "AND mp.unregisteredPlayerName = :playerName")
+    Optional<MatchPlayer> findUnregisteredPlayerByName(long fixtureId, long teamId, String playerName);
 }
