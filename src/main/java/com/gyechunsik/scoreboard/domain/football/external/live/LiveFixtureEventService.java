@@ -48,12 +48,12 @@ public class LiveFixtureEventService {
             throw new IllegalArgumentException("API _Response 데이터가 없습니다.");
         }
 
-        ResponseValues datas = new ResponseValues(response);
+        ResponseValues data = new ResponseValues(response);
 
-        Long fixtureId = datas.fixtureId;
-        Long leagueId = datas.leagueId;
-        Long homeId = datas.homeId;
-        Long awayId = datas.awayId;
+        Long fixtureId = data.fixtureId;
+        Long leagueId = data.leagueId;
+        Long homeId = data.homeId;
+        Long awayId = data.awayId;
 
         log.info("started to save live event fixtureId={}", fixtureId);
 
@@ -63,7 +63,7 @@ public class LiveFixtureEventService {
         Team away = findTeamOrThrow(awayId);
         log.info("found all fixture league home/away entities of fixtureId={}", fixtureId);
 
-        List<_Events> events = datas.events;
+        List<_Events> events = data.events;
         if (events.isEmpty()) {
             log.info("이벤트가 없습니다. fixtureId={}", fixtureId);
             return;
@@ -96,29 +96,9 @@ public class LiveFixtureEventService {
     private void deleteReducedEvents(List<_Events> events, List<FixtureEvent> fixtureEventList) {
         for (int i = events.size(); i < fixtureEventList.size(); i++) {
             FixtureEvent fixtureEvent = fixtureEventList.get(i);
-            MatchPlayer eventPlayer = fixtureEvent.getPlayer();
-            MatchPlayer eventAssist = fixtureEvent.getAssist();
-
-            deleteMatchPlayerIfNoRelationWithLineup(eventPlayer);
-            deleteMatchPlayerIfNoRelationWithLineup(eventAssist);
-
+            detachAndDeleteMatchPlayerIfNoLineup(fixtureEvent);
             fixtureEventRepository.delete(fixtureEventList.get(i));
         }
-    }
-
-    private Team findTeamOrThrow(Long teamId) {
-        return teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("Home/Away Team 정보가 없습니다. teamId=" + teamId));
-    }
-
-    private League findLeagueOrThrow(Long leagueId) {
-        return leagueRepository.findById(leagueId)
-                .orElseThrow(() -> new IllegalArgumentException("League 정보가 없습니다. leagueId=" + leagueId));
-    }
-
-    private Fixture findFixtureOrThrow(Long fixtureId) {
-        return fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("Fixture 정보가 없습니다. fixtureId=" + fixtureId));
     }
 
     /**
@@ -133,11 +113,9 @@ public class LiveFixtureEventService {
             FixtureEvent fixtureEvent = fixtureEventList.get(i);
             // 이벤트가 다르다면 업데이트
             if (!isSameEvent(event, fixtureEvent)) {
-                MatchPlayer prevEventPlayer = fixtureEvent.getPlayer();
-                MatchPlayer prevEventAssist = fixtureEvent.getAssist();
+                log.info("이벤트 업데이트. fixtureId={}, sequence={}", fixtureEvent.getFixture().getFixtureId(), fixtureEvent.getSequence());
 
-                deleteMatchPlayerIfNoRelationWithLineup(prevEventPlayer);
-                deleteMatchPlayerIfNoRelationWithLineup(prevEventAssist);
+                detachAndDeleteMatchPlayerIfNoLineup(fixtureEvent);
 
                 Fixture fixture = fixtureEvent.getFixture();
                 Team team = teamRepository.findById(event.getTeam().getId())
@@ -177,6 +155,20 @@ public class LiveFixtureEventService {
 
                 updateEvent(event, fixtureEvent, team, eventPlayer, eventAssist);
             }
+        }
+    }
+
+    private void detachAndDeleteMatchPlayerIfNoLineup(FixtureEvent fixtureEvent) {
+        MatchPlayer eventPlayer = fixtureEvent.getPlayer();
+        MatchPlayer eventAssist = fixtureEvent.getAssist();
+
+        if (eventPlayer != null && eventPlayer.getMatchLineup() == null) {
+            fixtureEvent.setPlayer(null);
+            matchPlayerRepository.delete(eventPlayer);
+        }
+        if (eventAssist != null && eventAssist.getMatchLineup() == null) {
+            fixtureEvent.setAssist(null);
+            matchPlayerRepository.delete(eventAssist);
         }
     }
 
@@ -544,15 +536,26 @@ public class LiveFixtureEventService {
         return FINISHED_STATUSES.contains(shortStatus);
     }
 
+    private Team findTeamOrThrow(Long teamId) {
+        return teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Home/Away Team 정보가 없습니다. teamId=" + teamId));
+    }
+
+    private League findLeagueOrThrow(Long leagueId) {
+        return leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new IllegalArgumentException("League 정보가 없습니다. leagueId=" + leagueId));
+    }
+
+    private Fixture findFixtureOrThrow(Long fixtureId) {
+        return fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("Fixture 정보가 없습니다. fixtureId=" + fixtureId));
+    }
+
     private void deleteEvents(Fixture fixture) {
         List<FixtureEvent> eventsList = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
 
         for (FixtureEvent fixtureEvent : eventsList) {
-            MatchPlayer eventPlayer = fixtureEvent.getPlayer();
-            MatchPlayer eventAssist = fixtureEvent.getAssist();
-
-            deleteMatchPlayerIfNoRelationWithLineup(eventPlayer);
-            deleteMatchPlayerIfNoRelationWithLineup(eventAssist);
+            detachAndDeleteMatchPlayerIfNoLineup(fixtureEvent);
         }
 
         fixtureEventRepository.deleteAll(eventsList);

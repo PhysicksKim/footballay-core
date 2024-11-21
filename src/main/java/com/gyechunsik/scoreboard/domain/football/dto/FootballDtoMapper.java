@@ -163,8 +163,6 @@ public class FootballDtoMapper {
     }
 
     private static MatchStatisticsDTO.PlayerStatisticsDTO createPlayerStatisticsDto(PlayerStatistics ps) {
-
-
         return new MatchStatisticsDTO.PlayerStatisticsDTO(
                 ps.getMinutesPlayed(),
                 ps.getPosition(),

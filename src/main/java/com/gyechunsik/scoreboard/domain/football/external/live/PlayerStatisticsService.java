@@ -190,7 +190,12 @@ public class PlayerStatisticsService {
         }
     }
 
-    private void saveOrUpdatePlayerStatistics(List<PlayerStatistics> createdPlayerStatistics, List<MatchPlayer> updatedMatchPlayers, MatchPlayer mp, _PlayerStatistics playerStatistics) {
+    private void saveOrUpdatePlayerStatistics(
+            List<PlayerStatistics> createdPlayerStatistics,
+            List<MatchPlayer> updatedMatchPlayers,
+            MatchPlayer mp,
+            _PlayerStatistics playerStatistics
+    ) {
         if (playerStatistics == null || playerStatistics.getStatistics() == null || playerStatistics.getStatistics().isEmpty()) {
             log.warn("playerStatistics 가 null 입니다. playerStatistics={}, mp={}", playerStatistics, mp);
             return;

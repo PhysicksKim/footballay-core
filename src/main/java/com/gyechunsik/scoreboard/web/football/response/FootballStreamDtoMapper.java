@@ -35,12 +35,7 @@ public class FootballStreamDtoMapper {
     }
 
     public static FixtureOfLeagueResponse toFixtureOfLeagueResponse(Fixture fixture) {
-        if (fixture.getHomeTeam() == null || fixture.getAwayTeam() == null) {
-            throw new IllegalArgumentException("홈팀 또는 어웨이팀 정보가 존재하지 않습니다. homeTeamIsNull:" + (fixture.getHomeTeam() == null) + ", awayTeamIsNull:" + (fixture.getAwayTeam() == null));
-        }
-        if (fixture.getLiveStatus() == null) {
-            throw new IllegalArgumentException("라이브 상태 정보가 존재하지 않습니다.");
-        }
+        validateFixtureData(fixture);
 
         LiveStatus liveStatus = fixture.getLiveStatus();
         FixtureOfLeagueResponse._Match match = new FixtureOfLeagueResponse._Match(
@@ -124,55 +119,6 @@ public class FootballStreamDtoMapper {
         return new FixtureEventsResponse(fixtureId, eventsList);
     }
 
-    private static FixtureEventsResponse._Events createEventResponse(FixtureEvent event, FixtureEventsResponse._Team respTeam, FixtureEventsResponse._Player respPlayer, FixtureEventsResponse._Player respAssist) {
-        return new FixtureEventsResponse._Events(
-                event.getSequence(),
-                event.getTimeElapsed(),
-                event.getExtraTime(),
-                respTeam,
-                respPlayer,
-                respAssist,
-                event.getType().toString(),
-                event.getDetail(),
-                event.getComments()
-        );
-    }
-
-    private static FixtureEventsResponse._Team createEventResponseTeam(FixtureEvent event) {
-        return new FixtureEventsResponse._Team(
-                event.getTeam().getId(),
-                event.getTeam().getName(),
-                event.getTeam().getKoreanName()
-        );
-    }
-
-    private static FixtureEventsResponse._Player createEventResponsePerson(MatchPlayer eventPlayer) {
-        if (eventPlayer == null) {
-            return null;
-        }
-
-        FixtureEventsResponse._Player respPlayer = null;
-        if (isUnregisteredPlayer(eventPlayer)) {
-            log.info("미등록 선수 정보가 존재합니다. {}", eventPlayer);
-            respPlayer = new FixtureEventsResponse._Player(
-                    null,
-                    eventPlayer.getUnregisteredPlayerName(),
-                    "",
-                    eventPlayer.getUnregisteredPlayerNumber() == null ? 0 : eventPlayer.getUnregisteredPlayerNumber(),
-                    eventPlayer.getTemporaryId() != null ? eventPlayer.getTemporaryId().toString() : null
-            );
-        } else {
-            respPlayer = new FixtureEventsResponse._Player(
-                    eventPlayer.getPlayer().getId(),
-                    eventPlayer.getPlayer().getName(),
-                    eventPlayer.getPlayer().getKoreanName(),
-                    eventPlayer.getPlayer().getNumber(),
-                    null
-            );
-        }
-        return respPlayer;
-    }
-
     public static FixtureLiveStatusResponse toFixtureLiveStatusResponse(long fixtureId, LiveStatus liveStatus) {
         FixtureLiveStatusResponse._Score score = new FixtureLiveStatusResponse._Score(
                 liveStatus.getHomeScore(),
@@ -192,7 +138,6 @@ public class FootballStreamDtoMapper {
     // TODO : [TEST] FixtureLineupResponse 맵핑에서 미등록 선수 포함 시 테스트 필요
     /**
      * Fixture -> Lineup -> MatchLineup -> MatchPlayer
-     *
      * @param fixture
      * @return
      */
@@ -219,9 +164,6 @@ public class FootballStreamDtoMapper {
                 List<FixtureLineupResponse._LineupPlayer> awayStartXI = new ArrayList<>();
                 List<FixtureLineupResponse._LineupPlayer> awaySubstitutes = new ArrayList<>();
                 toLineupPlayerList(findAwayPlayers, awayStartXI, awaySubstitutes);
-
-                log.info("findHomePlayers: {}", findHomePlayers);
-                log.info("findAwayPlayers: {}", findAwayPlayers);
 
                 Team homeTeam = findHomeLineup.getTeam();
                 Team awayTeam = findAwayLineup.getTeam();
@@ -254,10 +196,6 @@ public class FootballStreamDtoMapper {
         );
     }
 
-    private static @NotNull List<MatchPlayer> sortWithStartLineupComparator(MatchLineup findHomeLineup) {
-        return findHomeLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
-    }
-
     public static List<TeamsOfLeagueResponse> toTeamsOfLeagueResponseList(List<Team> teamsOfLeague) {
         List<TeamsOfLeagueResponse> responseList = new ArrayList<>();
         for (Team team : teamsOfLeague) {
@@ -270,6 +208,70 @@ public class FootballStreamDtoMapper {
             responseList.add(response);
         }
         return responseList;
+    }
+
+    private static void validateFixtureData(Fixture fixture) {
+        if (fixture.getHomeTeam() == null || fixture.getAwayTeam() == null) {
+            throw new IllegalArgumentException("홈팀 또는 어웨이팀 정보가 존재하지 않습니다. homeTeamIsNull:" + (fixture.getHomeTeam() == null) + ", awayTeamIsNull:" + (fixture.getAwayTeam() == null));
+        }
+        if (fixture.getLiveStatus() == null) {
+            throw new IllegalArgumentException("라이브 상태 정보가 존재하지 않습니다.");
+        }
+    }
+
+    private static FixtureEventsResponse._Events createEventResponse(FixtureEvent event, FixtureEventsResponse._Team respTeam, FixtureEventsResponse._Player respPlayer, FixtureEventsResponse._Player respAssist) {
+        return new FixtureEventsResponse._Events(
+                event.getSequence(),
+                event.getTimeElapsed(),
+                event.getExtraTime(),
+                respTeam,
+                respPlayer,
+                respAssist,
+                event.getType().toString(),
+                event.getDetail(),
+                event.getComments()
+        );
+    }
+
+    private static FixtureEventsResponse._Team createEventResponseTeam(FixtureEvent event) {
+        return new FixtureEventsResponse._Team(
+                event.getTeam().getId(),
+                event.getTeam().getName(),
+                event.getTeam().getKoreanName()
+        );
+    }
+
+    private static FixtureEventsResponse._Player createEventResponsePerson(MatchPlayer eventPlayer) {
+        if (eventPlayer == null) {
+            return null;
+        }
+
+        FixtureEventsResponse._Player respPlayer = null;
+        if (isUnregisteredPlayer(eventPlayer)) {
+            // 미등록선수
+            log.info("미등록 선수 정보가 존재합니다. {}", eventPlayer);
+            respPlayer = new FixtureEventsResponse._Player(
+                    null,
+                    eventPlayer.getUnregisteredPlayerName(),
+                    "",
+                    eventPlayer.getUnregisteredPlayerNumber() == null ? 0 : eventPlayer.getUnregisteredPlayerNumber(),
+                    eventPlayer.getTemporaryId() != null ? eventPlayer.getTemporaryId().toString() : null
+            );
+        } else {
+            // 등록선수
+            respPlayer = new FixtureEventsResponse._Player(
+                    eventPlayer.getPlayer().getId(),
+                    eventPlayer.getPlayer().getName(),
+                    eventPlayer.getPlayer().getKoreanName(),
+                    eventPlayer.getPlayer().getNumber(),
+                    null
+            );
+        }
+        return respPlayer;
+    }
+
+    private static @NotNull List<MatchPlayer> sortWithStartLineupComparator(MatchLineup findHomeLineup) {
+        return findHomeLineup.getMatchPlayers().stream().sorted(new StartLineupComparator()).toList();
     }
 
     private static void toLineupPlayerList(

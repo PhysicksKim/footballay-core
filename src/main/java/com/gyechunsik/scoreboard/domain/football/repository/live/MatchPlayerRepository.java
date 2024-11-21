@@ -40,13 +40,13 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
 
     @Query("SELECT mp FROM MatchPlayer mp " +
             "JOIN FETCH mp.matchLineup ml " +
-            "JOIN FETCH mp.playerStatistics ps " +
+            "LEFT JOIN FETCH mp.playerStatistics ps " +
             "WHERE ml.fixture = :fixture AND ml.team = :team")
     List<MatchPlayer> findMatchPlayerByFixtureAndTeam(Fixture fixture, Team team);
 
     @Query("SELECT mp FROM MatchPlayer mp " +
             "WHERE mp.matchLineup.fixture.fixtureId = :fixtureId " +
-            "AND mp.matchLineup.team = :teamId " +
+            "AND mp.matchLineup.team.id = :teamId " +
             "AND mp.unregisteredPlayerName = :playerName")
     Optional<MatchPlayer> findUnregisteredPlayerByName(long fixtureId, long teamId, String playerName);
 }

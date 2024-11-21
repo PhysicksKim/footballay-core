@@ -56,7 +56,8 @@ public record MatchStatisticsResponse(
             String koreanName,
             String photo,
             String position,
-            Integer number
+            Integer number,
+            String tempId
     ){}
 
     public record _PlayerStatistics(

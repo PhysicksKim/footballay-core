@@ -57,7 +57,7 @@ public class MatchStatisticsResponseMapper {
         if (teamStat == null) {
             log.info("Team statistics not available, returning empty statistics.");
             return new MatchStatisticsResponse._ResponseTeamStatistics(
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  List.of() // 기본값으로 빈 통계 제공
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of() // 기본값으로 빈 통계 제공
             );
         }
 
@@ -153,13 +153,14 @@ public class MatchStatisticsResponseMapper {
 
     private static MatchStatisticsResponse._PlayerInfoBasic createResponsePlayerInfoBasic(MatchPlayerStatisticsDTO mpsDto) {
         return new MatchStatisticsResponse._PlayerInfoBasic(
-        mpsDto.getId(),
-        mpsDto.getName(),
-        mpsDto.getKoreanName(),
-        mpsDto.getPhotoUrl(),
-        mpsDto.getPosition(),
-        mpsDto.getNumber()
-);
+                mpsDto.getId(),
+                mpsDto.getName(),
+                mpsDto.getKoreanName(),
+                mpsDto.getPhotoUrl(),
+                mpsDto.getPosition(),
+                mpsDto.getNumber(),
+                mpsDto.getTemporaryId() != null ? mpsDto.getTemporaryId().toString() : null
+        );
     }
 
     private static int safeInt(Integer value) {

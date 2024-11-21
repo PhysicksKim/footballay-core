@@ -73,6 +73,7 @@ public class LineupService {
         //  혹시나 불완전한 이전 데이터가 잔존한다 하더라도 라인업 데이터가 없다면 라인업을 다시 저장할 필요가 없습니다.
         boolean notExistLineup = !this.existLineupDataInResponse(response);
         if(notExistLineup) {
+            log.info("[Lineup Save Need : X] lineup is not exist in response. fixtureId={}", responseValues.fixtureId);
             return false;
         }
 
@@ -87,6 +88,7 @@ public class LineupService {
 
         // API 라인업 정보가 있고, DB 라인업 데이터는 없다면 : 다시 저장해야 합니다
         if(optionalHomeLineup.isEmpty() || optionalAwayLineup.isEmpty()) {
+            log.info("[Lineup Save Need : O] lineup data is not exist in database. fixtureId={}", responseValues.fixtureId);
             return true;
         }
 
@@ -425,7 +427,12 @@ public class LineupService {
      * @return 불일치가 있으면 true, 그렇지 않으면 false
      */
     private boolean isPlayerCountMismatch(int expectedRegistered, int expectedUnregistered, PlayerCount actualCount) {
-        return actualCount.registered != expectedRegistered || actualCount.unregistered != expectedUnregistered;
+        boolean isMismatch = actualCount.registered != expectedRegistered || actualCount.unregistered != expectedUnregistered;
+        if(isMismatch) {
+            log.info("[Lineup Save Need : O] 라인업 데이터의 등록/미등록 선수 수가 불일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}",
+                    expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
+        }
+        return isMismatch;
     }
 
     private static class PlayerCount {
