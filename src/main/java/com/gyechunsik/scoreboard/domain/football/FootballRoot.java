@@ -1,7 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football;
 
-import com.gyechunsik.scoreboard.domain.football.dto.FootballDtoMapper;
-import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDTO;
+import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -42,78 +41,58 @@ public class FootballRoot {
 
     private final LeagueRepository leagueRepository;
 
-    public List<League> getLeagues() {
-        List<League> leagues;
+    public List<LeagueDto> getLeagues() {
         try {
-            leagues = footballDataService.getLeagues(10);
+            List<League> leagueEntities = footballDataService.getLeagues(10);
+            return FootballDomainDtoMapper.leagueDtosFromEntities(leagueEntities);
         } catch (Exception e) {
             log.error("error while getting Leagues :: {}", e.getMessage());
             return List.of();
         }
-        return leagues;
     }
 
-    public List<Team> getTeamsOfLeague(long leagueId) {
-        List<Team> teams;
-        try {
-            teams = footballDataService.getTeamsByLeagueId(leagueId);
-        } catch (Exception e) {
-            log.error("error while getting _Teams by LeagueId :: {}", e.getMessage());
-            return List.of();
-        }
-        return teams;
+    public List<LeagueDto> getAvailableLeagues() {
+        List<League> leagueEntities = footballAvailableService.getAvailableLeagues();
+        return FootballDomainDtoMapper.leagueDtosFromEntities(leagueEntities);
     }
 
-    public List<Player> getSquadOfTeam(long teamId) {
-        List<Player> squad;
-        try {
-            squad = footballDataService.getSquadOfTeam(teamId);
-        } catch (Exception e) {
-            log.error("error while getting Squad by TeamId :: {}", e.getMessage());
-            return List.of();
-        }
-        return squad;
-    }
-
-    public Player getPlayer(long playerId) {
-        Player player;
-        try {
-            player = footballDataService.findPlayerById(playerId).orElseThrow();
-        } catch (Exception e) {
-            log.error("error while getting _Player by Id :: {}", e.getMessage());
-            return null;
-        }
-        return player;
-    }
-
-    /**
-     * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
-     * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
-     * @return
-     */
-    public List<Fixture> getNextFixturesFromDate(long leagueId, ZonedDateTime zonedDateTime) {
-        List<Fixture> fixtures;
-        try {
-            fixtures = footballDataService.findFixturesOnClosestDate(leagueId, zonedDateTime);
-            log.info("getNextFixturesFromDate :: {}", fixtures);
-        } catch (Exception e) {
-            log.error("error while getting _Fixtures by LeagueId :: {}", e.getMessage());
-            return List.of();
-        }
-        return fixtures;
-    }
-
-    public League addAvailableLeague(long leagueId) {
+    public LeagueDto addAvailableLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
 
         footballAvailableService.updateAvailableLeague(leagueId, true);
 
-        return league;
+        return FootballDomainDtoMapper.leagueDtoFromEntity(league);
     }
 
-    public List<League> getAvailableLeagues() {
-        return footballAvailableService.getAvailableLeagues();
+    public List<TeamDto> getTeamsOfLeague(long leagueId) {
+        try {
+            List<Team> teamEntities = footballDataService.getTeamsByLeagueId(leagueId);
+            return FootballDomainDtoMapper.teamDtosFromEntities(teamEntities);
+        } catch (Exception e) {
+            log.error("error while getting _Teams by LeagueId :: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    public List<PlayerDto> getSquadOfTeam(long teamId) {
+        try {
+            List<Player> squadEntities = footballDataService.getSquadOfTeam(teamId);
+            return FootballDomainDtoMapper.playerDtosFromEntities(squadEntities);
+        } catch (Exception e) {
+            log.error("error while getting Squad by TeamId :: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
+    public PlayerDto getPlayer(long playerId) {
+        try {
+            Player player = footballDataService.findPlayerById(playerId).orElseThrow();
+            return FootballDomainDtoMapper.playerDtoFromEntity(player);
+        } catch (Exception e) {
+            log.error("error while getting Player by Id :: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -131,7 +110,7 @@ public class FootballRoot {
         return true;
     }
 
-    public Fixture addAvailableFixture(long fixtureId) {
+    public FixtureInfoDto addAvailableFixture(long fixtureId) {
         Fixture fixture = footballDataService.getFixtureById(fixtureId);
         try {
             footballAvailableService.addAvailableFixture(fixtureId);
@@ -139,27 +118,58 @@ public class FootballRoot {
             throw new RuntimeException(e);
         }
         log.info("Add Available fixture :: {}", fixture);
-        return fixture;
+        fixture.getLiveStatus();
+        return FootballDomainDtoMapper.fixtureInfoDtoFromEntity(fixture);
     }
 
-    public List<Fixture> getFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
-        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballDataService.findFixturesOnClosestDate(leagueId, truncated);
+    public Optional<FixtureInfoDto> getFixtureInfo(long fixtureId) {
+        try {
+            Fixture fixture = footballDataService.getFixtureById(fixtureId);
+            return Optional.of(FootballDomainDtoMapper.fixtureInfoDtoFromEntity(fixture));
+        } catch (Exception e) {
+            log.error("error while getting _Fixture by Id :: {}", e.getMessage());
+            return Optional.empty();
+        }
     }
 
-    public List<Fixture> getAvailableFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
-        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.findAvailableFixturesOnClosestDate(leagueId, truncated);
+    /**
+     * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
+     * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
+     * @return
+     */
+    public List<FixtureInfoDto> getNextFixturesFromDate(long leagueId, ZonedDateTime zonedDateTime) {
+        try {
+            List<Fixture> fixtures = footballDataService.findFixturesOnClosestDate(leagueId, zonedDateTime);
+            log.info("getNextFixturesFromDate :: {}", fixtures);
+            return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(fixtures);
+        } catch (Exception e) {
+            log.error("error while getting _Fixtures by LeagueId :: {}", e.getMessage());
+            return List.of();
+        }
     }
 
-    public List<Fixture> getFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<FixtureInfoDto> getFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballDataService.findFixturesOnDate(leagueId, truncated);
+        List<Fixture> fixturesOnClosestDate = footballDataService.findFixturesOnClosestDate(leagueId, truncated);
+        return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(fixturesOnClosestDate);
     }
 
-    public List<Fixture> getAvailableFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
+    public List<FixtureInfoDto> getAvailableFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
-        return footballAvailableService.findAvailableFixturesOnDate(leagueId, truncated);
+        List<Fixture> availableFixtures = footballAvailableService.findAvailableFixturesOnClosestDate(leagueId, truncated);
+        return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(availableFixtures);
+    }
+
+    public List<FixtureInfoDto> getFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        List<Fixture> fixturesOnDate = footballDataService.findFixturesOnDate(leagueId, truncated);
+        return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(fixturesOnDate);
+    }
+
+    public List<FixtureInfoDto> getAvailableFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
+        ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
+        List<Fixture> availableFixturesOnDate = footballAvailableService.findAvailableFixturesOnDate(leagueId, truncated);
+        return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(availableFixturesOnDate);
     }
 
     public boolean removeAvailableFixture(long fixtureId) {
@@ -328,22 +338,11 @@ public class FootballRoot {
         return true;
     }
 
-    public Optional<Fixture> getFixture(long fixtureId) {
-        try {
-            Fixture findFixture = footballDataService.getFixtureById(fixtureId);
-            log.info("getFixture :: {}", findFixture);
-            return Optional.of(findFixture);
-        } catch (Exception e) {
-            log.warn("error while getting _Fixture by Id :: {}", e.getMessage());
-            return Optional.empty();
-        }
-    }
-
-    public Optional<LiveStatus> getFixtureLiveStatus(long fixtureId) {
+    public Optional<LiveStatusDto> getFixtureLiveStatus(long fixtureId) {
         try {
             LiveStatus liveStatus = footballDataService.getFixtureLiveStatus(fixtureId);
             log.info("getFixtureLiveStatus :: {}", liveStatus);
-            return Optional.of(liveStatus);
+            return Optional.of(FootballDomainDtoMapper.liveStatusDtoFromEntity(liveStatus));
         } catch (Exception e) {
             log.warn("error while getting _FixtureLiveStatus by Id :: {}", e.getMessage());
             return Optional.empty();
@@ -351,20 +350,18 @@ public class FootballRoot {
     }
 
     /**
-     * Fixture Entity 를 연관관계들을 모두 채워서 재공합니다. <br>
-     * 트랜잭션 범위 밖에서 Lazy Loading 에러가 발생하지 않도록, Fixture 관련 연관관계 엔티티 필드들을 채워서 제공해줍니다.
+     * Fixture 기본 연관관계 정보와 더불어 라인업 데이터까지 재공합니다. <br>
      * @see Fixture
      * @see MatchLineup
      * @see MatchPlayer
-     * @see FixtureEvent
      * @see LiveStatus
      * @see Player
      * @see Team
      * @see League
      * @param fixtureId 조회할 fixtureId
-     * @return 연관관계들이 모두 채워져 있는 fixture entity
+     * @return fixtureWithLineupDto
      */
-    public Optional<Fixture> getFixtureWithEager(long fixtureId) {
+    public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
             log.info("try fixture eager loading :: {}", fixtureId);
             Fixture findFixture = footballDataService.getFixtureWithEager(fixtureId);
@@ -377,32 +374,30 @@ public class FootballRoot {
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
-
-            List<FixtureEvent> events = footballDataService.getFixtureEvents(findFixture);
-            findFixture.setEvents(events);
             log.info("fixture eager loaded :: {}", findFixture.getFixtureId());
-            return Optional.of(findFixture);
+            return Optional.of(FootballDomainDtoMapper.fixtureWithLineupDtoFromEntity(findFixture));
         } catch (Exception e) {
             log.warn("error while getting _Fixture with Eager by Id :: {}", e.getMessage());
             return Optional.empty();
         }
     }
 
-    public List<FixtureEvent> getFixtureEvents(long fixtureId) {
+    public List<FixtureEventWithPlayerDto> getFixtureEvents(long fixtureId) {
         try {
             Fixture fixture = footballDataService.getFixtureById(fixtureId);
-            return footballDataService.getFixtureEvents(fixture);
+            List<FixtureEvent> fixtureEvents = footballDataService.getFixtureEvents(fixture);
+            return FootballDomainDtoMapper.fixtureEventDtosFromEntities(fixtureEvents);
         } catch (Exception e) {
             log.error("error while getting _FixtureEvents by Id :: {}", e.getMessage());
             return List.of();
         }
     }
 
-    public List<Team> getTeamsOfPlayer(long playerId) {
+    public List<TeamDto> getTeamsOfPlayer(long playerId) {
         try {
             List<Team> teamPlayer = footballDataService.getTeamsOfPlayer(playerId);
             log.info("getPlayerTeamRelations :: {}", teamPlayer);
-            return teamPlayer;
+            return FootballDomainDtoMapper.teamDtosFromEntities(teamPlayer);
         } catch (Exception e) {
             log.error("error while getting _PlayerTeamRelations by Id :: {}", e.getMessage());
             return List.of();
@@ -415,7 +410,7 @@ public class FootballRoot {
      * @return
      */
     @Transactional(readOnly = true)
-    public MatchStatisticsDTO getMatchStatistics(long fixtureId) {
+    public MatchStatisticsDto getMatchStatistics(long fixtureId) {
         log.info("getMatchStatistics :: fixtureId={}", fixtureId);
         try {
             Fixture fixture = footballDataService.getFixtureById(fixtureId);
@@ -428,7 +423,7 @@ public class FootballRoot {
             List<MatchPlayer> homePlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), home.getId());
             List<MatchPlayer> awayPlayerStatistics = footballDataService.getPlayerStatistics(fixture.getFixtureId(), away.getId());
 
-            MatchStatisticsDTO dto = FootballDtoMapper.matchStatisticsDTOFromEntity(
+            MatchStatisticsDto dto = FootballDomainDtoMapper.matchStatisticsDTOFromEntity(
                     fixture, liveStatus, home, away, homeStatistics, awayStatistics, homePlayerStatistics, awayPlayerStatistics
             );
             log.debug("return getMatchStatistics :: {}", dto);

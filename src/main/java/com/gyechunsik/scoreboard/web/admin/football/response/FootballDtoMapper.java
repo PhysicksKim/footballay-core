@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.web.admin.football.response;
 
+import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -12,96 +13,96 @@ import java.util.List;
 
 public class FootballDtoMapper {
 
-    public static LiveStatusResponse toLiveStatusDto(LiveStatus liveStatus) {
+    public static LiveStatusResponse toLiveStatusDto(LiveStatusDto liveStatusDto) {
         return new LiveStatusResponse(
-                liveStatus.getLongStatus(),
-                liveStatus.getShortStatus(),
-                liveStatus.getElapsed()
+                liveStatusDto.longStatus(),
+                liveStatusDto.shortStatus(),
+                liveStatusDto.elapsed()
         );
     }
 
-    public static LeagueResponse toLeagueDto(League league) {
+    public static LeagueResponse toLeagueDto(LeagueDto league) {
         return new LeagueResponse(
-                league.getLeagueId(),
-                league.getName(),
-                league.getKoreanName(),
-                league.getLogo()
+                league.leagueId(),
+                league.name(),
+                league.koreanName(),
+                league.logo()
         );
     }
 
-    public static TeamResponse toTeamDto(Team team) {
+    public static TeamResponse toTeamResponse(TeamDto team) {
         return new TeamResponse(
-                team.getId(),
-                team.getName(),
-                team.getKoreanName(),
-                team.getLogo()
+                team.id(),
+                team.name(),
+                team.koreanName(),
+                team.logo()
         );
     }
 
-    public static PlayerResponse toPlayerDto(Player player) {
+    public static PlayerResponse toPlayerDto(PlayerDto player) {
         return new PlayerResponse(
-                player.getId(),
-                player.getName(),
-                player.getKoreanName(),
-                player.getPhotoUrl(),
-                player.getPosition()
+                player.id(),
+                player.name(),
+                player.koreanName(),
+                player.photoUrl(),
+                player.position()
         );
     }
 
-    public static FixtureResponse toFixtureDto(Fixture fixture) {
+    public static FixtureResponse toFixtureDto(FixtureInfoDto fixture) {
         return new FixtureResponse(
-                fixture.getFixtureId(),
-                fixture.getReferee(),
-                fixture.getTimezone(),
-                ZonedDateTime.of(fixture.getDate(), ZoneId.of(fixture.getTimezone())),
-                fixture.getTimestamp(),
-                toLiveStatusDto(fixture.getLiveStatus()),
-                toLeagueDto(fixture.getLeague()),
-                toTeamDto(fixture.getHomeTeam()),
-                toTeamDto(fixture.getAwayTeam())
+                fixture.fixtureId(),
+                fixture.referee(),
+                fixture.timezone(),
+                fixture.date(),
+                fixture.timestamp(),
+                toLiveStatusDto(fixture.liveStatus()),
+                toLeagueDto(fixture.league()),
+                toTeamResponse(fixture.homeTeam()),
+                toTeamResponse(fixture.awayTeam())
         );
     }
 
-    public static AvailableLeagueDto toAvailableLeagueDto(League league) {
-        return new AvailableLeagueDto(
-                league.getLeagueId(),
-                league.getName(),
-                league.getKoreanName(),
-                league.getLogo(),
-                league.isAvailable(),
-                league.getCurrentSeason()
-        );
-    }
-
-    public static AvailableFixtureDto toAvailableFixtureDto(Fixture fixture) {
+    public static AvailableFixtureDto toAvailableFixtureDto(FixtureInfoDto fixtureInfoDto) {
         return new AvailableFixtureDto(
-                fixture.getFixtureId(),
-                fixture.getReferee(),
-                fixture.getTimezone(),
-                ZonedDateTime.of(fixture.getDate(), ZoneId.of(fixture.getTimezone())),
-                fixture.getTimestamp(),
-                fixture.isAvailable(),
-                toLiveStatusDto(fixture.getLiveStatus()),
-                toLeagueDto(fixture.getLeague()),
-                toTeamDto(fixture.getHomeTeam()),
-                toTeamDto(fixture.getAwayTeam())
+                fixtureInfoDto.fixtureId(),
+                fixtureInfoDto.referee(),
+                fixtureInfoDto.timezone(),
+                fixtureInfoDto.date(),
+                fixtureInfoDto.timestamp(),
+                fixtureInfoDto.available(),
+                toLiveStatusDto(fixtureInfoDto.liveStatus()),
+                toLeagueDto(fixtureInfoDto.league()),
+                toTeamResponse(fixtureInfoDto.homeTeam()),
+                toTeamResponse(fixtureInfoDto.awayTeam())
         );
     }
 
-    public static TeamsOfPlayerResponse toTeamsOfPlayer(Player player, List<Team> teams) {
+    public static AvailableLeagueDto toAvailableLeagueDto(LeagueDto league) {
+        return new AvailableLeagueDto(
+                league.leagueId(),
+                league.name(),
+                league.koreanName(),
+                league.logo(),
+                league.available(),
+                league.currentSeason()
+        );
+    }
+
+    public static TeamsOfPlayerResponse toTeamsOfPlayer(PlayerDto player, List<TeamDto> teams) {
         TeamsOfPlayerResponse._Player _player = new TeamsOfPlayerResponse._Player(
-                player.getId(),
-                player.getName(),
-                player.getKoreanName(),
-                player.getPhotoUrl(),
-                player.getPosition()
+                player.id(),
+                player.name(),
+                player.koreanName(),
+                player.photoUrl(),
+                player.position()
         );
         TeamsOfPlayerResponse._Team[] _teams = teams.stream()
                 .map(team -> new TeamsOfPlayerResponse._Team(
-                        team.getId(),
-                        team.getName(),
-                        team.getKoreanName(),
-                        team.getLogo()
+                        team.id(),
+                        team.name(),
+                        team.koreanName(),
+                        team.logo()
                 ))
                 .toArray(TeamsOfPlayerResponse._Team[]::new);
         return new TeamsOfPlayerResponse(_player, _teams);

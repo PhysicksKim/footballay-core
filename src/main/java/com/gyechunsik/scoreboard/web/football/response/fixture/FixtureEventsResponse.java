@@ -22,19 +22,19 @@ public record FixtureEventsResponse(
     ) {
     }
 
+    public record _Team(
+            long teamId,
+            String name,
+            String koreanName
+    ) {
+    }
+
     public record _Player(
             @Nullable Long playerId,
             @Nullable String name,
             @Nullable String koreanName,
             @Nullable Integer number,
             @Nullable String tempId
-    ) {
-    }
-
-    public record _Team(
-            long teamId,
-            String name,
-            String koreanName
     ) {
     }
 

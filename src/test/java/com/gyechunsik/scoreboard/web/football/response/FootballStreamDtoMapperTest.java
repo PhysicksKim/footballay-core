@@ -6,6 +6,9 @@ import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
+import com.gyechunsik.scoreboard.domain.football.dto.FixtureEventWithPlayerDto;
+import com.gyechunsik.scoreboard.domain.football.dto.FixtureInfoDto;
+import com.gyechunsik.scoreboard.domain.football.dto.FixtureWithLineupDto;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
@@ -67,10 +70,7 @@ class FootballStreamDtoMapperTest {
     void FixtureInfoResponse() throws JsonProcessingException {
         // given
         final long fixtureId = FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA;
-        Fixture fixture = footballRoot.getFixtureWithEager(fixtureId).orElseThrow();
-
-        Integer number = fixture.getLineups().get(0).getMatchPlayers().get(0).getPlayer().getNumber();
-        log.info("number :: {}", number);
+        FixtureInfoDto fixture = footballRoot.getFixtureInfo(fixtureId).orElseThrow();
 
         // when
         FixtureInfoResponse response = FootballStreamDtoMapper.toFixtureInfoResponse(fixture);
@@ -85,9 +85,6 @@ class FootballStreamDtoMapperTest {
         assertThat(response.home()).isNotNull();
         assertThat(response.away()).isNotNull();
         assertThat(response.date()).isNotNull();
-        // assertThat(response.liveStatus()).isNotNull();
-        // assertThat(response.events()).isNotNull();
-        // assertThat(response.lineup()).isNotNull();
     }
 
 
@@ -96,7 +93,7 @@ class FootballStreamDtoMapperTest {
     void FixtureEventsResponse() throws JsonProcessingException {
         // given
         final long fixtureId = FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA;
-        List<FixtureEvent> events = footballRoot.getFixtureEvents(fixtureId);
+        List<FixtureEventWithPlayerDto> events = footballRoot.getFixtureEvents(fixtureId);
 
         // when
         FixtureEventsResponse response = FootballStreamDtoMapper.toFixtureEventsResponse(fixtureId, events);

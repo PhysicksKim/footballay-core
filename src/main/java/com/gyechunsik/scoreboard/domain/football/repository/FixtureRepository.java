@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.repository;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,7 +31,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     List<Fixture> findNextFixturesAfterDate(@Param("league") League league, @Param("date") LocalDateTime date);
 
     @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
-    Optional<Fixture> findById(Long fixtureId);
+    Optional<Fixture> findById(@NotNull Long fixtureId);
 
     @Query("SELECT f FROM Fixture f " +
             "JOIN FETCH f.league l " +

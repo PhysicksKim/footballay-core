@@ -1,10 +1,5 @@
 package com.gyechunsik.scoreboard.domain.football.dto;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
 import jakarta.annotation.Nullable;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -16,26 +11,26 @@ import java.util.UUID;
 @Slf4j
 @Getter
 @Builder
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
-public class MatchStatisticsDTO {
+@AllArgsConstructor
+public class MatchStatisticsDto {
 
-    private FixtureDTO fixture;
-    private LiveStatusDTO liveStatus;
+    private MatchStatsFixture fixture;
+    private MatchStatsLiveStatus liveStatus;
 
-    private TeamDTO home;
-    private TeamDTO away;
+    private MatchStatsTeam home;
+    private MatchStatsTeam away;
 
     @Nullable
-    private TeamStatisticsDTO homeStatistics;
+    private MatchStatsTeamStatistics homeStatistics;
     @Nullable
-    private TeamStatisticsDTO awayStatistics;
+    private MatchStatsTeamStatistics awayStatistics;
 
-    private List<MatchPlayerStatisticsDTO> homePlayerStatistics;
-    private List<MatchPlayerStatisticsDTO> awayPlayerStatistics;
+    private List<MatchStatsPlayers> homePlayerStatistics;
+    private List<MatchStatsPlayers> awayPlayerStatistics;
 
     @Getter
     @AllArgsConstructor
-    public static class FixtureDTO {
+    public static class MatchStatsFixture {
         private long id;
         private String referee;
         private LocalDateTime date;
@@ -47,7 +42,7 @@ public class MatchStatisticsDTO {
 
     @Getter
     @AllArgsConstructor
-    public static class LiveStatusDTO {
+    public static class MatchStatsLiveStatus {
         private String longStatus;
         private String shortStatus;
         private Integer elapsed;
@@ -57,7 +52,7 @@ public class MatchStatisticsDTO {
 
     @Getter
     @AllArgsConstructor
-    public static class TeamDTO {
+    public static class MatchStatsTeam {
         private Long id;
         private String name;
         private String koreanName;
@@ -66,7 +61,7 @@ public class MatchStatisticsDTO {
 
     @Getter
     @AllArgsConstructor
-    public static class TeamStatisticsDTO {
+    public static class MatchStatsTeamStatistics {
         private Integer shotsOnGoal;
         private Integer shotsOffGoal;
         private Integer totalShots;
@@ -84,19 +79,19 @@ public class MatchStatisticsDTO {
         private Integer passesAccurate;
         private Integer passesAccuracyPercentage;
         private Integer goalsPrevented;
-        private List<ExpectedGoalsDTO> expectedGoalsList;
+        private List<MatchStatsXg> expectedGoalsList;
     }
 
     @Getter
     @AllArgsConstructor
-    public static class ExpectedGoalsDTO {
+    public static class MatchStatsXg {
         private Integer elapsed;
         private String xg;
     }
 
     @Getter
     @AllArgsConstructor
-    public static class MatchPlayerStatisticsDTO {
+    public static class MatchStatsPlayers {
 
         /**
          * Player 가 Unregistered Player 인 경우 id 가 null 일 수 있습니다.
@@ -114,14 +109,14 @@ public class MatchStatisticsDTO {
 
         private String position;
         private boolean substitute;
-        private PlayerStatisticsDTO statistics;
+        private MatchStatsPlayerStatistics statistics;
         private UUID temporaryId;
 
     }
 
     @Getter
     @AllArgsConstructor
-    public static class PlayerStatisticsDTO {
+    public static class MatchStatsPlayerStatistics {
         private Integer minutesPlayed;
         private String position;
         private String rating;
@@ -153,7 +148,7 @@ public class MatchStatisticsDTO {
 
     @Override
     public String toString() {
-        return "MatchStatisticsDTO{" +
+        return "MatchStatisticsDto{" +
                 "fixture.id=" + fixture.getId() +
                 ", liveStatus.elapsed=" + liveStatus.getElapsed() +
                 ", home.id=" + home.getId() +

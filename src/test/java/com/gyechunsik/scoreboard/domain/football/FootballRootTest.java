@@ -3,9 +3,9 @@ package com.gyechunsik.scoreboard.domain.football;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
+import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
-import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
@@ -18,8 +18,6 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepos
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchProcessor;
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchProcessor;
-import com.gyechunsik.scoreboard.util.TestJobKeyUtil;
-import com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -31,7 +29,6 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
@@ -178,14 +175,14 @@ class FootballRootTest {
         leagueRepository.save(league2);
 
         // when
-        List<League> leagues = footballRoot.getLeagues();
+        List<LeagueDto> leagues = footballRoot.getLeagues();
 
         // then
         assertThat(leagues).isNotEmpty();
         assertThat(leagues).hasSize(2);
         leagues.forEach(league -> {
-            assertThat(league.getName()).isNotNull();
-            assertThat(league.getLeagueId()).isNotNull();
+            assertThat(league.name()).isNotNull();
+            assertThat(league.leagueId()).isNotNull();
         });
     }
 
@@ -202,16 +199,12 @@ class FootballRootTest {
         em.clear();
 
         // when
-        List<Team> teams = footballRoot.getTeamsOfLeague(leagueId);
+        List<TeamDto> teams = footballRoot.getTeamsOfLeague(leagueId);
 
         // then
         assertThat(teams).isNotEmpty();
         teams.forEach(team -> {
-            assertThat(team.getName()).isNotNull();
-            assertThat(team.getLeagueTeams()).isNotEmpty();
-            team.getLeagueTeams().forEach(
-                    leagueTeam -> assertThat(leagueTeam.getLeague().getName()).isNotNull()
-            );
+            assertThat(team.name()).isNotNull();
         });
     }
 
@@ -230,16 +223,12 @@ class FootballRootTest {
         em.clear();
 
         // when
-        List<Player> players = footballRoot.getSquadOfTeam(teamId);
+        List<PlayerDto> players = footballRoot.getSquadOfTeam(teamId);
 
         // then
         assertThat(players).isNotEmpty();
         players.forEach(player -> {
-            assertThat(player.getName()).isNotNull();
-            assertThat(player.getTeamPlayers()).isNotEmpty();
-            player.getTeamPlayers().forEach(
-                    teamPlayer -> assertThat(teamPlayer.getTeam().getName()).isNotNull()
-            );
+            assertThat(player.name()).isNotNull();
         });
     }
 
@@ -255,13 +244,13 @@ class FootballRootTest {
         ZonedDateTime beforeEuro2024Start = ZonedDateTime.parse("2024-06-01T00:00:00Z");
 
         // when
-        List<Fixture> nextFixturesFromDate = footballRoot.getNextFixturesFromDate(leagueId, beforeEuro2024Start);
+        List<FixtureInfoDto> nextFixturesFromDate = footballRoot.getNextFixturesFromDate(leagueId, beforeEuro2024Start);
 
         // then
         assertThat(nextFixturesFromDate).isNotEmpty();
         nextFixturesFromDate.forEach(fixture -> {
-            assertThat(fixture.getHomeTeam().getName()).isNotNull();
-            assertThat(fixture.getAwayTeam().getName()).isNotNull();
+            assertThat(fixture.homeTeam().name()).isNotNull();
+            assertThat(fixture.awayTeam().name()).isNotNull();
         });
     }
 
@@ -276,10 +265,10 @@ class FootballRootTest {
         footballRoot.addAvailableLeague(leagueId);
 
         // then
-        List<League> availableLeagues = footballRoot.getAvailableLeagues();
+        List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isNotEmpty();
         assertThat(availableLeagues).hasSize(1);
-        assertThat(availableLeagues.get(0).getLeagueId()).isEqualTo(leagueId);
+        assertThat(availableLeagues.get(0).leagueId()).isEqualTo(leagueId);
     }
 
     @Test
@@ -294,7 +283,7 @@ class FootballRootTest {
         footballRoot.removeAvailableLeague(leagueId);
 
         // then
-        List<League> availableLeagues = footballRoot.getAvailableLeagues();
+        List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isEmpty();
     }
 
@@ -319,10 +308,10 @@ class FootballRootTest {
 
         // when
         long fixtureId = fixture.getFixtureId();
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
+        FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
         // then
-        assertThat(addAvailableFixture.isAvailable()).isTrue();
+        assertThat(addAvailableFixture.available()).isTrue();
     }
 
     @Test
@@ -353,18 +342,18 @@ class FootballRootTest {
 
         // when
         long fixtureId = fixture.getFixtureId();
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
+        FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
-        List<Fixture> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(
+        List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(
                 league.getLeagueId(),
                 ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
         log.info("available fixtures = {}", availableFixtures);
 
         // then
-        assertThat(addAvailableFixture.isAvailable()).isTrue();
+        assertThat(addAvailableFixture.available()).isTrue();
         assertThat(availableFixtures).isNotEmpty();
         assertThat(availableFixtures).hasSize(1);
-        assertThat(availableFixtures.get(0).getFixtureId()).isEqualTo(fixture.getFixtureId());
+        assertThat(availableFixtures.get(0).fixtureId()).isEqualTo(fixture.getFixtureId());
     }
 
     @Test
@@ -387,7 +376,7 @@ class FootballRootTest {
         em.clear();
 
         long fixtureId = fixture.getFixtureId();
-        Fixture addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
+        FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
         em.flush();
         em.clear();
@@ -397,7 +386,7 @@ class FootballRootTest {
         waitUntilJobRemoved(fixtureId);
 
         // then
-        assertThat(addAvailableFixture.isAvailable()).isTrue();
+        assertThat(addAvailableFixture.available()).isTrue();
         assertThat(isSuccess).isTrue();
         fixtureRepository.findById(fixture.getFixtureId()).ifPresent(f -> {
             assertThat(f.isAvailable()).isFalse();
@@ -428,17 +417,14 @@ class FootballRootTest {
         em.clear();
 
         // when
-        Fixture eagerFixture = footballRoot.getFixtureWithEager(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA)
+        FixtureWithLineupDto eagerFixture = footballRoot.getFixtureWithLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
 
-        em.detach(eagerFixture);
-
         // then
-        assertThat(eagerFixture.getHomeTeam().getName()).isNotNull();
-        assertThat(eagerFixture.getAwayTeam().getName()).isNotNull();
-        assertThat(eagerFixture.getLiveStatus()).isNotNull();
-        assertThat(eagerFixture.getLineups()).isNotNull().isNotEmpty();
-        assertThat(eagerFixture.getEvents()).isNotNull().isNotEmpty();
+        assertThat(eagerFixture.homeLineup().team().name()).isNotNull();
+        assertThat(eagerFixture.awayLineup().team().name()).isNotNull();
+        assertThat(eagerFixture.fixture()).isNotNull();
+        assertThat(eagerFixture.fixture().liveStatus()).isNotNull();
     }
 
     private void waitUntilJobAdded(long fixtureId) {
