@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.available;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.scheduler.FootballSchedulerName;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchTask;
@@ -22,6 +23,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -58,12 +60,21 @@ public class FootballAvailableFixtureJobTest {
     private long fixtureId;
 
     private void mockFixtureRepository(long fixtureId) {
+        LocalDateTime dateTime = LocalDateTime.now().plusMinutes(1);
         Fixture mockFixture = new Fixture();
         mockFixture.setFixtureId(fixtureId);
-        mockFixture.setDate(LocalDateTime.now());
+        mockFixture.setDate(dateTime);
         mockFixture.setTimezone("Asia/Seoul");
-        mockFixture.setTimestamp(Instant.now().getEpochSecond());
+        mockFixture.setTimestamp(dateTime.atZone(ZoneId.of("Asia/Seoul")).toEpochSecond());
 
+        LiveStatus liveStatus = LiveStatus.builder()
+                .elapsed(90)
+                .longStatus("Match Finished")
+                .shortStatus("FT")
+                .homeScore(1)
+                .awayScore(0)
+                .build();
+        mockFixture.setLiveStatus(liveStatus);
         when(fixtureRepository.findById(fixtureId)).thenReturn(Optional.of(mockFixture));
     }
 
@@ -85,6 +96,7 @@ public class FootballAvailableFixtureJobTest {
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
+        waitUntilJobAllEnrolled(liveMatchJobKey);
 
         assertNotNull(scheduler.getJobDetail(lineupJobKey), "PreviousMatchJob should have been registered.");
         assertNotNull(scheduler.getJobDetail(liveMatchJobKey), "LiveMatchJob should have been registered.");
@@ -208,8 +220,9 @@ public class FootballAvailableFixtureJobTest {
 
     /**
      * 특정 트리거를 수동으로 즉시 실행하도록 합니다
+     *
      * @param scheduler Quartz Scheduler
-     * @param jobKeys 즉시 트리거할 JobKey 목록
+     * @param jobKeys   즉시 트리거할 JobKey 목록
      * @throws SchedulerException check 및 trigger 과정에서 Quartz 스케줄러 예외 발생 가능
      */
     public void triggerJobNow(Scheduler scheduler, JobKey... jobKeys) throws SchedulerException {

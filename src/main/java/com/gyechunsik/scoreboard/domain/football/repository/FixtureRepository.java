@@ -30,7 +30,13 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
             "AND CAST( f.date AS DATE ) = (SELECT CAST( MIN(f2.date) AS DATE) FROM Fixture f2 WHERE f2.date >= :date)")
     List<Fixture> findNextFixturesAfterDate(@Param("league") League league, @Param("date") LocalDateTime date);
 
-    @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
+    // @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
+    @Query("SELECT f FROM Fixture f " +
+            "JOIN FETCH f.liveStatus ls " +
+            "JOIN FETCH f.league l " +
+            "JOIN FETCH f.homeTeam ht " +
+            "JOIN FETCH f.awayTeam at " +
+            "WHERE f.fixtureId = :fixtureId")
     Optional<Fixture> findById(@NotNull Long fixtureId);
 
     @Query("SELECT f FROM Fixture f " +

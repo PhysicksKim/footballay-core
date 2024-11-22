@@ -56,16 +56,15 @@ public class FixtureJobManageService {
                 fixture.getDate(), fixture.getTimezone(), fixture.getTimestamp()
         );
         ZonedDateTime lineupAnnounceTime = kickOffTime.minusHours(LINEUP_ANNOUNCE_BEFORE_HOUR);
-        ZonedDateTime now = ZonedDateTime.now();
 
-        addPreviousMatchJobIfMatchNotStarted(fixtureId, lineupAnnounceTime, now);
+        addPreviousMatchJobIfMatchNotStarted(fixtureId, lineupAnnounceTime, kickOffTime);
         liveMatchJobSchedulerService.addJob(fixtureId, kickOffTime);
 
         log.info("Fixture jobs added for fixtureId={}", fixtureId);
     }
 
-    private void addPreviousMatchJobIfMatchNotStarted(long fixtureId, ZonedDateTime lineupAnnounceTime, ZonedDateTime now) throws SchedulerException {
-        if(now.isBefore(lineupAnnounceTime)) {
+    private void addPreviousMatchJobIfMatchNotStarted(long fixtureId, ZonedDateTime lineupAnnounceTime, ZonedDateTime kickOffTime) throws SchedulerException {
+        if(ZonedDateTime.now().isBefore(kickOffTime)) {
             previousMatchJobSchedulerService.addJob(fixtureId, lineupAnnounceTime);
         }
     }

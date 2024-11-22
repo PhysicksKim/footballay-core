@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.*;
 @Slf4j
 @SpringBootTest
 @Transactional
-@ActiveProfiles({"dev","mockapi"})
+@ActiveProfiles({"dev", "mockapi"})
 class FootballRootTest {
 
     @Autowired
@@ -301,6 +301,8 @@ class FootballRootTest {
         LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
         LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
         leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
+        LiveStatus saveLiveStatus = liveStatusRepository.save(createFullTimeLiveStatus());
+        fixture.setLiveStatus(saveLiveStatus);
         fixtureRepository.save(fixture);
 
         em.flush();
@@ -312,6 +314,16 @@ class FootballRootTest {
 
         // then
         assertThat(addAvailableFixture.available()).isTrue();
+    }
+
+    private static LiveStatus createFullTimeLiveStatus() {
+        return LiveStatus.builder()
+                .elapsed(90)
+                .longStatus("Match Finished")
+                .shortStatus("FT")
+                .homeScore(1)
+                .awayScore(0)
+                .build();
     }
 
     @Test
@@ -328,14 +340,9 @@ class FootballRootTest {
         LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
         LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
         leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
-        Fixture savedFixture = fixtureRepository.save(fixture);
-        LiveStatus liveStatus = LiveStatus.builder()
-                .fixture(savedFixture)
-                .longStatus("Not started")
-                .shortStatus("NS")
-                .elapsed(0)
-                .build();
-        liveStatusRepository.save(liveStatus);
+        LiveStatus liveStatus = liveStatusRepository.save(createNotStartedLiveStatus());
+        fixture.setLiveStatus(liveStatus);
+        fixtureRepository.save(fixture);
 
         em.flush();
         em.clear();
@@ -356,6 +363,14 @@ class FootballRootTest {
         assertThat(availableFixtures.get(0).fixtureId()).isEqualTo(fixture.getFixtureId());
     }
 
+    private static LiveStatus createNotStartedLiveStatus() {
+        return LiveStatus.builder()
+                .longStatus("Not started")
+                .shortStatus("NS")
+                .elapsed(0)
+                .build();
+    }
+
     @Test
     @DisplayName("이용 가능한 경기 일정을 삭제합니다")
     void successRemoveAvailableFixture() {
@@ -370,6 +385,8 @@ class FootballRootTest {
         LeagueTeam leagueTeamHome = LeagueTeam.builder().league(league).team(homeTeam).build();
         LeagueTeam leagueTeamAway = LeagueTeam.builder().league(league).team(awayTeam).build();
         leagueTeamRepository.saveAll(List.of(leagueTeamHome, leagueTeamAway));
+        LiveStatus liveStatus = liveStatusRepository.save(createNotStartedLiveStatus());
+        fixture.setLiveStatus(liveStatus);
         fixtureRepository.save(fixture);
 
         em.flush();
