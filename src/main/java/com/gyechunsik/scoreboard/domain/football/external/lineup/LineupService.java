@@ -118,6 +118,7 @@ public class LineupService {
         List<_Lineups._StartPlayer> substitutes = lineupResponse.getSubstitutes();
 
         Map<Long, _Lineups._StartPlayer> playerResponseMap = startXI.stream()
+                .filter(player -> player.getPlayer().getId() != null)
                 .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player));
         playerResponseMap.putAll(substitutes.stream()
                 .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
@@ -168,6 +169,7 @@ public class LineupService {
         final String photoUrl_prefix = "https://media.api-sports.io/football/players/";
         final String photoUrl_suffix = ".png";
         List<Player> players = missingPlayers.stream()
+                .filter(playerResponse -> playerResponse.getPlayer().getId() != null)
                 .map(playerResponse -> Player.builder()
                         .id(playerResponse.getPlayer().getId())
                         .name(playerResponse.getPlayer().getName())
@@ -184,6 +186,7 @@ public class LineupService {
 
         List<_Lineups._StartPlayer> startPlayers = (isSubstitute ? lineups.getSubstitutes() : lineups.getStartXI());
         Map<Long, _Lineups._Player> playerResponseMap = startPlayers.stream()
+                .filter(player -> player.getPlayer().getId() != null)
                 .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player.getPlayer()));
 
         List<Player> findPlayers = playerRepository.findAllById(playerResponseMap.keySet());
