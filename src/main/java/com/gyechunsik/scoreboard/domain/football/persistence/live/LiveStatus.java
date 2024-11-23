@@ -33,7 +33,7 @@ public class LiveStatus {
     @Override
     public String toString() {
         return "LiveStatus{" +
-                ", id=" + id +
+                "id=" + id +
                 ", longStatus='" + longStatus + '\'' +
                 ", shortStatus='" + shortStatus + '\'' +
                 ", elapsed=" + elapsed +

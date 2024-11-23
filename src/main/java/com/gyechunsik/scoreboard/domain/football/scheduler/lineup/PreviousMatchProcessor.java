@@ -60,12 +60,11 @@ public class PreviousMatchProcessor implements PreviousMatchTask {
             // Response 라인업 선수 목록 != DB 저장된 라인업 선수 목록 인 경우
             log.info("fixtureId={} response has lineup data. MatchLineup caching will be started", fixtureId);
             boolean needToCleanUpAndReSaveLineup = lineupService.isNeedToCleanUpAndReSaveLineup(response);
-            if(!needToCleanUpAndReSaveLineup) {
-                return false;
+            if(needToCleanUpAndReSaveLineup) {
+                log.info("fixtureId={} need to clean up and re-save Lineup", fixtureId);
+                return cleanUpAndResaveLineup(response, fixtureId);
             }
-
-            boolean isAllPlayersAreRegistered = cleanUpAndResaveLineup(response, fixtureId);
-            return isAllPlayersAreRegistered;
+            return false;
         } catch (Exception e) {
             log.error("fixtureId={} lineup cache failed", fixtureId, e);
             return false;

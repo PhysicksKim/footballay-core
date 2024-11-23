@@ -364,7 +364,7 @@ public class FootballRoot {
     public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
             log.info("try fixture eager loading :: {}", fixtureId);
-            Fixture findFixture = footballDataService.getFixtureWithEager(fixtureId);
+            Fixture findFixture = footballDataService.getFixtureById(fixtureId);
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
 

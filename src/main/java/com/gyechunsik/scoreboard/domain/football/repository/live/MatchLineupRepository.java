@@ -22,15 +22,16 @@ public interface MatchLineupRepository extends JpaRepository<MatchLineup, Long> 
 
     List<MatchLineup> findAllByFixture(Fixture fixture);
 
-    // @Query("SELECT ml FROM MatchLineup ml " +
-    //         "JOIN FETCH ml.matchPlayers sp " +
-    //         "JOIN FETCH sp.player p " +
-    //         "WHERE ml.fixture = :fixture AND ml.team = :fixture.homeTeam")
-    // Optional<MatchLineup> findHomeLineupByFixture(Fixture fixture);
-
+    /**
+     * 라인업 선수들이 포함된 MatchLineup 을 조회합니다. <br>
+     * 미등록 선수도 조회되도록 하기 위하여 LEFT JOIN 을 사용합니다.
+     * @param fixture 경기 정보
+     * @param team 팀 정보
+     * @return 등록/미등록 라인업 선수들이 포함된 MatchLineup
+     */
     @Query("SELECT ml FROM MatchLineup ml " +
             "JOIN FETCH ml.matchPlayers mp " +
-            "JOIN FETCH mp.player p " +
+            "LEFT JOIN FETCH mp.player p " +
             "WHERE ml.fixture = :fixture AND ml.team = :team")
     Optional<MatchLineup> findTeamLineupByFixture(@Param("fixture") Fixture fixture, @Param("team") Team team);
 

@@ -59,7 +59,7 @@ public class LineupService {
      * </p>
      *
      * @param response 외부 API 의 FixtureSingleResponse
-     * @return 클린업 및 라인업 재저장이 필요한 경우 true, 그렇지 않으면 false
+     * @return 기존 저장 데이터와 API 응답을 비교해서 미등록/등록 선수 수가 불일치 하면 true, 그렇지 않으면 false
      * @throws IllegalArgumentException API 응답 또는 데이터베이스에 필요한 데이터가 없는 경우
      */
     public boolean isNeedToCleanUpAndReSaveLineup(FixtureSingleResponse response) {
@@ -350,7 +350,6 @@ public class LineupService {
             matchPlayerList.add(matchPlayer);
         });
 
-        // TODO : [TEST] 미등록선수에 대해 temporaryId 가 제대로 추가되는지
         // id 가 null 인 선수들은 playerRepository 에 저장되지 않고 MatchPlayer 에만 저장
         idNullPlayerList.forEach(responsePlayer -> {
             MatchPlayer matchPlayer = MatchPlayer.builder()
@@ -418,7 +417,7 @@ public class LineupService {
     /**
      * API 데이터와 DB 에 저장된 라인업 간의 등록/미등록 선수 수 불일치가 있는지 확인합니다.
      * <p>
-     * 등록 선수와 미등록 선수의 예상 수와 실제 수를 비교하여 불일치가 있으면 true를 반환합니다.
+     * 등록 선수와 미등록 선수의 예상 수와 실제 수를 비교하여 불일치가 있으면 true 를 반환합니다.
      * </p>
      *
      * @param expectedRegistered 예상되는 등록 선수 수
@@ -430,6 +429,9 @@ public class LineupService {
         boolean isMismatch = actualCount.registered != expectedRegistered || actualCount.unregistered != expectedUnregistered;
         if(isMismatch) {
             log.info("[Lineup Save Need : O] 라인업 데이터의 등록/미등록 선수 수가 불일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}",
+                    expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
+        } else {
+            log.info("[Lineup Save Need : X] 라인업 데이터의 등록/미등록 선수 수가 일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}",
                     expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
         }
         return isMismatch;

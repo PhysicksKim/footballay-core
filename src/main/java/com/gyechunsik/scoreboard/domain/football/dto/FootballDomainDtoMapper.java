@@ -116,8 +116,7 @@ public class FootballDomainDtoMapper {
         for (MatchPlayer mp : playerStats) {
             PlayerStatistics ps = mp.getPlayerStatistics();
             if (ps == null) {
-                log.error("PlayerStatistics is null. MatchPlayer: {}", mp);
-                throw new IllegalArgumentException("PlayerStatistics is null. MatchPlayer: " + mp);
+                continue;
             }
             MatchStatisticsDto.MatchStatsPlayerStatistics stats = createPlayerStatisticsDto(ps);
 
@@ -385,7 +384,7 @@ public class FootballDomainDtoMapper {
     }
 
     private static LineupDto.LineupPlayer createLineupPlayerDto(MatchPlayer matchPlayer) {
-        if(isUnregisteredPlayer(matchPlayer)) {
+        if (isUnregisteredPlayer(matchPlayer)) {
             return new LineupDto.LineupPlayer(
                     null,
                     matchPlayer.getUnregisteredPlayerName(),
@@ -440,10 +439,10 @@ public class FootballDomainDtoMapper {
     }
 
     private static FixtureEventWithPlayerDto.EventPlayerDto createEventPlayerDto(@Nullable MatchPlayer player) {
-        if(player == null) {
+        if (player == null) {
             return null;
         }
-        if(isUnregisteredPlayer(player)) {
+        if (isUnregisteredPlayer(player)) {
             return new FixtureEventWithPlayerDto.EventPlayerDto(
                     null,
                     player.getUnregisteredPlayerName(),
