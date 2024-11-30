@@ -22,12 +22,12 @@ public class LiveMatchProcessor implements LiveMatchTask {
 
     private final ApiCallService apiCallService;
 
-    private final LiveFixtureEventService liveFixtureService;
-    private final PlayerStatisticsService playerStatisticsService;
-    private final TeamStatisticsService teamStatisticsService;
-
-    private final LineupService lineupService;
     private final FixtureDataIntegrityService fixtureDataIntegrityService;
+    private final LineupService lineupService;
+
+    private final LiveFixtureEventService liveFixtureService;
+    private final TeamStatisticsService teamStatisticsService;
+    private final PlayerStatisticsService playerStatisticsService;
 
     /**
      * `fixtureId` 를 받아서 해당 경기의 라이브 정보를 캐싱합니다. <br>

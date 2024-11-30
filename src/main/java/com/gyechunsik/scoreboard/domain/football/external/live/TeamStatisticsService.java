@@ -40,13 +40,7 @@ public class TeamStatisticsService {
     private final TeamStatisticsRepository teamStatisticsRepository;
 
     private final TeamRepository teamRepository;
-    private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
-    private final LeagueRepository leagueRepository;
-    private final FixtureEventRepository fixtureEventRepository;
-    private final LiveStatusRepository liveStatusRepository;
-
-    private final EntityManager em;
 
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
@@ -85,7 +79,6 @@ public class TeamStatisticsService {
                     home.getId(), away.getId());
             throw new IllegalArgumentException("Home or away statistics not matched with home or away team");
         }
-
 
         // Find exist entities
         Fixture fixture = fixtureRepository.findById(fixtureSingle.getFixture().getId())

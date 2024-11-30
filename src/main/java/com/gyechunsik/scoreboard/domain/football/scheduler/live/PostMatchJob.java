@@ -11,11 +11,22 @@ import org.quartz.JobExecutionException;
 public class PostMatchJob implements Job {
 
     private final LiveMatchTask liveMatchTask;
+    private final CheckPostJobDelete checkPostJobDelete;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
         log.info("PostMatchJob executed, fixture ID : {}", fixtureId);
+
         liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
+        if(checkPostJobDelete.isLongAfterMatchFinished(fixtureId)) {
+            try {
+                context.getScheduler().deleteJob(context.getJobDetail().getKey());
+                log.info("PostMatchJob Job deleted :: key={}", context.getJobDetail().getKey());
+            } catch (Exception e) {
+                log.error("PostMatchJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

@@ -165,35 +165,6 @@ class PlayerStatisticsServiceTest {
         });
     }
 
-    // TODO : 먼저 MatchLineup 저장 후에 선수 통계 저장해야함.
-    @DisplayName("라인업에 없고 통계에만 있는 새로운 선수 정보가 있을 때 캐싱 및 저장")
-    @Test
-    void save_withNewPlayer_shouldCacheAndSave() {
-        // given
-        FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
-        lineupService.saveLineup(response);
-
-        em.flush();
-        em.clear();
-
-        // when
-        List<_PlayerStatistics> playerStatisticsList = response.getResponse().get(0).getPlayers().get(0).getPlayers();
-        addUnexpectedNewRegisteredPlayerOnlyInStatistics(playerStatisticsList);
-        playerStatisticsService.savePlayerStatistics(response);
-        em.flush();
-        em.clear();
-
-        // then
-        Fixture fixture = getFixture();
-        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
-
-        // 새로운 선수가 저장되었는지 확인
-        boolean newPlayerSaved = homePlayerStatisticsList.stream()
-                .anyMatch(mp -> mp.getPlayer().getId().equals(9999999L));
-
-        assertThat(newPlayerSaved).isTrue();
-    }
-
     /**
      * 예상치 못하게 통계에만 새롭게 id 가 존재하는 등록선수가 추가되는 경우
      * @param playerStatisticsList

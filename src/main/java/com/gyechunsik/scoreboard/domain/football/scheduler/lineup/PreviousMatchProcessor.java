@@ -31,8 +31,9 @@ import org.springframework.stereotype.Service;
 public class PreviousMatchProcessor implements PreviousMatchTask {
 
     private final ApiCallService apiCallService;
-    private final LineupService lineupService;
+
     private final FixtureDataIntegrityService fixtureDataIntegrityService;
+    private final LineupService lineupService;
 
     /**
      * 주어진 경기 ID에 대한 라인업 데이터를 요청하고 데이터베이스에 저장합니다.

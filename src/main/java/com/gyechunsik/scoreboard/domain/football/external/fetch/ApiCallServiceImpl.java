@@ -204,7 +204,9 @@ public class ApiCallServiceImpl implements ApiCallService {
             }
             FixtureSingleResponse fixtureSingleResponse = objectMapper.readValue(responseBody.string(), FixtureSingleResponse.class);
 
-            if(fixtureId == 1208125) {
+            // DEBUG for 2024-11-11 EPL 11R chelsea vs arsenal
+            final boolean DEBUG_UNREGI_PLAYER = false;
+            if(fixtureId == 1208125 && DEBUG_UNREGI_PLAYER) {
                 // Modify the player ID if it matches the target ID
                 final long chelseaJacksonId = 283058L; // Jackson player's original ID
                 log.info("DEV !!! 첼시 아스날 경기 id=1208125 에서 잭슨 id={} 를 null 로 변경", chelseaJacksonId);
@@ -213,6 +215,9 @@ public class ApiCallServiceImpl implements ApiCallService {
                 updateEventPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updateLineupPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updatePlayerStatisticsIdToNull(fixtureSingleResponse, chelseaJacksonId);
+
+                log.info("DEV single lineup : {}", fixtureSingleResponse.getResponse().get(0).getLineups());
+                log.info("DEV single event : {}", fixtureSingleResponse.getResponse().get(0).getEvents());
             }
 
             return fixtureSingleResponse;
@@ -246,7 +251,6 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-
     // Helper method to update player ID in events
     private void updateEventPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
@@ -256,13 +260,11 @@ public class ApiCallServiceImpl implements ApiCallService {
                         if (event.getPlayer() != null && event.getPlayer().getId() != null
                                 && event.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
                             log.info("DEV event.player 에서 잭슨 찾았다 id null 로 변경");
-                            event.getPlayer().setId(null); // Set the ID to null
-                            event.getAssist().setId(null); // Set the ID to null
+                            event.getPlayer().setId(null);
                         }
                         if (event.getAssist() != null && event.getAssist().getId() != null
                                 && event.getAssist().getId().equals(targetUnregisteredPlayerId)) {
                             log.info("DEV event.assist 에서 잭슨 찾았다 id null 로 변경");
-                            event.getAssist().setId(null); // Set the ID to null
                             event.getPlayer().setId(null);
                         }
                     }

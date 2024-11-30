@@ -25,10 +25,9 @@ import java.util.Optional;
 
 /**
  * Football 과 관련된 DomainRoot 에 해당합니다. <br>
- * 여기서는 @Transactional 이 시작되면 안됩니다. <br>
- * 예를 들어 새롭게 저장된 entity 에서 연관관계 데이터를 가져오면, flush 되지 않아서
- * JPA 트랜잭션이 종료되고 flush 된 후에 동작해야 합니다.
- *
+ * Domain Root Class Level 에서는 @Transactional 이 시작되지 않도록 합니다. <br>
+ * 여러 Service 간의 CRUD 가 이뤄질 때 의도적으로 Domain Root 계층에서 Transaction 이 종료되도록 하기 위함입니다. <br>
+ * 예를 들어 팀-선수 간 연관관계 맵핑 엔티티들을 추가한 후 읽을 때, 쓰기와 읽기간 Transaction 이 분리되도록 합니다.
  */
 @Slf4j
 @RequiredArgsConstructor

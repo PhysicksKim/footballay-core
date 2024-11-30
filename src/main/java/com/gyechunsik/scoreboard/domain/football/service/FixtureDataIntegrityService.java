@@ -41,11 +41,11 @@ import java.util.Optional;
 @Transactional
 public class FixtureDataIntegrityService {
 
+    private final FixtureRepository fixtureRepository;
+    private final MatchLineupRepository matchLineupRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final FixtureEventRepository fixtureEventRepository;
     private final PlayerStatisticsRepository playerStatisticsRepository;
-    private final MatchPlayerRepository matchPlayerRepository;
-    private final MatchLineupRepository matchLineupRepository;
-    private final FixtureRepository fixtureRepository;
 
     public void cleanUpFixtureLiveData(long fixtureId) {
         Optional<Fixture> optionalFixture = fixtureRepository.findByIdWithAllAssociations(fixtureId);
@@ -70,9 +70,7 @@ public class FixtureDataIntegrityService {
         log.info("start cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
 
         List<MatchLineup> lineups = fixture.getLineups();
-        log.info("DEV lineups={}", lineups);
         List<FixtureEvent> fixtureEvents = fixture.getEvents();
-        log.info("DEV fixtureEvents={}", fixtureEvents);
 
         removeEvents(fixtureEvents);
         removeLineups(lineups);

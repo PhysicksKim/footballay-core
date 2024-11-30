@@ -11,7 +11,6 @@ import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
-import com.gyechunsik.scoreboard.domain.football.service.FixtureDataIntegrityService;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +36,6 @@ public class LineupService {
     private final FixtureRepository fixtureRepository;
     private final MatchLineupRepository matchLineupRepository;
     private final MatchPlayerRepository matchPlayerRepository;
-
-    private final EntityManager entityManager;
 
     /**
      * FixtureSingleResponse 에서 라인업 데이터의 존재 여부를 확인합니다.
@@ -365,34 +362,6 @@ public class LineupService {
         });
 
         return matchPlayerRepository.saveAll(matchPlayerList);
-    }
-
-    /**
-     * 이전에 저장된 라인업 데이터를 정리합니다.
-     * <p>
-     * 해당 경기의 MatchLineup과 MatchPlayer 데이터를 삭제하여 중복 저장을 방지합니다.
-     * </p>
-     * <strong>Deprecated:</strong> MatchPlayer 리팩토링 이후 이 메서드는 더 이상 사용되지 않습니다.
-     * 라인업 삭제는 FixtureDataIntegrityService에서 처리됩니다.
-     *
-     * @param fixtureId 경기 ID
-     * @deprecated 리팩토링 이후 {@link FixtureDataIntegrityService#cleanUpFixtureLiveData(long)}를 사용하세요.
-     */
-    @Deprecated(since = "MatchPlayer refactoring 이후 deprecated 됨. lineup 삭제는 FixtureDataIntegrityService 에서 처리합니다.", forRemoval = true)
-    public void cleanupPreviousLineup(long fixtureId) {
-        log.info("previous start lineup clean up for fixtureId={}", fixtureId);
-        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow();
-        List<MatchLineup> lineups = matchLineupRepository.findAllByFixture(fixture);
-        if (!lineups.isEmpty()) {
-            log.info("이미 저장된 lineup 정보가 있어, 기존 데이터를 삭제합니다. 기존에 저장된 MatchLineup count : {}", lineups.size());
-            int deletedPlayerCount = matchPlayerRepository.deleteByMatchLineupIn(lineups);
-            entityManager.flush();
-            log.info("삭제된 player count = {}", deletedPlayerCount);
-            matchLineupRepository.deleteAllInBatch(lineups);
-            log.info("fixtureId={} 라인업 정보 삭제 완료", fixtureId);
-        } else {
-            log.info("이전에 저장된 fixtureId={} 라인업 정보가 없어, prevCleanup 할 데이터가 없습니다.", fixtureId);
-        }
     }
 
     /**
