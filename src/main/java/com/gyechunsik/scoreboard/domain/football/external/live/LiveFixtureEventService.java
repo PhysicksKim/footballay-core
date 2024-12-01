@@ -43,11 +43,11 @@ public class LiveFixtureEventService {
     private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
     private final LiveStatusRepository liveStatusRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
     private final FixtureEventRepository fixtureEventRepository;
 
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
-    private final MatchPlayerRepository matchPlayerRepository;
 
     public void saveLiveEvent(FixtureSingleResponse response) {
         if (response.getResponse().isEmpty()) {

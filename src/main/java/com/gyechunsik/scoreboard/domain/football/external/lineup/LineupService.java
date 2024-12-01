@@ -373,6 +373,10 @@ public class LineupService {
     private PlayerCount countPlayers(MatchLineup lineup) {
         int registered = 0;
         int unregistered = 0;
+        if(lineup == null || lineup.getMatchPlayers() == null) {
+            return new PlayerCount(registered, unregistered);
+        }
+
         for (MatchPlayer matchPlayer : lineup.getMatchPlayers()) {
             if (matchPlayer.getPlayer() == null) {
                 unregistered++;
