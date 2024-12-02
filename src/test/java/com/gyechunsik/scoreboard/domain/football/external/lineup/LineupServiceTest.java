@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -238,7 +239,7 @@ class LineupServiceTest {
         assertThat(result).isFalse(); // Since lineup already exists
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @DisplayName("선수의 번호가 변경된 경우 saveLineup 테스트")
     @Test
     void testSaveLineup_PlayerNumberUpdate() {
@@ -340,6 +341,9 @@ class LineupServiceTest {
         // Initial lineup save
         FixtureSingleResponse initialResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         lineupService.saveLineup(initialResponse);
+
+        em.flush();
+        em.clear();
 
         // Fetch the same response
         FixtureSingleResponse sameResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);

@@ -210,6 +210,7 @@ public class LineupService {
      * @return 모든 선수가 등록된 선수이면 true, 그렇지 않으면 false
      */
     protected boolean isAllRegisteredPlayers(ResponseValues responseValues) {
+        log.info("DEV isAllRegistered? : unregis home={} away={}", responseValues.homeUnregisteredPlayers, responseValues.awayUnregisteredPlayers);
         return responseValues.homeUnregisteredPlayers.isEmpty() && responseValues.awayUnregisteredPlayers.isEmpty();
     }
 
@@ -223,7 +224,7 @@ public class LineupService {
      *
      * @param lineupResponse 라인업 데이터
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     protected void cacheAndUpdateFromLineupPlayers(_Lineups lineupResponse) {
         List<_Lineups._StartPlayer> startXI = lineupResponse.getStartXI();
         List<_Lineups._StartPlayer> substitutes = lineupResponse.getSubstitutes();
