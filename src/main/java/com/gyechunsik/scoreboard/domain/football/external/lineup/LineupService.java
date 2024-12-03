@@ -110,7 +110,6 @@ public class LineupService {
      * @return 라인업이 완전하고 모든 선수가 등록된 경우 true, 그렇지 않으면 false
      * @throws IllegalArgumentException 필요한 데이터가 없거나 경기 또는 팀이 데이터베이스에 없는 경우
      */
-    // TODO : unregistered player 에 temporary ID 추가해야함
     public boolean saveLineup(FixtureSingleResponse response) {
         ResponseValues responseValues = ResponseValues.of(response);
         if(responseValues == null) {
@@ -130,7 +129,7 @@ public class LineupService {
 
         if(!matchLineupRepository.findAllByFixture(fixture).isEmpty()) {
             log.warn("fixtureId={} 에 이미 라인업 정보가 존재합니다. cleanup 이후 다시 저장해야 합니다.", responseValues.fixtureId);
-            return false;
+            throw new IllegalStateException("fixtureId=" + responseValues.fixtureId + " 에 이미 라인업 정보가 존재합니다. cleanup 이후 다시 저장해야 합니다.");
         }
 
         // 라인업 정보를 이용해 Player 를 저장 또는 업데이트 합니다.

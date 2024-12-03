@@ -64,12 +64,12 @@ public class LiveMatchProcessor implements LiveMatchTask {
     private boolean saveDataAndIsFinished(FixtureSingleResponse response) {
         log.info("Data Saving is Started");
         long fixtureId = response.getResponse().get(0).getFixture().getId();
-        checkWhetherLineupChangedAndResave(response, fixtureId);
+        checkAndResaveLineupIfNeed(response, fixtureId);
         saveFixtureLiveData(response);
         return updateLiveStatusAndIsFinished(response);
     }
 
-    private void checkWhetherLineupChangedAndResave(FixtureSingleResponse response, long fixtureId) {
+    private void checkAndResaveLineupIfNeed(FixtureSingleResponse response, long fixtureId) {
         try{
             boolean needToReSaveLineup = lineupService.isNeedToCleanUpAndReSaveLineup(response);
             if(!needToReSaveLineup) {
@@ -94,11 +94,18 @@ public class LiveMatchProcessor implements LiveMatchTask {
      *
      * @param response 새로운 라인업 데이터를 포함하는 FixtureSingleResponse
      * @param fixtureId 경기의 ID
-     * @return 라인업이 완전하고 저장에 성공한 경우 true, 그렇지 않으면 false
      */
     private void cleanUpAndResaveLineup(FixtureSingleResponse response, long fixtureId) {
         fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
-        lineupService.saveLineup(response);
+        try {
+            lineupService.saveLineup(response);
+        } catch (IllegalStateException e) {
+            log.info("fixtureId={} need to save Lineup again because of {}", fixtureId, e.getMessage());
+            fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
+            lineupService.saveLineup(response);
+        } catch (Exception e) {
+            log.error("Unexpected error while checking and saving Lineup when saving live data. Try to cleanUp and resave :: FixtureId={}", fixtureId, e);
+        }
     }
 
     private void saveFixtureLiveData(@NotNull FixtureSingleResponse response) {

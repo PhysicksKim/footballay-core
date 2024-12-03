@@ -18,6 +18,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepo
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @ActiveProfiles({"dev", "mockapi"})
@@ -233,13 +235,10 @@ class LineupServiceTest {
         lineupService.saveLineup(response);
 
         // when
-        boolean result = lineupService.saveLineup(response);
-
-        // then
-        assertThat(result).isFalse(); // Since lineup already exists
+        assertThrows(IllegalStateException.class, () -> lineupService.saveLineup(response));
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     @DisplayName("선수의 번호가 변경된 경우 saveLineup 테스트")
     @Test
     void testSaveLineup_PlayerNumberUpdate() {
@@ -272,12 +271,8 @@ class LineupServiceTest {
         });
 
         // when
-        lineupService.cacheAndUpdateFromLineupPlayers(response.getResponse().get(0).getLineups().get(0)); // Exception 발생 라인
-        em.flush();
-        em.clear();
+        lineupService.cacheAndUpdateFromLineupPlayers(response.getResponse().get(0).getLineups().get(0));
         lineupService.cacheAndUpdateFromLineupPlayers(response.getResponse().get(0).getLineups().get(1));
-        em.flush();
-        em.clear();
 
         // then
         response.getResponse().get(0).getLineups().forEach(lineup -> {

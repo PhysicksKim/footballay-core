@@ -96,6 +96,15 @@ public class PreviousMatchProcessor implements PreviousMatchTask {
     private boolean cleanUpAndResaveLineup(FixtureSingleResponse response, long fixtureId) {
         log.info("fixtureId={} need to save Lineup", fixtureId);
         fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
-        return lineupService.saveLineup(response);
+        try {
+            return lineupService.saveLineup(response);
+        } catch (IllegalStateException e) {
+            log.info("fixtureId={} need to save Lineup again because of {}", fixtureId, e.getMessage());
+            fixtureDataIntegrityService.cleanUpFixtureLiveData(fixtureId);
+            return lineupService.saveLineup(response);
+        } catch (Exception e) {
+            log.error("Unexpected error while checking and saving Lineup when saving live data. Try to cleanUp and resave :: FixtureId={}", fixtureId, e);
+            return false;
+        }
     }
 }
