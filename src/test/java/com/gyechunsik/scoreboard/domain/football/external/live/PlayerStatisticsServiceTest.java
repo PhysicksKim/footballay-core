@@ -4,6 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
@@ -165,6 +166,78 @@ class PlayerStatisticsServiceTest {
         });
     }
 
+    @DisplayName("라인업에 없는 미등록 선수가 통계에만 등장할 경우, 해당 통계는 무시되어야 한다.")
+    @Test
+    void saveStats_UnregisteredPlayerNotInLineup_ShouldIgnoreStats() {
+        // given
+        FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+
+        // 라인업 저장
+        lineupService.saveLineup(response);
+        em.flush();
+        em.clear();
+
+        // 통계 정보에서 라인업에 없는 미등록 선수 추가
+        // 실제 로직 상 이 선수는 matchPlayerMap 에 없으므로 처리되지 않아야 함
+        List<FixtureSingleResponse._FixturePlayers> playersData = response.getResponse().get(0).getPlayers();
+        if (!playersData.isEmpty()) {
+            FixtureSingleResponse._FixturePlayers teamPlayers = playersData.get(0);
+            List<_PlayerStatistics> playerStatsList = teamPlayers.getPlayers();
+
+            // 라인업에 존재하지 않는 미등록 선수 추가
+            _PlayerStatistics newUnregiPlayerStat = new _PlayerStatistics();
+            _Player newPlayer = new _Player();
+            newPlayer.setId(null); // 미등록
+            newPlayer.setName("No Lineup Unregistered Player Only In Stats");
+            newPlayer.setPhoto("http://example.com/unregi_player_photo.png");
+
+            // 기본 스탯 초기화
+            _Statistics statistics = new _Statistics();
+            statistics.setGames(new _Statistics._Games());
+            statistics.setShots(new _Statistics._Shots());
+            statistics.setGoals(new _Statistics._Goals());
+            statistics.setPasses(new _Statistics._Passes());
+            statistics.setTackles(new _Statistics._Tackles());
+            statistics.setDuels(new _Statistics._Duels());
+            statistics.setDribbles(new _Statistics._Dribbles());
+            statistics.setFouls(new _Statistics._Fouls());
+            statistics.setCards(new _Statistics._Cards());
+            statistics.setPenalty(new _Statistics._Penalty());
+            statistics.getGames().setMinutes(90); // 임의값
+
+            newUnregiPlayerStat.setPlayer(newPlayer);
+            newUnregiPlayerStat.setStatistics(List.of(statistics));
+
+            playerStatsList.add(newUnregiPlayerStat);
+        }
+
+        // when
+        playerStatisticsService.savePlayerStatistics(response);
+        em.flush();
+        em.clear();
+
+        // then
+        Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
+        // 해당 선수가 MatchPlayer 로 저장되어 있지 않아야 함 (즉, 통계 무시)
+        List<MatchLineup> lineups = fixture.getLineups();
+        List<MatchPlayer> matchPlayers1 = lineups.get(0).getMatchPlayers();
+        List<MatchPlayer> matchPlayers2 = lineups.get(1).getMatchPlayers();
+
+        List<MatchPlayer> matchPlayers = new ArrayList<>();
+        matchPlayers.addAll(matchPlayers1);
+        matchPlayers.addAll(matchPlayers2);
+        boolean containsNoLineupUnregiPlayer = matchPlayers.stream()
+                .anyMatch(mp -> "No Lineup Unregistered Player Only In Stats".equals(mp.getUnregisteredPlayerName()));
+        assertThat(containsNoLineupUnregiPlayer).isFalse();
+
+        // PlayerStatistics 테이블에도 해당 선수의 통계가 생성되지 않았는지 확인
+        // 저장된 matchPlayers 들 중 PlayerStatistics가 생성된 경우만 확인, 새로운 이름의 unregistered 선수 없어야 함
+        boolean invalidStatsCreated = matchPlayers.stream()
+                .filter(mp -> mp.getPlayerStatistics() != null)
+                .anyMatch(mp -> "No Lineup Unregistered Player Only In Stats".equals(mp.getUnregisteredPlayerName()));
+        assertThat(invalidStatsCreated).isFalse();
+    }
+
     /**
      * 예상치 못하게 통계에만 새롭게 id 가 존재하는 등록선수가 추가되는 경우
      * @param playerStatisticsList
@@ -206,5 +279,4 @@ class PlayerStatisticsServiceTest {
         return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
     }
 
-    // TODO : 라인업에 없는데 통계에 미등록선수가 등장하는 경우 테스트도 추가 필요
 }

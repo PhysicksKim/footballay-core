@@ -158,8 +158,56 @@ class LiveFixtureEventServiceTest {
 
         Optional<FixtureEvent> first = events.stream().filter(event -> Objects.requireNonNull(event.getPlayer()).getUnregisteredPlayerName() != null).findFirst();
         assertThat(first).isPresent();
-        assertThat(first.get().getPlayer().getUnregisteredPlayerName()).isEqualTo(unregisterPlayerName);
-        assertThat(first.get().getPlayer().getMatchLineup()).isNotNull(); // 라인업에 있는 미등록 선수가 이벤트에 등장시 라인업 연관관계를 맺고 있어야 함
+        FixtureEvent eventWithUnregiPlayer = first.get();
+        assert eventWithUnregiPlayer.getPlayer() != null;
+        log.info("unregistered player found in events : {}", eventWithUnregiPlayer.getPlayer());
+        log.info("matchLineup of unregistered player : {}", eventWithUnregiPlayer.getPlayer().getMatchLineup());
+        assertThat(eventWithUnregiPlayer.getPlayer().getUnregisteredPlayerName()).isEqualTo(unregisterPlayerName);
+        assertThat(eventWithUnregiPlayer.getPlayer().getMatchLineup()).isNotNull(); // 라인업에 있는 미등록 선수가 이벤트에 등장시 라인업 연관관계를 맺고 있어야 함
+    }
+
+    @Transactional
+    @DisplayName("라인업에 미등록 선수가 있고 이벤트에 해당 미등록 선수가 등장하는 경우, 이벤트에 미등록 선수가 저장되어야 함")
+    @Test
+    void testUnregisteredPlayerNoLineupInEvent() {
+        // given
+        FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        _Lineups teamALineup = response.getResponse().get(0).getLineups().get(0);
+        Long teamAId = teamALineup.getTeam().getId();
+        _Lineups._Player teamAUnregiPlayer = teamALineup.getSubstitutes().get(0).getPlayer();
+        teamAUnregiPlayer.setId(null);
+        final String unregisterPlayerName = "Unregistered Player";
+        teamAUnregiPlayer.setName(unregisterPlayerName);
+
+        lineupService.saveLineup(response);
+
+        // Modify the event to have an unregistered player
+        final String noLineupUnregiPlayerName = "No Lineup Unregistered Player";
+        List<_Events> respEvents = response.getResponse().get(0).getEvents();
+        for(_Events event : respEvents) {
+            if(Objects.equals(event.getTeam().getId(), teamAId)) {
+                _Events._Player eventPlayer = event.getPlayer();
+                eventPlayer.setId(null);
+                eventPlayer.setName(noLineupUnregiPlayerName);
+                break;
+            }
+        }
+
+        // when
+        liveFixtureEventService.saveLiveEvent(response);
+
+        // then
+        Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
+        List<FixtureEvent> events = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
+
+        Optional<FixtureEvent> first = events.stream().filter(event -> Objects.requireNonNull(event.getPlayer()).getUnregisteredPlayerName() != null).findFirst();
+        assertThat(first).isPresent();
+        FixtureEvent eventWithUnregiPlayer = first.get();
+        assert eventWithUnregiPlayer.getPlayer() != null;
+        log.info("unregistered player found in events : {}", eventWithUnregiPlayer.getPlayer());
+        log.info("matchLineup of unregistered player : {}", eventWithUnregiPlayer.getPlayer().getMatchLineup());
+        assertThat(eventWithUnregiPlayer.getPlayer().getUnregisteredPlayerName()).isEqualTo(noLineupUnregiPlayerName);
+        assertThat(eventWithUnregiPlayer.getPlayer().getMatchLineup()).isNull(); // 라인업에 있는 미등록 선수가 이벤트에 등장시 라인업 연관관계를 맺고 있어야 함
     }
 
     @DisplayName("저장된 이벤트 수 보다 적은 수의 요청이 들어온다면 오버된 이벤트는 삭제")

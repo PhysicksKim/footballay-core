@@ -1,14 +1,12 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
@@ -93,30 +91,31 @@ public class PlayerStatisticsService {
         // 6) Registered 여부에 따라 따로 동작하도록 하기 위해 Map 으로 나누기
         List<MatchPlayer> matchPlayers = matchLineup.getMatchPlayers();
 
-        Map<Long, MatchPlayer> registeredPlayerMap = collectRegisteredPlayers(matchPlayers);
-        Map<String, MatchPlayer> unregisteredPlayerMap = collectUnregisteredPlayers(matchPlayers);
+        Map<Long, MatchPlayer> regiMatchPlayerEntityMap = collectRegisteredPlayers(matchPlayers);
+        Map<String, MatchPlayer> unregiMatchPlayerEntityMap = collectUnregisteredPlayers(matchPlayers);
 
-        Map<Long, _PlayerStatistics> registeredPlayerStatsMap = collectRegisteredPlayerStats(playerStatisticsList);
-        Map<String, _PlayerStatistics> unregisteredPlayerStatsMap = collectUnregisteredPlayerStats(playerStatisticsList);
+        Map<Long, _PlayerStatistics> regiPlayerDataMap = collectRegisteredPlayerStats(playerStatisticsList);
+        Map<String, _PlayerStatistics> unregiPlayerDataMap = collectUnregisteredPlayerStats(playerStatisticsList);
 
         // 7) unregistered/registered PlayerMap 에 대한 통계 정보 업데이트
-        List<PlayerStatistics> createdPlayerStatistics = new ArrayList<>();
-        List<MatchPlayer> updatedMatchPlayers = new ArrayList<>();
-        processPlayerMap(registeredPlayerMap, registeredPlayerStatsMap, createdPlayerStatistics, updatedMatchPlayers);
-        processPlayerMap(unregisteredPlayerMap, unregisteredPlayerStatsMap, createdPlayerStatistics, updatedMatchPlayers);
+        List<PlayerStatistics> collectingPlayerStatistics = new ArrayList<>();
+        List<MatchPlayer> collectingUpdatedMatchPlayers = new ArrayList<>();
+        createPlayerStatisticsEntityAndPutToMap(regiMatchPlayerEntityMap, regiPlayerDataMap, collectingPlayerStatistics, collectingUpdatedMatchPlayers);
+        createPlayerStatisticsEntityAndPutToMap(unregiMatchPlayerEntityMap, unregiPlayerDataMap, collectingPlayerStatistics, collectingUpdatedMatchPlayers);
 
-        // 8) 새롭게 생성된 playerStatistics entity save
-        List<PlayerStatistics> savedPlayerStatistics = playerStatisticsRepository.saveAll(createdPlayerStatistics);
-        List<MatchPlayer> savedMatchPlayers = matchPlayerRepository.saveAll(updatedMatchPlayers);
+        // 8) 새롭게 생성된 playerStatistics & MatchPlayer entity save
+        List<PlayerStatistics> savedPlayerStatistics = playerStatisticsRepository.saveAll(collectingPlayerStatistics);
+        List<MatchPlayer> savedMatchPlayers = matchPlayerRepository.saveAll(collectingUpdatedMatchPlayers);
 
         // 9) 새롭게 생성된 PlayerStatistics logging
         log.info("Team={} 의 새롭게 생성된 PlayerStatistics entity size: {}", matchLineup.getTeam().getName(), savedPlayerStatistics.size());
     }
 
-    private static boolean isStatsUnregisteredPlayer(@Nullable Long id) {
-        return id == null || id == 0;
-    }
-
+    /**
+     * 선수 통계 정보 중, 등록되지 않은 선수 정보를 추출합니다.
+     * @param playerStatisticsList
+     * @return
+     */
     private static @NotNull Map<String, _PlayerStatistics> collectUnregisteredPlayerStats(List<_PlayerStatistics> playerStatisticsList) {
         return playerStatisticsList.stream()
                 .filter(ps -> (ps.getPlayer() == null || isStatsUnregisteredPlayer(ps.getPlayer().getId()))
@@ -142,38 +141,53 @@ public class PlayerStatisticsService {
                 .collect(Collectors.toMap(mp -> mp.getPlayer().getId(), Function.identity()));
     }
 
-    private void processPlayerMap(Map<?, MatchPlayer> playerMap, Map<?, _PlayerStatistics> statsMap, List<PlayerStatistics> createdPlayerStatistics, List<MatchPlayer> updatedMatchPlayers) {
-        for (Map.Entry<?, MatchPlayer> entry : playerMap.entrySet()) {
-            MatchPlayer mp = entry.getValue();
-            _PlayerStatistics playerStatistics = statsMap.get(entry.getKey());
-            saveOrUpdatePlayerStatistics(createdPlayerStatistics, updatedMatchPlayers, mp, playerStatistics);
+    private void createPlayerStatisticsEntityAndPutToMap(
+            Map<?, MatchPlayer> givenMatchPlayers,
+            Map<?, _PlayerStatistics> givenPlayerStatsData,
+            List<PlayerStatistics> collectingPlayerStatsMap,
+            List<MatchPlayer> collectingMatchPlayerMap
+    ) {
+        for (Map.Entry<?, MatchPlayer> entry : givenMatchPlayers.entrySet()) {
+            MatchPlayer matchPlayer = entry.getValue();
+            _PlayerStatistics playerStatsData = givenPlayerStatsData.get(entry.getKey());
+
+            saveOrUpdatePlayerStatistics(
+                    collectingPlayerStatsMap,
+                    collectingMatchPlayerMap,
+                    matchPlayer,
+                    playerStatsData
+            );
         }
     }
 
     private void saveOrUpdatePlayerStatistics(
-            List<PlayerStatistics> createdPlayerStatistics,
-            List<MatchPlayer> updatedMatchPlayers,
-            MatchPlayer mp,
-            _PlayerStatistics playerStatistics
+            List<PlayerStatistics> collectingPlayerStatsMap,
+            List<MatchPlayer> collectingMatchPlayerMap,
+            MatchPlayer matchPlayer,
+            _PlayerStatistics playerStatsData
     ) {
-        if (playerStatistics == null || playerStatistics.getStatistics() == null || playerStatistics.getStatistics().isEmpty()) {
-            log.warn("playerStatistics 가 null 입니다. playerStatistics={}, mp={}", playerStatistics, mp);
+        if (playerStatsData == null || playerStatsData.getStatistics() == null || playerStatsData.getStatistics().isEmpty()) {
+            log.warn("제공된 playerStatistics data 가 null 입니다. playerStatistics={}, matchPlayer={}", playerStatsData, matchPlayer);
             return;
         }
-        _FixturePlayers._Statistics statsData = playerStatistics.getStatistics().get(0);
+
+        _FixturePlayers._Statistics statsData = playerStatsData.getStatistics().get(0);
+
         PlayerStatistics statsEntity;
-        if (mp.getPlayerStatistics() == null) {
-            statsEntity = createAndUpdatePlayerStatistics(statsData, mp);
-            createdPlayerStatistics.add(statsEntity);
-            mp.setPlayerStatistics(statsEntity);
-            updatedMatchPlayers.add(mp);
+        if (alreadyExistPlayerStatisticsEntity(matchPlayer)) {
+            statsEntity = createPlayerStatistics(statsData, matchPlayer);
+            collectingPlayerStatsMap.add(statsEntity);
+
+            matchPlayer.setPlayerStatistics(statsEntity);
+            collectingMatchPlayerMap.add(matchPlayer);
         } else {
-            statsEntity = mp.getPlayerStatistics();
+            statsEntity = matchPlayer.getPlayerStatistics();
             updatePlayerStatistics(statsData, statsEntity);
         }
     }
 
-    private PlayerStatistics createAndUpdatePlayerStatistics(_FixturePlayers._Statistics statsData, MatchPlayer mp) {
+
+    private PlayerStatistics createPlayerStatistics(_FixturePlayers._Statistics statsData, MatchPlayer mp) {
         PlayerStatistics build = PlayerStatistics.builder().matchPlayer(mp).build();
         return updatePlayerStatistics(statsData, build);
     }
@@ -216,6 +230,14 @@ public class PlayerStatisticsService {
             return Collections.emptyList();
         }
         return findFirst.get();
+    }
+
+    private static boolean isStatsUnregisteredPlayer(@Nullable Long id) {
+        return id == null || id == 0;
+    }
+
+    private static boolean alreadyExistPlayerStatisticsEntity(MatchPlayer matchPlayer) {
+        return matchPlayer.getPlayerStatistics() == null;
     }
 
 }
