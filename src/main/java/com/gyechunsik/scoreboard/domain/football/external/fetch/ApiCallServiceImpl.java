@@ -209,15 +209,11 @@ public class ApiCallServiceImpl implements ApiCallService {
             if(fixtureId == 1208125 && DEBUG_UNREGI_PLAYER) {
                 // Modify the player ID if it matches the target ID
                 final long chelseaJacksonId = 283058L; // Jackson player's original ID
-                log.info("DEV !!! 첼시 아스날 경기 id=1208125 에서 잭슨 id={} 를 null 로 변경", chelseaJacksonId);
 
                 // Call helper methods to update the player ID
                 updateEventPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updateLineupPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updatePlayerStatisticsIdToNull(fixtureSingleResponse, chelseaJacksonId);
-
-                log.info("DEV single lineup : {}", fixtureSingleResponse.getResponse().get(0).getLineups());
-                log.info("DEV single event : {}", fixtureSingleResponse.getResponse().get(0).getEvents());
             }
 
             return fixtureSingleResponse;
@@ -259,12 +255,10 @@ public class ApiCallServiceImpl implements ApiCallService {
                     for (FixtureSingleResponse._Events event : fixtureSingle.getEvents()) {
                         if (event.getPlayer() != null && event.getPlayer().getId() != null
                                 && event.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
-                            log.info("DEV event.player 에서 잭슨 찾았다 id null 로 변경");
                             event.getPlayer().setId(null);
                         }
                         if (event.getAssist() != null && event.getAssist().getId() != null
                                 && event.getAssist().getId().equals(targetUnregisteredPlayerId)) {
-                            log.info("DEV event.assist 에서 잭슨 찾았다 id null 로 변경");
                             event.getPlayer().setId(null);
                         }
                     }
@@ -283,7 +277,6 @@ public class ApiCallServiceImpl implements ApiCallService {
                             for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getStartXI()) {
                                 if (player.getPlayer() != null && player.getPlayer().getId() != null
                                         && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
-                                    log.info("DEV lineup.startXI 에서 잭슨 찾았다 id null 로 변경");
                                     player.getPlayer().setId(null); // Set the ID to null
                                 }
                             }
@@ -292,7 +285,6 @@ public class ApiCallServiceImpl implements ApiCallService {
                             for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getSubstitutes()) {
                                 if (player.getPlayer() != null && player.getPlayer().getId() != null
                                         && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
-                                    log.info("DEV lineup.substitutes 에서 잭슨 찾았다 id null 로 변경");
                                     player.getPlayer().setId(null); // Set the ID to null
                                 }
                             }
@@ -313,7 +305,6 @@ public class ApiCallServiceImpl implements ApiCallService {
                             for (FixtureSingleResponse._FixturePlayers._PlayerStatistics playerStatistics : fixturePlayers.getPlayers()) {
                                 FixtureSingleResponse._FixturePlayers._Player player = playerStatistics.getPlayer();
                                 if (player != null && player.getId() != null && player.getId().equals(targetUnregisteredPlayerId)) {
-                                    log.info("DEV playerStatistics 에서 잭슨 찾았다 id null 로 변경");
                                     player.setId(null); // Set the ID to null
                                 }
                             }

@@ -7,6 +7,7 @@ import java.util.List;
 
 import static com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDto.*;
 
+// TODO : 미등록 선수에 대한 통계 Response 생성 전략 필요
 @Slf4j
 public class MatchStatisticsResponseMapper {
 

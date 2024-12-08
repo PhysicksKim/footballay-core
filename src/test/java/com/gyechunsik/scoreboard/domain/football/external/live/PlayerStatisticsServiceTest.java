@@ -79,7 +79,6 @@ class PlayerStatisticsServiceTest {
         return fixtureRepository.findById(FIXTURE_ID).orElseThrow();
     }
 
-    // TODO : playerStatisticsService.savePlayerStatistics(response); 에서 MatchLineup 에다가 lineup 부터 저장해야함
     @DisplayName("선수 통계 저장 성공")
     @Test
     void save() {

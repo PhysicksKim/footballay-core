@@ -15,6 +15,7 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.xmlbeans.impl.regex.Match;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -165,7 +166,22 @@ public class LineupService {
         log.info("어웨이팀 라인업 정보 저장 완료. fixtureId={}, teamId={}, startXI.size={}, subs.size={}",
                 responseValues.fixtureId, awayTeam.getId(), awayMatchPlayerList.size(), awaySubstitutePlayerList.size());
 
+        // 3. 라인업을 통한 1차캐시 연관관계 조회시 문제가 생기지 않도록, 연관관계 엔티티를 넣어줍니다.
+        List<MatchPlayer> collectingHomePlayers = collectPlayers(homeMatchPlayerList, homeSubstitutePlayerList);
+        List<MatchPlayer> collectingAwayPlayers = collectPlayers(awayMatchPlayerList, awaySubstitutePlayerList);
+        homeMatchLineup.setMatchPlayers(collectingHomePlayers);
+        awayMatchLineup.setMatchPlayers(collectingAwayPlayers);
+        matchLineupRepository.save(homeMatchLineup);
+        matchLineupRepository.save(awayMatchLineup);
+
         return isAllRegisteredPlayers(new ResponseValues(response));
+    }
+
+    private List<MatchPlayer> collectPlayers(List<MatchPlayer> list1, List<MatchPlayer> list2) {
+        List<MatchPlayer> collectingPlayers = new ArrayList<>();
+        collectingPlayers.addAll(list1);
+        collectingPlayers.addAll(list2);
+        return collectingPlayers;
     }
 
     /**

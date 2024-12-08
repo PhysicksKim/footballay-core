@@ -130,8 +130,6 @@ public class FootballStreamDtoMapper {
         );
     }
 
-    // TODO : [TEST] FixtureLineupResponse 맵핑에서 미등록 선수 포함 시 테스트 필요
-
     /**
      * Fixture -> Lineup -> MatchLineup -> MatchPlayer
      *

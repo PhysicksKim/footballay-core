@@ -130,21 +130,6 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     )
     List<Fixture> findAvailableFixturesByLeagueAndDateRange(League league, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
-    // TODO : 테스트 및 쿼리 문제 해결 필요
-    // @Query("SELECT f FROM Fixture f " +
-    //         "LEFT JOIN FETCH f.liveStatus ls " +
-    //         "JOIN FETCH f.league l " +
-    //         "JOIN FETCH f.homeTeam ht " +
-    //         "JOIN FETCH f.awayTeam at " +
-    //         "JOIN FETCH f.lineups lu JOIN FETCH lu.matchPlayers mp " +
-    //         "JOIN FETCH f.events e " +
-    //         "JOIN FETCH e.player ep JOIN FETCH ep.matchLineup epml " +
-    //         "JOIN FETCH e.assist ea JOIN FETCH ea.matchLineup eaml " +
-    //         "JOIN FETCH f.teamStatistics ts JOIN FETCH ts.expectedGoalsList xg " +
-    //         "WHERE f.fixtureId = :fixtureId"
-    // )
-    // Optional<Fixture> findByIdWithAllAssociations(long fixtureId);
-
     @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
