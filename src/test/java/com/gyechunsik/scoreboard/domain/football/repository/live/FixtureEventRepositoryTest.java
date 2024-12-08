@@ -6,6 +6,8 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.EventType;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
@@ -44,6 +47,10 @@ class FixtureEventRepositoryTest {
 
     @Autowired
     private EntityManager em;
+    @Autowired
+    private MatchLineupRepository matchLineupRepository;
+    @Autowired
+    private MatchPlayerRepository matchPlayerRepository;
 
     @DisplayName("Fixture 의 Event 를 sequence 순서대로 조회한다")
     @Test
@@ -68,11 +75,28 @@ class FixtureEventRepositoryTest {
         em.flush();
         em.clear();
 
+        MatchLineup matchLineup = MatchLineup.builder()
+                .fixture(saveFixture)
+                .team(saveHome)
+                .formation("4-4-2")
+                .build();
+        matchLineupRepository.save(matchLineup);
+
+        em.flush();
+        em.clear();
+
+        List<MatchPlayer> matchPlayers = createMatchPlayersOfMatchLineup(matchLineup, savePlayers);
+        matchPlayers = matchPlayerRepository.saveAll(matchPlayers);
+        matchLineup.setMatchPlayers(matchPlayers);
+
+        em.flush();
+        em.clear();
+
         // when
         FixtureEvent seq0_normalGoal = FixtureEvent.builder()
                 .fixture(saveFixture)
                 .team(home)
-                .player(savePlayers.get(0))
+                .player(matchPlayers.get(0))
                 .sequence(0)
                 .timeElapsed(10)
                 .extraTime(0)
@@ -82,8 +106,8 @@ class FixtureEventRepositoryTest {
         FixtureEvent seq1_substitution = FixtureEvent.builder()
                 .fixture(saveFixture)
                 .team(home)
-                .player(savePlayers.get(1))
-                .assist(savePlayers.get(2))
+                .player(matchPlayers.get(1))
+                .assist(matchPlayers.get(2))
                 .sequence(1)
                 .timeElapsed(15)
                 .extraTime(0)
@@ -107,5 +131,19 @@ class FixtureEventRepositoryTest {
         assertThat(findFixtureEvents.get(0).getSequence()).isEqualTo(0);
         assertThat(findFixtureEvents.get(1).getSequence()).isEqualTo(1);
         assertThat(findFixtureEvents.get(0).getTeam().getId()).isEqualTo(home.getId());
+    }
+
+    private List<MatchPlayer> createMatchPlayersOfMatchLineup(MatchLineup matchLineup, List<Player> savePlayers) {
+        List<MatchPlayer> matchPlayers = new ArrayList<>();
+        for (int i = 0; i < savePlayers.size(); i++) {
+            Player player = savePlayers.get(i);
+            MatchPlayer matchPlayer = MatchPlayer.builder()
+                    .matchLineup(matchLineup)
+                    .player(player)
+                    .position("DF")
+                    .build();
+            matchPlayers.add(matchPlayer);
+        }
+        return matchPlayers;
     }
 }

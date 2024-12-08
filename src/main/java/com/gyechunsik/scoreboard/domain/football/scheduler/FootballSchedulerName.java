@@ -8,22 +8,22 @@ public class FootballSchedulerName {
     public static String fixtureGroup() {
         return "FixtureGroup";
     }
-    public static String startLineupJob(long fixtureId) {
-        return "StartLineupJob_" + fixtureId;
+    public static String previousMatchJob(long fixtureId) {
+        return "PreviousMatchJob_" + fixtureId;
     }
-    public static String startLineupTrigger(long fixtureId) {
+    public static String previousMatchTrigger(long fixtureId) {
         return "StartLineupTrigger_" + fixtureId;
     }
-    public static String liveFixtureJob(long fixtureId) {
-        return "LiveFixtureJob_" + fixtureId;
+    public static String liveMatchJob(long fixtureId) {
+        return "LiveMatchJob_" + fixtureId;
     }
-    public static String liveFixtureTrigger(long fixtureId) {
-        return "LiveFixtureTrigger_" + fixtureId;
+    public static String liveMatchTrigger(long fixtureId) {
+        return "LiveMatchTrigger_" + fixtureId;
     }
-    public static String postFinishJob(long fixtureId) {
-        return "PostFinishJob_" + fixtureId;
+    public static String postMatchJob(long fixtureId) {
+        return "PostMatchJob_" + fixtureId;
     }
-    public static String postFinishTrigger(long fixtureId) {
-        return "PostFinishTrigger_" + fixtureId;
+    public static String postMatchTrigger(long fixtureId) {
+        return "PostMatchTrigger_" + fixtureId;
     }
 }

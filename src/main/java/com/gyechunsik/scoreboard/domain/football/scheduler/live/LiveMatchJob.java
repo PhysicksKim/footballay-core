@@ -10,26 +10,27 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
-public class LiveFixtureJob implements Job {
+public class LiveMatchJob implements Job {
 
-    private final LiveFixtureTask liveFixtureTask;
-    private final LiveFixtureJobSchedulerService liveFixtureJobSchedulerService;
+    private final LiveMatchTask liveMatchTask;
+    private final LiveMatchJobSchedulerService liveMatchJobSchedulerService;
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
-        log.info("LiveFixtureJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
-        boolean isFixtureFinished = liveFixtureTask.requestAndSaveLiveFixtureData(fixtureId);
+        log.info("LiveMatchJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
+
+        boolean isFixtureFinished = liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
         if(isFixtureFinished) {
-            log.info("LiveFixture is finished. Deleting job");
+            log.info("LiveMatch is finished. Deleting job");
             try {
                 context.getScheduler().deleteJob(context.getJobDetail().getKey());
                 log.info("Job deleted :: key={}", context.getJobDetail().getKey());
-                liveFixtureJobSchedulerService.addPostFinishJob(fixtureId);
-                log.info("PostFinishJob added :: fixtureId={}", fixtureId);
+
+                liveMatchJobSchedulerService.addPostMatchJob(fixtureId);
+                log.info("PostMatchJob added :: fixtureId={}", fixtureId);
             } catch (Exception e) {
-                // log.error("jobDetail {}", context.getJobDetail());
-                log.error("LiveFixtureJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
+                log.error("LiveMatchJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
                 throw new RuntimeException(e);
             }
         }

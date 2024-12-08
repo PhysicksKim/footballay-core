@@ -10,10 +10,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.StartLineupRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.*;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -40,16 +36,22 @@ public class FootballDataService {
 
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
-
-    private static final Supplier<IllegalArgumentException> LEAGUE_NOT_EXIST_THROW_SUPPLIER
-            = () -> new IllegalArgumentException("존재하지 않는 리그입니다.");
     private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
     private final FixtureEventRepository fixtureEventRepository;
-    private final StartLineupRepository startLineupRepository;
+    private final MatchLineupRepository matchLineupRepository;
     private final TeamPlayerRepository teamPlayerRepository;
-    private final PlayerStatisticsRepository playerStatisticsRepository;
     private final TeamStatisticsRepository teamStatisticsRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
+
+    private static final Supplier<IllegalArgumentException> LEAGUE_NOT_EXIST_THROW_SUPPLIER
+            = () -> new IllegalArgumentException("존재하지 않는 리그입니다.");
+    private static final Supplier<IllegalArgumentException> TEAM_NOT_EXIST_THROW_SUPPLIER
+            = () -> new IllegalArgumentException("존재하지 않는 팀입니다.");
+    private static final Supplier<IllegalArgumentException> PLAYER_NOT_EXIST_THROW_SUPPLIER
+            = () -> new IllegalArgumentException("존재하지 않는 선수입니다.");
+    private static final Supplier<IllegalArgumentException> FIXTURE_NOT_EXIST_THROW_SUPPLIER
+            = () -> new IllegalArgumentException("존재하지 않는 경기입니다.");
 
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
@@ -63,13 +65,11 @@ public class FootballDataService {
     }
 
     public League findLeagueById(long leagueId) {
-        return leagueRepository.findById(leagueId)
-                .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
+        return leagueRepository.findById(leagueId).orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
     }
 
     public List<Team> getTeamsByLeagueId(long leagueId) {
-        League league = leagueRepository.findById(leagueId)
-                .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
+        League league = leagueRepository.findById(leagueId).orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
         return teamRepository.findTeamsByLeague(league);
     }
 
@@ -78,14 +78,11 @@ public class FootballDataService {
     }
 
     public Fixture getFixtureById(long fixtureId) {
-        return fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+        return findFixtureOrThrow(fixtureId);
     }
 
     public LiveStatus getFixtureLiveStatus(long fixtureId) {
-        return fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."))
-                .getLiveStatus();
+        return findFixtureOrThrow(fixtureId).getLiveStatus();
     }
 
     public List<Fixture> findFixturesOnClosestDate(long leagueId, ZonedDateTime matchDateFrom) {
@@ -135,22 +132,21 @@ public class FootballDataService {
 
     public Fixture getFixtureWithEager(long fixtureId) {
         return fixtureRepository.findFixtureByIdWithDetails(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+                .orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
     }
 
     public List<FixtureEvent> getFixtureEvents(Fixture fixture) {
         return fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
     }
 
-    public Optional<StartLineup> getStartLineup(Fixture fixture, Team team) {
-        return startLineupRepository.findByFixtureAndTeam(fixture, team);
+    public Optional<MatchLineup> getStartLineup(Fixture fixture, Team team) {
+        return matchLineupRepository.findByFixtureAndTeam(fixture, team);
     }
 
     public Player addTeamPlayerRelationManually(long teamId, long playerId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+        Team team = findTeamOrThrow(teamId);
         Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+                .orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
         Optional<TeamPlayer> findTeamPlayer = teamPlayerRepository.findByTeamAndPlayer(team, player);
         if (findTeamPlayer.isPresent()) {
             log.info("TeamPlayer relation already exists :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
@@ -168,10 +164,9 @@ public class FootballDataService {
     }
 
     public Player removeTeamPlayerRelationManually(long teamId, long playerId) {
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+        Team team = findTeamOrThrow(teamId);
         Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
         teamPlayerRepository.deleteByTeamAndPlayer(team, player);
         log.info("TeamPlayer relation removed manually :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
         setPreventUnlink(playerId, true);
@@ -180,7 +175,7 @@ public class FootballDataService {
 
     public void setPreventUnlink(long playerId, boolean preventUnlink) {
         Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
         player.setPreventUnlink(preventUnlink);
         playerRepository.save(player);
         log.info("PreventUnlink set to {} for player=[{},{}]", preventUnlink, playerId, player.getName());
@@ -201,7 +196,7 @@ public class FootballDataService {
 
     public List<Team> getTeamsOfPlayer(long playerId) {
         Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 선수입니다."));
+                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
         List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream()
                 .map(TeamPlayer::getTeam)
                 .toList();
@@ -210,19 +205,25 @@ public class FootballDataService {
     }
 
     public Optional<TeamStatistics> getTeamStatistics(long fixtureId, long teamId) {
-        Fixture fixture = fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
+        Fixture fixture = findFixtureOrThrow(fixtureId);
+        Team team = findTeamOrThrow(teamId);
         return teamStatisticsRepository.findByFixtureAndTeam(fixture, team);
     }
 
-    public List<PlayerStatistics> getPlayerStatistics(long fixtureId, long teamId) {
-        Fixture fixture = fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 팀입니다."));
-        return playerStatisticsRepository.findByFixtureAndTeam(fixture, team);
+    public List<MatchPlayer> getPlayerStatistics(long fixtureId, long teamId) {
+        Fixture fixture = findFixtureOrThrow(fixtureId);
+        Team team = findTeamOrThrow(teamId);
+        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
+    }
+
+    private Fixture findFixtureOrThrow(long fixtureId) {
+        return fixtureRepository.findById(fixtureId)
+                .orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
+    }
+
+    private Team findTeamOrThrow(long teamId) {
+        return teamRepository.findById(teamId)
+                .orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
     }
 
 }

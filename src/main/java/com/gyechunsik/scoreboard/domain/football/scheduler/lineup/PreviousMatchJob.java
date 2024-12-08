@@ -11,23 +11,23 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
-public class StartLineupJob implements Job {
+public class PreviousMatchJob implements Job {
 
-    private final StartLineupTask lineupTask;
+    private final PreviousMatchTask lineupTask;
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         long fixtureId = jobExecutionContext.getMergedJobDataMap().getLong("fixtureId");
-        log.info("StartLineupJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
+        log.info("PreviousMatchJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
         boolean isSuccess = lineupTask.requestAndSaveLineup(fixtureId);
         if(isSuccess) {
-            log.info("StartLineup is Saved. Deleting job");
+            log.info("MatchLineup is Saved. Deleting job");
             JobKey key = jobExecutionContext.getJobDetail().getKey();
             try {
                 jobExecutionContext.getScheduler().deleteJob(key);
                 log.info("Job deleted :: key={}", key);
             } catch (Exception e) {
-                log.error("StartLineupJob key=[{}] delete failed", key, e);
+                log.error("PreviousMatchJob key=[{}] delete failed", key, e);
                 throw new RuntimeException(e);
             }
         }

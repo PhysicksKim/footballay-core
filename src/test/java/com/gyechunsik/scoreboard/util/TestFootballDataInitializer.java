@@ -4,12 +4,14 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam;
@@ -40,6 +42,7 @@ public class TestFootballDataInitializer {
     public static final String AWAY_TEAM_ID = "awayTeamId";
     public static final String FIXTURE_ID = "fixtureId";
     private final TeamPlayerRepository teamPlayerRepository;
+    private final LiveStatusRepository liveStatusRepository;
 
     public Map<String, String> generateSingleSet() {
         LeagueTeamFixture generate = generate();
@@ -48,12 +51,15 @@ public class TestFootballDataInitializer {
         Team away = generate.away;
         Fixture fixture = generate.fixture;
 
+        LiveStatus liveStatus = liveStatusRepository.save(createLiveStatusFullTime());
+        fixture.setLiveStatus(liveStatus);
         League saveLeague = leagueRepository.save(league);
         Team saveHome = teamRepository.save(home);
         Team saveAway = teamRepository.save(away);
         leagueTeamRepository.save(LeagueTeam.builder().league(saveLeague).team(saveHome).build());
         leagueTeamRepository.save(LeagueTeam.builder().league(saveLeague).team(saveAway).build());
         Fixture saveFixture = fixtureRepository.save(fixture);
+        liveStatus.setFixture(saveFixture);
 
         List<Player> homePlayers = GeneratePlayersOfTeam.generatePlayersOfTeam(saveHome);
         List<Player> savedHomePlayers = playerRepository.saveAll(homePlayers);
@@ -71,6 +77,16 @@ public class TestFootballDataInitializer {
         em.clear();
 
         return generateIdMap(generate, savedHomePlayers, savedAwayPlayers);
+    }
+
+    private LiveStatus createLiveStatusFullTime() {
+        return LiveStatus.builder()
+                .elapsed(90)
+                .longStatus("Match Finished")
+                .shortStatus("FT")
+                .homeScore(1)
+                .awayScore(0)
+                .build();
     }
 
     public List<String> getPlayerIds(Map<String, String> dataIdMap) {

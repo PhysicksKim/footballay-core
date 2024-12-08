@@ -18,12 +18,12 @@ public record FixtureLineupResponse(
             String teamName,
             String teamKoreanName,
             String formation,
-            List<_StartPlayer> players,
-            List<_StartPlayer> substitutes
+            List<_LineupPlayer> players,
+            List<_LineupPlayer> substitutes
     ) {
     }
 
-    public record _StartPlayer(
+    public record _LineupPlayer(
             long id,
             String koreanName,
             String name,
@@ -31,7 +31,8 @@ public record FixtureLineupResponse(
             String photo,
             String position,
             String grid,
-            boolean substitute
+            boolean substitute,
+            String tempId
     ) {
     }
 }

@@ -1,29 +1,25 @@
 package com.gyechunsik.scoreboard.web.football.response;
 
-import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
+import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDto;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
+import static com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDto.*;
+
+// TODO : 미등록 선수에 대한 통계 Response 생성 전략 필요
 @Slf4j
 public class MatchStatisticsResponseMapper {
 
-    public static MatchStatisticsResponse toResponse(MatchStatistics matchStat) {
-        Fixture fixture = matchStat.getFixture();
-        LiveStatus liveStatus = matchStat.getLiveStatus();
-        Team home = matchStat.getHome();
-        Team away = matchStat.getAway();
+    public static MatchStatisticsResponse toResponse(MatchStatisticsDto matchStat) {
+        MatchStatsFixture fixture = matchStat.getFixture();
+        MatchStatsLiveStatus liveStatus = matchStat.getLiveStatus();
+        MatchStatsTeam home = matchStat.getHome();
+        MatchStatsTeam away = matchStat.getAway();
 
-        List<PlayerStatistics> homePlayerStats = matchStat.getHomePlayerStatistics();
-        List<PlayerStatistics> awayPlayerStats = matchStat.getAwayPlayerStatistics();
+        List<MatchStatsPlayers> homePlayerStats = matchStat.getHomePlayerStatistics();
+        List<MatchStatsPlayers> awayPlayerStats = matchStat.getAwayPlayerStatistics();
 
-        // RESPONSE records
         MatchStatisticsResponse._ResponseFixture responseFixture = toResponseFixture(fixture, liveStatus);
         MatchStatisticsResponse._ResponseTeam homeTeam = toResponseTeam(home);
         MatchStatisticsResponse._ResponseTeam awayTeam = toResponseTeam(away);
@@ -33,7 +29,6 @@ public class MatchStatisticsResponseMapper {
         List<MatchStatisticsResponse._ResponsePlayerStatistics> homePlayerStatList = toResponsePlayerStatisticsList(homePlayerStats);
         List<MatchStatisticsResponse._ResponsePlayerStatistics> awayPlayerStatList = toResponsePlayerStatisticsList(awayPlayerStats);
 
-        // end RESPONSE record
         return new MatchStatisticsResponse(
                 responseFixture,
                 new MatchStatisticsResponse._ResponseTeamWithStatistics(homeTeam, homeTeamStat, homePlayerStatList),
@@ -41,24 +36,15 @@ public class MatchStatisticsResponseMapper {
         );
     }
 
-    private static List<MatchStatisticsResponse._XG> toXGList(List<ExpectedGoals> xgList) {
-        return xgList.stream()
-                .map(xg -> new MatchStatisticsResponse._XG(
-                        safeInt(xg.getElapsed()),
-                        xg.getXg()
-                ))
-                .toList();
-    }
-
-    private static MatchStatisticsResponse._ResponseFixture toResponseFixture(Fixture fixture, LiveStatus liveStatus) {
+    private static MatchStatisticsResponse._ResponseFixture toResponseFixture(MatchStatsFixture fixture, MatchStatsLiveStatus liveStatus) {
         return new MatchStatisticsResponse._ResponseFixture(
-                fixture.getFixtureId(),
+                fixture.getId(),
                 liveStatus.getElapsed() != null ? liveStatus.getElapsed() : 0,
                 liveStatus.getShortStatus()
         );
     }
 
-    private static MatchStatisticsResponse._ResponseTeam toResponseTeam(Team team) {
+    private static MatchStatisticsResponse._ResponseTeam toResponseTeam(MatchStatsTeam team) {
         return new MatchStatisticsResponse._ResponseTeam(
                 team.getId(),
                 team.getName(),
@@ -67,23 +53,50 @@ public class MatchStatisticsResponseMapper {
         );
     }
 
-    private static MatchStatisticsResponse._ResponseTeamStatistics toTeamStatisticsResponse(TeamStatistics teamStat) {
+    private static MatchStatisticsResponse._ResponseTeamStatistics toTeamStatisticsResponse(MatchStatsTeamStatistics teamStat) {
         // null 체크를 통해 기본값 반환
         if (teamStat == null) {
             log.info("Team statistics not available, returning empty statistics.");
             return new MatchStatisticsResponse._ResponseTeamStatistics(
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  List.of() // 기본값으로 빈 통계 제공
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, List.of() // 기본값으로 빈 통계 제공
             );
         }
 
-        List<ExpectedGoals> expectedGoalsList = teamStat.getExpectedGoalsList() != null ? teamStat.getExpectedGoalsList() : List.of();
+        List<MatchStatsXg> expectedGoalsList = teamStat.getExpectedGoalsList() != null ? teamStat.getExpectedGoalsList() : List.of();
         List<MatchStatisticsResponse._XG> xgList = toXGList(expectedGoalsList);
 
         return createTeamStatisticsRecord(teamStat, xgList);
     }
 
+    private static List<MatchStatisticsResponse._ResponsePlayerStatistics> toResponsePlayerStatisticsList(List<MatchStatsPlayers> mpsDtoList) {
+        return mpsDtoList.stream()
+                .map(MatchStatisticsResponseMapper::toResponsePlayerStatistics)
+                .toList();
+    }
+
+    private static List<MatchStatisticsResponse._XG> toXGList(List<MatchStatsXg> xgList) {
+        return xgList.stream()
+                .map(xg -> new MatchStatisticsResponse._XG(
+                        safeInt(xg.getElapsed()),
+                        xg.getXg()
+                ))
+                .toList();
+    }
+
+    private static MatchStatisticsResponse._ResponsePlayerStatistics toResponsePlayerStatistics(MatchStatsPlayers mpsDto) {
+        MatchStatisticsResponse._PlayerInfoBasic playerInfoBasic = createResponsePlayerInfoBasic(mpsDto);
+
+        MatchStatsPlayerStatistics playerStat = mpsDto.getStatistics();
+        MatchStatisticsResponse._PlayerStatistics playerStatistics = createResponsePlayerStatistics(playerStat);
+
+        return new MatchStatisticsResponse._ResponsePlayerStatistics(
+                playerInfoBasic,
+                playerStatistics
+        );
+    }
+
     private static MatchStatisticsResponse._ResponseTeamStatistics createTeamStatisticsRecord(
-            TeamStatistics teamStatistics,
+            MatchStatsTeamStatistics teamStatistics,
             List<MatchStatisticsResponse._XG> xgList) {
         return new MatchStatisticsResponse._ResponseTeamStatistics(
                 safeInt(teamStatistics.getShotsOnGoal()),
@@ -107,17 +120,8 @@ public class MatchStatisticsResponseMapper {
         );
     }
 
-    private static MatchStatisticsResponse._ResponsePlayerStatistics toResponsePlayerStatistics(PlayerStatistics playerStat) {
-        MatchStatisticsResponse._PlayerInfoBasic playerInfoBasic = new MatchStatisticsResponse._PlayerInfoBasic(
-                playerStat.getPlayer().getId(),
-                playerStat.getPlayer().getName(),
-                playerStat.getPlayer().getKoreanName(),
-                playerStat.getPlayer().getPhotoUrl(),
-                playerStat.getPosition(),
-                playerStat.getPlayer().getNumber()
-        );
-
-        MatchStatisticsResponse._PlayerStatistics playerStatistics = new MatchStatisticsResponse._PlayerStatistics(
+    private static MatchStatisticsResponse._PlayerStatistics createResponsePlayerStatistics(MatchStatsPlayerStatistics playerStat) {
+        return new MatchStatisticsResponse._PlayerStatistics(
                 safeInt(playerStat.getMinutesPlayed()),
                 playerStat.getPosition(),
                 playerStat.getRating(),
@@ -146,17 +150,18 @@ public class MatchStatisticsResponseMapper {
                 safeInt(playerStat.getPenaltiesMissed()),
                 safeInt(playerStat.getPenaltiesSaved())
         );
-
-        return new MatchStatisticsResponse._ResponsePlayerStatistics(
-                playerInfoBasic,
-                playerStatistics
-        );
     }
 
-    private static List<MatchStatisticsResponse._ResponsePlayerStatistics> toResponsePlayerStatisticsList(List<PlayerStatistics> playerStats) {
-        return playerStats.stream()
-                .map(MatchStatisticsResponseMapper::toResponsePlayerStatistics)
-                .toList();
+    private static MatchStatisticsResponse._PlayerInfoBasic createResponsePlayerInfoBasic(MatchStatsPlayers mpsDto) {
+        return new MatchStatisticsResponse._PlayerInfoBasic(
+                mpsDto.getId(),
+                mpsDto.getName(),
+                mpsDto.getKoreanName(),
+                mpsDto.getPhotoUrl(),
+                mpsDto.getPosition(),
+                mpsDto.getNumber(),
+                mpsDto.getTemporaryId() != null ? mpsDto.getTemporaryId().toString() : null
+        );
     }
 
     private static int safeInt(Integer value) {

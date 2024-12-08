@@ -1,16 +1,20 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -30,14 +34,22 @@ public class PlayerStatisticsService {
 
     private final TeamRepository teamRepository;
     private final FixtureRepository fixtureRepository;
-    private final PlayerRepository playerRepository;
     private final PlayerStatisticsRepository playerStatisticsRepository;
+    private final MatchLineupRepository matchLineupRepository;
+    private final MatchPlayerRepository matchPlayerRepository;
 
+    /**
+     * 반드시, MatchLineup 이 먼저 저장되어야지만 Fixture 에서 부터 선수별 통계를 저장할 수 있습니다. <br>
+     * MatchLineup 이 저장되어 있지 않다면 캐싱하지 않고 넘어갑니다. <br>
+     *
+     * @param response
+     */
     public void savePlayerStatistics(FixtureSingleResponse response) {
         // 1) Response 에서 데이터 추출
         _FixtureSingle fixtureSingle = response.getResponse().get(0);
         _Home home = fixtureSingle.getTeams().getHome();
         _Away away = fixtureSingle.getTeams().getAway();
+
         Long fixtureId = fixtureSingle.getFixture().getId();
         Long homeId = home.getId();
         Long awayId = away.getId();
@@ -48,144 +60,136 @@ public class PlayerStatisticsService {
         List<_PlayerStatistics> awayPlayerStatisticsList = extractTeamPlayerStatistics(bothTeamPlayerStatistics, awayId);
 
         // 3) 필요 엔티티 - 경기일정, 팀 조회
-        Fixture fixture = fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("fixtureId=" + fixtureId + " 에 해당하는 경기 정보가 없습니다."));
-        Team homeTeam = teamRepository.findById(homeId)
-                .orElseThrow(() -> new IllegalArgumentException("homeId=" + homeId + " 에 해당하는 팀 정보가 없습니다."));
-        Team awayTeam = teamRepository.findById(awayId)
-                .orElseThrow(() -> new IllegalArgumentException("awayId=" + awayId + " 에 해당하는 팀 정보가 없습니다."));
+        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow(() -> new IllegalArgumentException("fixtureId=" + fixtureId + " 에 해당하는 경기 정보가 없습니다."));
+        Team homeTeam = teamRepository.findById(homeId).orElseThrow(() -> new IllegalArgumentException("homeId=" + homeId + " 에 해당하는 팀 정보가 없습니다."));
+        Team awayTeam = teamRepository.findById(awayId).orElseThrow(() -> new IllegalArgumentException("awayId=" + awayId + " 에 해당하는 팀 정보가 없습니다."));
 
         // 4) 필요 엔티티 - 선수들 조회
-        Map<Long, Player> homePlayerMap = extractPlayers(homePlayerStatisticsList);
-        Map<Long, Player> awayPlayerMap = extractPlayers(awayPlayerStatisticsList);
+        List<MatchLineup> lineups = matchLineupRepository.findAllByFixture(fixture);
+        if (lineups.size() != 2) {
+            log.error("fixtureId={} 에 해당하는 경기의 라인업 정보가 올바르지 않습니다. size={}", fixtureId, lineups.size());
+            return;
+        }
+
+        Optional<MatchLineup> optionalHomeLineup = lineups.stream().filter(lineup -> lineup.getTeam().equals(homeTeam)).findFirst();
+        Optional<MatchLineup> optionalAwayLineup = lineups.stream().filter(lineup -> lineup.getTeam().equals(awayTeam)).findFirst();
+        if (optionalHomeLineup.isEmpty() || optionalAwayLineup.isEmpty()) {
+            log.error("fixtureId={} 에 해당하는 경기의 라인업 정보가 올바르지 않습니다. lineup 에 홈/어웨이 팀의 라인업이 존재하지 않습니다. home={}, away={}", fixtureId, optionalHomeLineup.isPresent(), optionalAwayLineup.isPresent());
+            return;
+        }
+
+        // TODO : 여기서 getMatchPlayers() 할 때 N+1 문제가 발생할 수 있음. 테스트 필요
+        MatchLineup homeMatchLineup = optionalHomeLineup.get();
+        MatchLineup awayMatchLineup = optionalAwayLineup.get();
 
         // 5) 선수 통계 정보 저장
-        savePlayerStatistics(homePlayerStatisticsList, homePlayerMap, fixture, homeTeam);
-        savePlayerStatistics(awayPlayerStatisticsList, awayPlayerMap, fixture, awayTeam);
+        savePlayerStatistics(homeMatchLineup, homePlayerStatisticsList);
+        savePlayerStatistics(awayMatchLineup, awayPlayerStatisticsList);
     }
 
-    private Map<Long, PlayerStatistics> savePlayerStatistics(
-            List<_PlayerStatistics> playerStatisticsList,
-            Map<Long, Player> playerMap,
-            Fixture fixture,
-            Team team) {
-        // 6) 기존에 저장되어 있는 선수 통계 정보 조회
-        Map<Long, PlayerStatistics> playerIdStatsMap = findAndMapPlayerStatistics(playerMap, fixture, team);
+    private void savePlayerStatistics(MatchLineup matchLineup, List<_PlayerStatistics> playerStatisticsList) {
+        // 6) Registered 여부에 따라 따로 동작하도록 하기 위해 Map 으로 나누기
+        List<MatchPlayer> matchPlayers = matchLineup.getMatchPlayers();
 
-        // 7) API 응답에서 제공한 선수 통계 정보로 PlayerStatistics 엔티티 생성 또는 업데이트
-        for (_PlayerStatistics playerStatistic : playerStatisticsList) {
+        Map<Long, MatchPlayer> regiMatchPlayerEntityMap = collectRegisteredPlayers(matchPlayers);
+        Map<String, MatchPlayer> unregiMatchPlayerEntityMap = collectUnregisteredPlayers(matchPlayers);
 
-            // 선수 엔티티, 선수 아이디, 선수 통계 정보 추출
-            Long playerId = playerStatistic.getPlayer().getId();
-            Player player = playerMap.get(playerId);
-            _FixturePlayers._Statistics statistics = playerStatistic.getStatistics().get(0);
+        Map<Long, _PlayerStatistics> regiPlayerDataMap = collectRegisteredPlayerStats(playerStatisticsList);
+        Map<String, _PlayerStatistics> unregiPlayerDataMap = collectUnregisteredPlayerStats(playerStatisticsList);
 
-            // 선수 통계 정보 엔티티
-            PlayerStatistics findPlayerStat = getOrCreatePlayerStatistics(playerIdStatsMap, fixture, team, player);
+        // 7) unregistered/registered PlayerMap 에 대한 통계 정보 업데이트
+        List<PlayerStatistics> collectingPlayerStatistics = new ArrayList<>();
+        List<MatchPlayer> collectingUpdatedMatchPlayers = new ArrayList<>();
+        createPlayerStatisticsEntityAndPutToMap(regiMatchPlayerEntityMap, regiPlayerDataMap, collectingPlayerStatistics, collectingUpdatedMatchPlayers);
+        createPlayerStatisticsEntityAndPutToMap(unregiMatchPlayerEntityMap, unregiPlayerDataMap, collectingPlayerStatistics, collectingUpdatedMatchPlayers);
 
-            updatePlayerStatistics(statistics, findPlayerStat);
-            playerIdStatsMap.put(playerId, findPlayerStat);
-        }
+        // 8) 새롭게 생성된 playerStatistics & MatchPlayer entity save
+        List<PlayerStatistics> savedPlayerStatistics = playerStatisticsRepository.saveAll(collectingPlayerStatistics);
+        List<MatchPlayer> savedMatchPlayers = matchPlayerRepository.saveAll(collectingUpdatedMatchPlayers);
 
-        // 8) 선수 통계 정보 엔티티들 저장
-        List<PlayerStatistics> playerStatistics = playerStatisticsRepository.saveAll(playerIdStatsMap.values());
-
-        // 9) 저장된 선수 로깅
-        logSavedPlayers(playerStatistics);
-        return playerIdStatsMap;
-    }
-
-    private static void logSavedPlayers(List<PlayerStatistics> playerStatistics) {
-        String playerNames = playerStatistics.stream()
-                .map(PlayerStatistics::getPlayer)
-                .map(p -> StringUtils.hasText(p.getKoreanName())
-                        ? p.getKoreanName() : p.getName())
-                .collect(Collectors.joining(", "));
-        log.info("선수 통계 정보 저장됨 : size={}, players=[{}]",
-                playerStatistics.size(), playerNames);
-    }
-
-    private Map<Long, Player> extractPlayers(List<_PlayerStatistics> playerStatisticsList) {
-        Map<Long, _Player> responsePlayerMap = extractResponsePlayerMap(playerStatisticsList);
-
-        Map<Long, Player> playerMap = findPlayers(responsePlayerMap.keySet());
-        Map<Long, _Player> notCachedPlayerMap = extractNotCachedPlayerMap(responsePlayerMap, playerMap);
-        Map<Long, Player> alreadyCachedPlayerMap = extractAlreadyCachedPlayerMap(responsePlayerMap, playerMap);
-
-        List<Player> newlyCachedPlayers = cacheNotSavedPlayers(notCachedPlayerMap);
-        Map<Long, Player> newlyCachedPlayerMap = newlyCachedPlayers.stream().collect(Collectors.toMap(Player::getId, Function.identity()));
-
-        Map<Long, Player> combinedMap = new HashMap<>();
-        combinedMap.putAll(alreadyCachedPlayerMap);
-        combinedMap.putAll(newlyCachedPlayerMap);
-        return combinedMap;
-    }
-
-    private static Map<Long, _Player> extractResponsePlayerMap(List<_PlayerStatistics> playerStatisticsList) {
-        return playerStatisticsList.stream()
-                .map(_PlayerStatistics::getPlayer)
-                .collect(Collectors.toMap(_Player::getId, Function.identity()));
-    }
-
-    private Map<Long, Player> extractAlreadyCachedPlayerMap(Map<Long, _Player> responsePlayerMap, Map<Long, Player> playerMap) {
-        return responsePlayerMap.entrySet().stream()
-                .filter(entry -> playerMap.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> playerMap.get(entry.getKey())));
-    }
-
-    private List<Player> cacheNotSavedPlayers(Map<Long, _Player> notSavedPlayerMap) {
-        List<Player> list = notSavedPlayerMap.entrySet().stream()
-                .map(entry -> Player.builder()
-                        .id(entry.getKey())
-                        .name(entry.getValue().getName())
-                        .photoUrl(entry.getValue().getPhoto())
-                        .build())
-                .toList();
-        List<Player> savedPlayers = playerRepository.saveAll(list);
-        if (!savedPlayers.isEmpty()) {
-            log.info("player statistics 에서 새롭게 캐싱한 선수 정보: {}", savedPlayers);
-        }
-        return savedPlayers;
-    }
-
-    private Map<Long, _Player> extractNotCachedPlayerMap(
-            Map<Long, _Player> responsePlayerMap,
-            Map<Long, Player> playerMap) {
-        return responsePlayerMap.entrySet().stream()
-                .filter(entry -> !playerMap.containsKey(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private Map<Long, Player> findPlayers(Set<Long> ids) {
-        return playerRepository.findAllById(ids).stream().collect(Collectors.toMap(Player::getId, Function.identity()));
+        // 9) 새롭게 생성된 PlayerStatistics logging
+        log.info("Team={} 의 새롭게 생성된 PlayerStatistics entity size: {}", matchLineup.getTeam().getName(), savedPlayerStatistics.size());
     }
 
     /**
-     * @param playerMap
-     * @param fixture
-     * @param team
-     * @return Map < playerId, PlayerStatistics >
+     * 선수 통계 정보 중, 등록되지 않은 선수 정보를 추출합니다.
+     * @param playerStatisticsList
+     * @return
      */
-    private Map<Long, PlayerStatistics> findAndMapPlayerStatistics(Map<Long, Player> playerMap, Fixture fixture, Team team) {
-        return playerStatisticsRepository.findByFixtureAndTeamAndPlayerIn(fixture, team, playerMap.values().stream().toList()).stream()
+    private static @NotNull Map<String, _PlayerStatistics> collectUnregisteredPlayerStats(List<_PlayerStatistics> playerStatisticsList) {
+        return playerStatisticsList.stream()
+                .filter(ps -> (ps.getPlayer() == null || isStatsUnregisteredPlayer(ps.getPlayer().getId()))
+                        && StringUtils.hasText(ps.getPlayer().getName()))
+                .collect(Collectors.toMap(ps -> ps.getPlayer().getName(), Function.identity()));
+    }
+
+    private static @NotNull Map<Long, _PlayerStatistics> collectRegisteredPlayerStats(List<_PlayerStatistics> playerStatisticsList) {
+        return playerStatisticsList.stream()
+                .filter(ps -> ps.getPlayer() != null && !isStatsUnregisteredPlayer(ps.getPlayer().getId()))
                 .collect(Collectors.toMap(ps -> ps.getPlayer().getId(), Function.identity()));
     }
 
-    private static PlayerStatistics getOrCreatePlayerStatistics(
-            Map<Long, PlayerStatistics> playerIdStatsMap,
-            Fixture fixture,
-            Team team,
-            Player player) {
-        PlayerStatistics findPlayerStat = playerIdStatsMap.get(player.getId());
-        if (findPlayerStat == null) {
-            return PlayerStatistics.builder()
-                    .fixture(fixture)
-                    .team(team)
-                    .player(player)
-                    .build();
-        } else {
-            return findPlayerStat;
+    private static @NotNull Map<String, MatchPlayer> collectUnregisteredPlayers(List<MatchPlayer> matchPlayers) {
+        return matchPlayers.stream()
+                .filter(mp -> mp.getPlayer() == null && StringUtils.hasText(mp.getUnregisteredPlayerName()))
+                .collect(Collectors.toMap(MatchPlayer::getUnregisteredPlayerName, Function.identity()));
+    }
+
+    private static @NotNull Map<Long, MatchPlayer> collectRegisteredPlayers(List<MatchPlayer> matchPlayers) {
+        return matchPlayers.stream()
+                .filter(mp -> mp.getPlayer() != null)
+                .collect(Collectors.toMap(mp -> mp.getPlayer().getId(), Function.identity()));
+    }
+
+    private void createPlayerStatisticsEntityAndPutToMap(
+            Map<?, MatchPlayer> givenMatchPlayers,
+            Map<?, _PlayerStatistics> givenPlayerStatsData,
+            List<PlayerStatistics> collectingPlayerStatsMap,
+            List<MatchPlayer> collectingMatchPlayerMap
+    ) {
+        for (Map.Entry<?, MatchPlayer> entry : givenMatchPlayers.entrySet()) {
+            MatchPlayer matchPlayer = entry.getValue();
+            _PlayerStatistics playerStatsData = givenPlayerStatsData.get(entry.getKey());
+
+            saveOrUpdatePlayerStatistics(
+                    collectingPlayerStatsMap,
+                    collectingMatchPlayerMap,
+                    matchPlayer,
+                    playerStatsData
+            );
         }
+    }
+
+    private void saveOrUpdatePlayerStatistics(
+            List<PlayerStatistics> collectingPlayerStatsMap,
+            List<MatchPlayer> collectingMatchPlayerMap,
+            MatchPlayer matchPlayer,
+            _PlayerStatistics playerStatsData
+    ) {
+        if (playerStatsData == null || playerStatsData.getStatistics() == null || playerStatsData.getStatistics().isEmpty()) {
+            log.warn("제공된 playerStatistics data 가 null 입니다. playerStatistics={}, matchPlayer={}", playerStatsData, matchPlayer);
+            return;
+        }
+
+        _FixturePlayers._Statistics statsData = playerStatsData.getStatistics().get(0);
+
+        PlayerStatistics statsEntity;
+        if (alreadyExistPlayerStatisticsEntity(matchPlayer)) {
+            statsEntity = createPlayerStatistics(statsData, matchPlayer);
+            collectingPlayerStatsMap.add(statsEntity);
+
+            matchPlayer.setPlayerStatistics(statsEntity);
+            collectingMatchPlayerMap.add(matchPlayer);
+        } else {
+            statsEntity = matchPlayer.getPlayerStatistics();
+            updatePlayerStatistics(statsData, statsEntity);
+        }
+    }
+
+
+    private PlayerStatistics createPlayerStatistics(_FixturePlayers._Statistics statsData, MatchPlayer mp) {
+        PlayerStatistics build = PlayerStatistics.builder().matchPlayer(mp).build();
+        return updatePlayerStatistics(statsData, build);
     }
 
     private static PlayerStatistics updatePlayerStatistics(_FixturePlayers._Statistics statistics, PlayerStatistics entity) {
@@ -220,15 +224,20 @@ public class PlayerStatisticsService {
     }
 
     private List<_PlayerStatistics> extractTeamPlayerStatistics(List<_FixturePlayers> bothTeamPlayerStatistics, Long teamId) {
-        Optional<List<_PlayerStatistics>> findFirst = bothTeamPlayerStatistics.stream()
-                .filter(playerStatistics -> playerStatistics.getTeam().getId().equals(teamId))
-                .map(_FixturePlayers::getPlayers)
-                .findFirst();
+        Optional<List<_PlayerStatistics>> findFirst = bothTeamPlayerStatistics.stream().filter(playerStatistics -> playerStatistics.getTeam().getId().equals(teamId)).map(_FixturePlayers::getPlayers).findFirst();
         if (findFirst.isEmpty()) {
             log.info("teamId={} 에 해당하는 선수 통계 정보가 없습니다.", teamId);
             return Collections.emptyList();
         }
         return findFirst.get();
+    }
+
+    private static boolean isStatsUnregisteredPlayer(@Nullable Long id) {
+        return id == null || id == 0;
+    }
+
+    private static boolean alreadyExistPlayerStatisticsEntity(MatchPlayer matchPlayer) {
+        return matchPlayer.getPlayerStatistics() == null;
     }
 
 }

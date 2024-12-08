@@ -3,8 +3,8 @@ package com.gyechunsik.scoreboard.domain.football.repository.live;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.StartLineup;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.StartPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -31,12 +31,12 @@ import static org.assertj.core.api.Assertions.*;
 @ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 @Transactional
-public class StartPlayerRepositoryTest {
+public class MatchPlayerRepositoryTest {
 
     @Autowired
-    private StartPlayerRepository startPlayerRepository;
+    private MatchPlayerRepository matchPlayerRepository;
     @Autowired
-    private StartLineupRepository startLineupRepository;
+    private MatchLineupRepository matchLineupRepository;
     @Autowired
     private PlayerRepository playerRepository;
 
@@ -57,7 +57,7 @@ public class StartPlayerRepositoryTest {
         dataIdMap = dataInitializer.generateSingleSet();
     }
 
-    @DisplayName("StartPlayer 추가에 성공")
+    @DisplayName("MatchPlayer 추가에 성공")
     @Test
     void AddStartPlayer() {
         // given
@@ -79,18 +79,18 @@ public class StartPlayerRepositoryTest {
         log.info("homePlayers : {}", homePlayers);
         log.info("awayPlayers : {}", awayPlayers);
 
-        StartLineup homeStartLineup = StartLineup.builder()
+        MatchLineup homeMatchLineup = MatchLineup.builder()
                 .fixture(fixture)
                 .team(home)
                 .formation("4-4-2")
                 .build();
-        StartLineup awayStartLineup = StartLineup.builder()
+        MatchLineup awayMatchLineup = MatchLineup.builder()
                 .fixture(fixture)
                 .team(away)
                 .formation("4-4-2")
                 .build();
-        homeStartLineup = startLineupRepository.save(homeStartLineup);
-        awayStartLineup = startLineupRepository.save(awayStartLineup);
+        homeMatchLineup = matchLineupRepository.save(homeMatchLineup);
+        awayMatchLineup = matchLineupRepository.save(awayMatchLineup);
 
         String[] girds = {
                 "1:1",
@@ -104,44 +104,44 @@ public class StartPlayerRepositoryTest {
 
         for (int i = 0; i < homePlayers.size(); i++) {
             Player homePlayer = homePlayers.get(i);
-            StartPlayer startPlayer = StartPlayer.builder()
+            MatchPlayer matchPlayer = MatchPlayer.builder()
                     .player(homePlayer)
-                    .startLineup(homeStartLineup)
+                    .matchLineup(homeMatchLineup)
                     .position(homePlayer.getPosition())
                     .grid(i<11 ? girds[i] : null)
                     .substitute(false)
                     .build();
-            startPlayerRepository.save(startPlayer);
+            matchPlayerRepository.save(matchPlayer);
         }
         for (int i = 0; i < awayPlayers.size(); i++) {
             Player awayPlayer = awayPlayers.get(i);
-            StartPlayer startPlayer = StartPlayer.builder()
+            MatchPlayer matchPlayer = MatchPlayer.builder()
                     .player(awayPlayer)
-                    .startLineup(awayStartLineup)
+                    .matchLineup(awayMatchLineup)
                     .position(awayPlayer.getPosition())
                     .grid(i<11 ? girds[i] : null)
                     .substitute(false)
                     .build();
-            startPlayerRepository.save(startPlayer);
+            matchPlayerRepository.save(matchPlayer);
         }
 
         em.flush();
         em.clear();
 
         // when
-        List<StartLineup> beforeDeleteStartLineup = startLineupRepository.findAllByFixture(fixture);
-        log.info("BEFORE startLineup size : {}", beforeDeleteStartLineup.size());
-        beforeDeleteStartLineup.forEach(startLineup -> {
-            log.info("BEFORE startLineup : {}", startLineup);
+        List<MatchLineup> beforeDeleteMatchLineup = matchLineupRepository.findAllByFixture(fixture);
+        log.info("BEFORE matchLineup size : {}", beforeDeleteMatchLineup.size());
+        beforeDeleteMatchLineup.forEach(startLineup -> {
+            log.info("BEFORE matchLineup : {}", startLineup);
         });
 
-        int deleted = startPlayerRepository.deleteByStartLineupIn(beforeDeleteStartLineup);
+        int deleted = matchPlayerRepository.deleteByMatchLineupIn(beforeDeleteMatchLineup);
         log.info("deleted players : {}", deleted);
 
-        List<StartPlayer> all = startPlayerRepository.findAll();
+        List<MatchPlayer> all = matchPlayerRepository.findAll();
 
         // then
-        assertThat(beforeDeleteStartLineup).isNotEmpty();
+        assertThat(beforeDeleteMatchLineup).isNotEmpty();
         assertThat(deleted).isEqualTo(homePlayers.size() + awayPlayers.size());
         assertThat(all).isEmpty();
     }

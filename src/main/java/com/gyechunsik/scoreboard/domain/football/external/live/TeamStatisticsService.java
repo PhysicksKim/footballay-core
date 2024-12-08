@@ -40,13 +40,7 @@ public class TeamStatisticsService {
     private final TeamStatisticsRepository teamStatisticsRepository;
 
     private final TeamRepository teamRepository;
-    private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
-    private final LeagueRepository leagueRepository;
-    private final FixtureEventRepository fixtureEventRepository;
-    private final LiveStatusRepository liveStatusRepository;
-
-    private final EntityManager em;
 
     private static final List<String> FINISHED_STATUSES
             = List.of("TBD", "FT", "AET", "PEN", "PST", "CANC", "ABD", "AWD", "WO");
@@ -62,7 +56,6 @@ public class TeamStatisticsService {
      * 기존에 저장된 팀통계가 있으면 업데이트하고 없으면 새로 생성해서 저장합니다.
      * ExpectedGoals 값 저장도 담당합니다.
      * </pre>
-     *
      * @param response
      * @see TeamStatistics
      * @see com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals
@@ -86,7 +79,6 @@ public class TeamStatisticsService {
                     home.getId(), away.getId());
             throw new IllegalArgumentException("Home or away statistics not matched with home or away team");
         }
-
 
         // Find exist entities
         Fixture fixture = fixtureRepository.findById(fixtureSingle.getFixture().getId())

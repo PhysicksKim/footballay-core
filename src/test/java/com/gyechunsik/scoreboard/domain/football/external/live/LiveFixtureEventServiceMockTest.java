@@ -85,7 +85,5 @@ class LiveFixtureEventServiceMockTest {
         verify(fixtureRepository, times(1)).findById(any(Long.class));
         verify(leagueRepository, times(1)).findById(any(Long.class));
         verify(fixtureEventRepository, times(1)).findByFixtureOrderBySequenceDesc(any(Fixture.class));
-        // List<FixtureEvent> all = fixtureEventRepository.findAll();
-        // assertThat(all.size()).isEqualTo(events.size());
     }
 }

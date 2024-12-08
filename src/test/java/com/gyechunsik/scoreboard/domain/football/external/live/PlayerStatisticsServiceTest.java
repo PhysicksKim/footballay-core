@@ -1,14 +1,18 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import jakarta.persistence.EntityManager;
@@ -52,9 +56,9 @@ class PlayerStatisticsServiceTest {
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
 
     @Autowired
-    private TeamStatisticsRepository teamStatisticsRepository;
+    private MatchPlayerRepository matchPlayerRepository;
     @Autowired
-    private PlayerStatisticsRepository playerStatisticsRepository;
+    private LineupService lineupService;
 
     @BeforeEach
     public void setup() {
@@ -80,6 +84,9 @@ class PlayerStatisticsServiceTest {
     void save() {
         // given
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        lineupService.saveLineup(response);
+        em.flush();
+        em.clear();
 
         // when
         playerStatisticsService.savePlayerStatistics(response);
@@ -88,13 +95,12 @@ class PlayerStatisticsServiceTest {
 
         // then
         Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture,true);
-        List<PlayerStatistics> awayPlayerStatisticsList = getPlayerStatistics(fixture,false);
+        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture,true);
+        List<MatchPlayer> awayPlayerStatisticsList = getPlayerStatistics(fixture,false);
 
         assertThat(homePlayerStatisticsList.size()).isGreaterThan(0);
         assertThat(awayPlayerStatisticsList.size()).isGreaterThan(0);
     }
-
 
     @DisplayName("존재하지 않는 경기 정보 저장 시 예외 발생")
     @Test
@@ -136,11 +142,11 @@ class PlayerStatisticsServiceTest {
 
         // then
         Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
+        List<MatchPlayer> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
 
         // 수정된 득점 수가 반영되었는지 확인
-        homePlayerStatisticsList.forEach(ps -> {
-            assertThat(ps.getGoals()).isEqualTo(10);
+        homePlayerStatisticsList.forEach(mp -> {
+            assertThat(mp.getPlayerStatistics().getGoals()).isEqualTo(10);
         });
     }
 
@@ -159,29 +165,50 @@ class PlayerStatisticsServiceTest {
         });
     }
 
-    @DisplayName("새로운 선수 정보가 있을 때 캐싱 및 저장")
+    @DisplayName("라인업에 없는 미등록 선수가 통계에만 등장할 경우, 해당 통계는 무시되어야 한다.")
     @Test
-    void save_withNewPlayer_shouldCacheAndSave() {
+    void saveStats_UnregisteredPlayerNotInLineup_ShouldIgnoreStats() {
         // given
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
 
-        List<_PlayerStatistics> playerStatisticsList = response.getResponse().get(0).getPlayers().get(0).getPlayers();
+        // 라인업 저장
+        lineupService.saveLineup(response);
+        em.flush();
+        em.clear();
 
-        // 새로운 선수로 수정
-        _PlayerStatistics newPlayerStatistics = playerStatisticsList.get(0);
-        _Player newPlayer = new _Player();
-        newPlayer.setId(9999999L);
-        newPlayer.setName("New Player");
-        newPlayer.setPhoto("http://example.com/photo.jpg");
-        newPlayerStatistics.setPlayer(newPlayer);
+        // 통계 정보에서 라인업에 없는 미등록 선수 추가
+        // 실제 로직 상 이 선수는 matchPlayerMap 에 없으므로 처리되지 않아야 함
+        List<FixtureSingleResponse._FixturePlayers> playersData = response.getResponse().get(0).getPlayers();
+        if (!playersData.isEmpty()) {
+            FixtureSingleResponse._FixturePlayers teamPlayers = playersData.get(0);
+            List<_PlayerStatistics> playerStatsList = teamPlayers.getPlayers();
 
-        _Statistics statistics = newPlayerStatistics.getStatistics().get(0);
-        statistics.getGames().setMinutes(90);
-        statistics.getGames().setPosition("Forward");
-        statistics.getGames().setRating("7.5");
-        statistics.getGames().setCaptain(false);
-        statistics.getGames().setSubstitute(false);
-        statistics.getGoals().setTotal(1);
+            // 라인업에 존재하지 않는 미등록 선수 추가
+            _PlayerStatistics newUnregiPlayerStat = new _PlayerStatistics();
+            _Player newPlayer = new _Player();
+            newPlayer.setId(null); // 미등록
+            newPlayer.setName("No Lineup Unregistered Player Only In Stats");
+            newPlayer.setPhoto("http://example.com/unregi_player_photo.png");
+
+            // 기본 스탯 초기화
+            _Statistics statistics = new _Statistics();
+            statistics.setGames(new _Statistics._Games());
+            statistics.setShots(new _Statistics._Shots());
+            statistics.setGoals(new _Statistics._Goals());
+            statistics.setPasses(new _Statistics._Passes());
+            statistics.setTackles(new _Statistics._Tackles());
+            statistics.setDuels(new _Statistics._Duels());
+            statistics.setDribbles(new _Statistics._Dribbles());
+            statistics.setFouls(new _Statistics._Fouls());
+            statistics.setCards(new _Statistics._Cards());
+            statistics.setPenalty(new _Statistics._Penalty());
+            statistics.getGames().setMinutes(90); // 임의값
+
+            newUnregiPlayerStat.setPlayer(newPlayer);
+            newUnregiPlayerStat.setStatistics(List.of(statistics));
+
+            playerStatsList.add(newUnregiPlayerStat);
+        }
 
         // when
         playerStatisticsService.savePlayerStatistics(response);
@@ -189,20 +216,66 @@ class PlayerStatisticsServiceTest {
         em.clear();
 
         // then
-        Fixture fixture = getFixture();
-        List<PlayerStatistics> homePlayerStatisticsList = getPlayerStatistics(fixture, true);
+        Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
+        // 해당 선수가 MatchPlayer 로 저장되어 있지 않아야 함 (즉, 통계 무시)
+        List<MatchLineup> lineups = fixture.getLineups();
+        List<MatchPlayer> matchPlayers1 = lineups.get(0).getMatchPlayers();
+        List<MatchPlayer> matchPlayers2 = lineups.get(1).getMatchPlayers();
 
-        // 새로운 선수가 저장되었는지 확인
-        boolean newPlayerSaved = homePlayerStatisticsList.stream()
-                .anyMatch(ps -> ps.getPlayer().getId().equals(9999999L));
+        List<MatchPlayer> matchPlayers = new ArrayList<>();
+        matchPlayers.addAll(matchPlayers1);
+        matchPlayers.addAll(matchPlayers2);
+        boolean containsNoLineupUnregiPlayer = matchPlayers.stream()
+                .anyMatch(mp -> "No Lineup Unregistered Player Only In Stats".equals(mp.getUnregisteredPlayerName()));
+        assertThat(containsNoLineupUnregiPlayer).isFalse();
 
-        assertThat(newPlayerSaved).isTrue();
+        // PlayerStatistics 테이블에도 해당 선수의 통계가 생성되지 않았는지 확인
+        // 저장된 matchPlayers 들 중 PlayerStatistics가 생성된 경우만 확인, 새로운 이름의 unregistered 선수 없어야 함
+        boolean invalidStatsCreated = matchPlayers.stream()
+                .filter(mp -> mp.getPlayerStatistics() != null)
+                .anyMatch(mp -> "No Lineup Unregistered Player Only In Stats".equals(mp.getUnregisteredPlayerName()));
+        assertThat(invalidStatsCreated).isFalse();
     }
 
-    private List<PlayerStatistics> getPlayerStatistics(Fixture fixture, boolean isHome) {
+    /**
+     * 예상치 못하게 통계에만 새롭게 id 가 존재하는 등록선수가 추가되는 경우
+     * @param playerStatisticsList
+     */
+    private static void addUnexpectedNewRegisteredPlayerOnlyInStatistics(List<_PlayerStatistics> playerStatisticsList) {
+        _PlayerStatistics newPlayerStatistics = new _PlayerStatistics();
+
+        _Player newPlayer = new _Player();
+        newPlayer.setId(9999999L);
+        newPlayer.setName("New Player");
+        newPlayer.setPhoto("http://example.com/photo.jpg");
+
+        _Statistics statistics = new _Statistics();
+        statistics.setGames(new _Statistics._Games());
+        statistics.setShots(new _Statistics._Shots());
+        statistics.setGoals(new _Statistics._Goals());
+        statistics.setPasses(new _Statistics._Passes());
+        statistics.setTackles(new _Statistics._Tackles());
+        statistics.setDuels(new _Statistics._Duels());
+        statistics.setDribbles(new _Statistics._Dribbles());
+        statistics.setFouls(new _Statistics._Fouls());
+        statistics.setCards(new _Statistics._Cards());
+        statistics.setPenalty(new _Statistics._Penalty());
+        statistics.getGames().setMinutes(90);
+        statistics.getGames().setPosition("Forward");
+        statistics.getGames().setRating("7.5");
+        statistics.getGames().setCaptain(false);
+        statistics.getGames().setSubstitute(false);
+        statistics.getGoals().setTotal(1);
+
+        newPlayerStatistics.setPlayer(newPlayer);
+        newPlayerStatistics.setStatistics(List.of(statistics));
+        playerStatisticsList.add(newPlayerStatistics);
+    }
+
+    private List<MatchPlayer> getPlayerStatistics(Fixture fixture, boolean isHome) {
         Team team = isHome ? fixture.getHomeTeam() : fixture.getAwayTeam();
-        List<PlayerStatistics> playerStatisticsList = playerStatisticsRepository.findByFixtureAndTeam(fixture, team);
-        return playerStatisticsList;
+
+        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
     }
 
 }

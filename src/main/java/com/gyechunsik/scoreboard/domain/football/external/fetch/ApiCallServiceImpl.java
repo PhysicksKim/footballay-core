@@ -202,7 +202,21 @@ public class ApiCallServiceImpl implements ApiCallService {
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null. fixture ID : " + fixtureId);
             }
-            return objectMapper.readValue(responseBody.string(), FixtureSingleResponse.class);
+            FixtureSingleResponse fixtureSingleResponse = objectMapper.readValue(responseBody.string(), FixtureSingleResponse.class);
+
+            // DEBUG for 2024-11-11 EPL 11R chelsea vs arsenal
+            final boolean DEBUG_UNREGI_PLAYER = false;
+            if(fixtureId == 1208125 && DEBUG_UNREGI_PLAYER) {
+                // Modify the player ID if it matches the target ID
+                final long chelseaJacksonId = 283058L; // Jackson player's original ID
+
+                // Call helper methods to update the player ID
+                updateEventPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
+                updateLineupPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
+                updatePlayerStatisticsIdToNull(fixtureSingleResponse, chelseaJacksonId);
+            }
+
+            return fixtureSingleResponse;
         } catch (IOException exception) {
             log.error("Api-Football call error :: fixtureId={} ", fixtureId, exception);
             throw new RuntimeException("Api-Football call error :: fixtureId=" + fixtureId, exception);
@@ -233,5 +247,71 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    // Helper method to update player ID in events
+    private void updateEventPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
+        if (fixtureSingleResponse.getResponse() != null) {
+            for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
+                if (fixtureSingle.getEvents() != null) {
+                    for (FixtureSingleResponse._Events event : fixtureSingle.getEvents()) {
+                        if (event.getPlayer() != null && event.getPlayer().getId() != null
+                                && event.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                            event.getPlayer().setId(null);
+                        }
+                        if (event.getAssist() != null && event.getAssist().getId() != null
+                                && event.getAssist().getId().equals(targetUnregisteredPlayerId)) {
+                            event.getPlayer().setId(null);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
+    // Helper method to update player ID in lineups
+    private void updateLineupPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
+        if (fixtureSingleResponse.getResponse() != null) {
+            for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
+                if (fixtureSingle.getLineups() != null) {
+                    for (FixtureSingleResponse._Lineups lineup : fixtureSingle.getLineups()) {
+                        if (lineup.getStartXI() != null) {
+                            for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getStartXI()) {
+                                if (player.getPlayer() != null && player.getPlayer().getId() != null
+                                        && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                                    player.getPlayer().setId(null); // Set the ID to null
+                                }
+                            }
+                        }
+                        if (lineup.getSubstitutes() != null) {
+                            for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getSubstitutes()) {
+                                if (player.getPlayer() != null && player.getPlayer().getId() != null
+                                        && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                                    player.getPlayer().setId(null); // Set the ID to null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Helper method to update player ID in playerStatistics
+    private void updatePlayerStatisticsIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
+        if (fixtureSingleResponse.getResponse() != null) {
+            for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
+                if (fixtureSingle.getPlayers() != null) {
+                    for (FixtureSingleResponse._FixturePlayers fixturePlayers : fixtureSingle.getPlayers()) {
+                        if (fixturePlayers.getPlayers() != null) {
+                            for (FixtureSingleResponse._FixturePlayers._PlayerStatistics playerStatistics : fixturePlayers.getPlayers()) {
+                                FixtureSingleResponse._FixturePlayers._Player player = playerStatistics.getPlayer();
+                                if (player != null && player.getId() != null && player.getId().equals(targetUnregisteredPlayerId)) {
+                                    player.setId(null); // Set the ID to null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

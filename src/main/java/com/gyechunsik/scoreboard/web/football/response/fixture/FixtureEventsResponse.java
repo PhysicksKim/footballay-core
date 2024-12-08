@@ -1,5 +1,7 @@
 package com.gyechunsik.scoreboard.web.football.response.fixture;
 
+import jakarta.annotation.Nullable;
+
 import java.util.List;
 
 public record FixtureEventsResponse(
@@ -12,19 +14,11 @@ public record FixtureEventsResponse(
             int elapsed,
             int extraTime,
             _Team team,
-            _Player player,
-            _Player assist,
+            @Nullable _Player player,
+            @Nullable _Player assist,
             String type, // subst, Goal, Card, Var
             String detail, // Yellow Card, Red Card, Substitution 1 2 3 ...
             String comments
-    ) {
-    }
-
-    public record _Player(
-            long playerId,
-            String name,
-            String koreanName,
-            Integer number
     ) {
     }
 
@@ -32,6 +26,15 @@ public record FixtureEventsResponse(
             long teamId,
             String name,
             String koreanName
+    ) {
+    }
+
+    public record _Player(
+            @Nullable Long playerId,
+            @Nullable String name,
+            @Nullable String koreanName,
+            @Nullable Integer number,
+            @Nullable String tempId
     ) {
     }
 

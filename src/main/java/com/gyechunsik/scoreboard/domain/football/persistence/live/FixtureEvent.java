@@ -4,7 +4,9 @@ import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.springframework.lang.Nullable;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -76,16 +78,26 @@ public class FixtureEvent {
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_id", nullable = false)
-    private Player player;
-
     /**
-     * 이벤트 타입이 교체("subst") 인 경우, "player" 는 교체 들어가는 선수고, "assist" 는 교체되어 나오는 선수 입니다.
+     * 1) id != null 인 경우 : registered Player 인 경우 Player 연관관계를 맺은 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name != null 인 경우 : unregistered player name 을 채운 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name == null 인 경우 : null 로 남겨둡니다. <br>
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "player_assist_id", nullable = true)
-    private Player assist;
+    @JoinColumn(name = "match_player_id", nullable = true)
+    @Nullable
+    private MatchPlayer player;
+
+    /**
+     * 이벤트 타입이 교체("subst") 인 경우, "player" 는 교체 들어가는 선수고, "assist" 는 교체되어 나오는 선수 입니다. <br>
+     * 1) id != null 인 경우 : registered Player 인 경우 Player 연관관계를 맺은 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name != null 인 경우 : unregistered player name 을 채운 MatchPlayer 를 저장합니다. <br>
+     * 2) id == null && name == null 인 경우 : null 로 남겨둡니다. <br>
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "match_player_assist_id", nullable = true)
+    @Nullable
+    private MatchPlayer assist;
 
     @Override
     public String toString() {
@@ -97,8 +109,8 @@ public class FixtureEvent {
                 ", detail='" + detail + '\'' +
                 ", comments='" + comments + '\'' +
                 ", team=" + team.getId() +
-                ", player=" + player.getId() +
-                ", assist=" + (assist == null ? "null" : assist.getId()) +
+                ", matchPlayerId=" + player.getId() +
+                ", assistId=" + (assist == null ? "null" : assist.getId()) +
                 '}';
     }
 }

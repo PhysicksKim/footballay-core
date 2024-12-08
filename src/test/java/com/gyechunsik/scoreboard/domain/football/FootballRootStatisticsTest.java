@@ -1,22 +1,16 @@
 package com.gyechunsik.scoreboard.domain.football;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDto;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
+import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.external.live.PlayerStatisticsService;
 import com.gyechunsik.scoreboard.domain.football.external.live.TeamStatisticsService;
-import com.gyechunsik.scoreboard.domain.football.model.MatchStatistics;
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
-import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.PlayerStatisticsRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,9 +37,6 @@ public class FootballRootStatisticsTest {
     private FootballApiCacheService footballApiCacheService;
 
     @Autowired
-    private FixtureRepository fixtureRepository;
-
-    @Autowired
     private EntityManager em;
 
     private ApiCallService apiCallService;
@@ -53,11 +44,9 @@ public class FootballRootStatisticsTest {
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
 
     @Autowired
-    private TeamStatisticsRepository teamStatisticsRepository;
-    @Autowired
-    private PlayerStatisticsRepository playerStatisticsRepository;
-    @Autowired
     private FootballRoot footballRoot;
+    @Autowired
+    private LineupService lineupService;
 
     @BeforeEach
     public void setup() {
@@ -74,18 +63,15 @@ public class FootballRootStatisticsTest {
         footballApiCacheService.cacheFixturesOfLeague(4L);
 
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
+        lineupService.saveLineup(response);
         teamStatisticsService.saveTeamStatistics(response);
         playerStatisticsService.savePlayerStatistics(response);
     }
 
-    private Fixture getFixture() {
-        return fixtureRepository.findById(FIXTURE_ID).orElseThrow();
-    }
-
     /**
-     * getMatchStatistics의 Eager 로딩 검증 테스트
-     * FootballRoot.getMatchStatistics는 메서드 레벨에서 @Transactional을 사용하므로
-     * 트랜잭션 외부에서도 반환된 MatchStatistics 내부의 연관 엔티티들이 로딩되어 있어야 합니다.
+     * getMatchStatistics 의 Eager 로딩 검증 테스트
+     * FootballRoot.getMatchStatistics 는 메서드 레벨에서 @Transactional 을 사용하므로
+     * 트랜잭션 외부에서도 반환된 MatchStatisticsDto 내부의 연관 엔티티들이 로딩되어 있어야 합니다.
      * 이 테스트는 이러한 Eager 로딩이 제대로 동작하는지 검증합니다.
      */
     @DisplayName("getMatchStatistics: Eager 로딩 검증")
@@ -94,35 +80,33 @@ public class FootballRootStatisticsTest {
         // given
 
         // when
-        MatchStatistics matchStatistics = footballRoot.getMatchStatistics(FIXTURE_ID);
+        MatchStatisticsDto matchStatisticsDTO = footballRoot.getMatchStatistics(FIXTURE_ID);
 
         // then
-        assertThat(matchStatistics).isNotNull();
-        assertThat(matchStatistics.getHome()).isNotNull();
-        assertThat(matchStatistics.getAway()).isNotNull();
+        assertThat(matchStatisticsDTO).isNotNull();
+        assertThat(matchStatisticsDTO.getHome()).isNotNull();
+        assertThat(matchStatisticsDTO.getAway()).isNotNull();
 
-        TeamStatistics homeStatistics = matchStatistics.getHomeStatistics();
+        MatchStatisticsDto.MatchStatsTeamStatistics homeStatistics = matchStatisticsDTO.getHomeStatistics();
         assertThat(homeStatistics).isNotNull();
-        assertThat(homeStatistics.getTeam()).isNotNull();
+        assertThat(homeStatistics.getBallPossession()).isNotNull();
         assertThat(homeStatistics.getExpectedGoalsList()).isNotEmpty();
 
-        TeamStatistics awayStatistics = matchStatistics.getAwayStatistics();
+        MatchStatisticsDto.MatchStatsTeamStatistics awayStatistics = matchStatisticsDTO.getAwayStatistics();
         assertThat(awayStatistics).isNotNull();
-        assertThat(awayStatistics.getTeam()).isNotNull();
+        assertThat(awayStatistics.getBallPossession()).isNotNull();
         assertThat(awayStatistics.getExpectedGoalsList()).isNotEmpty();
 
-        List<PlayerStatistics> homePlayerStatistics = matchStatistics.getHomePlayerStatistics();
+        List<MatchStatisticsDto.MatchStatsPlayers> homePlayerStatistics = matchStatisticsDTO.getHomePlayerStatistics();
         assertThat(homePlayerStatistics).isNotEmpty();
         homePlayerStatistics.forEach(playerStat -> {
-            assertThat(playerStat.getTeam()).isNotNull();
-            assertThat(playerStat.getPlayer()).isNotNull();
+            assertThat(playerStat).isNotNull();
         });
 
-        List<PlayerStatistics> awayPlayerStatistics = matchStatistics.getAwayPlayerStatistics();
+        List<MatchStatisticsDto.MatchStatsPlayers> awayPlayerStatistics = matchStatisticsDTO.getAwayPlayerStatistics();
         assertThat(awayPlayerStatistics).isNotEmpty();
         awayPlayerStatistics.forEach(playerStat -> {
-            assertThat(playerStat.getTeam()).isNotNull();
-            assertThat(playerStat.getPlayer()).isNotNull();
+            assertThat(playerStat).isNotNull();
         });
     }
 }

@@ -5,8 +5,8 @@ import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.StartLineupTask;
-import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveFixtureProcessor;
+import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchTask;
+import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchProcessor;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,9 +27,9 @@ public class FootballDataServiceWithMockApiTest {
     @Autowired
     private FootballApiCacheService footballApiCacheService;
     @Autowired
-    private StartLineupTask startLineupTask;
+    private PreviousMatchTask previousMatchTask;
     @Autowired
-    private LiveFixtureProcessor liveFixtureProcessor;
+    private LiveMatchProcessor liveMatchProcessor;
 
     @Autowired
     private EntityManager em;
@@ -44,8 +44,8 @@ public class FootballDataServiceWithMockApiTest {
         footballApiCacheService.cacheTeamSquad(TeamId.SPAIN);
         footballApiCacheService.cacheTeamSquad(TeamId.CROATIA);
         footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
-        startLineupTask.requestAndSaveLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
-        liveFixtureProcessor.requestAndSaveLiveFixtureData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
+        previousMatchTask.requestAndSaveLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
+        liveMatchProcessor.requestAndSaveLiveMatchData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
 
         em.flush();
         em.clear();

@@ -8,15 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static kotlin.reflect.KTypeProjection.star;
+
 /**
  * 선수 데이터의 기본이 되는 값들을 담습니다. <br>
  * API 전반에서는 id 를 기본으로 name 을 부가적인 정보로 사용합니다 <br>
- * 예를 들어 API 요청에서 name 으로 선수의 id 를 찾을 수도 있습니다. <br>
- * 기본 정보는 여러 API 응답에서 공통적으로 최소한으로 필요한 정보를 포함합니다. <br>
- * 예를 들어 Players/Squad Endpoint 에서 제공하는 정보가 있을 수 있고 <br>
- * Players Endpoint 에서 제공하는 정보가 있을 수 있고, Fixture/Lineups 에서 제공하는 정보가 있을 수 있습니다. <br>
- * 여러 API 응답에서 최소한으로 id, name 값이 제공되며, 경우에 따라 이외의 photoUrl, position, number 정보가 제공됩니다. <br>
+ * 아주 드물게 id 가 null 로 제공되는 경우도 있습니다. <br>
+ * 이런 경우에는 name 을 기반으로 선수를 식별합니다. <br>
  * photoUrl 은 id 를 기반으로 "https://media.api-sports.io/football/teams/{playerId}.png" 의 규칙을 가지기 때문에 id 만으로 photoUrl 값을 채워넣을 수 있습니다. <br>
+ * id 가 null 인경우 photoUrl 도 존재하지 않으므로 이미지가 로딩되지 않을 수 있습니다. <br>
+ * 클라이언트 측에서는 이를 고려하여 id 가 null 인 경우 거의 데이터를 가져올 수 없음을 알고 name 기반으로 선수를 식별하도록해야합니다. <br>
  */
 @Getter
 @Setter
@@ -27,6 +28,20 @@ import java.util.Objects;
 @Table(name = "players")
 public class Player {
 
+    /**
+     * API 응답에서 ID 가 null 인 경우도 있음.
+     * 예를 들어 fixtureId=1288342 에서는 lineup 에서
+     * {
+     * player: {
+     * id: null
+     * name: "Abolfazl Zamani"
+     * number: 15
+     * pos: "M"
+     * grid: null
+     * }
+     * }
+     * 이렇게 id 가 null 로 제공되는 경우가 있음.
+     */
     @Id
     @Column(nullable = false)
     private Long id;
