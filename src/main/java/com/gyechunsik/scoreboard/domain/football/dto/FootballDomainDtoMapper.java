@@ -358,6 +358,22 @@ public class FootballDomainDtoMapper {
         );
     }
 
+    public static FixtureWithLineupDto fixtureWithEmptyLineupDtoFromEntity(Fixture findFixture) {
+        return new FixtureWithLineupDto(
+                fixtureInfoDtoFromEntity(findFixture),
+                emptyLineupDtoFromTeamEntity(findFixture.getHomeTeam()),
+                emptyLineupDtoFromTeamEntity(findFixture.getAwayTeam())
+        );
+    }
+
+    public static LineupDto emptyLineupDtoFromTeamEntity(Team team) {
+        return new LineupDto(
+                createLineupTeamDto(team),
+                "",
+                List.of()
+        );
+    }
+
     public static LineupDto lineupDtoFromEntity(MatchLineup matchLineup) {
         return new LineupDto(
                 createLineupTeamDto(matchLineup.getTeam()),

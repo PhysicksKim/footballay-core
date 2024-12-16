@@ -12,10 +12,8 @@ import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import jakarta.annotation.Nullable;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.xmlbeans.impl.regex.Match;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +23,6 @@ import java.util.stream.Collectors;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
 
-// TODO : lineup 에서 id = null 인 선수가 들어오면 제대로 null safe 하게 동작해서 라인업이 제대로 저장 되는지 테스트 작성 필요
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -273,7 +270,7 @@ public class LineupService {
                 .map(Map.Entry::getValue)
                 .toList();
         convertAndCacheMissingPlayers(missingPlayers);
-        log.info("라인업 선수 중 아직 캐싱되지 않은 선수를 저장했습니다. missingPlayers={}", missingPlayerIds);
+        logCachedMissingPlayers(lineupResponse, missingPlayerIds);
     }
 
     /**
@@ -317,7 +314,6 @@ public class LineupService {
                         .build())
                 .toList();
         playerRepository.saveAll(players);
-        log.info("캐싱되지 않은 선수들을 라인업 데이터로 저장했습니다. players={}", players);
     }
 
     /**
@@ -423,6 +419,12 @@ public class LineupService {
                     expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
         }
         return isMismatch;
+    }
+
+    private static void logCachedMissingPlayers(_Lineups lineupResponse, Set<Long> missingPlayerIds) {
+        Long teamId = lineupResponse.getTeam().getId();
+        String teamName = lineupResponse.getTeam().getName();
+        log.info("라인업 선수 중 아직 캐싱되지 않은 선수를 저장했습니다. missingPlayers={},team={id={},name={}}", missingPlayerIds, teamId, teamName);
     }
 
     private static class PlayerCount {

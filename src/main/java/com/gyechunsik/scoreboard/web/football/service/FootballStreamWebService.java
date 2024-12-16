@@ -175,7 +175,7 @@ public class FootballStreamWebService {
 
         try {
             FixtureWithLineupDto fixture = footballRoot.getFixtureWithLineup(fixtureId)
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
+                    .orElseThrow(() -> new IllegalArgumentException("라인업 응답이 비어있습니다. fixtureId=" + fixtureId));
             FixtureLineupResponse response = FootballStreamDtoMapper.toFixtureLineupResponse(fixture);
             return apiCommonResponseService.createSuccessResponse(new FixtureLineupResponse[]{response}, requestUrl, params);
         } catch (Exception e) {

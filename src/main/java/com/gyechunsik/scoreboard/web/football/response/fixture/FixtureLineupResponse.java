@@ -2,6 +2,12 @@ package com.gyechunsik.scoreboard.web.football.response.fixture;
 
 import java.util.List;
 
+/**
+ * 경기 라인업 정보 응답 DTO.
+ * 라인업이 아직 저장되지 않았다면 빈 라인업이 제공됩니다.
+ * @param fixtureId
+ * @param lineup
+ */
 public record FixtureLineupResponse(
         long fixtureId,
         _Lineup lineup

@@ -362,7 +362,7 @@ public class FootballRoot {
      */
     public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
-            log.info("try fixture eager loading :: {}", fixtureId);
+            log.info("try fixture lineup loading id={}", fixtureId);
             Fixture findFixture = footballDataService.getFixtureById(fixtureId);
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
@@ -370,13 +370,18 @@ public class FootballRoot {
             List<MatchLineup> lineups = new ArrayList<>();
             Optional<MatchLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
             Optional<MatchLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
+            if(homeLineup.isEmpty() || awayLineup.isEmpty()) {
+                log.info("lineup is not exist id={}", fixtureId);
+                return Optional.of(FootballDomainDtoMapper.fixtureWithEmptyLineupDtoFromEntity(findFixture));
+            }
+
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
             log.info("fixture eager loaded :: {}", findFixture.getFixtureId());
             return Optional.of(FootballDomainDtoMapper.fixtureWithLineupDtoFromEntity(findFixture));
         } catch (Exception e) {
-            log.warn("error while getting _Fixture with Eager by Id :: {}", e.getMessage());
+            log.warn("error while getting Fixture with Lineup by Id :: {}", e.getMessage());
             return Optional.empty();
         }
     }

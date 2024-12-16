@@ -21,13 +21,13 @@ public class PreviousMatchJob implements Job {
         log.info("PreviousMatchJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
         boolean isSuccess = lineupTask.requestAndSaveLineup(fixtureId);
         if(isSuccess) {
-            log.info("MatchLineup is Saved. Deleting job");
+            log.info("MatchLineup is Saved. Job completed and try to delete job. fixtureId={}", fixtureId);
             JobKey key = jobExecutionContext.getJobDetail().getKey();
             try {
                 jobExecutionContext.getScheduler().deleteJob(key);
-                log.info("Job deleted :: key={}", key);
+                log.info("Job deleted. key={}", key);
             } catch (Exception e) {
-                log.error("PreviousMatchJob key=[{}] delete failed", key, e);
+                log.error("Error PreviousMatchJob key={} delete failed", key, e);
                 throw new RuntimeException(e);
             }
         }
