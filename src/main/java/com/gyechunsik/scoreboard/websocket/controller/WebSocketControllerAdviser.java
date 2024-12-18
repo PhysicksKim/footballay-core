@@ -1,10 +1,6 @@
 package com.gyechunsik.scoreboard.websocket.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.simp.annotation.SendToUser;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 

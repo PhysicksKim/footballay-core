@@ -8,9 +8,6 @@ import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.dto.FixtureEventWithPlayerDto;
 import com.gyechunsik.scoreboard.domain.football.dto.FixtureInfoDto;
-import com.gyechunsik.scoreboard.domain.football.dto.FixtureWithLineupDto;
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchTask;
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchProcessor;
@@ -28,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Transactional

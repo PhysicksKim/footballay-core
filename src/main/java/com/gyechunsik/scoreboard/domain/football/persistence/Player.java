@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static kotlin.reflect.KTypeProjection.star;
-
 /**
  * 선수 데이터의 기본이 되는 값들을 담습니다. <br>
  * API 전반에서는 id 를 기본으로 name 을 부가적인 정보로 사용합니다 <br>

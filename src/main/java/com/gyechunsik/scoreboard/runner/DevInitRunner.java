@@ -1,9 +1,5 @@
 package com.gyechunsik.scoreboard.runner;
 
-import com.gyechunsik.scoreboard.domain.football.FootballRoot;
-import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
-import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
-import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.Streamer;
@@ -14,6 +10,10 @@ import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultMatchRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultTeamRepository;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.StreamerRepository;
+import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
+import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;

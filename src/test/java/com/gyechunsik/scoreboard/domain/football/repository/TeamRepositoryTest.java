@@ -14,8 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.generateTwoSameLeague;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Named Query, @Query 등 Repository 의 커스텀 메서드들을 테스트 합니다.

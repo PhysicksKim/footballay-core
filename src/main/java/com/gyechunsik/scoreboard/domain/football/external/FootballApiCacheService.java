@@ -1,22 +1,22 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
-import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
+import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
-import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
-import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +31,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse.*;
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse.*;
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse.*;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse._Response;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse._Season;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse._PlayerData;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse._TeamInfo;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse._TeamResponse;
 
 /**
  * <h3>개발 주의 사항</h3>

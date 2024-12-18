@@ -1,9 +1,7 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.repository;
 
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.RemoteExpireTimes;
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import io.jsonwebtoken.lang.Strings;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;

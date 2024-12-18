@@ -1,11 +1,11 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
+import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
@@ -18,9 +18,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse.*;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse._PlayerData;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse._TeamSquad;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;

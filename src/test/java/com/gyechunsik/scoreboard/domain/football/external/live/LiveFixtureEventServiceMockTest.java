@@ -1,14 +1,14 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Events;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 

@@ -3,8 +3,8 @@ package com.gyechunsik.scoreboard.domain.football.service;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
+import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchTask;
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchProcessor;
 import jakarta.persistence.EntityManager;
@@ -15,7 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest

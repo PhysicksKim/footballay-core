@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.generate;
 
 @RequiredArgsConstructor

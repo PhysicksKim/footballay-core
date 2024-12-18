@@ -1,14 +1,7 @@
 package com.gyechunsik.scoreboard.web.admin.football.response;
 
 import com.gyechunsik.scoreboard.domain.football.dto.*;
-import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.League;
-import com.gyechunsik.scoreboard.domain.football.persistence.Player;
-import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 public class FootballDtoMapper {

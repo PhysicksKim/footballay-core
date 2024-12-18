@@ -1,11 +1,10 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code;
 
-import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 class CodeTest {

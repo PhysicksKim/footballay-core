@@ -1,27 +1,24 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.external.lineup.LineupService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.EventType;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
-import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +30,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Events;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Lineups;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Transactional

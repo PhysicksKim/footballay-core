@@ -3,7 +3,8 @@ package com.gyechunsik.scoreboard.websocket.response;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  *

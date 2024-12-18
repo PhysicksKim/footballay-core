@@ -13,8 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
-import static com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam.*;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.generate;
+import static com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam.generatePlayersOfTeam;
 
 @Slf4j
 @Transactional

@@ -1,8 +1,8 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +14,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @ActiveProfiles("mockapi")

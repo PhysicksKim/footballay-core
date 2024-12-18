@@ -2,8 +2,8 @@ package com.gyechunsik.scoreboard.domain.football.repository.live;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

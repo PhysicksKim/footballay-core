@@ -1,21 +1,16 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._FixtureSingle;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Statistics;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._FixtureSingle;
-import com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Statistics;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.ExpectedGoalsRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
-import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse.*;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Away;
+import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.FixtureSingleResponse._Home;
 
 /**
  * External football Api 와 TeamStatistics 간의 의존성을 해결해주는 서비스입니다.

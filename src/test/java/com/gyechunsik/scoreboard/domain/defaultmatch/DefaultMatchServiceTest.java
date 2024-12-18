@@ -2,9 +2,9 @@ package com.gyechunsik.scoreboard.domain.defaultmatch;
 
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultMatch;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.DefaultTeam;
-import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.DefaultUniform;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.Streamer;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.DefaultTeamCodes;
+import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.DefaultUniform;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.LeagueCategory;
 import com.gyechunsik.scoreboard.domain.defaultmatch.entity.enums.TeamSide;
 import com.gyechunsik.scoreboard.domain.defaultmatch.repository.DefaultMatchRepository;

@@ -1,7 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.repository.apicache.LastCacheLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

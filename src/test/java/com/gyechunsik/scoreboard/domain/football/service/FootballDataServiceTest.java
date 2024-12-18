@@ -22,8 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
-import static com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam.generatePlayersOfTeam;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Transactional

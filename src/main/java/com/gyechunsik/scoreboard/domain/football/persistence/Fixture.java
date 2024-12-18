@@ -1,11 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
 import com.gyechunsik.scoreboard.domain.football.service.FixtureJobManageService;
 import jakarta.persistence.*;
 import lombok.*;

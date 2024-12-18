@@ -1,9 +1,9 @@
 package com.gyechunsik.scoreboard.domain.football.external.lastlog;
 
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
-import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheType;
+import com.gyechunsik.scoreboard.domain.football.persistence.apicache.LastCacheLog;
 import com.gyechunsik.scoreboard.domain.football.repository.apicache.LastCacheLogRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @DataJpaTest

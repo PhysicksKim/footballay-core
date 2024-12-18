@@ -4,12 +4,12 @@ import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.constant.TeamId;
 import com.gyechunsik.scoreboard.domain.football.dto.*;
+import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
-import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -39,9 +37,11 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
-import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.*;
-import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.createLiveMatchJobKey;
+import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.createPreviousMatchJobKey;
+import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.waitForJobToBeRemoved;
+import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.waitForJobToBeScheduled;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @SpringBootTest

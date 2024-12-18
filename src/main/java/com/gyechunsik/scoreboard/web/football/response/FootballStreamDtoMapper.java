@@ -2,8 +2,7 @@ package com.gyechunsik.scoreboard.web.football.response;
 
 import com.gyechunsik.scoreboard.domain.football.comparator.StartLineupComparator;
 import com.gyechunsik.scoreboard.domain.football.dto.*;
-import com.gyechunsik.scoreboard.domain.football.persistence.Team;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
@@ -17,7 +16,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse.*;
+import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse._League;
+import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse._Team;
 
 @Slf4j
 public class FootballStreamDtoMapper {

@@ -1,13 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.ExpectedGoals;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.FixtureEvent;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchLineup;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.PlayerStatistics;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.TeamStatistics;
+import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.FixtureEventRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepository;

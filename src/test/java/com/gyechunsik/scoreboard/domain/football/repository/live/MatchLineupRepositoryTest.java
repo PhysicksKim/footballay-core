@@ -15,15 +15,11 @@ import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeam
 import com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture;
 import com.gyechunsik.scoreboard.domain.football.util.GeneratePlayersOfTeam;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;

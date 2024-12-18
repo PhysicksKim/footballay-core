@@ -1,16 +1,12 @@
 package com.gyechunsik.scoreboard.domain.football.comparator;
 
 import com.gyechunsik.scoreboard.domain.football.dto.LineupDto;
-import com.gyechunsik.scoreboard.domain.football.persistence.Player;
-import com.gyechunsik.scoreboard.domain.football.persistence.live.MatchPlayer;
-import com.sun.jna.platform.unix.solaris.Kstat2;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer> {

@@ -25,8 +25,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.*;
-import static org.assertj.core.api.Assertions.*;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
+import static com.gyechunsik.scoreboard.domain.football.util.GenerateLeagueTeamFixture.generate;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @DataJpaTest

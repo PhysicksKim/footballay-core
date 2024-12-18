@@ -1,26 +1,25 @@
 package com.gyechunsik.scoreboard.domain.football.scheduler.live;
 
-import com.gyechunsik.scoreboard.domain.football.scheduler.FootballSchedulerName;
-import com.gyechunsik.scoreboard.util.TestJobKeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.quartz.*;
+import org.quartz.JobDetail;
+import org.quartz.JobKey;
+import org.quartz.Scheduler;
+import org.quartz.TriggerKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.ZonedDateTime;
-import java.util.concurrent.TimeUnit;
 
 import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.*;
-import static com.gyechunsik.scoreboard.util.TestJobKeyUtil.createLiveMatchJobKey;
 import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.waitForJobToBeRemoved;
 import static com.gyechunsik.scoreboard.util.TestQuartzJobWaitUtil.waitForJobToBeScheduled;
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @SpringBootTest

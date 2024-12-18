@@ -1,6 +1,5 @@
 package com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.service;
 
-import com.gyechunsik.scoreboard.domain.token.RemoteHostTokenService;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.RemoteExpireTimes;
 import com.gyechunsik.scoreboard.websocket.domain.scoreboard.remote.code.RemoteCode;
 import jakarta.validation.constraints.NotNull;
@@ -12,7 +11,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
