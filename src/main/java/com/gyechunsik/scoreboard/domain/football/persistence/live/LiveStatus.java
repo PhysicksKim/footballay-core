@@ -27,7 +27,9 @@ public class LiveStatus {
     private String shortStatus;
     private Integer elapsed;
 
+    @Builder.Default
     private Integer homeScore = 0;
+    @Builder.Default
     private Integer awayScore = 0;
 
     @Override
