@@ -65,10 +65,42 @@ public class AdminPageAwsService {
                 && cookieMap.containsKey("CloudFront-Key-Pair-Id");
     }
 
+    /**
+     * Admin 리소스 전체에 접근할 수 있는 Signed Cookies 생성
+     */
+    public CookiesForCannedPolicy createSignedCookies() {
+        try {
+            Instant expirationDate = Instant.now().plusSeconds(1800); // 30분 뒤 만료
+            String privateKeyPath = privateKeyResource.getFile().getPath();
+            log.info("Private Key Path: {}", privateKeyPath);
+
+            CannedSignerRequest cannedSignerRequest = CannedSignerRequest.builder()
+                    .resourceUrl(cloudfrontDomain + ADMIN_RESOURCE_PATH)
+                    .privateKey(Paths.get(privateKeyPath))
+                    .keyPairId(keyPairId)
+                    .expirationDate(expirationDate)
+                    .build();
+
+            CookiesForCannedPolicy signedCookies = cloudFrontUtilities.getCookiesForCannedPolicy(cannedSignerRequest);
+            log.info("Generated Signed Cookies: Policy={}, Signature={}, KeyPairId={}",
+                    signedCookies.expiresHeaderValue(),
+                    signedCookies.signatureHeaderValue(),
+                    signedCookies.keyPairIdHeaderValue());
+            return signedCookies;
+        } catch (IOException e) {
+            log.error("Failed to load private key file", e);
+            throw new RuntimeException("Failed to load private key file", e);
+        } catch (Exception e) {
+            log.error("Failed to create signed cookies", e);
+            throw new RuntimeException("Failed to create signed cookies", e);
+        }
+    }
+
     public String generateSignedUrlForFile(String filePath) {
         try {
             Instant expirationDate = Instant.now().plusSeconds(300); // 5분 뒤 만료
             String privateKeyPath = privateKeyResource.getFile().getPath();
+            log.info("Private Key Path: {}", privateKeyPath);
 
             CannedSignerRequest cannedRequest = CannedSignerRequest.builder()
                     .resourceUrl(cloudfrontDomain + "/chuncity/admin/" + filePath)
@@ -81,6 +113,7 @@ public class AdminPageAwsService {
             log.info("Generated Signed URL: {}", signedUrl.url());
             return signedUrl.url();
         } catch (Exception e) {
+            log.error("Failed to generate signed URL for file: {}", filePath, e);
             throw new RuntimeException("Failed to generate signed URL for file: " + filePath, e);
         }
     }
@@ -102,17 +135,6 @@ public class AdminPageAwsService {
         }
     }
 
-    /**
-     * 쿠키 발급 요청 코드 서명
-     */
-    public String signCookieIssueToken(String cookieIssueCode) {
-        try {
-            PrivateKey privateKey = loadPrivateKey();
-            return signData(cookieIssueCode, privateKey);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to sign cookie issue code", e);
-        }
-    }
 
     /**
      * ADMIN index page 에 대한 Signed URL 생성
@@ -122,6 +144,7 @@ public class AdminPageAwsService {
             CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
             Instant expirationDate = Instant.now().plusSeconds(300); // 5분 뒤 만료
             String privateKeyPath = privateKeyResource.getFile().getPath();
+            log.info("Private Key Path: {}", privateKeyPath);
 
             CannedSignerRequest cannedRequest = CannedSignerRequest.builder()
                     .resourceUrl(cloudfrontDomain + ADMIN_INDEX_PATH)
@@ -139,30 +162,14 @@ public class AdminPageAwsService {
     }
 
     /**
-     * Admin 리소스 전체에 접근할 수 있는 Signed Cookies 생성
+     * 쿠키 발급 요청 코드 서명
      */
-    public CookiesForCannedPolicy createSignedCookies() {
+    public String signCookieIssueToken(String cookieIssueCode) {
         try {
-            Instant expirationDate = Instant.now().plusSeconds(1800); // 30분 뒤 만료
-            String privateKeyPath = privateKeyResource.getFile().getPath();
-
-            CannedSignerRequest cannedSignerRequest = CannedSignerRequest.builder()
-                    .resourceUrl(cloudfrontDomain + ADMIN_RESOURCE_PATH)
-                    .privateKey(Paths.get(privateKeyPath))
-                    .keyPairId(keyPairId)
-                    .expirationDate(expirationDate)
-                    .build();
-
-            CookiesForCannedPolicy signedCookies = cloudFrontUtilities.getCookiesForCannedPolicy(cannedSignerRequest);
-            log.info("Generated Signed Cookies: Policy={}, Signature={}, KeyPairId={}",
-                    signedCookies.expiresHeaderValue(),
-                    signedCookies.signatureHeaderValue(),
-                    signedCookies.keyPairIdHeaderValue());
-            return signedCookies;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load private key file", e);
+            PrivateKey privateKey = loadPrivateKey();
+            return signData(cookieIssueCode, privateKey);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create signed cookies", e);
+            throw new RuntimeException("Failed to sign cookie issue code", e);
         }
     }
 

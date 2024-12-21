@@ -78,3 +78,10 @@ logging:
   level:
     org:
       testcontainers: debug
+
+aws:
+  cloudfront:
+    domain: "https://MOCKDOMAIN.com"
+    keyPairId: "MOCKKEYPAIRID"
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
