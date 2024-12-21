@@ -30,6 +30,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // AWS SDK ; S3 사용
+    implementation 'software.amazon.awssdk:s3:2.29.36'
+    implementation 'software.amazon.awssdk:cloudfront:2.29.36'
+
+    // CloudFront Signed URL/Cookie를 위한 암호화 (RSA 서명)
+    // BouncyCastle는 RSA 서명 용도로 사용
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+
     // OKHttp : for http client
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 

@@ -40,9 +40,13 @@ out/
 ### secret keys ###
 application-secret.yml
 application-devsecret.yml
+application-aws.yml
 
 ### Dev Files
 application-api.yml
+
+### AWS Cloudfront pem key files
+/src/main/resources/keys/
 
 dev/
 
