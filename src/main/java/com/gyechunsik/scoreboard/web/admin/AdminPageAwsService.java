@@ -20,6 +20,9 @@ import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
@@ -45,7 +48,6 @@ public class AdminPageAwsService {
     private final String ADMIN_INDEX_PATH = "/index.html";
     private final String ADMIN_RESOURCE_PATH = "/chuncity/admin";
     private final String COOKIE_DOMAIN = ".gyechunsik.site";
-    private final String COOKIE_RESOURCE_URL = cloudfrontDomain + "/*";
     private final int COOKIE_MAX_AGE_SEC = 3600;
     private final int STATIC_FILE_EXPIRATION_SEC = 60;
 
@@ -76,7 +78,7 @@ public class AdminPageAwsService {
         try {
             final Instant expirationDate = Instant.now().plusSeconds(COOKIE_MAX_AGE_SEC);
 
-            CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(COOKIE_RESOURCE_URL, expirationDate);
+            CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain+"/*", expirationDate);
             Map<String, String> cookiesMap = cookiesToMap(cookiesForCustomPolicy);
             setCookiesToHttpResponse(response, cookiesMap, COOKIE_DOMAIN, COOKIE_MAX_AGE_SEC);
 
@@ -139,7 +141,49 @@ public class AdminPageAwsService {
                 .build();
     }
 
-    private static void setCookiesToHttpResponse(HttpServletResponse response, Map<String, String> cookiesMap, String cookieDomain, long maxAgeInSeconds) {
+    private CookiesForCustomPolicy createSignedCookies(String resourceUrl, Instant expirationDate) throws Exception {
+        Path privateKeyPath = Paths.get(privateKeyResource.getFile().getPath());
+        CustomSignerRequest customPolicyRequest = CustomSignerRequest.builder()
+                .keyPairId(keyPairId)
+                .privateKey(privateKeyPath)
+                .resourceUrl(resourceUrl)
+                .expirationDate(expirationDate)
+                .build();
+        return cloudFrontUtilities.getCookiesForCustomPolicy(customPolicyRequest);
+    }
+
+    /**
+     * aws util 에서 제공하는 cookieValue 는 "{cookieName}={cookieValue}" 로 구성되어 있습니다.
+     * 이때 name 과 value 둘 다 = 문자를 포함하지 않습니다.
+     * aws util 에서는 base64 인코딩 후 "=" 문자가 포함되어 있다면 "_" 로 치환되어 있습니다.
+     * @see <a href="https://docs.aws.amazon.com/ko_kr/AmazonCloudFront/latest/DeveloperGuide/private-content-setting-signed-cookie-canned-policy.html">
+     *     Amazon CloudFront 개발자 가이드 - 미리 준비된 정책을 사용하여 서명된 쿠키 설정</a>
+     * @param cookiesForCustomPolicy aws util 에서 제공하는 Custom Policy 쿠키
+     * @return cookieName, cookieValue 로 구성된 Map
+     */
+    private Map<String, String> cookiesToMap(CookiesForCustomPolicy cookiesForCustomPolicy) {
+        String[] policies = cookiesForCustomPolicy.policyHeaderValue().split("=");
+        String[] keyPairIds = cookiesForCustomPolicy.keyPairIdHeaderValue().split("=");
+        String[] signatures = cookiesForCustomPolicy.signatureHeaderValue().split("=");
+        return Map.of(
+                policies[0], policies[1],
+                keyPairIds[0], keyPairIds[1],
+                signatures[0], signatures[1]
+        );
+    }
+
+    private static boolean isContainCloudfrontCookies(Map<String, String> cookieMap) {
+        return (cookieMap.containsKey("CloudFront-Policy") || cookieMap.containsKey("CloudFront-Expires"))
+                && cookieMap.containsKey("CloudFront-Signature")
+                && cookieMap.containsKey("CloudFront-Key-Pair-Id");
+    }
+
+    private static void setCookiesToHttpResponse(
+            HttpServletResponse response,
+            Map<String, String> cookiesMap,
+            String cookieDomain,
+            long maxAgeInSeconds
+    ) {
         for(Map.Entry<String, String> cookieEntry : cookiesMap.entrySet()) {
             ResponseCookie cookie = createCookieFrom(cookieEntry, cookieDomain, maxAgeInSeconds);
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -155,32 +199,6 @@ public class AdminPageAwsService {
                 .sameSite("None")
                 .maxAge(maxAgeInSeconds)
                 .build();
-    }
-
-    private Map<String, String> cookiesToMap(CookiesForCustomPolicy cookiesForCustomPolicy) {
-        String[] policies = cookiesForCustomPolicy.policyHeaderValue().split("=");
-        String[] keyPairIds = cookiesForCustomPolicy.keyPairIdHeaderValue().split("=");
-        String[] signatures = cookiesForCustomPolicy.signatureHeaderValue().split("=");
-        return Map.of(
-                policies[0], policies[1],
-                keyPairIds[0], keyPairIds[1],
-                signatures[0], signatures[1]
-        );
-    }
-
-    private CookiesForCustomPolicy createSignedCookies(String resourceUrl, Instant expirationDate) throws Exception {
-        return cloudFrontUtilities.getCookiesForCustomPolicy(CustomSignerRequest.builder()
-                .resourceUrl(resourceUrl)
-                .privateKey(Paths.get(privateKeyResource.getFile().getPath()))
-                .keyPairId(keyPairId)
-                .expirationDate(expirationDate)
-                .build());
-    }
-
-    private static boolean isContainCloudfrontCookies(Map<String, String> cookieMap) {
-        return (cookieMap.containsKey("CloudFront-Policy") || cookieMap.containsKey("CloudFront-Expires"))
-                && cookieMap.containsKey("CloudFront-Signature")
-                && cookieMap.containsKey("CloudFront-Key-Pair-Id");
     }
 
     private static @NotNull Map<String, String> collectCookies(HttpServletRequest request) {
