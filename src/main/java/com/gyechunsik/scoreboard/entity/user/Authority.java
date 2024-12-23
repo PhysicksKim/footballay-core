@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.entity.user;
 
+import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "authorities",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "authority"})})
-public class Authority {
+public class Authority extends BaseDateAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

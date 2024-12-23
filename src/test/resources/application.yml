@@ -74,3 +74,11 @@ cookies:
   user-info:
     name: "user-info"
     max-age: 1209600 # 2주 (단위: 초)
+
+# Aws Service 관련 bean 생성을 위한 mock 값들
+aws:
+  cloudfront:
+    domain: "https://MOCKDOMAIN.com"
+    keyPairId: "MOCKKEYPAIRID"
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL

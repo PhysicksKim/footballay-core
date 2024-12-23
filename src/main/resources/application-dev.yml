@@ -102,3 +102,10 @@ logging:
 custom:
   login:
     remember-me-key: remember-me-key-only-for-dev
+
+aws:
+  cloudfront:
+    domain: "https://static.gyechunsik.site"
+    keyPairId: "MOCKKEYPAIRID"
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
