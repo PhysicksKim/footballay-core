@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.entity.user;
 
+import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,7 +12,7 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends BaseDateAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

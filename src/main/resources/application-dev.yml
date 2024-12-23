@@ -105,7 +105,7 @@ custom:
 
 aws:
   cloudfront:
-    domain: "https://MOCKDOMAIN.com"
+    domain: "https://static.gyechunsik.site"
     keyPairId: "MOCKKEYPAIRID"
     privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
     publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
