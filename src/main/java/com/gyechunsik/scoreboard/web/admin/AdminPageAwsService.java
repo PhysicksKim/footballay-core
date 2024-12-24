@@ -132,7 +132,6 @@ public class AdminPageAwsService {
     private CannedSignerRequest createCannedRequest(String url, Instant expirationDate) throws Exception {
         Path privateKeyPath = Paths.get(privateKeyResource.getFile().getPath());
         String resourceUrl = cloudfrontDomain + ADMIN_RESOURCE_PATH + url;
-        log.info("create canned signer request for resource=[{}],expirationDate=[{}]", resourceUrl, expirationDate);
         return CannedSignerRequest.builder()
                 .resourceUrl(resourceUrl)
                 .keyPairId(keyPairId)
