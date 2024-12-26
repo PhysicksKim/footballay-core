@@ -358,7 +358,7 @@ public class FootballRoot {
      * @see Team
      * @see League
      * @param fixtureId 조회할 fixtureId
-     * @return fixtureWithLineupDto
+     * @return Optional fixtureWithLineupDto
      */
     public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
