@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.domain.football.preference.service;
+package com.gyechunsik.scoreboard.domain.football.preference.util;
 
 import com.gyechunsik.scoreboard.utils.ImageValidator;
 import jakarta.validation.constraints.NotNull;
@@ -20,6 +20,11 @@ public class PreferenceValidator {
     private static final int CUSTOM_PHOTO_WIDTH = 150;
     private static final int CUSTOM_PHOTO_HEIGHT = 150;
 
+    /**
+     * 선수 커스텀 이미지가 유효한지 확인합니다.
+     * @param image 선수 커스텀 이미지
+     * @return 유효한 이미지인지 여부
+     */
     public boolean isValidPlayerCustomPhotoImage(@NotNull MultipartFile image) {
         if(image == null) {
             log.error("Image is null");
@@ -30,6 +35,7 @@ public class PreferenceValidator {
             imageValidator.validateFileNotEmpty(image);
             imageValidator.validateContentType(image, CUSTOM_PHOTO_CONTENT_TYPES);
             imageValidator.validateFileSignature(image, CUSTOM_PHOTO_MIME_TYPES);
+            imageValidator.validateImageDimensions(image, CUSTOM_PHOTO_WIDTH, CUSTOM_PHOTO_HEIGHT);
         } catch (IllegalArgumentException e) {
             log.error("Invalid image file", e);
             return false;

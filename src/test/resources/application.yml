@@ -10,11 +10,6 @@ spring:
       name: admin
       password: admin
 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-#    show-sql: true
-
   quartz:
     job-store-type: jdbc
     jdbc:
@@ -33,6 +28,12 @@ spring:
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 1234
 
 #  data:
 #    redis:
@@ -82,3 +83,16 @@ aws:
     keyPairId: "MOCKKEYPAIRID"
     privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
     publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
+  s3:
+    region: "MOCKREGION"
+    accessKey: "MOCKACCESS"
+    secretKey: "MOCKSECRET"
+    bucket-name: "MOCKBUCKETNAME"
+    public-domain: "https://MOCOKS3DOMAIN.com"
+
+path:
+  football:
+    players:
+      photo:
+        prefix: "chuncity/dev/players"
+        suffix: "devphoto"

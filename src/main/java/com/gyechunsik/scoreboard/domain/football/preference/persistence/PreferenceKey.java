@@ -24,6 +24,6 @@ public class PreferenceKey {
     private User user;
 
     @Column(nullable = false, unique = true)
-    private String key;
+    private String keyhash;
 
 }

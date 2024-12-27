@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.preference.repository;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,9 +10,9 @@ import java.util.Optional;
 @Repository
 public interface PreferenceKeyRepository extends JpaRepository<PreferenceKey, Long> {
 
-    boolean existsByKey(String key);
+    boolean existsByKeyhash(String keyhash);
 
-    Optional<PreferenceKey> findByUserIdAndKey(Long userId, String aDefault);
+    Optional<PreferenceKey> findByUserId(@NotNull Long userId);
 
-    Optional<PreferenceKey> findByKey(String preferenceKey);
+    Optional<PreferenceKey> findByKeyhash(String keyhash);
 }

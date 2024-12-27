@@ -1,6 +1,5 @@
 package com.gyechunsik.scoreboard.utils;
 
-import org.apache.http.entity.ContentType;
 import org.apache.tika.Tika;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;

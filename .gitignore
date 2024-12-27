@@ -41,6 +41,7 @@ out/
 application-secret.yml
 application-devsecret.yml
 application-aws.yml
+application-path.yml
 
 ### Dev Files
 application-api.yml

@@ -1,0 +1,6 @@
+path:
+  football:
+    players:
+      photo:
+        prefix: "chuncity/dev/players"
+        suffix: "devphoto"

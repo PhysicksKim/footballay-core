@@ -27,17 +27,17 @@ public class PreferenceKeyService {
         String key;
         do {
             key = generateRandomKey();
-        } while (preferenceKeyRepository.existsByKey(key));
-        log.info("Generated streamer key: {}", key);
+        } while (preferenceKeyRepository.existsByKeyhash(key));
+        log.info("Generated preferenceKey={}", key);
 
         PreferenceKey preferKey = PreferenceKey.builder()
                 .user(user)
-                .key(key)
+                .keyhash(key)
                 .build();
         return preferenceKeyRepository.save(preferKey);
     }
 
-    public static String generateRandomKey() {
+    private static String generateRandomKey() {
         StringBuilder keyBuilder = new StringBuilder(KEY_LENGTH);
         for (int i = 0; i < KEY_LENGTH; i++) {
             keyBuilder.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));

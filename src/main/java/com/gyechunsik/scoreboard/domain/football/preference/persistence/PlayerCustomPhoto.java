@@ -30,11 +30,12 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
     @JoinColumn(nullable = false)
     private Player player;
 
-    @Column(nullable = false)
-    private String path;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_file_path_id", nullable = true)
+    private UserFilePath userFilePath;
 
     @Column(nullable = false)
-    private String domain;
+    private String fileName;
 
     @Column(nullable = false)
     private int version;
@@ -42,7 +43,22 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
     @Column(nullable = false)
     private boolean isActive;
 
-    public String getPhotoUrl() {
-        return this.domain + this.path;
+    @PrePersist
+    @PreUpdate
+    private void removeFilenameSlash() {
+        if (fileName != null) {
+            fileName = fileName.replaceAll("/", "");
+        }
     }
+
+    public String getPhotoUrl() {
+        String fullPath = this.userFilePath.getFullPath();
+        String noStartSlashFilename = this.fileName.startsWith("/") ? this.fileName.substring(1) : this.fileName;
+        if(fullPath.endsWith("/")) {
+            return fullPath + noStartSlashFilename;
+        } else {
+            return fullPath + "/" + noStartSlashFilename;
+        }
+    }
+
 }
