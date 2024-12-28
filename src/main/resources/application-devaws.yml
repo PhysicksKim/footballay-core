@@ -1,0 +1,13 @@
+aws:
+  cloudfront:
+    domain: "https://static.gyechunsik.site"
+    keyPairId: "MOCKKEYPAIRID"
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
+
+  s3:
+    accessKey: AMOCKACCESSKEYZ
+    secretKey: XAMOCKSECRETKEYZ
+    region: ap-northeast-2
+    bucket-name: MOCK-BUCKET-NAME
+    public-domain: "https://static.MOCKDOMAINqk20ejkt01ke03.com"
