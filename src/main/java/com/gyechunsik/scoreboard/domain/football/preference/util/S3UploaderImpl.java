@@ -32,8 +32,6 @@ public class S3UploaderImpl implements S3Uploader {
     @Value("${aws.s3.public-domain}")
     private String s3domain;
 
-    private static final String FILE_PATH_PREFIX = "/test-upload/";
-
     /**
      * 로컬 파일을 S3에 업로드
      *
@@ -86,7 +84,44 @@ public class S3UploaderImpl implements S3Uploader {
         }
     }
 
-    // 필요하다면, S3 파일 삭제 등 유틸 메서드도 만들 수 있습니다.
+    /**
+     * MultipartFile을 S3에 업로드
+     * @param multipartFile 업로드할 파일
+     * @param s3Key S3 상의 업로드될 경로/파일명 (예: "test2.png")
+     */
+    public void uploadFile(MultipartFile multipartFile, String s3Key) {
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(multipartFile.getSize());
+            metadata.setContentType(multipartFile.getContentType());
+
+            PutObjectRequest putObjectRequest = new PutObjectRequest(
+                    bucketName,
+                    s3Key,
+                    multipartFile.getInputStream(),
+                    metadata
+            );
+            amazonS3.putObject(putObjectRequest);
+        } catch (IOException e) {
+            throw new RuntimeException("fail S3 file upload", e);
+        }
+    }
+
+    /**
+     * 해당 key에 해당하는 파일이 S3 버킷에 존재하는지 여부를 확인합니다.
+     *
+     * @param s3Key S3 상의 전체 경로(예: "test-upload/test2.png")
+     * @return true: 존재함 / false: 존재하지 않음
+     */
+    public boolean existsFile(String s3Key) {
+        try {
+            return amazonS3.doesObjectExist(bucketName, s3Key);
+        } catch (AmazonS3Exception e) {
+            log.error("[S3Uploader] Failed to check object existence in S3. error={}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
     public void deleteFile(String s3Key) {
         try {
             amazonS3.deleteObject(bucketName, s3Key);
@@ -97,53 +132,4 @@ public class S3UploaderImpl implements S3Uploader {
         }
     }
 
-    // -----------------------------------
-
-    /**
-     * 파일명 생성: {version}_{timestamp}.png
-     *
-     * @param version          이미지 버전
-     * @param originalFilename 원본 파일명
-     * @return 생성된 파일명
-     */
-    public String generateFileName(int version, String originalFilename) {
-        String extension = getFileExtension(originalFilename);
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        return version + "_" + timestamp + "." + extension;
-    }
-
-
-    /**
-     * 파일 업로드 및 경로 반환
-     *
-     * @param file     업로드할 파일
-     * @param userId   사용자 ID
-     * @param playerId 선수 ID
-     * @param version  이미지 버전
-     * @return 업로드된 파일의 S3 URL
-     */
-    public String upload(MultipartFile file, Long userId, Long playerId, int version) {
-        String fileName = generateFileName(version, file.getOriginalFilename());
-        String filePath = FILE_PATH_PREFIX + userId + "/" + playerId + "/" + fileName;
-
-        try {
-            amazonS3.putObject(new PutObjectRequest(bucketName, filePath, file.getInputStream(), null));
-            return s3domain + "/" + filePath;
-        } catch (IOException e) {
-            throw new RuntimeException("이미지 업로드에 실패했습니다.", e);
-        }
-    }
-
-    /**
-     * 파일 확장자 추출
-     *
-     * @param filename 파일명
-     * @return 파일 확장자
-     */
-    private String getFileExtension(String filename) {
-        if (filename == null || filename.isEmpty()) {
-            throw new IllegalArgumentException("파일 이름이 유효하지 않습니다.");
-        }
-        return filename.substring(filename.lastIndexOf('.') + 1);
-    }
 }

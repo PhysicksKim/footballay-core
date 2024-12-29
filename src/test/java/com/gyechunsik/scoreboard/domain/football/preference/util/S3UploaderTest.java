@@ -4,16 +4,21 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Disabled("실제 AWS S3에 직접 업로드/다운로드를 수행하므로, 필요 시 활성화하여 테스트하세요.")
 @ActiveProfiles("aws")
 @Slf4j
 @SpringBootTest
@@ -36,9 +41,13 @@ class S3UploaderTest {
 
     @Test
     void testUploadAndDownloadFile() throws Exception {
+        File file = new File(LOCAL_FILE_PATH);
+        FileInputStream fis = new FileInputStream(file);
+        MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "image/png", fis);
+
         // 1) S3 업로드
-        String fileUrl = s3Uploader.uploadFile(LOCAL_FILE_PATH, S3_KEY);
-        log.info("[TEST] File uploaded to S3. url={}", fileUrl);
+        s3Uploader.uploadFile(multipartFile, S3_KEY);
+        log.info("[TEST] File uploaded to S3");
 
         // 2) S3에서 로컬로 다운로드
         s3Uploader.downloadFile(S3_KEY, DOWNLOAD_PATH);

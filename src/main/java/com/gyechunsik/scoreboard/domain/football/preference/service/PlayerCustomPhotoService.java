@@ -16,6 +16,7 @@ import com.gyechunsik.scoreboard.entity.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -80,6 +81,7 @@ public class PlayerCustomPhotoService {
         return photoDtoMap;
     }
 
+    // TODO : s3 upload 과정과 entity 저장 과정을 분리해야합니다. 파일 업로드 시간동안 db connection 점유 문제가 있습니다.
     /**
      * 새로운 커스텀 선수 이미지를 등록합니다.
      *
@@ -89,55 +91,85 @@ public class PlayerCustomPhotoService {
      * @return 등록된 커스텀 선수 이미지 DTO
      */
     @Transactional
-    public PlayerCustomPhotoDto registerCustomPhoto(Long userId, Long playerId, MultipartFile file) {
+    public PlayerCustomPhotoDto registerAndUploadCustomPhoto(Long userId, Long playerId, MultipartFile file) {
         if(!validateCustomPhoto(file)) {
             throw new IllegalArgumentException("Invalid custom photo");
         }
 
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("Player not found with id: " + playerId));
-        PreferenceKey preferenceKey = preferenceKeyRepository.findByUserId(userId)
+        PreferenceKey preferenceKey = getPreferenceKeyOrThrow(userId);
+        UserFilePath nowUserFilePath = getUserFilePathForNowPhoto(userId);
+        int version = getVersionForNewPhoto(preferenceKey, playerId);
+        String fileName = generateFileName(playerId, file, version);
+        PlayerCustomPhoto playerCustomPhoto = createPlayerCustomPhotoEntity(
+                preferenceKey,
+                nowUserFilePath,
+                playerId,
+                version,
+                fileName
+        );
+
+        deactivePreviousPhotos(preferenceKey, playerId);
+
+        String s3Key = getS3Key(nowUserFilePath, fileName);
+        s3Uploader.uploadFile(file, s3Key);
+
+        return PlayerCustomPhotoDto.fromEntity(playerCustomPhotoRepository.save(playerCustomPhoto));
+    }
+
+    private PreferenceKey getPreferenceKeyOrThrow(Long userId) {
+        return preferenceKeyRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found for userId: " + userId));
+    }
 
-        List<PlayerCustomPhoto> activePhotos =
-                playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(preferenceKey.getId(), playerId);
-        for(PlayerCustomPhoto photo : activePhotos) {
-            photo.setActive(false);
-        }
+    private static @NotNull String generateFileName(Long playerId, MultipartFile file, int version) {
+        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+        validateFileExtension(fileExtension);
+        String fileName = CustomPhotoFileNameGenerator.generate(playerId, version, fileExtension);
+        return fileName;
+    }
 
-        int version = 1;
-
-        // 해당 키와 선수에 이미지가 있다면 version 가장 큰 값을 가져옴
-        Optional<PlayerCustomPhoto> latestPhoto = playerCustomPhotoRepository.findLatestPhotoByPreferenceKeyAndPlayer(
-                preferenceKey.getId(), playerId);
-        if(latestPhoto.isPresent()) {
-            version = latestPhoto.get().getVersion() + 1;
-        }
-
-        // 해당 키와 선수에 이미 활성화된 이미지 있다면 비활성화 처리
-        playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(preferenceKey.getId(), playerId)
-                .forEach(photo -> photo.setActive(false));
-
+    private UserFilePath getUserFilePathForNowPhoto(long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
-        UserFilePath userFilePathForCustomPhoto = userFilePathService.getPlayerCustomPhotoPath(user);
+        return userFilePathService.getPlayerCustomPhotoPath(user);
+    }
 
-        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+    private void deactivePreviousPhotos(PreferenceKey preferenceKey, Long playerId) {
+        playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(preferenceKey.getId(), playerId)
+                .forEach(photo -> photo.setActive(false));
+    }
+
+    private int getVersionForNewPhoto(PreferenceKey preferenceKey, Long playerId) {
+        Optional<PlayerCustomPhoto> latestPhoto = playerCustomPhotoRepository.findLatestPhotoByPreferenceKeyAndPlayer(
+                preferenceKey.getId(), playerId);
+        if(latestPhoto.isEmpty()) {
+            return 1;
+        } else {
+            return latestPhoto.get().getVersion() + 1;
+        }
+    }
+
+    private static void validateFileExtension(String fileExtension) {
         if(fileExtension == null || fileExtension.isEmpty()) {
             throw new IllegalArgumentException("Invalid file extension");
         }
-        String fileName = CustomPhotoFileNameGenerator.generate(playerId, version, fileExtension);
+    }
 
-        PlayerCustomPhoto playerCustomPhoto = PlayerCustomPhoto.builder()
+    private PlayerCustomPhoto createPlayerCustomPhotoEntity(PreferenceKey preferenceKey, UserFilePath userFilePath, long playerId, int version, String fileName) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found with id: " + playerId));
+        return PlayerCustomPhoto.builder()
                 .preferenceKey(preferenceKey)
+                .userFilePath(userFilePath)
                 .player(player)
-                .userFilePath(userFilePathForCustomPhoto)
                 .fileName(fileName)
                 .version(version)
                 .isActive(true)
                 .build();
+    }
 
-        return PlayerCustomPhotoDto.fromEntity(playerCustomPhotoRepository.save(playerCustomPhoto));
+    private static String getS3Key(UserFilePath userFilePathForCustomPhoto, String fileName) {
+        return userFilePathForCustomPhoto.getPathWithoutDomain() + fileName;
     }
 
     private boolean validateCustomPhoto(MultipartFile file) {
