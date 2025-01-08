@@ -11,6 +11,7 @@ public record FixtureResponse(
         LiveStatusResponse liveStatus,
         LeagueResponse league,
         TeamResponse homeTeam,
-        TeamResponse awayTeam
+        TeamResponse awayTeam,
+        boolean available
 ) {
 }

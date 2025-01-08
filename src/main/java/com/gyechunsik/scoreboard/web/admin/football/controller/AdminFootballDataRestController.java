@@ -136,6 +136,17 @@ public class AdminFootballDataRestController {
         return ResponseEntity.ok().body(response);
     }
 
+    @GetMapping("/fixtures/date")
+    public ResponseEntity<ApiResponse<FixtureResponse>> getFixturesOnDate(
+            long leagueId,
+            @RequestParam(required = true) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        String requestUrl = "/api/admin/football/fixtures/date";
+        ZonedDateTime zonedDateTime = date == null ? ZonedDateTime.now() : date.atStartOfDay(ZoneId.of("Asia/Seoul"));
+        ApiResponse<FixtureResponse> response = adminFootballDataWebService.getFixturesOnDate(leagueId, zonedDateTime, requestUrl);
+        return ResponseEntity.ok().body(response);
+    }
+
     @GetMapping("/players/export/{teamId}")
     public ResponseEntity<InputStreamResource> exportPlayersToExcel(@PathVariable long teamId) throws IOException {
         List<Player> players = footballDataService.getSquadOfTeam(teamId);

@@ -131,10 +131,11 @@ public class FootballRoot {
         }
     }
 
+    // TODO : getFixturesOnClosestDate() 와 중복되므로 이 메서드를 삭제해야함
     /**
      * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
      * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
-     * @return
+     * @return 주어진 날짜로 부터 가장 가까운 fixture 들
      */
     public List<FixtureInfoDto> getNextFixturesFromDate(long leagueId, ZonedDateTime zonedDateTime) {
         try {
@@ -147,6 +148,13 @@ public class FootballRoot {
         }
     }
 
+    /**
+     * 주어진 날짜를 기준으로 가장 가까운 fixture 를 찾아 해당 날짜의 fixture 들을 모두 가져옵니다. <br>
+     * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
+     * @param leagueId 리그 ID
+     * @param zonedDateTime 탐색 시작 날짜
+     * @return 주어진 날짜로 부터 가장 가까운 fixture 를 찾아서 해당 날짜의 fixture 들
+     */
     public List<FixtureInfoDto> getFixturesOnClosestDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
         List<Fixture> fixturesOnClosestDate = footballDataService.findFixturesOnClosestDate(leagueId, truncated);
@@ -159,6 +167,12 @@ public class FootballRoot {
         return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(availableFixtures);
     }
 
+    /**
+     * 주어진 날짜를 기준으로 해당 날짜의 fixture 들을 모두 가져옵니다.
+     * @param leagueId 리그 ID
+     * @param zonedDateTime 날짜
+     * @return 해당 날짜의 fixture 들
+     */
     public List<FixtureInfoDto> getFixturesOnDate(long leagueId, ZonedDateTime zonedDateTime) {
         ZonedDateTime truncated = zonedDateTime.truncatedTo(ChronoUnit.DAYS);
         List<Fixture> fixturesOnDate = footballDataService.findFixturesOnDate(leagueId, truncated);

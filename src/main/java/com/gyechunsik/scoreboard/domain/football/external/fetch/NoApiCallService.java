@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Slf4j
-@Profile({"!mockapi", "!api"})
+@Profile("!mockapi & !api")
 @Service
 public class NoApiCallService implements ApiCallService{
 

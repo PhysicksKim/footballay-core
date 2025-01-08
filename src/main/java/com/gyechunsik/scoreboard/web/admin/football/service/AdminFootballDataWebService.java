@@ -201,4 +201,23 @@ public class AdminFootballDataWebService {
             return apiCommonResponseService.createFailureResponse("선수의 팀 조회 실패", requestUrl, params);
         }
     }
+
+    public ApiResponse<FixtureResponse> getFixturesOnDate(long leagueId, ZonedDateTime date, String requestUrl) {
+        Map<String, String> params = Map.of(
+                "leagueId", String.valueOf(leagueId),
+                "date", date.toString()
+        );
+        date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
+        FixtureResponse[] fixtures;
+        try {
+            fixtures = footballRoot.getFixturesOnDate(leagueId, date).stream()
+                    .map(FootballDtoMapper::toFixtureDto)
+                    .sorted(Comparator.comparing(FixtureResponse::date))
+                    .toArray(FixtureResponse[]::new);
+        } catch (Exception e) {
+            log.error("error while getting fixture info :: {}", e.getMessage());
+            return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl, params);
+        }
+        return apiCommonResponseService.createSuccessResponse(fixtures, requestUrl, params);
+    }
 }

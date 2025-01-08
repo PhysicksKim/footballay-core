@@ -52,7 +52,8 @@ public class FootballDtoMapper {
                 toLiveStatusDto(fixture.liveStatus()),
                 toLeagueDto(fixture.league()),
                 toTeamResponse(fixture.homeTeam()),
-                toTeamResponse(fixture.awayTeam())
+                toTeamResponse(fixture.awayTeam()),
+                fixture.available()
         );
     }
 

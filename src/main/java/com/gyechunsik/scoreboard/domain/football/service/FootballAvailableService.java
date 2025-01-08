@@ -51,6 +51,9 @@ public class FootballAvailableService {
         Fixture fixture =
                 fixtureRepository.findById(fixtureId)
                 .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
+        if(fixture.isAvailable()) {
+            throw new IllegalArgumentException("fixture is already available");
+        }
 
         fixtureJobManageService.addFixtureJobs(fixture);
 
