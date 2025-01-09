@@ -65,7 +65,7 @@ public class AdminFootballDataWebService {
         );
         try {
             date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
-            List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(leagueId, date);
+            List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(leagueId, date);
             AvailableFixtureDto[] array = availableFixtures.stream()
                     .map(FootballDtoMapper::toAvailableFixtureDto)
                     .sorted(Comparator.comparing(AvailableFixtureDto::date))

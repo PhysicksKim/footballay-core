@@ -82,31 +82,31 @@ public class FootballAvailableService {
      * @param matchDateFrom 포함하여 가장 가까운 날짜에 있는 모든 경기일정 조회
      * @return 해당 날짜에 있는 모든 경기일정
      */
-    public List<Fixture> findAvailableFixturesOnClosestDate(long leagueId, ZonedDateTime matchDateFrom) {
+    public List<Fixture> findAvailableFixturesOnNearestDate(long leagueId, ZonedDateTime matchDateFrom) {
         LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDateFrom);
         League league = getLeagueById(leagueId);
-        log.info("findAvailableFixturesOnClosestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
+        log.info("findAvailableFixturesOnNearestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
 
         // Find the first fixture after the given date
         List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateAfter(
                 league,
                 localDateTime,
-                PageRequestForOnlyOneClosest()
+                PageRequestForOnlyOneNearest()
         );
         if (fixturesByLeagueAndDate.isEmpty()) {
             return List.of();
         }
 
-        // Get the date of the closest fixture
-        Fixture closestFixture = fixturesByLeagueAndDate.get(0);
-        LocalDateTime closestDate = closestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
-        List<Fixture> availableFixturesOfClosestDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
+        // Get the date of the nearest fixture
+        Fixture nearestFixture = fixturesByLeagueAndDate.get(0);
+        LocalDateTime nearestDate = nearestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
+        List<Fixture> availableFixturesOfNearestDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
                 league,
-                closestDate,
-                closestDate.plusDays(1).minusSeconds(1)
+                nearestDate,
+                nearestDate.plusDays(1).minusSeconds(1)
         );
-        log.info("date of closest fixture={}, size of availableFixturesOfClosestDate={}", closestDate, availableFixturesOfClosestDate.size());
-        return availableFixturesOfClosestDate;
+        log.info("date of nearest fixture={}, size of availableFixturesOfNearestDate={}", nearestDate, availableFixturesOfNearestDate.size());
+        return availableFixturesOfNearestDate;
     }
 
     public List<Fixture> findAvailableFixturesOnDate(long leagueId, ZonedDateTime matchDate) {
@@ -123,7 +123,7 @@ public class FootballAvailableService {
         return availableFixturesByLeagueAndDate;
     }
 
-    private static Pageable PageRequestForOnlyOneClosest() {
+    private static Pageable PageRequestForOnlyOneNearest() {
         return PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
     }
 

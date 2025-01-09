@@ -330,7 +330,7 @@ class FootballRootTest {
 
     @Test
     @DisplayName("이용 가능한 경기 일정을 조회합니다")
-    void successGetAvailableFixturesOnClosestDate() {
+    void successGetAvailableFixturesOnNearestDate() {
         // given
         LeagueTeamFixture leagueTeamFixture = generate();
         League league = leagueTeamFixture.league;
@@ -353,7 +353,7 @@ class FootballRootTest {
         long fixtureId = fixture.getFixtureId();
         FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
 
-        List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnClosestDate(
+        List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(
                 league.getLeagueId(),
                 ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
         log.info("available fixtures = {}", availableFixtures);

@@ -51,7 +51,7 @@ public class FootballExcelService {
 
             // 데이터 생성
             int rowIdx = 1;
-            log.info("excel data players: {}", players);
+            log.info("excel data write start");
             for (Player player : players) {
                 Row row = sheet.createRow(rowIdx);
                 row.setHeightInPoints(rowHeightInPoints); // 각 행의 높이 지정
@@ -86,6 +86,7 @@ public class FootballExcelService {
             }
 
             workbook.write(out);
+            log.info("excel data write end");
             return new ByteArrayInputStream(out.toByteArray());
         }
     }

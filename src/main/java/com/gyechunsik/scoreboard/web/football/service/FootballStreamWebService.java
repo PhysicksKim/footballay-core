@@ -63,15 +63,15 @@ public class FootballStreamWebService {
     /**
      * 해당 리그에서 주어진 날짜로 부터 가장 가까운 경기가 있는 날의 모든 경기를 조회합니다.
      */
-    public ApiResponse<FixtureOfLeagueResponse> getFixturesOnClosestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+    public ApiResponse<FixtureOfLeagueResponse> getFixturesOnNearestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
         Map<String, String> params = createParams(request.leagueId(), paramDate);
         try {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
-            List<FixtureInfoDto> fixturesOfLeague = footballRoot.getFixturesOnClosestDate(request.leagueId(), dateTime);
+            List<FixtureInfoDto> fixturesOfLeague = footballRoot.getFixturesOnNearestDate(request.leagueId(), dateTime);
             return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
-            log.error("Error occurred while calling getFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
+            log.error("Error occurred while calling getFixturesOnNearestDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
@@ -95,15 +95,15 @@ public class FootballStreamWebService {
     /**
      * 해당 리그에서 주어진 날짜로 부터 가장 가까운 경기가 있는 날의 모든 Available 경기를 조회합니다.
      */
-    public ApiResponse<FixtureOfLeagueResponse> getAvailableFixturesOnClosestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
+    public ApiResponse<FixtureOfLeagueResponse> getAvailableFixturesOnNearestDate(String requestUrl, FixtureOfLeagueRequest request, ZonedDateTime paramDate) {
         Map<String, String> params = createParams(request.leagueId(), paramDate);
         try {
             validateRequest(request, requestUrl, params);
             ZonedDateTime dateTime = validateAndTruncateDate(paramDate, requestUrl, params);
-            List<FixtureInfoDto> fixturesOfLeague = footballRoot.getAvailableFixturesOnClosestDate(request.leagueId(), dateTime);
+            List<FixtureInfoDto> fixturesOfLeague = footballRoot.getAvailableFixturesOnNearestDate(request.leagueId(), dateTime);
             return createFixtureListSuccessResponse(fixturesOfLeague, requestUrl, params);
         } catch (Exception e) {
-            log.error("Error occurred while calling getAvailableFixturesOnClosestDate() leagueId : {}", request.leagueId(), e);
+            log.error("Error occurred while calling getAvailableFixturesOnNearestDate() leagueId : {}", request.leagueId(), e);
             return createFailureResponse("fixture 정보를 가져오는데 실패했습니다", requestUrl, params);
         }
     }
