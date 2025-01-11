@@ -13,9 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@Table(name = "custom_player_photos", indexes = {
-        @Index(name = "idx_preference_player_active", columnList = "preference_key_id, player_id, is_active")
-})
+@Table(name = "custom_player_photos",
+        indexes = {
+            @Index(name = "idx_preference_player_active", columnList = "preference_key_id, player_id, is_active")
+        }
+        // ,uniqueConstraints = {
+        //         @UniqueConstraint(columnNames = {"preference_key_id", "player_id", "is_active"})
+        // }
+)
 public class PlayerCustomPhoto extends BaseDateAuditEntity {
 
     @Id
@@ -38,9 +43,6 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
     private String fileName;
 
     @Column(nullable = false)
-    private int version;
-
-    @Column(nullable = false)
     private boolean isActive;
 
     @PrePersist
@@ -51,14 +53,24 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PlayerCustomPhoto)) return false;
+        PlayerCustomPhoto that = (PlayerCustomPhoto) o;
+        return id != null && id.equals(that.id);
+    }
+
     public String getPhotoUrl() {
         String fullPath = this.userFilePath.getFullPath();
         String noStartSlashFilename = this.fileName.startsWith("/") ? this.fileName.substring(1) : this.fileName;
-        if(fullPath.endsWith("/")) {
+        if (fullPath.endsWith("/")) {
             return fullPath + noStartSlashFilename;
         } else {
             return fullPath + "/" + noStartSlashFilename;
         }
     }
+
+
 
 }

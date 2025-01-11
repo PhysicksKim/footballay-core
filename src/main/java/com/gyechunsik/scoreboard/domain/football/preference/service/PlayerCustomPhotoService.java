@@ -16,7 +16,6 @@ import com.gyechunsik.scoreboard.entity.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// TODO : s3 upload 과정과 entity 저장 과정을 분리해야합니다. 파일 업로드 시간동안 db connection 점유 문제가 있습니다.
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,27 +33,63 @@ public class PlayerCustomPhotoService {
     private final UserRepository userRepository;
     private final PlayerRepository playerRepository;
     private final PreferenceKeyRepository preferenceKeyRepository;
-    private final PreferenceValidator preferenceValidator;
-    private final S3Uploader s3Uploader;
     private final PlayerCustomPhotoRepository playerCustomPhotoRepository;
     private final UserFilePathService userFilePathService;
+    private final PreferenceValidator preferenceValidator;
+    private final S3Uploader s3Uploader;
 
     /**
-     * 활성화된 커스텀 선수 이미지들을 조회합니다.
+     * 새로운 커스텀 선수 이미지를 등록하고 업로드이후 활성화합니다. <br>
+     * 기존에 활성화된 커스텀 선수 이미지가 있으면 비활성화하고 새로운 이미지를 활성화 시킵니다. <br>
+     *
+     * @throws IllegalArgumentException 이미지 파일이 유효하지 않은 경우
+     * @param userId    사용자 ID
+     * @param playerId  선수 ID
+     * @param file      업로드할 이미지 파일
+     * @return 등록된 커스텀 선수 이미지 DTO
+     */
+    @Transactional
+    public PlayerCustomPhotoDto registerAndUploadCustomPhoto(long userId, long playerId, MultipartFile file) {
+        if(!validateCustomPhoto(file)) {
+            throw new IllegalArgumentException("Invalid custom photo");
+        }
+
+        PreferenceKey preferenceKey = getPreferenceKeyOrThrow(userId);
+        UserFilePath nowUserFilePath = getUserFilePathForNowPhoto(userId);
+        String fileName = generateFileName(playerId, file);
+        PlayerCustomPhoto playerCustomPhoto = createPlayerCustomPhotoEntity(
+                preferenceKey,
+                nowUserFilePath,
+                playerId,
+                fileName
+        );
+
+        deactivatePreviousPhoto(preferenceKey, playerId);
+
+        String s3Key = getS3Key(nowUserFilePath, fileName);
+        s3Uploader.uploadFile(file, s3Key);
+
+        return PlayerCustomPhotoDto.fromEntity(playerCustomPhotoRepository.save(playerCustomPhoto));
+    }
+
+    /**
+     * 활성화된 커스텀 선수 이미지들을 조회합니다. <br>
+     * 선수 ID 집합에 대해 활성화된 커스텀 선수 이미지를 조회합니다. <br>
+     * 커스텀 이미지가 없는 선수는 반환되는 Map에 포함되지 않습니다.
      *
      * @param preferenceKey 커스텀 선수 이미지를 조회할 PreferenceKey
      * @param playerIds 조회할 선수들의 ID 집합
      * @return 활성화된 커스텀 선수 이미지 DTO
      */
     @Transactional(readOnly = true)
-    public Map<Long, PlayerCustomPhotoDto> getPlayerCustomPhotos(String preferenceKey, Set<Long> playerIds) {
+    public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String preferenceKey, Set<Long> playerIds) {
         Optional<PreferenceKey> optionalKey = preferenceKeyRepository.findByKeyhash(preferenceKey);
         if(optionalKey.isEmpty()) {
             throw new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey);
         }
         PreferenceKey key = optionalKey.get();
 
-        List<PlayerCustomPhoto> photos = PlayerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayers(
+        List<PlayerCustomPhoto> photos = PlayerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
                 key.getId(), playerIds);
 
         Map<Long, PlayerCustomPhoto> photoMap = new HashMap<>();
@@ -81,50 +117,135 @@ public class PlayerCustomPhotoService {
         return photoDtoMap;
     }
 
-    // TODO : s3 upload 과정과 entity 저장 과정을 분리해야합니다. 파일 업로드 시간동안 db connection 점유 문제가 있습니다.
     /**
-     * 새로운 커스텀 선수 이미지를 등록합니다.
-     *
-     * @param userId    사용자 ID
-     * @param playerId  선수 ID
-     * @param file      업로드할 이미지 파일
-     * @return 등록된 커스텀 선수 이미지 DTO
+     * 활성 비활성 둘 다 포함해 커스텀 선수 이미지들을 모두 조회합니다.
+     * @param preferenceKey PreferenceKey
+     * @param playerId 선수 ID
+     * @return 모든 커스텀 선수 이미지 DTO
      */
     @Transactional
-    public PlayerCustomPhotoDto registerAndUploadCustomPhoto(Long userId, Long playerId, MultipartFile file) {
-        if(!validateCustomPhoto(file)) {
-            throw new IllegalArgumentException("Invalid custom photo");
-        }
+    public List<PlayerCustomPhotoDto> getAllCustomPhotos(String preferenceKey, long playerId) {
+        PreferenceKey key = preferenceKeyRepository.findByKeyhash(preferenceKey)
+                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
 
-        PreferenceKey preferenceKey = getPreferenceKeyOrThrow(userId);
-        UserFilePath nowUserFilePath = getUserFilePathForNowPhoto(userId);
-        int version = getVersionForNewPhoto(preferenceKey, playerId);
-        String fileName = generateFileName(playerId, file, version);
-        PlayerCustomPhoto playerCustomPhoto = createPlayerCustomPhotoEntity(
-                preferenceKey,
-                nowUserFilePath,
-                playerId,
-                version,
-                fileName
-        );
-
-        deactivePreviousPhotos(preferenceKey, playerId);
-
-        String s3Key = getS3Key(nowUserFilePath, fileName);
-        s3Uploader.uploadFile(file, s3Key);
-
-        return PlayerCustomPhotoDto.fromEntity(playerCustomPhotoRepository.save(playerCustomPhoto));
+        List<PlayerCustomPhoto> photoList = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(key, playerId);
+        return photoList.stream()
+                .map(PlayerCustomPhotoDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
-    private PreferenceKey getPreferenceKeyOrThrow(Long userId) {
+    // TODO : DeactivatePhoto(), activatePhoto(), deletePhoto() method 추가 필요
+    /**
+     * 유저의 특정 커스텀 이미지를 비활성화합니다. <br>
+     * 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
+     * {@link PlayerCustomPhoto} 엔티티의 uniqueConstraints 에 따라서 keyHash 와 playerId 가 주어지면 활성화된 엔티티는 고유합니다.
+     *
+     * @param keyHash 커스텀 이미지 PreferenceKey
+     * @param playerId 선수 ID
+     * @return 비활성화 성공 여부. 기존에 활성화된 이미지가 없더라도 true 반환
+     */
+    @Transactional
+    public boolean deactivatePhoto(String keyHash, long playerId, long photoId) {
+        try {
+            Optional<PlayerCustomPhoto> optionalPhoto = playerCustomPhotoRepository.findById(photoId);
+            if(optionalPhoto.isEmpty()) {
+                log.info("Photo not found with id={}", photoId);
+                return true;
+            }
+
+            PlayerCustomPhoto photo = optionalPhoto.get();
+            validatePhotoKeyHashAndPlayerId(photo, keyHash, playerId);
+
+            log.info("Deactivating photo id={}", photo.getId());
+            photo.setActive(false);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to deactivate photo", e);
+            return false;
+        }
+    }
+
+    /**
+     * 일치하지 않는다면 비정상적인 접근입니다.
+     *
+     * @param entity
+     * @param keyHash
+     */
+    private void validatePhotoKeyHashAndPlayerId(PlayerCustomPhoto entity, String keyHash, long playerId) {
+        if(!entity.getPreferenceKey().getKeyhash().equals(keyHash)) {
+            throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + keyHash);
+        }
+        if(entity.getPlayer().getId() != playerId) {
+            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
+        }
+    }
+
+    // custom photo 중 active 이미지를 변경하기 위해 사용
+    /**
+     * 유저의 특정 커스텀 이미지를 활성화합니다. <br>
+     * 기존 활성화된 이미지가 있으면 비활성화 하고 새로운 이미지를 활성화합니다.
+     *
+     * @throws IllegalArgumentException 이미지가 존재하지 않거나 keyHash 와 photoId 가 일치하지 않는 경우
+     * @param keyHash 커스텀 이미지 PreferenceKey
+     * @param playerId 활성화할 선수 ID
+     * @param photoId 활성화할 커스텀 이미지 ID
+     * @return 활성화된 커스텀 선수 이미지 DTO
+     */
+    @Transactional
+    public PlayerCustomPhotoDto activatePhoto(String keyHash, long playerId, long photoId) {
+        PreferenceKey preferenceKey = preferenceKeyRepository.findByKeyhash(keyHash)
+                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + keyHash));
+
+        // 기존 활성화된 이미지가 있으면 비활성화
+        playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, playerId)
+                .ifPresent(activePhoto -> {
+                    log.info("Deactivating active photo id={}", activePhoto.getId());
+                    activePhoto.setActive(false);
+                });
+
+        // 새로운 이미지 활성화
+        PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
+                .orElseThrow(() -> new IllegalArgumentException("PlayerCustomPhoto not found with id: " + photoId));
+        if(!photo.getPreferenceKey().getKeyhash().equals(keyHash)) {
+            throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + keyHash);
+        }
+        photo.setActive(true);
+
+        return PlayerCustomPhotoDto.fromEntity(photo);
+    }
+
+    // custom photo 엔티티 및 파일을 삭제하기 위해 사용
+    /**
+     * 유저의 특정 커스텀 이미지를 삭제합니다. <br>
+     * 이미지가 존재하지 않는 경우에도 true 반환합니다.
+     *
+     * @throws IllegalArgumentException 이미지가 존재하지 않거나 keyHash 와 photoId 가 일치하지 않는 경우
+     * @param preferenceKey PreferenceKey
+     * @param photoId 삭제할 커스텀 이미지 ID
+     * @return 삭제 성공 여부. 이미지가 존재하지 않는 경우에도 true 반환
+     */
+    @Transactional
+    public boolean deletePhoto(String preferenceKey, long photoId) {
+        try {
+            PreferenceKey key = preferenceKeyRepository.findByKeyhash(preferenceKey)
+                    .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
+            playerCustomPhotoRepository.deleteByIdAndPreferenceKey(photoId, key);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to delete photo", e);
+            return false;
+        }
+    }
+
+    private PreferenceKey getPreferenceKeyOrThrow(long userId) {
         return preferenceKeyRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found for userId: " + userId));
     }
 
-    private static @NotNull String generateFileName(Long playerId, MultipartFile file, int version) {
+    private static String generateFileName(long playerId, MultipartFile file) {
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         validateFileExtension(fileExtension);
-        String fileName = CustomPhotoFileNameGenerator.generate(playerId, version, fileExtension);
+        String fileName = CustomPhotoFileNameGenerator.generate(playerId, fileExtension);
         return fileName;
     }
 
@@ -134,19 +255,13 @@ public class PlayerCustomPhotoService {
         return userFilePathService.getPlayerCustomPhotoPath(user);
     }
 
-    private void deactivePreviousPhotos(PreferenceKey preferenceKey, Long playerId) {
-        playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(preferenceKey.getId(), playerId)
-                .forEach(photo -> photo.setActive(false));
-    }
-
-    private int getVersionForNewPhoto(PreferenceKey preferenceKey, Long playerId) {
-        Optional<PlayerCustomPhoto> latestPhoto = playerCustomPhotoRepository.findLatestPhotoByPreferenceKeyAndPlayer(
-                preferenceKey.getId(), playerId);
-        if(latestPhoto.isEmpty()) {
-            return 1;
-        } else {
-            return latestPhoto.get().getVersion() + 1;
-        }
+    private void deactivatePreviousPhoto(PreferenceKey preferenceKey, long playerId) {
+        playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, playerId)
+                        .ifPresent(photo -> {
+                            log.info("Active photo already exists of preferenceKey.id={} Deactivating photo id={}", preferenceKey.getId(), photo.getId());
+                            photo.setActive(false);
+                        });
+        playerCustomPhotoRepository.flush();
     }
 
     private static void validateFileExtension(String fileExtension) {
@@ -155,7 +270,7 @@ public class PlayerCustomPhotoService {
         }
     }
 
-    private PlayerCustomPhoto createPlayerCustomPhotoEntity(PreferenceKey preferenceKey, UserFilePath userFilePath, long playerId, int version, String fileName) {
+    private PlayerCustomPhoto createPlayerCustomPhotoEntity(PreferenceKey preferenceKey, UserFilePath userFilePath, long playerId, String fileName) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with id: " + playerId));
         return PlayerCustomPhoto.builder()
@@ -163,7 +278,6 @@ public class PlayerCustomPhotoService {
                 .userFilePath(userFilePath)
                 .player(player)
                 .fileName(fileName)
-                .version(version)
                 .isActive(true)
                 .build();
     }
@@ -173,8 +287,7 @@ public class PlayerCustomPhotoService {
     }
 
     private boolean validateCustomPhoto(MultipartFile file) {
-        preferenceValidator.isValidPlayerCustomPhotoImage(file);
-        return false;
+        return preferenceValidator.isValidPlayerCustomPhotoImage(file);
     }
 
 }

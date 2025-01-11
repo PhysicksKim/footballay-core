@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Objects;
+
 @Slf4j
 @Getter
 @Setter
@@ -26,4 +28,17 @@ public class PreferenceKey {
     @Column(nullable = false, unique = true)
     private String keyhash;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PreferenceKey that = (PreferenceKey) o;
+        return Objects.equals(getKeyhash(), that.getKeyhash());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getKeyhash());
+    }
 }

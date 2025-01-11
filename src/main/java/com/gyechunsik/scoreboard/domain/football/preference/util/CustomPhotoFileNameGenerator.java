@@ -8,13 +8,13 @@ public class CustomPhotoFileNameGenerator {
     private static final int KEY_LENGTH = 10;
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    public static String generate(long playerId, int version, String extension) {
+    public static String generate(long playerId, String extension) {
         if(extension.startsWith(".")) {
             extension = extension.substring(1);
         }
 
         String hash = generateRandomHash();
-        return String.format("%d_%d_%s.%s", playerId, version, hash, extension);
+        return String.format("%d_%s.%s", playerId, hash, extension);
     }
 
     private static String generateRandomHash() {

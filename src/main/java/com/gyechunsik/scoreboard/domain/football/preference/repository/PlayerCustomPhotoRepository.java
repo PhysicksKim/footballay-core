@@ -1,8 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.preference.repository;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PlayerCustomPhoto;
-import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserFilePath;
-import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserPathCategory;
+import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,37 +18,33 @@ public interface PlayerCustomPhotoRepository extends JpaRepository<PlayerCustomP
             "JOIN FETCH pho.player pl " +
             "WHERE pho.preferenceKey.id = :preferenceKeyId " +
             "AND pl.id IN :playerIds AND pho.isActive = true")
-    List<PlayerCustomPhoto> findActivePhotosByPreferenceKeyAndPlayers(
+    List<PlayerCustomPhoto> findAllActivesByPreferenceKeyAndPlayers(
             @Param("preferenceKeyId") Long preferenceKeyId,
             @Param("playerIds") Set<Long> playerIds
     );
 
     @Query("SELECT p FROM PlayerCustomPhoto p " +
-            "WHERE p.preferenceKey.id = :preferenceKeyId " +
-            "AND p.player.id = :playerId " +
-            "ORDER BY p.version DESC " +
-            "LIMIT 1")
-    Optional<PlayerCustomPhoto> findLatestPhotoByPreferenceKeyAndPlayer(
-            @Param("preferenceKeyId") Long preferenceKeyId,
-            @Param("playerId") Long playerId
-    );
-
-    @Query("SELECT p FROM PlayerCustomPhoto p " +
-            "WHERE p.preferenceKey.id = :preferenceKeyId " +
+            "WHERE p.preferenceKey = :preferenceKey " +
             "AND p.player.id = :playerId " +
             "AND p.isActive = true")
-    List<PlayerCustomPhoto> findActivePhotosByPreferenceKeyAndPlayer(
-            @Param("preferenceKeyId") Long preferenceKeyId,
+    Optional<PlayerCustomPhoto> findActivePhotoByPreferenceKeyAndPlayer(
+            @Param("preferenceKey") PreferenceKey preferenceKey,
             @Param("playerId") Long playerId
     );
 
+    /**
+     * 활성 및 비활성 이미지들을 모두 가져 옵니다.
+     * @param preferenceKey
+     * @param playerId
+     * @return
+     */
     @Query("SELECT p FROM PlayerCustomPhoto p " +
-            "WHERE p.preferenceKey.id = (SELECT pk.id FROM PreferenceKey pk WHERE pk.keyhash = :keyhash) " +
-            "AND p.player.id = :playerId " +
-            "AND p.isActive = true")
-    List<PlayerCustomPhoto> findPlayerCustomPhotosByPreferenceKeyAndPlayer(
-            @Param("keyhash") String keyhash,
+            "WHERE p.preferenceKey = :preferenceKey " +
+            "AND p.player.id = :playerId")
+    List<PlayerCustomPhoto> findAllByPreferenceKeyAndPlayer(
+            @Param("preferenceKey") PreferenceKey preferenceKey,
             @Param("playerId") Long playerId
     );
 
+    void deleteByIdAndPreferenceKey(long photoId, PreferenceKey key);
 }

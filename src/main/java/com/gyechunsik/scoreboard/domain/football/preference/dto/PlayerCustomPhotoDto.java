@@ -3,15 +3,16 @@ package com.gyechunsik.scoreboard.domain.football.preference.dto;
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PlayerCustomPhoto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class PlayerCustomPhotoDto {
     private Long id;
     private Long userId;
     private Long playerId;
     private String photoUrl;
-    private Integer version;
     private Boolean isActive;
     private String uploadedAt;
     private String updatedAt;
@@ -22,7 +23,6 @@ public class PlayerCustomPhotoDto {
                 photo.getPreferenceKey().getUser().getId(),
                 photo.getPlayer().getId(),
                 photo.getPhotoUrl(),
-                photo.getVersion(),
                 photo.isActive(),
                 photo.getCreatedDate().toString(),
                 photo.getModifiedDate().toString()

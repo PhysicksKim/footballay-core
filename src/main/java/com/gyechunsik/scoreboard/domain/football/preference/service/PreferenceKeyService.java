@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -35,6 +36,17 @@ public class PreferenceKeyService {
                 .keyhash(key)
                 .build();
         return preferenceKeyRepository.save(preferKey);
+    }
+
+    @Transactional
+    public boolean deletePreferenceKeyForUser(User user) {
+        Optional<PreferenceKey> preferenceKey = preferenceKeyRepository.findByUser(user);
+        if(preferenceKey.isEmpty()) {
+            log.warn("PreferenceKey not found for user={}", user);
+            return false;
+        }
+        preferenceKeyRepository.delete(preferenceKey.get());
+        return true;
     }
 
     private static String generateRandomKey() {

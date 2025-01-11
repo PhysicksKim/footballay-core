@@ -9,20 +9,16 @@ import com.gyechunsik.scoreboard.entity.user.User;
 import com.gyechunsik.scoreboard.entity.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 @Slf4j
 @DataJpaTest
@@ -39,7 +35,7 @@ class PlayerCustomPhotoRepositoryTest {
     private PreferenceKeyRepository preferenceKeyRepository;
 
     @Autowired
-    private EntityManager testEntityManager;
+    private EntityManager em;
 
     @Autowired
     private UserRepository userRepository;
@@ -99,9 +95,9 @@ class PlayerCustomPhotoRepositoryTest {
                 .name("Player 3")
                 .build();
 
-        testEntityManager.persist(player1);
-        testEntityManager.persist(player2);
-        testEntityManager.persist(player3);
+        em.persist(player1);
+        em.persist(player2);
+        em.persist(player3);
 
         // UserFilePath 생성
         userFilePath = UserFilePath.builder()
@@ -114,243 +110,169 @@ class PlayerCustomPhotoRepositoryTest {
                 .build();
         userFilePathRepository.save(userFilePath);
 
-        testEntityManager.flush();
-        testEntityManager.clear();
+        em.flush();
+        em.clear();
     }
 
     @Nested
-    @DisplayName("findActivePhotosByPreferenceKeyAndPlayers 메서드 테스트")
-    class FindActivePhotosByPreferenceKeyAndPlayersTest {
+    class FindActivePhotosByPreferenceKeyAndPlayers {
 
+        @DisplayName("여러 선수의 활성화된 커스텀 이미지를 조회한다")
         @Test
-        @DisplayName("활성화된 커스텀 사진들을 잘 가져오는지 테스트 (새로운 구조 - userFilePath, fileName)")
-        void testFindActivePhotos() {
+        void findActivePhotosFromPlayerIdSet() {
             // given
-            PlayerCustomPhoto photo1 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo1.png")
-                    .version(1)
-                    .isActive(true)
-                    .build();
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto2 = createAndSavePlayerCustomPhoto(preferenceKey, player2);
+            PlayerCustomPhoto playerCustomPhoto3 = createAndSavePlayerCustomPhoto(preferenceKey, player3);
 
-            PlayerCustomPhoto photo2 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player2)
-                    .userFilePath(userFilePath)
-                    .fileName("photo2.png")
-                    .version(1)
-                    .isActive(true)
-                    .build();
-
-            // 비활성화된 사진
-            PlayerCustomPhoto photo3 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo3.png")
-                    .version(2)
-                    .isActive(false)
-                    .build();
-
-            // 다른 PreferenceKey
-            PlayerCustomPhoto photo4 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey2)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo4.png")
-                    .version(1)
-                    .isActive(true)
-                    .build();
-
-            playerCustomPhotoRepository.save(photo1);
-            playerCustomPhotoRepository.save(photo2);
-            playerCustomPhotoRepository.save(photo3);
-            playerCustomPhotoRepository.save(photo4);
-            testEntityManager.flush();
+            Set<Long> playerIds = Set.of(player1.getId(), player2.getId(), player3.getId());
+            em.flush();
+            em.clear();
 
             // when
-            List<PlayerCustomPhoto> result = playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayers(
-                    preferenceKey.getId(),
-                    Set.of(player1.getId(), player2.getId(), player3.getId())
-            );
+            List<PlayerCustomPhoto> activePhotos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(preferenceKey.getId(), playerIds);
 
             // then
-            assertThat(result).hasSize(2);
-            assertThat(result).extracting("fileName").containsExactlyInAnyOrder("photo1.png", "photo2.png");
+            log.info("activePhotos: {}", activePhotos);
+            assertThat(activePhotos).contains(playerCustomPhoto1, playerCustomPhoto2, playerCustomPhoto3);
+        }
 
-            // photo1, photo2 활성, 같은 preferenceKey
-            // photo3 비활성
-            // photo4 다른 preferenceKey
+
+        @DisplayName("여러 선수 커스텀 이미지 조회 중 비활성화된 커스텀 이미지는 조회하지 않는다")
+        @Test
+        void findActivePhotosFromPlayerIdSetWithInactivePhoto() {
+            // given
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto2 = createAndSavePlayerCustomPhoto(preferenceKey, player2);
+            PlayerCustomPhoto playerCustomPhoto3 = createAndSavePlayerCustomPhoto(preferenceKey, player3);
+            playerCustomPhoto3.setActive(false);
+
+            Set<Long> playerIds = Set.of(player1.getId(), player2.getId(), player3.getId());
+            em.flush();
+            em.clear();
+
+            // when
+            List<PlayerCustomPhoto> activePhotos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(preferenceKey.getId(), playerIds);
+
+            // then
+            log.info("activePhotos: {}", activePhotos);
+            assertThat(activePhotos).contains(playerCustomPhoto1, playerCustomPhoto2);
+            assertThat(activePhotos).doesNotContain(playerCustomPhoto3);
         }
     }
 
     @Nested
-    @DisplayName("findLatestPhotoByPreferenceKeyAndPlayer 메서드 테스트")
-    class FindLatestPhotoByPreferenceKeyAndPlayerTest {
+    class FindActivePhotoByPreferenceKeyAndPlayer {
 
+        @DisplayName("선수 한 명의 활성화된 커스텀 이미지를 조회한다")
         @Test
-        @DisplayName("version이 가장 큰 사진을 잘 가져오는지 테스트 (새로운 구조)")
-        void testFindLatestPhoto() {
+        void findActivePhoto() {
             // given
-            PlayerCustomPhoto photo1 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo1.png")
-                    .version(1)
-                    .isActive(true)
-                    .build();
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
 
-            PlayerCustomPhoto photo2 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo2.png")
-                    .version(2)
-                    .isActive(true)
-                    .build();
-
-            // version이 더 크지만 isActive=false
-            PlayerCustomPhoto photo3 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo3.png")
-                    .version(3)
-                    .isActive(false)
-                    .build();
-
-            PlayerCustomPhoto photo4 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player2)
-                    .userFilePath(userFilePath)
-                    .fileName("photo4.png")
-                    .version(10)
-                    .isActive(true)
-                    .build();
-
-            playerCustomPhotoRepository.save(photo1);
-            playerCustomPhotoRepository.save(photo2);
-            playerCustomPhotoRepository.save(photo3);
-            playerCustomPhotoRepository.save(photo4);
-            testEntityManager.flush();
+            em.flush();
+            em.clear();
 
             // when
-            Optional<PlayerCustomPhoto> latest = playerCustomPhotoRepository.findLatestPhotoByPreferenceKeyAndPlayer(
-                    preferenceKey.getId(),
-                    player1.getId()
-            );
+            PlayerCustomPhoto activePhoto = playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, player1.getId()).orElseThrow();
 
             // then
-            assertThat(latest).isPresent();
-            assertThat(latest.get().getVersion()).isEqualTo(3);  // version이 가장 큰 값
-            assertThat(latest.get().getFileName()).isEqualTo("photo3.png");
-
-            // getPhotoUrl 활용 예시
-            // Lazy 로딩 테스트 (userFilePath)
-            String photoUrl = latest.get().getPhotoUrl();
-            log.info("PhotoUrl = {}", photoUrl);
-            assertThat(photoUrl).contains("photo3.png");
+            log.info("activePhoto: {}", activePhoto);
+            assertThat(activePhoto).isEqualTo(playerCustomPhoto1);
         }
 
+        @DisplayName("활성화된 커스텀 이미지가 없으면 빈 Optional을 반환한다")
         @Test
-        @DisplayName("해당 데이터가 없으면 Optional.empty 반환")
-        void testFindLatestPhoto_Empty() {
-            // given - 아무 데이터 없음
+        void findActivePhotoWithNoActivePhoto() {
+            // given
+            PlayerCustomPhoto playerCustomPhoto = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            playerCustomPhoto.setActive(false);
+
+            em.flush();
+            em.clear();
 
             // when
-            Optional<PlayerCustomPhoto> latest = playerCustomPhotoRepository.findLatestPhotoByPreferenceKeyAndPlayer(
-                    preferenceKey.getId(),
-                    player1.getId()
-            );
+            Optional<PlayerCustomPhoto> optionalPhoto = playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, player1.getId());
 
             // then
-            assertThat(latest).isEmpty();
+            log.info("optionalPhoto: {}", optionalPhoto);
+            assertThat(optionalPhoto).isEmpty();
         }
+
     }
 
     @Nested
-    @DisplayName("findActivePhotosByPreferenceKeyAndPlayer 메서드 테스트")
-    class FindActivePhotosByPreferenceKeyAndPlayerTest {
+    class FindAllByPreferenceKeyAndPlayer {
 
+        @DisplayName("선수 한 명의 모든 커스텀 이미지를 조회한다")
         @Test
-        @DisplayName("isActive=true인 사진들만 가져오는지 테스트 (새로운 구조)")
-        void testFindActivePhotos() {
+        void findAllPhotos() {
             // given
-            PlayerCustomPhoto photo1 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo1.png")
-                    .version(1)
-                    .isActive(true)
-                    .build();
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto2 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto3 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
 
-            PlayerCustomPhoto photo2 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo2.png")
-                    .version(2)
-                    .isActive(false) // 비활성
-                    .build();
-
-            PlayerCustomPhoto photo3 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player2)
-                    .userFilePath(userFilePath)
-                    .fileName("photo3.png")
-                    .version(1)
-                    .isActive(true)  // 다른 player
-                    .build();
-
-            playerCustomPhotoRepository.save(photo1);
-            playerCustomPhotoRepository.save(photo2);
-            playerCustomPhotoRepository.save(photo3);
-            testEntityManager.flush();
+            em.flush();
+            em.clear();
 
             // when
-            List<PlayerCustomPhoto> result = playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(
-                    preferenceKey.getId(),
-                    player1.getId()
-            );
+            List<PlayerCustomPhoto> allPhotos = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(preferenceKey, player1.getId());
 
             // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getFileName()).isEqualTo("photo1.png");
-
-            // getPhotoUrl 활용 예시
-            String photoUrl = result.get(0).getPhotoUrl();
-            log.info("Active PhotoUrl = {}", photoUrl);
-            assertThat(photoUrl).contains("photo1.png");
+            log.info("allPhotos: {}", allPhotos);
+            assertThat(allPhotos).contains(playerCustomPhoto1, playerCustomPhoto2, playerCustomPhoto3);
         }
 
+        @DisplayName("선수 한 명의 모든 커스텀 이미지 조회 중 비활성화된 커스텀 이미지도 조회한다")
         @Test
-        @DisplayName("활성화된 사진이 없으면 빈 리스트 반환")
-        void testFindActivePhotos_Empty() {
+        void findAllPhotosWithInactivePhoto() {
             // given
-            PlayerCustomPhoto photo1 = PlayerCustomPhoto.builder()
-                    .preferenceKey(preferenceKey)
-                    .player(player1)
-                    .userFilePath(userFilePath)
-                    .fileName("photo1.png")
-                    .version(1)
-                    .isActive(false)
-                    .build();
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto2 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto3 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            playerCustomPhoto3.setActive(false);
 
-            playerCustomPhotoRepository.save(photo1);
-            testEntityManager.flush();
+            em.flush();
+            em.clear();
 
             // when
-            List<PlayerCustomPhoto> result = playerCustomPhotoRepository.findActivePhotosByPreferenceKeyAndPlayer(
-                    preferenceKey.getId(),
-                    player1.getId()
-            );
+            List<PlayerCustomPhoto> allPhotos = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(preferenceKey, player1.getId());
 
             // then
-            assertThat(result).isEmpty();
+            log.info("allPhotos: {}", allPhotos);
+            assertThat(allPhotos).contains(playerCustomPhoto1, playerCustomPhoto2, playerCustomPhoto3);
+        }
+
+        @DisplayName("다른 PreferenceKey로 저장된 커스텀 이미지는 조회하지 않는다")
+        @Test
+        void findAllPhotosWithDifferentPreferenceKey() {
+            // given
+            PlayerCustomPhoto playerCustomPhoto1 = createAndSavePlayerCustomPhoto(preferenceKey, player1);
+            PlayerCustomPhoto playerCustomPhoto2 = createAndSavePlayerCustomPhoto(preferenceKey2, player1);
+
+            em.flush();
+            em.clear();
+
+            // when
+            List<PlayerCustomPhoto> allPhotos = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(preferenceKey, player1.getId());
+
+            // then
+            log.info("allPhotos: {}", allPhotos);
+            assertThat(allPhotos).contains(playerCustomPhoto1);
+            assertThat(allPhotos).doesNotContain(playerCustomPhoto2);
         }
     }
+
+    private PlayerCustomPhoto createAndSavePlayerCustomPhoto(PreferenceKey preferenceKey, Player player) {
+        PlayerCustomPhoto playerCustomPhoto = PlayerCustomPhoto.builder()
+                .preferenceKey(preferenceKey)
+                .player(player)
+                .userFilePath(userFilePath)
+                .fileName("player" + player.getId() + ".jpg")
+                .isActive(true)
+                .build();
+
+        return playerCustomPhotoRepository.save(playerCustomPhoto);
+    }
+
 }

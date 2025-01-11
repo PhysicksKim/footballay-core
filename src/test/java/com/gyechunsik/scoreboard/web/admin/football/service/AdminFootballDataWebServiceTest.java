@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.constant.LeagueId;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
@@ -64,6 +65,8 @@ class AdminFootballDataWebServiceTest {
 
     @MockBean
     private LiveMatchJobSchedulerService liveMatchJobSchedulerService;
+    @Autowired
+    private FootballRoot footballRoot;
 
     @BeforeEach
     void setup() throws SchedulerException {
@@ -162,11 +165,29 @@ class AdminFootballDataWebServiceTest {
         assertThat(response.metaData().requestUrl()).isEqualTo("/api/admin/football/available/fixtures/available");
     }
 
+    @DisplayName("이미 이용가능 경기인 경우 이용가능 중복 추가시 실패")
+    @Test
+    void fail_addAvailableFixture() throws JsonProcessingException {
+        // given
+        long fixtureId = FixtureId.FIXTURE_EURO2024_1; // 예시 경기 ID
+
+        // when
+        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.metaData().status()).isEqualTo("FAILURE");
+        assertThat(response.metaData().responseCode()).isEqualTo(400);
+        assertThat(response.metaData().requestUrl()).isEqualTo("/api/admin/football/available/fixtures/available");
+    }
+
     @DisplayName("이용가능 경기 추가 성공")
     @Test
     void success_addAvailableFixture() throws JsonProcessingException {
         // given
-        long fixtureId = FixtureId.FIXTURE_EURO2024_1; // 예시 경기 ID
+        long fixtureId = FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA; // 예시 경기 ID
+        // InitData 에서 available 로 설정해뒀으므로 제거
+        footballRoot.removeAvailableFixture(fixtureId);
 
         // when
         ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
