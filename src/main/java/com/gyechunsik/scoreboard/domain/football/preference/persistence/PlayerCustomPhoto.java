@@ -15,11 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 @Entity
 @Table(name = "custom_player_photos",
         indexes = {
-            @Index(name = "idx_preference_player_active", columnList = "preference_key_id, player_id, is_active")
+            @Index(name = "idx_preference_player_active", columnList = "preference_key_id, player_id")
         }
-        // ,uniqueConstraints = {
-        //         @UniqueConstraint(columnNames = {"preference_key_id", "player_id", "is_active"})
-        // }
 )
 public class PlayerCustomPhoto extends BaseDateAuditEntity {
 
@@ -70,7 +67,5 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
             return fullPath + "/" + noStartSlashFilename;
         }
     }
-
-
 
 }

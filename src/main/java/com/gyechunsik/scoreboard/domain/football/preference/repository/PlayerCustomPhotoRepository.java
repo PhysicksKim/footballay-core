@@ -11,13 +11,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * `idx_preference_player_active` 인덱스가 동작하도록 하기 위해서 preferenceKey, playerId 순서대로 조건절을 작성하세요.
+ */
 @Repository
 public interface PlayerCustomPhotoRepository extends JpaRepository<PlayerCustomPhoto, Long> {
 
     @Query("SELECT pho FROM PlayerCustomPhoto pho " +
             "JOIN FETCH pho.player pl " +
             "WHERE pho.preferenceKey.id = :preferenceKeyId " +
-            "AND pl.id IN :playerIds AND pho.isActive = true")
+            "AND pho.player.id IN :playerIds AND pho.isActive = true")
     List<PlayerCustomPhoto> findAllActivesByPreferenceKeyAndPlayers(
             @Param("preferenceKeyId") Long preferenceKeyId,
             @Param("playerIds") Set<Long> playerIds

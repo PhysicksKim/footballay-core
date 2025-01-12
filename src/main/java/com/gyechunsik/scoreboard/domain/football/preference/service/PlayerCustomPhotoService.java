@@ -63,13 +63,13 @@ public class PlayerCustomPhotoService {
                 playerId,
                 fileName
         );
+        PlayerCustomPhoto savedPhoto = playerCustomPhotoRepository.save(playerCustomPhoto);
 
         deactivatePreviousPhoto(preferenceKey, playerId);
-
         String s3Key = getS3Key(nowUserFilePath, fileName);
         s3Uploader.uploadFile(file, s3Key);
 
-        return PlayerCustomPhotoDto.fromEntity(playerCustomPhotoRepository.save(playerCustomPhoto));
+        return PlayerCustomPhotoDto.fromEntity(savedPhoto);
     }
 
     /**
@@ -83,38 +83,20 @@ public class PlayerCustomPhotoService {
      */
     @Transactional(readOnly = true)
     public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String preferenceKey, Set<Long> playerIds) {
-        Optional<PreferenceKey> optionalKey = preferenceKeyRepository.findByKeyhash(preferenceKey);
-        if(optionalKey.isEmpty()) {
-            throw new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey);
-        }
-        PreferenceKey key = optionalKey.get();
+        PreferenceKey key = getKey(preferenceKey);
 
-        List<PlayerCustomPhoto> photos = PlayerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
+        List<PlayerCustomPhoto> photos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
                 key.getId(), playerIds);
+        photos = ensureSingleActivePhotosWithList(key, photos);
 
-        Map<Long, PlayerCustomPhoto> photoMap = new HashMap<>();
-        for(PlayerCustomPhoto photo : photos) {
-            Player player = photo.getPlayer();
-
-            // 활성화된 이미지가 둘 이상인 경우 가장 마지막에 수정된 이미지를 선택
-            if (photoMap.containsKey(player.getId())) {
-                log.warn("Multiple active custom photos found for player={},preferenceKey={}", player.getId(), preferenceKey);
-                PlayerCustomPhoto existingPhoto = photoMap.get(player.getId());
-                if (existingPhoto.getModifiedDate().isBefore(photo.getModifiedDate())) {
-                    photoMap.put(player.getId(), photo);
-                    existingPhoto.setActive(false);
-                } else {
-                    photo.setActive(false);
-                }
-            } else {
-                photoMap.put(player.getId(), photo);
-            }
-        }
-
-        Map<Long, PlayerCustomPhotoDto> photoDtoMap = photoMap.values().stream()
+        return photos.stream()
                 .map(PlayerCustomPhotoDto::fromEntity)
                 .collect(Collectors.toMap(PlayerCustomPhotoDto::getPlayerId, photo -> photo));
-        return photoDtoMap;
+    }
+
+    private PreferenceKey getKey(String preferenceKey) {
+        return preferenceKeyRepository.findByKeyhash(preferenceKey)
+                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
     }
 
     /**
@@ -125,8 +107,7 @@ public class PlayerCustomPhotoService {
      */
     @Transactional
     public List<PlayerCustomPhotoDto> getAllCustomPhotos(String preferenceKey, long playerId) {
-        PreferenceKey key = preferenceKeyRepository.findByKeyhash(preferenceKey)
-                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
+        PreferenceKey key = getKey(preferenceKey);
 
         List<PlayerCustomPhoto> photoList = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(key, playerId);
         return photoList.stream()
@@ -180,7 +161,6 @@ public class PlayerCustomPhotoService {
         }
     }
 
-    // custom photo 중 active 이미지를 변경하기 위해 사용
     /**
      * 유저의 특정 커스텀 이미지를 활성화합니다. <br>
      * 기존 활성화된 이미지가 있으면 비활성화 하고 새로운 이미지를 활성화합니다.
@@ -193,15 +173,9 @@ public class PlayerCustomPhotoService {
      */
     @Transactional
     public PlayerCustomPhotoDto activatePhoto(String keyHash, long playerId, long photoId) {
-        PreferenceKey preferenceKey = preferenceKeyRepository.findByKeyhash(keyHash)
-                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + keyHash));
+        PreferenceKey preferenceKey = getKey(keyHash);
 
-        // 기존 활성화된 이미지가 있으면 비활성화
-        playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, playerId)
-                .ifPresent(activePhoto -> {
-                    log.info("Deactivating active photo id={}", activePhoto.getId());
-                    activePhoto.setActive(false);
-                });
+        deactivatePreviousPhoto(preferenceKey, playerId);
 
         // 새로운 이미지 활성화
         PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
@@ -227,14 +201,63 @@ public class PlayerCustomPhotoService {
     @Transactional
     public boolean deletePhoto(String preferenceKey, long photoId) {
         try {
-            PreferenceKey key = preferenceKeyRepository.findByKeyhash(preferenceKey)
-                    .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
+            PreferenceKey key = getKey(preferenceKey);
             playerCustomPhotoRepository.deleteByIdAndPreferenceKey(photoId, key);
             return true;
         } catch (Exception e) {
             log.error("Failed to delete photo", e);
             return false;
         }
+    }
+
+    private List<PlayerCustomPhoto> ensureSingleActivePhotosWithList(PreferenceKey preferenceKey, List<PlayerCustomPhoto> photos) {
+        List<PlayerCustomPhoto> activePhotosAfterEnforcement = new ArrayList<>();
+
+        Map<Long, List<PlayerCustomPhoto>> groupedPhotos = photos.stream()
+                .collect(Collectors.groupingBy(photo -> photo.getPlayer().getId()));
+
+        for (Map.Entry<Long, List<PlayerCustomPhoto>> entry : groupedPhotos.entrySet()) {
+            Long playerId = entry.getKey();
+            List<PlayerCustomPhoto> playerPhotos = entry.getValue();
+
+            if (playerPhotos.size() <= 1) {
+                activePhotosAfterEnforcement.addAll(playerPhotos);
+                continue;
+            }
+
+            playerPhotos.sort(Comparator.comparing(PlayerCustomPhoto::getModifiedDate).reversed());
+            PlayerCustomPhoto latestActivePhoto = playerPhotos.get(0);
+            activePhotosAfterEnforcement.add(latestActivePhoto);
+
+            for (int i = 1; i < playerPhotos.size(); i++) {
+                PlayerCustomPhoto photo = playerPhotos.get(i);
+                log.warn("Multiple active custom photo found for playerId={}, preferenceKey={} Deactivating photo.id={}",
+                        playerId, preferenceKey.getKeyhash(), photo.getId());
+                photo.setActive(false);
+            }
+
+            playerCustomPhotoRepository.saveAll(playerPhotos);
+        }
+
+        return activePhotosAfterEnforcement;
+    }
+
+    private void ensureSingleActivePhoto(PreferenceKey preferenceKey, long playerId) {
+        List<PlayerCustomPhoto> activePhotos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
+                preferenceKey.getId(), Set.of(playerId));
+        if (activePhotos.size() <= 1) {
+            return;
+        }
+
+        activePhotos.sort(Comparator.comparing(PlayerCustomPhoto::getModifiedDate).reversed());
+        for (int i = 1; i < activePhotos.size(); i++) {
+            PlayerCustomPhoto photo = activePhotos.get(i);
+            log.warn("Multiple active custom photos found for player={}, preferenceKey={}. Deactivating photo id={}",
+                    playerId, preferenceKey.getKeyhash(), photo.getId());
+            photo.setActive(false);
+        }
+
+        playerCustomPhotoRepository.saveAll(activePhotos);
     }
 
     private PreferenceKey getPreferenceKeyOrThrow(long userId) {
@@ -258,7 +281,7 @@ public class PlayerCustomPhotoService {
     private void deactivatePreviousPhoto(PreferenceKey preferenceKey, long playerId) {
         playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, playerId)
                         .ifPresent(photo -> {
-                            log.info("Active photo already exists of preferenceKey.id={} Deactivating photo id={}", preferenceKey.getId(), photo.getId());
+                            log.info("Deactivate previous active photo keyhash={}, playerId={} Deactivated photo id={}", preferenceKey.getKeyhash(), playerId, photo.getId());
                             photo.setActive(false);
                         });
         playerCustomPhotoRepository.flush();
