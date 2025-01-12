@@ -29,6 +29,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.LeagueInfoResponse._Response;
@@ -112,19 +113,21 @@ public class FootballApiCacheService {
 
         Map<Long, _TeamResponse> apiTeamsSet = teamInfoResponse.getResponse().stream()
                 .collect(Collectors.toMap(teamInfo -> teamInfo.getTeam().getId(), _TeamInfo::getTeam));
-        List<Team> findTeams = teamRepository.findTeamsByLeague(league);
+        List<Team> findByLeagueTeams = teamRepository.findTeamsByLeague(league);
 
-        List<Team> bothExistTeams = new ArrayList<>(); // CASE 1. db 존재 api 없음. 일부 필드 업데이트
-        List<_TeamResponse> bothExistTeamRespons = new ArrayList<>(); // CASE 1. db 존재 api 없음. 일부 필드 업데이트
+        // 리그로 조회시 db 에 존재하는지 여부 입니다. 다른 리그를 통해 이미 캐싱된 경우 otherLeagueCachedTeam 에 포함됩니다.
+        List<Team> bothExistTeams = new ArrayList<>(); // CASE 1. db 존재 api 존재. 일부 필드 업데이트
+        List<_TeamResponse> bothExistTeamResponse = new ArrayList<>(); // CASE 1. db 존재 api 존재. 일부 필드 업데이트
         List<Team> dbOnlyExistTeams = new ArrayList<>(); // CASE 2. db 존재 api 없음. leagueTeam 연관관계 끊어줌
-        List<_TeamResponse> apiOnlyExistTeamRespons = new ArrayList<>(); // CASE 3. db 없음 api 존재. 새로운 팀 추가
+        List<_TeamResponse> apiOnlyExistTeamResponse = new ArrayList<>(); // CASE 3. db 없음 api 존재. 새로운 팀 추가
+        Map<Long, Team> otherLeagueExistTeams = existInOtherLeagues(apiTeamsSet, findByLeagueTeams); // CASE 4. 다른 리그에서 이미 캐싱돼서 연관관계만 추가하면 되는 팀
 
         // CASE 1 & CASE 2
-        for (Team team : findTeams) {
+        for (Team team : findByLeagueTeams) {
             if (apiTeamsSet.containsKey(team.getId())) {
                 // CASE 1 : db 존재 api 존재
                 bothExistTeams.add(team);
-                bothExistTeamRespons.add(apiTeamsSet.get(team.getId()));
+                bothExistTeamResponse.add(apiTeamsSet.get(team.getId()));
                 apiTeamsSet.remove(team.getId());
             } else {
                 // CASE 2 : db 존재 api 없음
@@ -132,12 +135,12 @@ public class FootballApiCacheService {
             }
         }
         // CASE 3
-        apiOnlyExistTeamRespons.addAll(apiTeamsSet.values());
+        apiOnlyExistTeamResponse.addAll(apiTeamsSet.values());
 
         // CASE 1 : 일부 필드 업데이트
         for (int i = 0; i < bothExistTeams.size(); i++) {
             Team team = bothExistTeams.get(i);
-            _TeamResponse teamResponse = bothExistTeamRespons.get(i);
+            _TeamResponse teamResponse = bothExistTeamResponse.get(i);
             team.updateCompare(toTeamEntity(teamResponse));
             teamRepository.save(team);
         }
@@ -148,10 +151,14 @@ public class FootballApiCacheService {
         }
 
         // CASE 3 : 새로운 팀 추가
-        List<Team> newTeams = apiOnlyExistTeamRespons.stream()
+        // api 에만 존재하더라도, otherLeagueCachedTeam 에 존재하는 팀이라면 새롭게 저장하지는 않고 연관관계만 추가해줘야 합니다.
+        List<Team> newTeams = apiOnlyExistTeamResponse.stream()
+                .filter(team -> !otherLeagueExistTeams.containsKey(team.getId()))
                 .map(FootballApiCacheService::toTeamEntity)
                 .toList();
+
         List<Team> savedNewTeams = teamRepository.saveAll(newTeams);
+        savedNewTeams.addAll(otherLeagueExistTeams.values());
         // 새로운 팀에 대해 리그팀 연관관계 추가
         for (Team newTeam : savedNewTeams) {
             LeagueTeam leagueTeam = LeagueTeam.builder()
@@ -163,8 +170,9 @@ public class FootballApiCacheService {
 
         log.info("CASE 1 ; Both exist teams : {}", bothExistTeams.stream().map(Team::getName).toList());
         log.info("CASE 2 ; DB only exist teams : {}", dbOnlyExistTeams.stream().map(Team::getName).toList());
-        log.info("CASE 3 ; API only exist teams : {}", savedNewTeams.stream().map(Team::getName).toList());
-
+        log.info("CASE 3 ; API only exist teams : {} , Other league exist teams : {}",
+                savedNewTeams.stream().map(Team::getName).toList(),
+                otherLeagueExistTeams.values().stream().map(Team::getName).toList());
         log.info("_Teams of [leagueId={},name={}] is cached", league.getLeagueId(), league.getName());
 
         lastCacheLogService.saveApiCache(ApiCacheType.LEAGUE_TEAMS, Map.of("leagueId", leagueId), ZonedDateTime.now());
@@ -426,7 +434,6 @@ public class FootballApiCacheService {
         return savedPlayer;
     }
 
-
     private static League toLeagueEntity(_Response leagueResponse) {
         _LeagueResponse leagueInfo = leagueResponse.getLeague();
         int currentSeason = extractCurrentSeason(leagueResponse);
@@ -562,6 +569,20 @@ public class FootballApiCacheService {
             league.updateCompare(build);
         }
         return league;
+    }
+
+    private Map<Long, Team> existInOtherLeagues(Map<Long, _TeamResponse> apiTeamsSet, List<Team> findTeamsOfTargetLeague) {
+        Map<Long, Team> existTeams = teamRepository.findAllById(apiTeamsSet.keySet()).stream()
+                .collect(Collectors.toMap(Team::getId, Function.identity()));
+
+        Set<Long> targetLeagueTeamIds = findTeamsOfTargetLeague.stream()
+                .map(Team::getId)
+                .collect(Collectors.toSet());
+
+        for(Long id : targetLeagueTeamIds) {
+            existTeams.remove(id);
+        }
+        return existTeams;
     }
 
 }

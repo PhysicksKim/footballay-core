@@ -206,8 +206,7 @@ public class FootballRoot {
     public boolean cacheTeamsOfLeague(long leagueId) {
         try {
             List<Team> teams = footballApiCacheService.cacheTeamsOfLeague(leagueId);
-            log.info("cached _Teams LeagueId :: {}", leagueId);
-            log.info("cached _Teams :: {}", teams.stream().map(Team::getName).toList());
+            log.info("cached Teams of League id={}. teams.size={}", leagueId, teams.size());
         } catch (Exception e) {
             log.error("error while caching Teams of League :: {}", e.getMessage());
             return false;
