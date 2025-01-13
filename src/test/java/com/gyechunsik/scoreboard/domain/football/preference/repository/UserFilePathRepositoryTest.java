@@ -2,8 +2,8 @@ package com.gyechunsik.scoreboard.domain.football.preference.repository;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserFilePath;
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserPathCategory;
-import com.gyechunsik.scoreboard.entity.user.User;
-import com.gyechunsik.scoreboard.entity.user.UserRepository;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
+import com.gyechunsik.scoreboard.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

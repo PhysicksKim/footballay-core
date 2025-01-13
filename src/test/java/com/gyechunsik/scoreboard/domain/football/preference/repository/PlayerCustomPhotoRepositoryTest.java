@@ -5,8 +5,8 @@ import com.gyechunsik.scoreboard.domain.football.preference.persistence.PlayerCu
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserFilePath;
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserPathCategory;
-import com.gyechunsik.scoreboard.entity.user.User;
-import com.gyechunsik.scoreboard.entity.user.UserRepository;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
+import com.gyechunsik.scoreboard.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;

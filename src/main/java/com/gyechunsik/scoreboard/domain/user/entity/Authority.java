@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.entity.user;
+package com.gyechunsik.scoreboard.domain.user.entity;
 
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;

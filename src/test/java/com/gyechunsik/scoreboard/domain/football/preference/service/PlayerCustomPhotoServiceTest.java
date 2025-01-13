@@ -7,8 +7,8 @@ import com.gyechunsik.scoreboard.domain.football.preference.persistence.Preferen
 import com.gyechunsik.scoreboard.domain.football.preference.repository.PlayerCustomPhotoRepository;
 import com.gyechunsik.scoreboard.domain.football.preference.repository.PreferenceKeyRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.entity.user.User;
-import com.gyechunsik.scoreboard.entity.user.UserRepository;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
+import com.gyechunsik.scoreboard.domain.user.repository.UserRepository;
 import com.gyechunsik.scoreboard.util.CustomPhotoMultipartGenerator;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,6 @@
-package com.gyechunsik.scoreboard.entity.user;
+package com.gyechunsik.scoreboard.domain.user.repository;
 
+import com.gyechunsik.scoreboard.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -11,8 +11,8 @@ import com.gyechunsik.scoreboard.domain.football.preference.util.CustomPhotoFile
 import com.gyechunsik.scoreboard.domain.football.preference.util.PreferenceValidator;
 import com.gyechunsik.scoreboard.domain.football.preference.util.S3Uploader;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
-import com.gyechunsik.scoreboard.entity.user.User;
-import com.gyechunsik.scoreboard.entity.user.UserRepository;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
+import com.gyechunsik.scoreboard.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PlayerCustomPhotoService {
 
-    private final PlayerCustomPhotoRepository PlayerCustomPhotoRepository;
     private final UserRepository userRepository;
     private final PlayerRepository playerRepository;
     private final PreferenceKeyRepository preferenceKeyRepository;
@@ -77,13 +76,13 @@ public class PlayerCustomPhotoService {
      * 선수 ID 집합에 대해 활성화된 커스텀 선수 이미지를 조회합니다. <br>
      * 커스텀 이미지가 없는 선수는 반환되는 Map에 포함되지 않습니다.
      *
-     * @param preferenceKey 커스텀 선수 이미지를 조회할 PreferenceKey
+     * @param keyHash 커스텀 선수 이미지를 조회할 PreferenceKey
      * @param playerIds 조회할 선수들의 ID 집합
      * @return 활성화된 커스텀 선수 이미지 DTO
      */
     @Transactional(readOnly = true)
-    public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String preferenceKey, Set<Long> playerIds) {
-        PreferenceKey key = getKey(preferenceKey);
+    public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String keyHash, Set<Long> playerIds) {
+        PreferenceKey key = getKey(keyHash);
 
         List<PlayerCustomPhoto> photos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
                 key.getId(), playerIds);
@@ -92,11 +91,6 @@ public class PlayerCustomPhotoService {
         return photos.stream()
                 .map(PlayerCustomPhotoDto::fromEntity)
                 .collect(Collectors.toMap(PlayerCustomPhotoDto::getPlayerId, photo -> photo));
-    }
-
-    private PreferenceKey getKey(String preferenceKey) {
-        return preferenceKeyRepository.findByKeyhash(preferenceKey)
-                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
     }
 
     /**
@@ -115,7 +109,6 @@ public class PlayerCustomPhotoService {
                 .collect(Collectors.toList());
     }
 
-    // TODO : DeactivatePhoto(), activatePhoto(), deletePhoto() method 추가 필요
     /**
      * 유저의 특정 커스텀 이미지를 비활성화합니다. <br>
      * 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
@@ -147,21 +140,6 @@ public class PlayerCustomPhotoService {
     }
 
     /**
-     * 일치하지 않는다면 비정상적인 접근입니다.
-     *
-     * @param entity
-     * @param keyHash
-     */
-    private void validatePhotoKeyHashAndPlayerId(PlayerCustomPhoto entity, String keyHash, long playerId) {
-        if(!entity.getPreferenceKey().getKeyhash().equals(keyHash)) {
-            throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + keyHash);
-        }
-        if(entity.getPlayer().getId() != playerId) {
-            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
-        }
-    }
-
-    /**
      * 유저의 특정 커스텀 이미지를 활성화합니다. <br>
      * 기존 활성화된 이미지가 있으면 비활성화 하고 새로운 이미지를 활성화합니다.
      *
@@ -177,7 +155,6 @@ public class PlayerCustomPhotoService {
 
         deactivatePreviousPhoto(preferenceKey, playerId);
 
-        // 새로운 이미지 활성화
         PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
                 .orElseThrow(() -> new IllegalArgumentException("PlayerCustomPhoto not found with id: " + photoId));
         if(!photo.getPreferenceKey().getKeyhash().equals(keyHash)) {
@@ -188,7 +165,6 @@ public class PlayerCustomPhotoService {
         return PlayerCustomPhotoDto.fromEntity(photo);
     }
 
-    // custom photo 엔티티 및 파일을 삭제하기 위해 사용
     /**
      * 유저의 특정 커스텀 이미지를 삭제합니다. <br>
      * 이미지가 존재하지 않는 경우에도 true 반환합니다.
@@ -258,6 +234,26 @@ public class PlayerCustomPhotoService {
         }
 
         playerCustomPhotoRepository.saveAll(activePhotos);
+    }
+
+    private PreferenceKey getKey(String preferenceKey) {
+        return preferenceKeyRepository.findByKeyhash(preferenceKey)
+                .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
+    }
+
+    /**
+     * 일치하지 않는다면 비정상적인 접근입니다.
+     *
+     * @param entity
+     * @param keyHash
+     */
+    private void validatePhotoKeyHashAndPlayerId(PlayerCustomPhoto entity, String keyHash, long playerId) {
+        if(!entity.getPreferenceKey().getKeyhash().equals(keyHash)) {
+            throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + keyHash);
+        }
+        if(entity.getPlayer().getId() != playerId) {
+            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
+        }
     }
 
     private PreferenceKey getPreferenceKeyOrThrow(long userId) {

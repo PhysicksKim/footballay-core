@@ -25,9 +25,6 @@ public class UserInfoCookieGenerator {
     }
 
     private String getUserInfoString(Authentication authentication) {
-        // Authentication 객체에서 사용자 정보를 추출하여 문자열로 변환하는 로직 구현
-        // ...
-
         Object details = authentication.getDetails();
         log.info("UserInfoCookieGenerator Authentication :: {}", authentication);
         return "this-is-test-authentication-details";

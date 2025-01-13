@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.preference.persistence;
 
-import com.gyechunsik.scoreboard.entity.user.User;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

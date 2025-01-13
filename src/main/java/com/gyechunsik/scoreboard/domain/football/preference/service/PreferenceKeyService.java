@@ -2,7 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.preference.service;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.domain.football.preference.repository.PreferenceKeyRepository;
-import com.gyechunsik.scoreboard.entity.user.User;
+import com.gyechunsik.scoreboard.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
