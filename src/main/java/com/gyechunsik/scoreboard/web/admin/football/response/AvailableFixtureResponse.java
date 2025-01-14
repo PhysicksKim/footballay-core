@@ -2,7 +2,7 @@ package com.gyechunsik.scoreboard.web.admin.football.response;
 
 import java.time.ZonedDateTime;
 
-public record AvailableFixtureDto(
+public record AvailableFixtureResponse(
         long fixtureId,
         String referee,
         String timezone,

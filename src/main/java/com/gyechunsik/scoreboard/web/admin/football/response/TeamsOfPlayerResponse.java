@@ -5,8 +5,6 @@ public record TeamsOfPlayerResponse(
     _Team[] teams
 ) {
 
-
-
     public record _Player(
             long playerId,
             String name,

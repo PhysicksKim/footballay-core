@@ -10,7 +10,6 @@ import lombok.ToString;
 @ToString
 public class PlayerCustomPhotoDto {
     private Long id;
-    private Long userId;
     private Long playerId;
     private String photoUrl;
     private Boolean isActive;
@@ -20,7 +19,6 @@ public class PlayerCustomPhotoDto {
     public static PlayerCustomPhotoDto fromEntity(PlayerCustomPhoto photo) {
         return new PlayerCustomPhotoDto(
                 photo.getId(),
-                photo.getPreferenceKey().getUser().getId(),
                 photo.getPlayer().getId(),
                 photo.getPhotoUrl(),
                 photo.isActive(),

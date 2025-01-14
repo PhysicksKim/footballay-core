@@ -6,6 +6,7 @@ import com.gyechunsik.scoreboard.domain.football.dto.LeagueDto;
 import com.gyechunsik.scoreboard.domain.football.dto.PlayerDto;
 import com.gyechunsik.scoreboard.domain.football.dto.TeamDto;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
+import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballDtoMapper;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +27,15 @@ public class AdminFootballDataWebService {
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
 
-    public ApiResponse<AvailableLeagueDto> getAvailableLeagues(String requestUrl) {
+    public ApiResponse<AvailableLeagueResponse> getAvailableLeagues(String requestUrl) {
         List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
-        AvailableLeagueDto[] array = availableLeagues.stream()
+        AvailableLeagueResponse[] array = availableLeagues.stream()
                 .map(FootballDtoMapper::toAvailableLeagueDto)
-                .toArray(AvailableLeagueDto[]::new);
+                .toArray(AvailableLeagueResponse[]::new);
         return apiCommonResponseService.createSuccessResponse(array, requestUrl);
     }
 
-    public ApiResponse<AvailableLeagueDto> addAvailableLeague(long leagueId, String requestUrl) {
+    public ApiResponse<AvailableLeagueResponse> addAvailableLeague(long leagueId, String requestUrl) {
         Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
         LeagueDto league;
         try {
@@ -43,8 +44,8 @@ public class AdminFootballDataWebService {
             log.error("error while adding available league :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("리그 추가 실패", requestUrl, params);
         }
-        AvailableLeagueDto leagueDto = FootballDtoMapper.toAvailableLeagueDto(league);
-        AvailableLeagueDto[] response = {leagueDto};
+        AvailableLeagueResponse leagueDto = FootballDtoMapper.toAvailableLeagueDto(league);
+        AvailableLeagueResponse[] response = {leagueDto};
         return apiCommonResponseService.createSuccessResponse(response, requestUrl, params);
     }
 
@@ -58,7 +59,7 @@ public class AdminFootballDataWebService {
         return apiCommonResponseService.createSuccessResponse(new String[]{"리그 삭제 성공"}, requestUrl, params);
     }
 
-    public ApiResponse<AvailableFixtureDto> getAvailableFixtures(long leagueId, ZonedDateTime date, String requestUrl) {
+    public ApiResponse<AvailableFixtureResponse> getAvailableFixtures(long leagueId, ZonedDateTime date, String requestUrl) {
         Map<String, String> params = Map.of(
                 "leagueId", String.valueOf(leagueId),
                 "date", date.toString()
@@ -66,10 +67,10 @@ public class AdminFootballDataWebService {
         try {
             date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
             List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(leagueId, date);
-            AvailableFixtureDto[] array = availableFixtures.stream()
+            AvailableFixtureResponse[] array = availableFixtures.stream()
                     .map(FootballDtoMapper::toAvailableFixtureDto)
-                    .sorted(Comparator.comparing(AvailableFixtureDto::date))
-                    .toArray(AvailableFixtureDto[]::new);
+                    .sorted(Comparator.comparing(AvailableFixtureResponse::date))
+                    .toArray(AvailableFixtureResponse[]::new);
             return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
         } catch (Exception e) {
             log.error("error while getting available fixtures :: {}", e.getMessage());
@@ -77,7 +78,7 @@ public class AdminFootballDataWebService {
         }
     }
 
-    public ApiResponse<AvailableFixtureDto> addAvailableFixture(long fixtureId, String requestUrl) {
+    public ApiResponse<AvailableFixtureResponse> addAvailableFixture(long fixtureId, String requestUrl) {
         Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         FixtureInfoDto fixtureInfoDto;
         try {
@@ -86,8 +87,8 @@ public class AdminFootballDataWebService {
             log.error("error while adding available fixture :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("경기 추가 실패", requestUrl, params);
         }
-        AvailableFixtureDto fixtureDto = FootballDtoMapper.toAvailableFixtureDto(fixtureInfoDto);
-        AvailableFixtureDto[] response = {fixtureDto};
+        AvailableFixtureResponse fixtureDto = FootballDtoMapper.toAvailableFixtureDto(fixtureInfoDto);
+        AvailableFixtureResponse[] response = {fixtureDto};
         return apiCommonResponseService.createSuccessResponse(response, requestUrl, params);
     }
 

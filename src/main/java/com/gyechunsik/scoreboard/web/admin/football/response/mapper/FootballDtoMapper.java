@@ -1,6 +1,7 @@
-package com.gyechunsik.scoreboard.web.admin.football.response;
+package com.gyechunsik.scoreboard.web.admin.football.response.mapper;
 
 import com.gyechunsik.scoreboard.domain.football.dto.*;
+import com.gyechunsik.scoreboard.web.admin.football.response.*;
 
 import java.util.List;
 
@@ -57,8 +58,8 @@ public class FootballDtoMapper {
         );
     }
 
-    public static AvailableFixtureDto toAvailableFixtureDto(FixtureInfoDto fixtureInfoDto) {
-        return new AvailableFixtureDto(
+    public static AvailableFixtureResponse toAvailableFixtureDto(FixtureInfoDto fixtureInfoDto) {
+        return new AvailableFixtureResponse(
                 fixtureInfoDto.fixtureId(),
                 fixtureInfoDto.referee(),
                 fixtureInfoDto.timezone(),
@@ -72,8 +73,8 @@ public class FootballDtoMapper {
         );
     }
 
-    public static AvailableLeagueDto toAvailableLeagueDto(LeagueDto league) {
-        return new AvailableLeagueDto(
+    public static AvailableLeagueResponse toAvailableLeagueDto(LeagueDto league) {
+        return new AvailableLeagueResponse(
                 league.leagueId(),
                 league.name(),
                 league.koreanName(),

@@ -10,8 +10,8 @@ import com.gyechunsik.scoreboard.domain.football.scheduler.lineup.PreviousMatchJ
 import com.gyechunsik.scoreboard.domain.football.scheduler.live.LiveMatchJobSchedulerService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.util.DevInitData;
-import com.gyechunsik.scoreboard.web.admin.football.response.AvailableFixtureDto;
-import com.gyechunsik.scoreboard.web.admin.football.response.AvailableLeagueDto;
+import com.gyechunsik.scoreboard.web.admin.football.response.AvailableFixtureResponse;
+import com.gyechunsik.scoreboard.web.admin.football.response.AvailableLeagueResponse;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +84,7 @@ class AdminFootballDataWebServiceTest {
         log.info("availableLeagues={}", availableLeagues);
 
         // when
-        ApiResponse<AvailableLeagueDto> responseAvailableLeagues =
+        ApiResponse<AvailableLeagueResponse> responseAvailableLeagues =
                 adminFootballDataWebService.getAvailableLeagues("/api/admin/football/available/leagues/available");
 
         String responseJsonString = jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseAvailableLeagues);
@@ -100,7 +100,7 @@ class AdminFootballDataWebServiceTest {
 
         for (int i = 0; i < availableLeagues.size(); i++) {
             League expectedLeague = availableLeagues.get(i);
-            AvailableLeagueDto actualLeagueDto = responseAvailableLeagues.response()[i];
+            AvailableLeagueResponse actualLeagueDto = responseAvailableLeagues.response()[i];
 
             assertThat(actualLeagueDto.leagueId()).isEqualTo(expectedLeague.getLeagueId());
             assertThat(actualLeagueDto.name()).isEqualTo(expectedLeague.getName());
@@ -118,7 +118,7 @@ class AdminFootballDataWebServiceTest {
         long leagueId = LeagueId.EURO; // 예시 리그 ID
 
         // when
-        ApiResponse<AvailableLeagueDto> response = adminFootballDataWebService.addAvailableLeague(leagueId, "/api/admin/football/available/leagues/available");
+        ApiResponse<AvailableLeagueResponse> response = adminFootballDataWebService.addAvailableLeague(leagueId, "/api/admin/football/available/leagues/available");
 
         // then
         assertThat(response).isNotNull();
@@ -126,7 +126,7 @@ class AdminFootballDataWebServiceTest {
         assertThat(response.metaData().responseCode()).isEqualTo(200);
         assertThat(response.metaData().requestUrl()).isEqualTo("/api/admin/football/available/leagues/available");
         assertThat(response.response()).hasSize(1);
-        AvailableLeagueDto addedLeague = response.response()[0];
+        AvailableLeagueResponse addedLeague = response.response()[0];
         assertThat(addedLeague.leagueId()).isEqualTo(leagueId);
     }
 
@@ -155,7 +155,7 @@ class AdminFootballDataWebServiceTest {
         ZonedDateTime date = ZonedDateTime.now(); // 현재 날짜
 
         // when
-        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.getAvailableFixtures(leagueId, date, "/api/admin/football/available/fixtures/available");
+        ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.getAvailableFixtures(leagueId, date, "/api/admin/football/available/fixtures/available");
         log.info("response={}", jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response));
 
         // then
@@ -172,7 +172,7 @@ class AdminFootballDataWebServiceTest {
         long fixtureId = FixtureId.FIXTURE_EURO2024_1; // 예시 경기 ID
 
         // when
-        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
+        ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
 
         // then
         assertThat(response).isNotNull();
@@ -190,7 +190,7 @@ class AdminFootballDataWebServiceTest {
         footballRoot.removeAvailableFixture(fixtureId);
 
         // when
-        ApiResponse<AvailableFixtureDto> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
+        ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
 
         // then
         assertThat(response).isNotNull();
@@ -198,7 +198,7 @@ class AdminFootballDataWebServiceTest {
         assertThat(response.metaData().responseCode()).isEqualTo(200);
         assertThat(response.metaData().requestUrl()).isEqualTo("/api/admin/football/available/fixtures/available");
         assertThat(response.response()).hasSize(1);
-        AvailableFixtureDto addedFixture = response.response()[0];
+        AvailableFixtureResponse addedFixture = response.response()[0];
         assertThat(addedFixture.fixtureId()).isEqualTo(fixtureId);
     }
 

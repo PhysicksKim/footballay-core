@@ -7,4 +7,5 @@ public record PlayerDto(
         String photoUrl,
         String position
 ) {
+
 }
