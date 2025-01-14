@@ -68,4 +68,15 @@ public class PlayerCustomPhoto extends BaseDateAuditEntity {
         }
     }
 
+    @Override
+    public String toString() {
+        return "PlayerCustomPhoto{" +
+                "id=" + id +
+                ", preferenceKey.id=" + preferenceKey.getId() +
+                ", player.id=" + player.getId() +
+                ", userFilePath.id=" + userFilePath.getId() +
+                ", fileName='" + fileName + '\'' +
+                ", isActive=" + isActive +
+                '}';
+    }
 }

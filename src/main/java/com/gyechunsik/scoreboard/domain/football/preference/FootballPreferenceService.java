@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Football Domain 에서 Preference 관련 도메인 진입점입니다. <br>
+ * Football Domain 에서 Preference <b>도메인 진입점</b>입니다. <br>
  * Admin Page 에서 진입하는 경우 Username 으로 User - PreferenceKey 를 인증하며 이외의 경우 KeyHash - PreferenceKey 를 인증합니다. <br>
  * 진입점에 해당하므로 {@link Transactional} 을 사용하지 않습니다. <br>
  */
@@ -52,7 +52,7 @@ public class FootballPreferenceService {
         return extractPhotoUrlMap(photoMap);
     }
 
-    public Map<Long, String> getAllPlayerCustomPhotoUrls(String keyHash, Set<Long> playerIds) {
+    public Map<Long, String> getCustomPhotoUrlsOfPlayers(String keyHash, Set<Long> playerIds) {
         Map<Long, PlayerCustomPhotoDto> photoMap =
                 playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
         return extractPhotoUrlMap(photoMap);
@@ -75,12 +75,6 @@ public class FootballPreferenceService {
     public boolean deactivatePhoto(String username, long playerId, long photoId) {
         boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, playerId, photoId);
         log.info("Deactivate photo success={}", success);
-        return success;
-    }
-
-    public boolean deletePhoto(String username, long photoId) {
-        boolean success = playerCustomPhotoService.deletePhotoWithUsername(username, photoId);
-        log.info("Delete photo success={}", success);
         return success;
     }
 

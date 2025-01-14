@@ -7,8 +7,6 @@ import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
-import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
-import com.gyechunsik.scoreboard.domain.football.preference.service.PlayerCustomPhotoService;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
@@ -39,7 +37,6 @@ public class FootballRoot {
     private final FootballAvailableService footballAvailableService;
 
     private final LeagueRepository leagueRepository;
-    private final PlayerCustomPhotoService playerCustomPhotoService;
 
     public List<LeagueDto> getLeagues() {
         try {

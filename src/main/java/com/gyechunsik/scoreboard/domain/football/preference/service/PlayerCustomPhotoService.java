@@ -54,6 +54,8 @@ public class PlayerCustomPhotoService {
         }
 
         PreferenceKey preferenceKey = getKeyOrThrow(userId);
+        deactivatePreviousPhoto(preferenceKey, playerId);
+
         UserFilePath nowUserFilePath = getUserFilePathForNowPhoto(userId);
         String fileName = generateFileName(playerId, file);
         PlayerCustomPhoto playerCustomPhoto = createPlayerCustomPhotoEntity(
@@ -64,7 +66,6 @@ public class PlayerCustomPhotoService {
         );
         PlayerCustomPhoto savedPhoto = playerCustomPhotoRepository.save(playerCustomPhoto);
 
-        deactivatePreviousPhoto(preferenceKey, playerId);
         String s3Key = getS3Key(nowUserFilePath, fileName);
         s3Uploader.uploadFile(file, s3Key);
 
@@ -74,7 +75,7 @@ public class PlayerCustomPhotoService {
     /**
      * 활성화된 커스텀 선수 이미지들을 조회합니다. <br>
      * 선수 ID 집합에 대해 활성화된 커스텀 선수 이미지를 조회합니다. <br>
-     * 커스텀 이미지가 없는 선수는 반환되는 Map에 포함되지 않습니다.
+     * 커스텀 이미지가 없는 선수는 반환되는 Map에 포함되지 않습니다. <br>
      *
      * @param keyHash 커스텀 선수 이미지를 조회할 PreferenceKey
      * @param playerIds 조회할 선수들의 ID 집합
@@ -83,7 +84,6 @@ public class PlayerCustomPhotoService {
     @Transactional
     public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String keyHash, Set<Long> playerIds) {
         PreferenceKey key = getKey(keyHash);
-
         List<PlayerCustomPhoto> photos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
                 key.getId(), playerIds);
         photos = ensureSingleActivePhotosWithList(key, photos);
@@ -106,25 +106,9 @@ public class PlayerCustomPhotoService {
 
     /**
      * 활성 비활성 둘 다 포함해 커스텀 선수 이미지들을 모두 조회합니다.
-     * @param preferenceKey PreferenceKey
+     * @param username 커스텀 이미지 설정 user
      * @param playerId 선수 ID
      * @return 모든 커스텀 선수 이미지 DTO
-     */
-    @Transactional
-    public List<PlayerCustomPhotoDto> getAllCustomPhotos(String preferenceKey, long playerId) {
-        PreferenceKey key = getKey(preferenceKey);
-
-        List<PlayerCustomPhoto> photoList = playerCustomPhotoRepository.findAllByPreferenceKeyAndPlayer(key, playerId);
-        return photoList.stream()
-                .map(PlayerCustomPhotoDto::fromEntity)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * admin page 에서 접근
-     * @param username
-     * @param playerId
-     * @return
      */
     @Transactional
     public List<PlayerCustomPhotoDto> getAllCustomPhotosWithUsername(String username, long playerId) {
@@ -142,37 +126,10 @@ public class PlayerCustomPhotoService {
      * 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
      * {@link PlayerCustomPhoto} 엔티티의 uniqueConstraints 에 따라서 keyHash 와 playerId 가 주어지면 활성화된 엔티티는 고유합니다.
      *
-     * @param keyHash 커스텀 이미지 PreferenceKey
+     * @param username 커스텀 이미지 설정 user
      * @param playerId 선수 ID
+     * @param photoId 비활성화할 커스텀 이미지 ID
      * @return 비활성화 성공 여부. 기존에 활성화된 이미지가 없더라도 true 반환
-     */
-    @Transactional
-    public boolean deactivatePhoto(String keyHash, long playerId, long photoId) {
-        try {
-            Optional<PlayerCustomPhoto> optionalPhoto = playerCustomPhotoRepository.findById(photoId);
-            if(optionalPhoto.isEmpty()) {
-                log.info("Photo not found with id={}", photoId);
-                return true;
-            }
-
-            PlayerCustomPhoto photo = optionalPhoto.get();
-            validatePhotoKeyHashAndPlayerId(photo, keyHash, playerId);
-
-            log.info("Deactivating photo id={}", photo.getId());
-            photo.setActive(false);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to deactivate photo", e);
-            return false;
-        }
-    }
-
-    /**
-     * admin page 에서 접근
-     * @param username
-     * @param playerId
-     * @param photoId
-     * @return
      */
     @Transactional
     public boolean deactivatePhotoWithUsername(String username, long playerId, long photoId) {
@@ -197,41 +154,16 @@ public class PlayerCustomPhotoService {
         }
     }
 
-    private void validatePhotoKeyUserAndPlayerId(PlayerCustomPhoto photo, User user, long playerId) {
-        if(!photo.getPreferenceKey().getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("Photo preferenceKey is not matched with userId: " + user.getId());
-        }
-        if(photo.getPlayer().getId() != playerId) {
-            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
-        }
-    }
-
     /**
      * 유저의 특정 커스텀 이미지를 활성화합니다. <br>
      * 기존 활성화된 이미지가 있으면 비활성화 하고 새로운 이미지를 활성화합니다.
      *
-     * @throws IllegalArgumentException 이미지가 존재하지 않거나 keyHash 와 photoId 가 일치하지 않는 경우
-     * @param keyHash 커스텀 이미지 PreferenceKey
+     * @throws IllegalArgumentException 이미지가 존재하지 않거나 username 과 photoId 의 user 가 일치하지 않는 경우
+     * @param username 커스텀 이미지를 설정하는 유저 이름
      * @param playerId 활성화할 선수 ID
      * @param photoId 활성화할 커스텀 이미지 ID
      * @return 활성화된 커스텀 선수 이미지 DTO
      */
-    @Transactional
-    public PlayerCustomPhotoDto activatePhoto(String keyHash, long playerId, long photoId) {
-        PreferenceKey preferenceKey = getKey(keyHash);
-
-        deactivatePreviousPhoto(preferenceKey, playerId);
-
-        PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
-                .orElseThrow(() -> new IllegalArgumentException("PlayerCustomPhoto not found with id: " + photoId));
-        if(!photo.getPreferenceKey().getKeyhash().equals(keyHash)) {
-            throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + keyHash);
-        }
-        photo.setActive(true);
-
-        return PlayerCustomPhotoDto.fromEntity(photo);
-    }
-
     @Transactional
     public PlayerCustomPhotoDto activatePhotoWithUsername(String username, long playerId, long photoId) {
         User user = getUserOrThrow(username);
@@ -249,27 +181,6 @@ public class PlayerCustomPhotoService {
         return PlayerCustomPhotoDto.fromEntity(photo);
     }
 
-    /**
-     * 유저의 특정 커스텀 이미지를 삭제합니다. <br>
-     * 이미지가 존재하지 않는 경우에도 true 반환합니다.
-     *
-     * @throws IllegalArgumentException 이미지가 존재하지 않거나 keyHash 와 photoId 가 일치하지 않는 경우
-     * @param preferenceKey PreferenceKey
-     * @param photoId 삭제할 커스텀 이미지 ID
-     * @return 삭제 성공 여부. 이미지가 존재하지 않는 경우에도 true 반환
-     */
-    @Transactional
-    public boolean deletePhoto(String preferenceKey, long photoId) {
-        try {
-            PreferenceKey key = getKey(preferenceKey);
-            playerCustomPhotoRepository.deleteByIdAndPreferenceKey(photoId, key);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to delete photo", e);
-            return false;
-        }
-    }
-
     @Transactional
     public boolean deletePhotoWithUsername(String username, long photoId) {
         try {
@@ -280,6 +191,15 @@ public class PlayerCustomPhotoService {
         } catch (Exception e) {
             log.error("Failed to delete photo", e);
             return false;
+        }
+    }
+
+    private void validatePhotoKeyUserAndPlayerId(PlayerCustomPhoto photo, User user, long playerId) {
+        if(!photo.getPreferenceKey().getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Photo preferenceKey is not matched with userId: " + user.getId());
+        }
+        if(photo.getPlayer().getId() != playerId) {
+            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
         }
     }
 
@@ -315,24 +235,6 @@ public class PlayerCustomPhotoService {
         return activePhotosAfterEnforcement;
     }
 
-    private void ensureSingleActivePhoto(PreferenceKey preferenceKey, long playerId) {
-        List<PlayerCustomPhoto> activePhotos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
-                preferenceKey.getId(), Set.of(playerId));
-        if (activePhotos.size() <= 1) {
-            return;
-        }
-
-        activePhotos.sort(Comparator.comparing(PlayerCustomPhoto::getModifiedDate).reversed());
-        for (int i = 1; i < activePhotos.size(); i++) {
-            PlayerCustomPhoto photo = activePhotos.get(i);
-            log.warn("Multiple active custom photos found for player={}, preferenceKey={}. Deactivating photo id={}",
-                    playerId, preferenceKey.getKeyhash(), photo.getId());
-            photo.setActive(false);
-        }
-
-        playerCustomPhotoRepository.saveAll(activePhotos);
-    }
-
     private PreferenceKey getKey(String preferenceKey) {
         return preferenceKeyRepository.findByKeyhash(preferenceKey)
                 .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found with key: " + preferenceKey));
@@ -358,13 +260,6 @@ public class PlayerCustomPhotoService {
                 .orElseThrow(() -> new IllegalArgumentException("PreferenceKey not found for userId: " + userId));
     }
 
-    private static String generateFileName(long playerId, MultipartFile file) {
-        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-        validateFileExtension(fileExtension);
-        String fileName = CustomPhotoFileNameGenerator.generate(playerId, fileExtension);
-        return fileName;
-    }
-
     private UserFilePath getUserFilePathForNowPhoto(long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
@@ -380,12 +275,6 @@ public class PlayerCustomPhotoService {
         playerCustomPhotoRepository.flush();
     }
 
-    private static void validateFileExtension(String fileExtension) {
-        if(fileExtension == null || fileExtension.isEmpty()) {
-            throw new IllegalArgumentException("Invalid file extension");
-        }
-    }
-
     private PlayerCustomPhoto createPlayerCustomPhotoEntity(PreferenceKey preferenceKey, UserFilePath userFilePath, long playerId, String fileName) {
         Player player = playerRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found with id: " + playerId));
@@ -396,10 +285,6 @@ public class PlayerCustomPhotoService {
                 .fileName(fileName)
                 .isActive(true)
                 .build();
-    }
-
-    private static String getS3Key(UserFilePath userFilePathForCustomPhoto, String fileName) {
-        return userFilePathForCustomPhoto.getPathWithoutDomain() + fileName;
     }
 
     private boolean validateCustomPhoto(MultipartFile file) {
@@ -419,9 +304,25 @@ public class PlayerCustomPhotoService {
 
     private Set<Long> findPlayerIds(long teamId) {
         List<Player> players = playerRepository.findAllByTeam(teamId);
-        Set<Long> playerIds = players.stream()
+        return players.stream()
                 .map(Player::getId)
                 .collect(Collectors.toSet());
-        return playerIds;
     }
+
+    private static String generateFileName(long playerId, MultipartFile file) {
+        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+        validateFileExtension(fileExtension);
+        return CustomPhotoFileNameGenerator.generate(playerId, fileExtension);
+    }
+
+    private static void validateFileExtension(String fileExtension) {
+        if(fileExtension == null || fileExtension.isEmpty()) {
+            throw new IllegalArgumentException("Invalid file extension");
+        }
+    }
+
+    private static String getS3Key(UserFilePath userFilePathForCustomPhoto, String fileName) {
+        return userFilePathForCustomPhoto.getPathWithoutDomain() + fileName;
+    }
+
 }

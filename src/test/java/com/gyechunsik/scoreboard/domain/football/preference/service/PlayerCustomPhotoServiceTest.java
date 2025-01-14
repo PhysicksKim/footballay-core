@@ -86,7 +86,7 @@ class PlayerCustomPhotoServiceTest {
     }
 
     @AfterEach
-    void clearData() {
+    void tearDown() {
         playerCustomPhotoRepository.deleteAll();
         preferenceKeyRepository.deleteAll();
         userRepository.deleteAll();
@@ -127,8 +127,8 @@ class PlayerCustomPhotoServiceTest {
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
 
             // when
-            PlayerCustomPhotoDto dto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
-            PlayerCustomPhotoDto dto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
 
             em.flush();
             em.clear();
@@ -153,12 +153,13 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile1 = CustomPhotoMultipartGenerator.generate();
             MultipartFile multipartFile2 = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
-            PlayerCustomPhotoDto photoDto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
-            PlayerCustomPhotoDto photoDto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER2_ID, multipartFile2);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER2_ID, multipartFile2);
+            final String keyhash = preferenceKey.getKeyhash();
 
             // when
             Set<Long> playerIds = Set.of(PLAYER1_ID, PLAYER2_ID);
-            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(preferenceKey.getKeyhash(), playerIds);
+            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(keyhash, playerIds);
 
             // then
             assertThat(photoDtoMap).hasSize(2);
@@ -173,14 +174,19 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile1 = CustomPhotoMultipartGenerator.generate();
             MultipartFile multipartFile2 = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
-            PlayerCustomPhotoDto photoDto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
             // first photo is deactivated when second photo is uploaded for the same player and the same user
-            PlayerCustomPhotoDto photoDto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            em.flush();
+            em.clear();
+            final String keyhash = preferenceKey.getKeyhash();
+            Set<Long> playerIds = Set.of(PLAYER1_ID);
 
             // when
-            Set<Long> playerIds = Set.of(PLAYER1_ID);
-            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(preferenceKey.getKeyhash(), playerIds);
+            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(keyhash, playerIds);
 
+            List<PlayerCustomPhoto> all = playerCustomPhotoRepository.findAll();
+            log.info("all: {}", all);
             // then
             assertThat(photoDtoMap).hasSize(1);
             assertThat(photoDtoMap.get(PLAYER1_ID)).isNotNull();
@@ -189,9 +195,12 @@ class PlayerCustomPhotoServiceTest {
         @DisplayName("커스텀 이미지가 없는 경우 빈 목록을 가져온다")
         @Test
         void noCustomPhotoExists() {
-            // when
+            // given
+            final String keyhash = preferenceKey.getKeyhash();
             Set<Long> playerIds = Set.of(PLAYER1_ID);
-            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(preferenceKey.getKeyhash(), playerIds);
+
+            // when
+            Map<Long, PlayerCustomPhotoDto> photoDtoMap = playerCustomPhotoService.getActiveCustomPhotos(keyhash, playerIds);
 
             // then
             assertThat(photoDtoMap).isEmpty();
@@ -208,11 +217,11 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile1 = CustomPhotoMultipartGenerator.generate();
             MultipartFile multipartFile2 = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
-            PlayerCustomPhotoDto photoDto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
-            PlayerCustomPhotoDto photoDto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
 
             // when
-            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotos(preferenceKey.getKeyhash(), PLAYER1_ID);
+            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
 
             // then
             assertThat(photoDtoList).hasSize(2);
@@ -225,12 +234,12 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile1 = CustomPhotoMultipartGenerator.generate();
             MultipartFile multipartFile2 = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
-            PlayerCustomPhotoDto photoDto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
             // first photo is deactivated when second photo is uploaded for the same player and the same user
-            PlayerCustomPhotoDto photoDto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
 
             // when
-            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotos(preferenceKey.getKeyhash(), PLAYER1_ID);
+            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
 
             // then
             assertThat(photoDtoList).hasSize(2);
@@ -240,7 +249,7 @@ class PlayerCustomPhotoServiceTest {
         @Test
         void noCustomPhotoExists() {
             // when
-            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotos(preferenceKey.getKeyhash(), PLAYER1_ID);
+            List<PlayerCustomPhotoDto> photoDtoList = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
 
             // then
             assertThat(photoDtoList).isEmpty();
@@ -259,7 +268,7 @@ class PlayerCustomPhotoServiceTest {
             PlayerCustomPhotoDto photoDto = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile);
 
             // when
-            playerCustomPhotoService.deactivatePhoto(preferenceKey.getKeyhash(), PLAYER1_ID, photoDto.getId());
+            playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoDto.getId());
             em.flush();
             em.clear();
 
@@ -281,16 +290,16 @@ class PlayerCustomPhotoServiceTest {
             em.flush();
             em.clear();
 
-            Long id1 = photoDto1.getId();
-            Long id2 = photoDto2.getId();
-            playerCustomPhotoRepository.findById(id1).ifPresent(photo -> photo.setActive(false));
-            playerCustomPhotoRepository.findById(id2).ifPresent(photo -> photo.setActive(false));
+            Long photoId1 = photoDto1.getId();
+            Long photoId2 = photoDto2.getId();
+            playerCustomPhotoRepository.findById(photoId1).ifPresent(photo -> photo.setActive(false));
+            playerCustomPhotoRepository.findById(photoId2).ifPresent(photo -> photo.setActive(false));
             em.flush();
             em.clear();
 
             // when
-            boolean result1 = playerCustomPhotoService.deactivatePhoto(preferenceKey.getKeyhash(), id1, PLAYER1_ID);
-            boolean result2 = playerCustomPhotoService.deactivatePhoto(preferenceKey.getKeyhash(), id2, PLAYER1_ID);
+            boolean result1 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId1);
+            boolean result2 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId2);
 
             // then
             assertThat(result1).isTrue();
@@ -308,11 +317,10 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
             PlayerCustomPhotoDto photoDto = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile);
-            String keyhash = preferenceKey.getKeyhash();
             long photoId = photoDto.getId();
 
             // when
-            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhoto(keyhash, PLAYER1_ID, photoId);
+            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId);
 
             // then
             assertThat(dto).isNotNull();
@@ -343,7 +351,7 @@ class PlayerCustomPhotoServiceTest {
             em.clear();
 
             // when
-            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhoto(preferenceKey.getKeyhash(), PLAYER1_ID, id1);
+            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, PLAYER1_ID, id1);
 
             // then
             assertThat(dto).isNotNull();
@@ -365,9 +373,10 @@ class PlayerCustomPhotoServiceTest {
             MultipartFile multipartFile = CustomPhotoMultipartGenerator.generate();
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
             PlayerCustomPhotoDto photoDto = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile);
+            final long photoId = photoDto.getId();
 
             // when
-            playerCustomPhotoService.deletePhoto(preferenceKey.getKeyhash(), photoDto.getId());
+            playerCustomPhotoService.deletePhotoWithUsername(USERNAME, photoId);
 
             // then
             assertThat(playerCustomPhotoRepository.findById(photoDto.getId())).isEmpty();
@@ -376,8 +385,11 @@ class PlayerCustomPhotoServiceTest {
         @DisplayName("삭제할 이미지가 없어도 true 를 반환")
         @Test
         void deleteNonExistingPhoto() {
+            // given
+            final long NOT_EXISTING_PHOTO_ID = 999999L;
+
             // when
-            boolean result = playerCustomPhotoService.deletePhoto(preferenceKey.getKeyhash(), 1L);
+            boolean result = playerCustomPhotoService.deletePhotoWithUsername(USERNAME, NOT_EXISTING_PHOTO_ID);
             em.flush();
             em.clear();
 

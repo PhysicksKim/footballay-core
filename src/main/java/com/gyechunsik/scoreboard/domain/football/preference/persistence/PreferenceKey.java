@@ -41,4 +41,12 @@ public class PreferenceKey {
     public int hashCode() {
         return Objects.hashCode(getKeyhash());
     }
+
+    @Override
+    public String toString() {
+        return "PreferenceKey{" +
+                "id=" + id +
+                ", keyhash='" + keyhash + '\'' +
+                '}';
+    }
 }
