@@ -22,10 +22,10 @@ import java.nio.file.Paths;
 @ActiveProfiles("aws")
 @Slf4j
 @SpringBootTest
-class S3UploaderTest {
+class CustomPhotoFileUploaderTest {
 
     @Autowired
-    private S3Uploader s3Uploader;
+    private CustomPhotoFileUploader customPhotoFileUploader;
 
     private static final String LOCAL_FILE_PATH = "src/main/resources/devdata/test1.png";
     private static final String S3_KEY          = "test-upload/test2.png";
@@ -46,11 +46,11 @@ class S3UploaderTest {
         MultipartFile multipartFile = new MockMultipartFile("file", file.getName(), "image/png", fis);
 
         // 1) S3 업로드
-        s3Uploader.uploadFile(multipartFile, S3_KEY);
+        customPhotoFileUploader.uploadFile(multipartFile, S3_KEY);
         log.info("[TEST] File uploaded to S3");
 
         // 2) S3에서 로컬로 다운로드
-        s3Uploader.downloadFile(S3_KEY, DOWNLOAD_PATH);
+        customPhotoFileUploader.downloadFile(S3_KEY, DOWNLOAD_PATH);
         Path downloadedPath = Paths.get(DOWNLOAD_PATH);
 
         // 3) 다운로드 성공 여부 검증 (파일 존재 확인)
@@ -69,13 +69,13 @@ class S3UploaderTest {
 
     @Test
     void testDeleteFile() {
-        s3Uploader.deleteFile(S3_KEY);
+        customPhotoFileUploader.deleteFile(S3_KEY);
         log.info("[TEST] File deleted in S3. key={}", S3_KEY);
 
         // 삭제를 확인하는 확실한 방법은, 다시 getObject(...)를 시도하여
         // AmazonS3Exception(404) 발생 여부를 체크하는 것입니다.
         Assertions.assertThrows(AmazonS3Exception.class, () -> {
-            s3Uploader.downloadFile(S3_KEY, DOWNLOAD_PATH);
+            customPhotoFileUploader.downloadFile(S3_KEY, DOWNLOAD_PATH);
         });
     }
 }

@@ -8,8 +8,8 @@ import com.gyechunsik.scoreboard.domain.football.preference.persistence.UserFile
 import com.gyechunsik.scoreboard.domain.football.preference.repository.PlayerCustomPhotoRepository;
 import com.gyechunsik.scoreboard.domain.football.preference.repository.PreferenceKeyRepository;
 import com.gyechunsik.scoreboard.domain.football.preference.util.CustomPhotoFileNameGenerator;
+import com.gyechunsik.scoreboard.domain.football.preference.util.CustomPhotoFileUploader;
 import com.gyechunsik.scoreboard.domain.football.preference.util.PreferenceValidator;
-import com.gyechunsik.scoreboard.domain.football.preference.util.S3Uploader;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.user.entity.User;
 import com.gyechunsik.scoreboard.domain.user.repository.UserRepository;
@@ -35,7 +35,7 @@ public class PlayerCustomPhotoService {
     private final PlayerCustomPhotoRepository playerCustomPhotoRepository;
     private final UserFilePathService userFilePathService;
     private final PreferenceValidator preferenceValidator;
-    private final S3Uploader s3Uploader;
+    private final CustomPhotoFileUploader customPhotoFileUploader;
 
     /**
      * 새로운 커스텀 선수 이미지를 등록하고 업로드이후 활성화합니다. <br>
@@ -67,7 +67,7 @@ public class PlayerCustomPhotoService {
         PlayerCustomPhoto savedPhoto = playerCustomPhotoRepository.save(playerCustomPhoto);
 
         String s3Key = getS3Key(nowUserFilePath, fileName);
-        s3Uploader.uploadFile(file, s3Key);
+        customPhotoFileUploader.uploadFile(file, s3Key);
 
         return PlayerCustomPhotoDto.fromEntity(savedPhoto);
     }

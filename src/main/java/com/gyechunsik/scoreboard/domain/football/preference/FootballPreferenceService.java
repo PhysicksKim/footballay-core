@@ -6,6 +6,7 @@ import com.gyechunsik.scoreboard.domain.user.entity.User;
 import com.gyechunsik.scoreboard.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,10 +30,13 @@ public class FootballPreferenceService {
     private final UserService userService;
 
     /**
-     * admin page 에서 접근
-     * @param username
-     * @param playerId
-     * @param photoFile
+     * 선수의 커스텀 사진을 저장합니다. <br>
+     * Authenticated 된 User 의 username 을 사용해야 합니다. <br>
+     * {@link Authentication} 객체의 {@link Authentication#isAuthenticated()} 된 객체에서 {@link Authentication#getName()} 을 사용합니다.<br>
+     *
+     * @param username Authenticated 된 User 의 username
+     * @param playerId 선수 ID
+     * @param photoFile 선수 사진 파일
      */
     public void savePlayerCustomPhoto(String username, long playerId, MultipartFile photoFile) {
         User user = userService.findUser(username);

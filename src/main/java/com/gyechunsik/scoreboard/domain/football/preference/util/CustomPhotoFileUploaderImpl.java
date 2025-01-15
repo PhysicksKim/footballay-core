@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -21,7 +20,7 @@ import java.nio.file.StandardCopyOption;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class S3UploaderImpl implements S3Uploader {
+public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
 
     private final AmazonS3 amazonS3;
 
@@ -52,7 +51,7 @@ public class S3UploaderImpl implements S3Uploader {
             log.info("Uploaded file to S3. URL={}", fileUrl);
             return fileUrl;
         } catch (AmazonS3Exception e) {
-            log.error("[S3UploaderImpl] Failed to upload file to S3. error={}", e.getMessage(), e);
+            log.error("[CustomPhotoFileUploaderImpl] Failed to upload file to S3. error={}", e.getMessage(), e);
             throw e;
         }
     }
@@ -75,10 +74,10 @@ public class S3UploaderImpl implements S3Uploader {
             log.info("Downloaded file from S3. localPath={}", localDownloadPath);
 
         } catch (AmazonS3Exception e) {
-            log.error("[S3UploaderImpl] Failed to download file from S3. error={}", e.getMessage(), e);
+            log.error("[CustomPhotoFileUploaderImpl] Failed to download file from S3. error={}", e.getMessage(), e);
             throw e;
         } catch (IOException e) {
-            log.error("[S3UploaderImpl] I/O error occurred while downloading file from S3. error={}", e.getMessage(), e);
+            log.error("[CustomPhotoFileUploaderImpl] I/O error occurred while downloading file from S3. error={}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -116,7 +115,7 @@ public class S3UploaderImpl implements S3Uploader {
         try {
             return amazonS3.doesObjectExist(bucketName, s3Key);
         } catch (AmazonS3Exception e) {
-            log.error("[S3Uploader] Failed to check object existence in S3. error={}", e.getMessage(), e);
+            log.error("[CustomPhotoFileUploader] Failed to check object existence in S3. error={}", e.getMessage(), e);
             throw e;
         }
     }
@@ -126,7 +125,7 @@ public class S3UploaderImpl implements S3Uploader {
             amazonS3.deleteObject(bucketName, s3Key);
             log.info("Deleted file in S3. s3Key={}", s3Key);
         } catch (AmazonS3Exception e) {
-            log.error("[S3UploaderImpl] Failed to delete file in S3. error={}", e.getMessage(), e);
+            log.error("[CustomPhotoFileUploaderImpl] Failed to delete file in S3. error={}", e.getMessage(), e);
             throw e;
         }
     }

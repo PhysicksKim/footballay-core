@@ -5,7 +5,6 @@ import com.gyechunsik.scoreboard.domain.football.dto.PlayerDto;
 import com.gyechunsik.scoreboard.domain.football.preference.FootballPreferenceService;
 import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
 import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballCustomPhotoMapper;
-import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballDtoMapper;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerPhotosResponse;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerResponse;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
@@ -47,17 +46,7 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    private PlayerResponse[] createPlayerResponse(List<PlayerDto> squadOfTeam, Map<Long, String> squadActiveCustomPhotos) {
-        List<PlayerResponse> responseList = new ArrayList<>();
-        for (PlayerDto player : squadOfTeam) {
-            String photoUrl = squadActiveCustomPhotos.get(player.id());
-            PlayerResponse responseDto = FootballCustomPhotoMapper.toPlayerDtoWithCustomPhoto(player, photoUrl);
-            responseList.add(responseDto);
-        }
-        return responseList.toArray(new PlayerResponse[]{});
-    }
-
-    public ApiResponse<PlayerPhotosResponse> getPlayerRegisteredImages(Authentication auth, long playerId, String requestUrl) {
+    public ApiResponse<PlayerPhotosResponse> getPlayerRegisteredImages(@Nullable Authentication auth, long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -74,11 +63,14 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> uploadPlayerImage(Authentication auth, long playerId, MultipartFile photoFile, String requestUrl) {
+    public ApiResponse<String> uploadPlayerImage(@Nullable Authentication auth, long playerId, MultipartFile photoFile, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
                 throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            }
+            if(photoFile==null || !"image/png".equals(photoFile.getContentType())) {
+                throw new IllegalArgumentException("Invalid photo file:"+photoFile);
             }
 
             String username = auth.getName();
@@ -91,7 +83,7 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> activateImage(Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> activateImage(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -107,7 +99,7 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> deactivateImage(Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> deactivateImage(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -122,4 +114,15 @@ public class AdminFootballPreferenceService {
             return apiResponseService.createFailureResponse("failed to deactivate image", requestUrl, params);
         }
     }
+
+    private PlayerResponse[] createPlayerResponse(List<PlayerDto> squadOfTeam, Map<Long, String> squadActiveCustomPhotos) {
+        List<PlayerResponse> responseList = new ArrayList<>();
+        for (PlayerDto player : squadOfTeam) {
+            String photoUrl = squadActiveCustomPhotos.get(player.id());
+            PlayerResponse responseDto = FootballCustomPhotoMapper.toPlayerDtoWithCustomPhoto(player, photoUrl);
+            responseList.add(responseDto);
+        }
+        return responseList.toArray(new PlayerResponse[]{});
+    }
+
 }
