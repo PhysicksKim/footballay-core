@@ -4,12 +4,17 @@ import com.gyechunsik.scoreboard.domain.football.dto.PlayerDto;
 import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerPhotosResponse;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerResponse;
+import com.gyechunsik.scoreboard.web.admin.football.response.PreferenceKeyResponse;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FootballCustomPhotoMapper {
+public class FootballPreferenceMapper {
+
+    public static PreferenceKeyResponse toPreferenceKeyResponse(String keyHash) {
+        return new PreferenceKeyResponse(keyHash);
+    }
 
     public static PlayerResponse toPlayerDtoWithCustomPhoto(PlayerDto player, @Nullable String customPhotoUrl) {
         return new PlayerResponse(

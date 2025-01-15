@@ -24,6 +24,11 @@ public class PreferenceKeyService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @Transactional
+    public Optional<PreferenceKey> findPreferenceKey(User user) {
+        return preferenceKeyRepository.findByUser(user);
+    }
+
+    @Transactional
     public PreferenceKey generatePreferenceKeyForUser(User user) {
         String key;
         do {
@@ -40,13 +45,18 @@ public class PreferenceKeyService {
 
     @Transactional
     public boolean deletePreferenceKeyForUser(User user) {
-        Optional<PreferenceKey> preferenceKey = preferenceKeyRepository.findByUser(user);
-        if(preferenceKey.isEmpty()) {
-            log.warn("PreferenceKey not found for user={}", user);
+        try{
+            Optional<PreferenceKey> preferenceKey = preferenceKeyRepository.findByUser(user);
+            if(preferenceKey.isEmpty()) {
+                log.warn("PreferenceKey not found for user={}", user);
+                return false;
+            }
+            preferenceKeyRepository.delete(preferenceKey.get());
+            return true;
+        } catch (Exception e) {
+            log.error("Unexpected fail while deleting preferenceKey for user={}", user, e);
             return false;
         }
-        preferenceKeyRepository.delete(preferenceKey.get());
-        return true;
     }
 
     private static String generateRandomKey() {

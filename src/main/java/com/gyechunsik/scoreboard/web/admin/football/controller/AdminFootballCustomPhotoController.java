@@ -1,7 +1,9 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
+import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerPhotosResponse;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerResponse;
+import com.gyechunsik.scoreboard.web.admin.football.response.PreferenceKeyResponse;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballPreferenceService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,38 @@ public class AdminFootballCustomPhotoController {
     private final AdminFootballPreferenceService preferenceService;
 
     private static final String CONTROLLER_URL = "/api/admin/football";
+
+    /**
+     * {@link PreferenceKey} 생성
+     * @param auth
+     * @return
+     */
+    @PostMapping("/preference")
+    public ResponseEntity<?> createPreferenceKey(Authentication auth) {
+        final String requestUrl = CONTROLLER_URL + "/preference";
+        ApiResponse<PreferenceKeyResponse> preferenceKey = preferenceService.createPreferenceKey(auth, requestUrl);
+        if(preferenceKey.metaData().responseCode() == 200) {
+            String generatedKeyHash = preferenceKey.response()[0].keyHash();
+            log.info("PreferenceKey auth:{}, hash:{}", auth, generatedKeyHash);
+            return ResponseEntity.ok().body(preferenceKey);
+        }
+        return ResponseEntity.badRequest().body(preferenceKey);
+
+    }
+
+    /**
+     * {@link PreferenceKey} 삭제
+     * @param auth
+     * @return
+     */
+    @DeleteMapping("/preference")
+    public ResponseEntity<?> deletePreferenceKey(Authentication auth) {
+        final String requestUrl = CONTROLLER_URL + "/preference";
+        ApiResponse<String> response = preferenceService.deletePreferenceKey(auth, requestUrl);
+        log.info("PreferenceKey Deleted: {}", response);
+        return ResponseEntity.ok().body(response);
+    }
+
 
     /**
      * 팀의 선수단 정보를 가져오고, 해당 유저의 커스텀 활성 이미지들을 포함하여 반환
@@ -74,7 +108,7 @@ public class AdminFootballCustomPhotoController {
     public ResponseEntity<?> uploadPlayerImage(
             Authentication auth,
             @PathVariable long playerId,
-            @RequestParam("photo") MultipartFile photo
+            @RequestPart MultipartFile photo
     ) {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/images";
         ApiResponse<String> response = preferenceService.uploadPlayerImage(auth, playerId, photo, requestUrl);

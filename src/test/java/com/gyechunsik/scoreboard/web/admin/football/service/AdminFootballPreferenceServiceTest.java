@@ -4,7 +4,7 @@ import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.dto.PlayerDto;
 import com.gyechunsik.scoreboard.domain.football.preference.FootballPreferenceService;
 import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
-import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballCustomPhotoMapper;
+import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballPreferenceMapper;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerPhotosResponse;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerResponse;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
@@ -163,7 +163,7 @@ class AdminFootballPreferenceServiceTest {
 
             // Then
             assertThat(response.response()).hasSize(1);
-            assertThat(response.response()[0]).isEqualTo(FootballCustomPhotoMapper.toPlayerPhotosResponse(playerDto, allPhotos));
+            assertThat(response.response()[0]).isEqualTo(FootballPreferenceMapper.toPlayerPhotosResponse(playerDto, allPhotos));
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_SUCCESS);
 
             verify(footballRoot, times(1)).getPlayer(playerId);

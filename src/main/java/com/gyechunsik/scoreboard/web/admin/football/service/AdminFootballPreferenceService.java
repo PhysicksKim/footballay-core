@@ -4,7 +4,8 @@ import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.dto.PlayerDto;
 import com.gyechunsik.scoreboard.domain.football.preference.FootballPreferenceService;
 import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
-import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballCustomPhotoMapper;
+import com.gyechunsik.scoreboard.web.admin.football.response.PreferenceKeyResponse;
+import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballPreferenceMapper;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerPhotosResponse;
 import com.gyechunsik.scoreboard.web.admin.football.response.PlayerResponse;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
@@ -28,6 +29,38 @@ public class AdminFootballPreferenceService {
     private final FootballPreferenceService footballPreferenceService;
     private final ApiCommonResponseService apiResponseService;
     private final FootballRoot footballRoot;
+
+    public ApiResponse<PreferenceKeyResponse> createPreferenceKey(@Nullable Authentication authentication, String requestUrl) {
+        try{
+            if(authentication==null || !authentication.isAuthenticated()) {
+                return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/createPreferenceKey");
+            }
+
+            String keyHash = footballPreferenceService.createPreferenceKey(authentication.getName());
+            PreferenceKeyResponse[] response = {FootballPreferenceMapper.toPreferenceKeyResponse(keyHash)};
+
+            return apiResponseService.createSuccessResponse(response, requestUrl);
+        } catch (Exception e) {
+            log.error("Failed to create preference key", e);
+            return apiResponseService.createFailureResponse("failed to create preference key", requestUrl);
+        }
+    }
+
+    public ApiResponse<String> deletePreferenceKey(@Nullable Authentication authentication, String requestUrl) {
+        try {
+            if(authentication==null || !authentication.isAuthenticated()) {
+                return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/deletePreferenceKey");
+            }
+
+            boolean success = footballPreferenceService.deletePreferenceKey(authentication.getName());
+            String[] response = {success ? "success" : "failed"};
+
+            return apiResponseService.createSuccessResponse(response, requestUrl);
+        } catch (Exception e) {
+            log.error("Failed to delete preference key", e);
+            return apiResponseService.createFailureResponse("failed to delete preference key", requestUrl);
+        }
+    }
 
     public ApiResponse<PlayerResponse> getSquadCustomPhotos(@Nullable Authentication auth, long teamId, String requestUrl) {
         Map<String, String> params = Map.of("teamId", String.valueOf(teamId));
@@ -55,7 +88,7 @@ public class AdminFootballPreferenceService {
             String username = auth.getName();
             PlayerDto playerDto = footballRoot.getPlayer(playerId);
             List<PlayerCustomPhotoDto> allPhotos = footballPreferenceService.getAllPhotosOfPlayerIncludeInactive(username, playerId);
-            PlayerPhotosResponse[] responseArr = {FootballCustomPhotoMapper.toPlayerPhotosResponse(playerDto, allPhotos)};
+            PlayerPhotosResponse[] responseArr = {FootballPreferenceMapper.toPlayerPhotosResponse(playerDto, allPhotos)};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
             log.error("Failed to get player registered images", e);
@@ -119,7 +152,7 @@ public class AdminFootballPreferenceService {
         List<PlayerResponse> responseList = new ArrayList<>();
         for (PlayerDto player : squadOfTeam) {
             String photoUrl = squadActiveCustomPhotos.get(player.id());
-            PlayerResponse responseDto = FootballCustomPhotoMapper.toPlayerDtoWithCustomPhoto(player, photoUrl);
+            PlayerResponse responseDto = FootballPreferenceMapper.toPlayerDtoWithCustomPhoto(player, photoUrl);
             responseList.add(responseDto);
         }
         return responseList.toArray(new PlayerResponse[]{});

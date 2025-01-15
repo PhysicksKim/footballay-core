@@ -1,20 +1,20 @@
 package com.gyechunsik.scoreboard.domain.football.preference;
 
 import com.gyechunsik.scoreboard.domain.football.preference.dto.PlayerCustomPhotoDto;
+import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.domain.football.preference.service.PlayerCustomPhotoService;
+import com.gyechunsik.scoreboard.domain.football.preference.service.PreferenceKeyService;
 import com.gyechunsik.scoreboard.domain.user.entity.User;
 import com.gyechunsik.scoreboard.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Football Domain 에서 Preference <b>도메인 진입점</b>입니다. <br>
@@ -26,8 +26,35 @@ import java.util.Set;
 @Service
 public class FootballPreferenceService {
 
+    private final PreferenceKeyService preferenceKeyService;
     private final PlayerCustomPhotoService playerCustomPhotoService;
     private final UserService userService;
+
+    /**
+     * PreferenceKey 를 생성합니다.
+     * @param username Authenticated 된 User 의 username
+     * @return 생성된 keyHash
+     */
+    public String createPreferenceKey(String username) {
+        User user = userService.findUser(username);
+        Optional<PreferenceKey> optionKey = preferenceKeyService.findPreferenceKey(user);
+        if(optionKey.isPresent()) {
+            throw new IllegalStateException("PreferenceKey already exists for user="+username);
+        }
+
+        PreferenceKey preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
+        return preferenceKey.getKeyhash();
+    }
+
+    /**
+     * PreferenceKey 를 삭제합니다.
+     * @param username Authenticated 된 User 의 username
+     * @return 존재하지 않으면 false, 삭제 성공하면 true
+     */
+    public boolean deletePreferenceKey(String username) {
+        User user = userService.findUser(username);
+        return preferenceKeyService.deletePreferenceKeyForUser(user);
+    }
 
     /**
      * 선수의 커스텀 사진을 저장합니다. <br>
