@@ -8,6 +8,7 @@ import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballPrefere
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -44,18 +45,17 @@ public class AdminFootballCustomPhotoController {
     }
 
     /**
-     * {@link PreferenceKey} 삭제
+     * {@link PreferenceKey} 재발급
      * @param auth
      * @return
      */
-    @DeleteMapping("/preference")
-    public ResponseEntity<?> deletePreferenceKey(Authentication auth) {
+    @PatchMapping("/preference")
+    public ResponseEntity<?> reissuePreferenceKey(Authentication auth) {
         final String requestUrl = CONTROLLER_URL + "/preference";
-        ApiResponse<String> response = preferenceService.deletePreferenceKey(auth, requestUrl);
-        log.info("PreferenceKey Deleted: {}", response);
+        ApiResponse<PreferenceKeyResponse> response = preferenceService.reissuePreferenceKey(auth, requestUrl);
+        log.info("PreferenceKey reissued: {}", response);
         return ResponseEntity.ok().body(response);
     }
-
 
     /**
      * 팀의 선수단 정보를 가져오고, 해당 유저의 커스텀 활성 이미지들을 포함하여 반환
@@ -153,6 +153,17 @@ public class AdminFootballCustomPhotoController {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/images/" + photoId + "/deactivate";
         ApiResponse<String> response = preferenceService.deactivateImage(auth, playerId, photoId, requestUrl);
         log.info("Image Deactivated: {}", response);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/players/images/{photoId}")
+    public ResponseEntity<?> deleteImage(
+            Authentication auth,
+            @PathVariable long photoId
+    ) {
+        final String requestUrl = CONTROLLER_URL + "/players/images/" + photoId;
+        ApiResponse<String> response = preferenceService.deleteImage(auth, photoId, requestUrl);
+        log.info("Image Deleted: {}", response);
         return ResponseEntity.ok().build();
     }
 }

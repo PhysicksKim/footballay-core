@@ -31,32 +31,6 @@ public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
     private String s3domain;
 
     /**
-     * 로컬 파일을 S3에 업로드
-     *
-     * @param localFilePath 로컬 파일 경로 (예: "src/main/resources/devdata/test1.png")
-     * @param s3Key         S3 상의 업로드될 경로/파일명 (예: "test2.png")
-     * @return 업로드된 파일의 전체 URL (예: https://.../test2.png)
-     */
-    public String uploadFile(String localFilePath, String s3Key) {
-        File file = new File(localFilePath);
-        if(!file.exists()) {
-            throw new IllegalArgumentException("Local file does not exist: " + localFilePath);
-        }
-
-        try {
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, s3Key, file);
-            amazonS3.putObject(putObjectRequest);
-
-            String fileUrl = s3domain + "/" + s3Key;
-            log.info("Uploaded file to S3. URL={}", fileUrl);
-            return fileUrl;
-        } catch (AmazonS3Exception e) {
-            log.error("[CustomPhotoFileUploaderImpl] Failed to upload file to S3. error={}", e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    /**
      * S3에 업로드된 파일을 로컬 경로로 다운로드
      *
      * @param s3Key            S3 상의 파일명 (예: "test2.png")
@@ -93,6 +67,7 @@ public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
             metadata.setContentLength(multipartFile.getSize());
             metadata.setContentType(multipartFile.getContentType());
 
+            log.info("Uploading file to S3. s3Key={}", s3Key);
             PutObjectRequest putObjectRequest = new PutObjectRequest(
                     bucketName,
                     s3Key,

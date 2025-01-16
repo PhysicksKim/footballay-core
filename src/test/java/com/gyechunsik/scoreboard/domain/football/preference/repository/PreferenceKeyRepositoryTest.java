@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.preference.repository;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.domain.user.entity.User;
+import com.gyechunsik.scoreboard.entity.HibernateFilterAspect;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,22 +11,26 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
 @DataJpaTest
 @Transactional
+@Import(HibernateFilterAspect.class) // Hibernate Filter 적용을 위한 Import
 class PreferenceKeyRepositoryTest {
 
     @Autowired
     private PreferenceKeyRepository preferenceKeyRepository;
 
     @Autowired
-    private EntityManager testEntityManager;
+    private EntityManager em;
 
     private User user1;
     private User user2;
@@ -65,10 +70,10 @@ class PreferenceKeyRepositoryTest {
                 .build();
 
         // User 엔티티 영속화
-        testEntityManager.persist(user1);
-        testEntityManager.persist(user2);
-        testEntityManager.flush();
-        testEntityManager.clear();
+        em.persist(user1);
+        em.persist(user2);
+        em.flush();
+        em.clear();
 
         // 테스트용 PreferenceKey 생성 (각 사용자당 하나씩만 생성)
         preferenceKey1 = PreferenceKey.builder()
@@ -82,10 +87,10 @@ class PreferenceKeyRepositoryTest {
                 .build();
 
         // PreferenceKey 엔티티 영속화
-        testEntityManager.persist(preferenceKey1);
-        testEntityManager.persist(preferenceKey2);
-        testEntityManager.flush();
-        testEntityManager.clear();
+        em.persist(preferenceKey1);
+        em.persist(preferenceKey2);
+        em.flush();
+        em.clear();
     }
 
     @Nested
@@ -248,6 +253,39 @@ class PreferenceKeyRepositoryTest {
 
             // then
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("PreferenceKey 소프트 딜리트 테스트")
+    class SoftDeleteTests {
+
+        @DisplayName("findById 와 findByIdIncludingDeleted 메서드 테스트")
+        @Test
+        public void testSoftDelete() {
+            // when
+            preferenceKeyRepository.delete(preferenceKey1);
+
+            // then
+            Optional<PreferenceKey> found = preferenceKeyRepository.findById(preferenceKey1.getId());
+            assertThat(found).isEmpty();
+
+            Optional<PreferenceKey> foundIncludingDeleted = preferenceKeyRepository.findByIdIncludingDeleted(preferenceKey1.getId());
+            assertThat(foundIncludingDeleted).isPresent();
+            assertThat(foundIncludingDeleted.get().isEnabled()).isFalse();
+        }
+
+        @DisplayName("findAllDeleted 메서드 테스트")
+        @Test
+        public void testFindAllDeleted() {
+            // 또 다른 PreferenceKey 생성 및 소프트 딜리트
+            preferenceKeyRepository.delete(preferenceKey1);
+
+            // 소프트 딜리트된 모든 PreferenceKey 조회
+            List<PreferenceKey> deletedKeys = preferenceKeyRepository.findAllDeleted();
+            assertThat(deletedKeys).isNotEmpty();
+            assertThat(deletedKeys).hasSize(1);
+            assertThat(deletedKeys.get(0).getId()).isEqualTo(preferenceKey1.getId());
         }
     }
 }

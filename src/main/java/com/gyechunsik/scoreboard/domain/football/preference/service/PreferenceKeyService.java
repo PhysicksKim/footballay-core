@@ -5,6 +5,7 @@ import com.gyechunsik.scoreboard.domain.football.preference.repository.Preferenc
 import com.gyechunsik.scoreboard.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,19 +31,33 @@ public class PreferenceKeyService {
 
     @Transactional
     public PreferenceKey generatePreferenceKeyForUser(User user) {
-        String key;
-        do {
-            key = generateRandomKey();
-        } while (preferenceKeyRepository.existsByKeyhash(key));
-        log.info("Generated preferenceKey={}", key);
+        String keyHash = generateKeyHash();
+        log.info("Generated preferenceKey={}", keyHash);
 
         PreferenceKey preferKey = PreferenceKey.builder()
                 .user(user)
-                .keyhash(key)
+                .keyhash(keyHash)
                 .build();
         return preferenceKeyRepository.save(preferKey);
     }
 
+    @Transactional
+    public PreferenceKey reissuePreferenceKeyForUser(User user) {
+        PreferenceKey preferenceKey = preferenceKeyRepository.findByUser(user).orElseThrow(
+                () -> new IllegalStateException("PreferenceKey not found for user=" + user)
+        );
+        String newKeyHash = generateKeyHash();
+        preferenceKey.setKeyhash(newKeyHash);
+        return preferenceKeyRepository.save(preferenceKey);
+    }
+
+    /**
+     * Soft Delete 됩니다.
+     *
+     * @see PreferenceKey
+     * @param user 삭제할 Key 를 소유한 User
+     * @return 삭제 성공하면 true, PreferenceKey 가 없으면 false
+     */
     @Transactional
     public boolean deletePreferenceKeyForUser(User user) {
         try{
@@ -65,6 +80,14 @@ public class PreferenceKeyService {
             keyBuilder.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
         }
         return keyBuilder.toString();
+    }
+
+    private String generateKeyHash() {
+        String key;
+        do {
+            key = generateRandomKey();
+        } while (preferenceKeyRepository.existsByKeyhash(key));
+        return key;
     }
 
 }

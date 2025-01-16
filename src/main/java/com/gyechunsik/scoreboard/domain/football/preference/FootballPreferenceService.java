@@ -32,14 +32,15 @@ public class FootballPreferenceService {
 
     /**
      * PreferenceKey 를 생성합니다.
+     *
      * @param username Authenticated 된 User 의 username
      * @return 생성된 keyHash
      */
     public String createPreferenceKey(String username) {
         User user = userService.findUser(username);
         Optional<PreferenceKey> optionKey = preferenceKeyService.findPreferenceKey(user);
-        if(optionKey.isPresent()) {
-            throw new IllegalStateException("PreferenceKey already exists for user="+username);
+        if (optionKey.isPresent()) {
+            throw new IllegalStateException("PreferenceKey already exists for user=" + username);
         }
 
         PreferenceKey preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
@@ -47,7 +48,21 @@ public class FootballPreferenceService {
     }
 
     /**
+     * PreferenceKey 를 재발급합니다.
+     *
+     * @param username Authenticated 된 User 의 username
+     * @return 새로 생성된 keyHash
+     */
+    public String reissuePreferenceKey(String username) {
+        User user = userService.findUser(username);
+        PreferenceKey preferenceKey = preferenceKeyService.reissuePreferenceKeyForUser(user);
+        log.info("Reissued preferenceKey={} for user=[name={},id={}]", preferenceKey.getKeyhash(), user.getUsername(), user.getId());
+        return preferenceKey.getKeyhash();
+    }
+
+    /**
      * PreferenceKey 를 삭제합니다.
+     *
      * @param username Authenticated 된 User 의 username
      * @return 존재하지 않으면 false, 삭제 성공하면 true
      */
@@ -61,8 +76,8 @@ public class FootballPreferenceService {
      * Authenticated 된 User 의 username 을 사용해야 합니다. <br>
      * {@link Authentication} 객체의 {@link Authentication#isAuthenticated()} 된 객체에서 {@link Authentication#getName()} 을 사용합니다.<br>
      *
-     * @param username Authenticated 된 User 의 username
-     * @param playerId 선수 ID
+     * @param username  Authenticated 된 User 의 username
+     * @param playerId  선수 ID
      * @param photoFile 선수 사진 파일
      */
     public void savePlayerCustomPhoto(String username, long playerId, MultipartFile photoFile) {
@@ -73,6 +88,7 @@ public class FootballPreferenceService {
 
     /**
      * admin page 에서 팀 선수들의 커스텀 사진 조회
+     *
      * @param username
      * @param teamId
      * @return playerId - photoUrl map
@@ -109,6 +125,12 @@ public class FootballPreferenceService {
         return success;
     }
 
+    public boolean deletePhoto(String username, long photoId) {
+        boolean success = playerCustomPhotoService.deletePhotoWithUsername(username, photoId);
+        log.info("Delete photo success={}", success);
+        return success;
+    }
+
     private static Map<Long, String> extractPhotoUrlMap(Map<Long, PlayerCustomPhotoDto> photoMap) {
         Map<Long, String> photoUrls = new HashMap<>();
         for (Map.Entry<Long, PlayerCustomPhotoDto> entry : photoMap.entrySet()) {
@@ -116,4 +138,5 @@ public class FootballPreferenceService {
         }
         return photoUrls;
     }
+
 }

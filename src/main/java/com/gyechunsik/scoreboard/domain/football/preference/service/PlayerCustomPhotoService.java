@@ -135,7 +135,6 @@ public class PlayerCustomPhotoService {
     public boolean deactivatePhotoWithUsername(String username, long playerId, long photoId) {
         try {
             User user = getUserOrThrow(username);
-            PreferenceKey key = getKeyOrThrow(user.getId());
             Optional<PlayerCustomPhoto> optionalPhoto = playerCustomPhotoRepository.findById(photoId);
             if(optionalPhoto.isEmpty()) {
                 log.info("Photo not found with id={}", photoId);
@@ -177,6 +176,7 @@ public class PlayerCustomPhotoService {
             throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + preferenceKey.getKeyhash());
         }
         photo.setActive(true);
+        log.info("Activating photo id={}", photo.getId());
 
         return PlayerCustomPhotoDto.fromEntity(photo);
     }
@@ -184,9 +184,24 @@ public class PlayerCustomPhotoService {
     @Transactional
     public boolean deletePhotoWithUsername(String username, long photoId) {
         try {
+            Optional<PlayerCustomPhoto> findPhoto = playerCustomPhotoRepository.findById(photoId);
+            if(findPhoto.isEmpty()) {
+                log.warn("delete requested but not found with id={}", photoId);
+                return true;
+            }
+            PlayerCustomPhoto photo = findPhoto.get();
+            String filename = photo.getFileName();
+
             User user = getUserOrThrow(username);
+            UserFilePath userFilePath = userFilePathService.getPlayerCustomPhotoPath(user);
+
             PreferenceKey key = getKeyOrThrow(user.getId());
             playerCustomPhotoRepository.deleteByIdAndPreferenceKey(photoId, key);
+            log.info("Deleted photo id={}", photoId);
+
+            String s3key = userFilePath.getFullPath() + filename;
+            log.info("Deleting s3 photo file s3key={}", s3key);
+            customPhotoFileUploader.deleteFile(s3key);
             return true;
         } catch (Exception e) {
             log.error("Failed to delete photo", e);
@@ -322,7 +337,11 @@ public class PlayerCustomPhotoService {
     }
 
     private static String getS3Key(UserFilePath userFilePathForCustomPhoto, String fileName) {
-        return userFilePathForCustomPhoto.getPathWithoutDomain() + fileName;
+        String path = userFilePathForCustomPhoto.getPathWithoutDomain() + fileName;
+        if(path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        return path;
     }
 
 }

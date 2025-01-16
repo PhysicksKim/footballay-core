@@ -62,6 +62,22 @@ public class AdminFootballPreferenceService {
         }
     }
 
+    public ApiResponse<PreferenceKeyResponse> reissuePreferenceKey(@Nullable Authentication authentication, String requestUrl) {
+        try {
+            if(authentication==null || !authentication.isAuthenticated()) {
+                return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/reissuePreferenceKey");
+            }
+
+            String keyHash = footballPreferenceService.reissuePreferenceKey(authentication.getName());
+            PreferenceKeyResponse[] response = {FootballPreferenceMapper.toPreferenceKeyResponse(keyHash)};
+
+            return apiResponseService.createSuccessResponse(response, requestUrl);
+        } catch (Exception e) {
+            log.error("Failed to reissue preference key", e);
+            return apiResponseService.createFailureResponse("failed to reissue preference key", requestUrl);
+        }
+    }
+
     public ApiResponse<PlayerResponse> getSquadCustomPhotos(@Nullable Authentication auth, long teamId, String requestUrl) {
         Map<String, String> params = Map.of("teamId", String.valueOf(teamId));
         try {
@@ -145,6 +161,22 @@ public class AdminFootballPreferenceService {
         } catch (Exception e) {
             log.error("Failed to deactivate image", e);
             return apiResponseService.createFailureResponse("failed to deactivate image", requestUrl, params);
+        }
+    }
+
+    public ApiResponse<String> deleteImage(@Nullable Authentication auth, long photoId, String requestUrl) {
+        Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
+        try {
+            if(auth==null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            }
+            String username = auth.getName();
+            boolean success = footballPreferenceService.deletePhoto(username, photoId);
+            String[] responseArr = {success ? "success" : "failed"};
+            return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Failed to delete image", e);
+            return apiResponseService.createFailureResponse("failed to delete image", requestUrl, params);
         }
     }
 
