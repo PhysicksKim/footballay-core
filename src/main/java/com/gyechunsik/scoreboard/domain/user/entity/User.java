@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.user.entity;
 
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +23,15 @@ public class User extends BaseDateAuditEntity {
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
+
+    @Column(nullable = true, unique = true, length = 30)
+    private String nickname;
+
+    /**
+     * 프로필 이미지 URL
+     */
+    @Column(nullable = true)
+    private String profileImage;
 
     @Column(nullable = false, length = 500)
     private String password;

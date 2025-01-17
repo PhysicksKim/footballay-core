@@ -24,9 +24,4 @@ public class Authority extends BaseDateAuditEntity {
     @Column(nullable = false, length = 50)
     private Role authority;
 
-    public enum Role {
-        ROLE_USER,
-        ROLE_ADMIN
-    }
-
 }

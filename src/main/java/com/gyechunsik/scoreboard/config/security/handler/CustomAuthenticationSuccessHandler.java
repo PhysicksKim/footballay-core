@@ -17,13 +17,13 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class CustomAuthenticationSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
-    private final UserInfoCookieGenerator userInfoCookieGenerator;
+    // private final UserInfoCookieGenerator userInfoCookieGenerator;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws ServletException, IOException {
-        Cookie cookie = userInfoCookieGenerator.generateCookie(authentication);
+        // Cookie cookie = userInfoCookieGenerator.generateCookie(authentication);
+        // response.addCookie(cookie);
         log.info("Authentication Success handler called");
-        response.addCookie(cookie);
         super.onAuthenticationSuccess(request, response, authentication);
     }
 }

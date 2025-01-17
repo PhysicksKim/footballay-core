@@ -19,4 +19,5 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found username=" + username));
     }
+
 }

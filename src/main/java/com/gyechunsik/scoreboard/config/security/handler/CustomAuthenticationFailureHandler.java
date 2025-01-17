@@ -16,7 +16,6 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        // 유저 정보 쿠키 만료
         log.info("Authentication Fail Handler Called");
         super.onAuthenticationFailure(request, response, exception);
     }
