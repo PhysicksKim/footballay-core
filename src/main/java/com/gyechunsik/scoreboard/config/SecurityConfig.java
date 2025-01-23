@@ -1,12 +1,13 @@
 package com.gyechunsik.scoreboard.config;
 
 import com.gyechunsik.scoreboard.config.security.handler.SpaCsrfTokenRequestHandler;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,7 +24,9 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -55,18 +58,17 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(corsConfigurationSource())
+                        .csrfTokenRepository(csrfConfigurationSource())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()) // 커스텀 핸들러 설정
-                        .requireCsrfProtectionMatcher(new AntPathRequestMatcher("/login", "POST"))
+                        .ignoringRequestMatchers(ignoreExceptLoginPost())
                 )
-                // .csrf(csrf -> csrf
-                //         .requireCsrfProtectionMatcher(new AntPathRequestMatcher("/login", "POST"))) // 로그인 POST 요청에만 CSRF 보호
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN")
                         .anyRequest().permitAll())
                 .formLogin(form -> form.permitAll()
                         .failureUrl("/login?error")
-                        .successHandler(authenticationSuccessHandler))
+                        .successHandler(authenticationSuccessHandler)
+                        .failureHandler(authenticationFailureHandler))
                 .anonymous(Customizer.withDefaults())
                 .logout(configure ->
                         configure.logoutSuccessHandler(logoutSuccessHandler))
@@ -94,10 +96,28 @@ public class SecurityConfig {
         return http.build();
     }
 
-    private CsrfTokenRepository corsConfigurationSource() {
+    private RequestMatcher ignoreExceptLoginPost() {
+        return request -> {
+            String uri = request.getRequestURI();
+            String method = request.getMethod();
+
+            // /login 이면서 POST인 경우 => CSRF 필터 적용
+            if ("/login".equals(uri) && "POST".equalsIgnoreCase(method)) {
+                log.info("CSRF 필터 적용: {}", uri);
+                return false; // CSRF 필터 적용
+            }
+
+            // 그 외 모든 요청 => CSRF 무시
+            log.info("CSRF 필터 무시: {}", uri);
+            return true;
+        };
+    }
+
+    private CsrfTokenRepository csrfConfigurationSource() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        // 쿠키 및 헤더 이름은 기본값을 사용합니다.
         // repository.setCookieName("XSRF-TOKEN");
-        // repository.setHeaderName("X-XSRF-TOKEN"); // 프론트엔드에서 사용할 헤더 이름
+        // repository.setHeaderName("X-XSRF-TOKEN");
         repository.setCookiePath("/");
         repository.setCookieCustomizer(cookie -> {
             cookie.secure(true);

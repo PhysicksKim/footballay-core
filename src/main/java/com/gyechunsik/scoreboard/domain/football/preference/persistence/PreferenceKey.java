@@ -11,6 +11,10 @@ import org.hibernate.type.descriptor.java.BooleanJavaType;
 
 import java.util.Objects;
 
+/**
+ * 사용자의 환경설정 키를 저장하는 엔티티입니다. <br>
+ * 한국어로 "속성키" 라는 이름을 사용합니다.
+ */
 @Slf4j
 @Getter
 @Setter

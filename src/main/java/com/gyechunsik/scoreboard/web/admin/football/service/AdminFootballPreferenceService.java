@@ -95,7 +95,7 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<PlayerPhotosResponse> getPlayerRegisteredImages(@Nullable Authentication auth, long playerId, String requestUrl) {
+    public ApiResponse<PlayerPhotosResponse> getPlayerRegisteredPhotos(@Nullable Authentication auth, long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -107,19 +107,19 @@ public class AdminFootballPreferenceService {
             PlayerPhotosResponse[] responseArr = {FootballPreferenceMapper.toPlayerPhotosResponse(playerDto, allPhotos)};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
-            log.error("Failed to get player registered images", e);
-            return apiResponseService.createFailureResponse("failed to get player registered images", requestUrl, params);
+            log.error("Failed to get player registered photos", e);
+            return apiResponseService.createFailureResponse("failed to get player registered photos", requestUrl, params);
         }
     }
 
-    public ApiResponse<String> uploadPlayerImage(@Nullable Authentication auth, long playerId, MultipartFile photoFile, String requestUrl) {
+    public ApiResponse<String> uploadPlayerPhoto(@Nullable Authentication auth, long playerId, MultipartFile photoFile, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
                 throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
             }
             if(photoFile==null || !"image/png".equals(photoFile.getContentType())) {
-                throw new IllegalArgumentException("Invalid photo file:"+photoFile);
+                throw new IllegalArgumentException("Invalid photo file contentType:"+(photoFile==null ? "null" : photoFile.getContentType()));
             }
 
             String username = auth.getName();
@@ -127,12 +127,12 @@ public class AdminFootballPreferenceService {
             String[] responseArr = {"success"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
-            log.error("Failed to upload player image", e);
-            return apiResponseService.createFailureResponse("failed to upload player image", requestUrl, params);
+            log.error("Failed to upload player photo", e);
+            return apiResponseService.createFailureResponse("failed to upload player photo", requestUrl, params);
         }
     }
 
-    public ApiResponse<String> activateImage(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> activatePhoto(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -143,12 +143,12 @@ public class AdminFootballPreferenceService {
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
-            log.error("Failed to activate image", e);
-            return apiResponseService.createFailureResponse("failed to activate image", requestUrl, params);
+            log.error("Failed to activate photo", e);
+            return apiResponseService.createFailureResponse("failed to activate photo", requestUrl, params);
         }
     }
 
-    public ApiResponse<String> deactivateImage(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> deactivatePhoto(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -159,12 +159,28 @@ public class AdminFootballPreferenceService {
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
-            log.error("Failed to deactivate image", e);
-            return apiResponseService.createFailureResponse("failed to deactivate image", requestUrl, params);
+            log.error("Failed to deactivate photo", e);
+            return apiResponseService.createFailureResponse("failed to deactivate photo", requestUrl, params);
         }
     }
 
-    public ApiResponse<String> deleteImage(@Nullable Authentication auth, long photoId, String requestUrl) {
+    public ApiResponse<String> useDefaultProfileImage(Authentication auth, long playerId, String requestUrl) {
+        Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
+        try {
+            if(auth==null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            }
+            log.info("useDefaultProfileImage authentication:{} playerId:{}", auth, playerId);
+            boolean success = footballPreferenceService.switchToDefaultPhoto(playerId);
+            String[] responseArr = {success ? "success" : "failed"};
+            return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
+        } catch (Exception e) {
+            log.error("Failed to use default profile image", e);
+            return apiResponseService.createFailureResponse("failed to use default profile image", requestUrl, params);
+        }
+    }
+
+    public ApiResponse<String> deletePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
@@ -175,8 +191,8 @@ public class AdminFootballPreferenceService {
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
-            log.error("Failed to delete image", e);
-            return apiResponseService.createFailureResponse("failed to delete image", requestUrl, params);
+            log.error("Failed to delete photo", e);
+            return apiResponseService.createFailureResponse("failed to delete photo", requestUrl, params);
         }
     }
 

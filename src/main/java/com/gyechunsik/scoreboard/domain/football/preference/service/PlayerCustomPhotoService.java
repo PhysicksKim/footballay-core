@@ -54,7 +54,7 @@ public class PlayerCustomPhotoService {
         }
 
         PreferenceKey preferenceKey = getKeyOrThrow(userId);
-        deactivatePreviousPhoto(preferenceKey, playerId);
+        deactivateCurrentActivePhoto(preferenceKey, playerId);
 
         UserFilePath nowUserFilePath = getUserFilePathForNowPhoto(userId);
         String fileName = generateFileName(playerId, file);
@@ -168,7 +168,7 @@ public class PlayerCustomPhotoService {
         User user = getUserOrThrow(username);
         PreferenceKey preferenceKey = getKeyOrThrow(user.getId());
 
-        deactivatePreviousPhoto(preferenceKey, playerId);
+        deactivateCurrentActivePhoto(preferenceKey, playerId);
 
         PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
                 .orElseThrow(() -> new IllegalArgumentException("PlayerCustomPhoto not found with id: " + photoId));
@@ -181,6 +181,33 @@ public class PlayerCustomPhotoService {
         return PlayerCustomPhotoDto.fromEntity(photo);
     }
 
+    /**
+     * 요청한 유저의 특정 선수의 커스텀 이미지를 비활성화합니다. <br>
+     * @param username 인증된 유저의 username
+     * @param playerId 비활성화할 선수 ID
+     * @return 비활성화 성공 여부. 이미지가 존재하지 않는 경우에도 true 반환
+     */
+    @Transactional
+    public boolean deactivatePhotoWithUsername(String username, long playerId) {
+        try {
+            User user = getUserOrThrow(username);
+            PreferenceKey key = getKeyOrThrow(user.getId());
+            deactivateCurrentActivePhoto(key, playerId);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to deactivate photo", e);
+            return false;
+        }
+    }
+
+    /**
+     * 특정 선수의 커스텀 이미지를 삭제합니다. <br>
+     * 삭제 성공 여부에 따라 boolean 을 반환하며 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
+     *
+     * @param username 인증된 유저의 username
+     * @param photoId 삭제할 커스텀 이미지 ID
+     * @return 삭제 성공 여부
+     */
     @Transactional
     public boolean deletePhotoWithUsername(String username, long photoId) {
         try {
@@ -281,7 +308,7 @@ public class PlayerCustomPhotoService {
         return userFilePathService.getPlayerCustomPhotoPath(user);
     }
 
-    private void deactivatePreviousPhoto(PreferenceKey preferenceKey, long playerId) {
+    private void deactivateCurrentActivePhoto(PreferenceKey preferenceKey, long playerId) {
         playerCustomPhotoRepository.findActivePhotoByPreferenceKeyAndPlayer(preferenceKey, playerId)
                         .ifPresent(photo -> {
                             log.info("Deactivate previous active photo keyhash={}, playerId={} Deactivated photo id={}", preferenceKey.getKeyhash(), playerId, photo.getId());

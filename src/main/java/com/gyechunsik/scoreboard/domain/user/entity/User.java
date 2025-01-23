@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.user.entity;
 
+import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
@@ -41,5 +42,8 @@ public class User extends BaseDateAuditEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Authority> authorities = new HashSet<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PreferenceKey preferenceKey;
 
 }

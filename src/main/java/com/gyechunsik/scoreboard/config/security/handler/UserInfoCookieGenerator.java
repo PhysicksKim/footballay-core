@@ -7,7 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
+// @Component
 public class UserInfoCookieGenerator {
 
     @Value("${cookies.user-info.name}")

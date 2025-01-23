@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.user;
 
+import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.domain.user.entity.Authority;
 import com.gyechunsik.scoreboard.domain.user.entity.Role;
 import com.gyechunsik.scoreboard.domain.user.entity.User;
@@ -24,7 +25,9 @@ public class UserRoot {
         String nickname = user.getNickname();
         String[] roles = toRoleResponse(user.getAuthorities());
         String profileImage = user.getProfileImage();
-        return new UserInfoDto(nickname, roles, profileImage);
+        PreferenceKey key = user.getPreferenceKey();
+        String preferenceKey = key == null ? "" : key.getKeyhash();
+        return new UserInfoDto(nickname, roles, profileImage, preferenceKey);
     }
 
     private static String[] toRoleResponse(Collection<Authority> authorities) {

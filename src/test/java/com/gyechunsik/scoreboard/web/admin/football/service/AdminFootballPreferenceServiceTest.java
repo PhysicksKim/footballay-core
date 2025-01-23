@@ -136,19 +136,19 @@ class AdminFootballPreferenceServiceTest {
     }
 
     @Nested
-    @DisplayName("getPlayerRegisteredImages 메서드 테스트")
-    class GetPlayerRegisteredImagesTest {
+    @DisplayName("getPlayerRegisteredPhotos 메서드 테스트")
+    class GetPlayerRegisteredPhotosTest {
 
         @Test
         @DisplayName("정상적으로 선수의 등록된 이미지를 가져온다")
-        void getPlayerRegisteredImages_Success() {
+        void getPlayerRegisteredPhotos_Success() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
             long playerId = 1L;
-            String requestUrl = "/api/admin/football/player/1/images";
+            String requestUrl = "/api/admin/football/player/1/photos";
             PlayerDto playerDto = createPlayerDto(1L, "Ronaldo");
 
             PlayerCustomPhotoDto photoDto1 = createPlayerCustomPhotoDto(1L, 1L, "https://photos.com/1_1.png", true);
@@ -159,7 +159,7 @@ class AdminFootballPreferenceServiceTest {
             when(footballPreferenceService.getAllPhotosOfPlayerIncludeInactive("user1", playerId)).thenReturn(allPhotos);
 
             // When
-            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredImages(auth, playerId, requestUrl);
+            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredPhotos(auth, playerId, requestUrl);
 
             // Then
             assertThat(response.response()).hasSize(1);
@@ -172,16 +172,16 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("인증되지 않은 사용자가 접근하면 예외를 반환한다")
-        void getPlayerRegisteredImages_Unauthenticated() {
+        void getPlayerRegisteredPhotos_Unauthenticated() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
 
             long playerId = 1L;
-            String requestUrl = "/api/admin/football/player/1/images";
+            String requestUrl = "/api/admin/football/player/1/photos";
 
             // When
-            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredImages(auth, playerId, requestUrl);
+            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredPhotos(auth, playerId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -191,19 +191,19 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("예외 발생 시 실패 응답을 반환한다")
-        void getPlayerRegisteredImages_Exception() {
+        void getPlayerRegisteredPhotos_Exception() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
             long playerId = 1L;
-            String requestUrl = "/api/admin/football/player/1/images";
+            String requestUrl = "/api/admin/football/player/1/photos";
 
             when(footballRoot.getPlayer(playerId)).thenThrow(new RuntimeException("Database error"));
 
             // When
-            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredImages(auth, playerId, requestUrl);
+            ApiResponse<PlayerPhotosResponse> response = adminFootballPreferenceService.getPlayerRegisteredPhotos(auth, playerId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -212,12 +212,12 @@ class AdminFootballPreferenceServiceTest {
     }
 
     @Nested
-    @DisplayName("uploadPlayerImage 메서드 테스트")
-    class UploadPlayerImageTest {
+    @DisplayName("uploadPlayerPhoto 메서드 테스트")
+    class UploadPlayerPhotoTest {
 
         @Test
         @DisplayName("정상적으로 선수 이미지를 업로드한다")
-        void uploadPlayerImage_Success() {
+        void uploadPlayerPhoto_Success() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -225,11 +225,11 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             MultipartFile photoFile = mock(MultipartFile.class);
-            when(photoFile.getContentType()).thenReturn("image/png");
+            when(photoFile.getContentType()).thenReturn("photo/png");
             String requestUrl = "/api/admin/football/player/1/upload";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerImage(auth, playerId, photoFile, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerPhoto(auth, playerId, photoFile, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("success");
@@ -240,7 +240,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("인증되지 않은 사용자가 접근하면 예외를 반환한다")
-        void uploadPlayerImage_Unauthenticated() {
+        void uploadPlayerPhoto_Unauthenticated() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
@@ -250,7 +250,7 @@ class AdminFootballPreferenceServiceTest {
             String requestUrl = "/api/admin/football/player/1/upload";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerImage(auth, playerId, photoFile, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerPhoto(auth, playerId, photoFile, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -261,7 +261,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("유효하지 않은 파일 타입일 경우 예외를 반환한다")
-        void uploadPlayerImage_InvalidFileType() {
+        void uploadPlayerPhoto_InvalidFileType() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -273,7 +273,7 @@ class AdminFootballPreferenceServiceTest {
             String requestUrl = "/api/admin/football/player/1/upload";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerImage(auth, playerId, photoFile, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerPhoto(auth, playerId, photoFile, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -284,7 +284,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("예외 발생 시 실패 응답을 반환한다")
-        void uploadPlayerImage_Exception() {
+        void uploadPlayerPhoto_Exception() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -292,13 +292,13 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             MultipartFile photoFile = mock(MultipartFile.class);
-            when(photoFile.getContentType()).thenReturn("image/png");
+            when(photoFile.getContentType()).thenReturn("photo/png");
             String requestUrl = "/api/admin/football/player/1/upload";
 
             doThrow(new RuntimeException("Upload failed")).when(footballPreferenceService).savePlayerCustomPhoto("user1", playerId, photoFile);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerImage(auth, playerId, photoFile, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.uploadPlayerPhoto(auth, playerId, photoFile, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -309,12 +309,12 @@ class AdminFootballPreferenceServiceTest {
     }
 
     @Nested
-    @DisplayName("activateImage 및 deactivateImage 메서드 테스트")
-    class ActivateDeactivateImageTest {
+    @DisplayName("activatePhoto 및 deactivatePhoto 메서드 테스트")
+    class ActivateDeactivatePhotoTest {
 
         @Test
         @DisplayName("이미지를 정상적으로 활성화한다")
-        void activateImage_Success() {
+        void activatePhoto_Success() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -322,12 +322,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/activate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
             when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenReturn(true);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("success");
@@ -338,7 +338,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("이미지 활성화 실패 시 실패 응답을 반환한다")
-        void activateImage_Failure() {
+        void activatePhoto_Failure() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -346,12 +346,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/activate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
             when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenReturn(false);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("failed");
@@ -362,17 +362,17 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("인증되지 않은 사용자가 접근하면 예외를 반환한다")
-        void activateImage_Unauthenticated() {
+        void activatePhoto_Unauthenticated() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/activate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -383,7 +383,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("예외 발생 시 실패 응답을 반환한다")
-        void activateImage_Exception() {
+        void activatePhoto_Exception() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -391,12 +391,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/activate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
             when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenThrow(new RuntimeException("Activation failed"));
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -407,7 +407,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("이미지를 정상적으로 비활성화한다")
-        void deactivateImage_Success() {
+        void deactivatePhoto_Success() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -415,12 +415,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/deactivate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
             when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenReturn(true);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("success");
@@ -431,7 +431,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("이미지 비활성화 실패 시 실패 응답을 반환한다")
-        void deactivateImage_Failure() {
+        void deactivatePhoto_Failure() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -439,12 +439,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/deactivate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
             when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenReturn(false);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("failed");
@@ -455,17 +455,17 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("인증되지 않은 사용자가 접근하면 예외를 반환한다")
-        void deactivateImage_Unauthenticated() {
+        void deactivatePhoto_Unauthenticated() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/deactivate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -476,7 +476,7 @@ class AdminFootballPreferenceServiceTest {
 
         @Test
         @DisplayName("예외 발생 시 실패 응답을 반환한다")
-        void deactivateImage_Exception() {
+        void deactivatePhoto_Exception() {
             // Given
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(true);
@@ -484,12 +484,12 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             long photoId = 10L;
-            String requestUrl = "/api/admin/football/player/1/image/10/deactivate";
+            String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
             when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenThrow(new RuntimeException("Deactivation failed"));
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivateImage(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
