@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -125,7 +126,11 @@ public class FootballExcelService {
                     if(playerId != 0) {
                         log.info("playerId: {}, name: {}, koreanName: {}, number: {}", playerId, name, koreanName, number);
                     }
-                    Player player = playerRepository.findById(playerId).orElseThrow(() -> new RuntimeException("Player not found"));
+                    Optional<Player> find = playerRepository.findById(playerId);
+                    if(find.isEmpty()) {
+                        log.warn("Player not found: {}", playerId);
+                    }
+                    Player player = find.get();
 
                     if(koreanName != null && !koreanName.isEmpty()) {
                         player.setKoreanName(koreanName);

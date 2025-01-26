@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.web.common.controller;
 
+import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -17,9 +18,11 @@ public class IndexPageController {
 
     private final RestTemplate restTemplate;
 
+    private final CustomEnvironmentVariable envVar;
+
     @GetMapping("/")
     public ResponseEntity<String> scoreboardIndexPage() {
-        String path = "https://static.gyechunsik.site/indexpage/index.html";
+        String path = "https://static."+envVar.getMainDomain()+"/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("main Page");
         return ResponseEntity.ok()
@@ -29,7 +32,7 @@ public class IndexPageController {
 
     @GetMapping("/iframe-test")
     public ResponseEntity<String> scoreboardIndexPage_iframeTest() {
-        String path = "https://static.gyechunsik.site/indexpage/index.html";
+        String path = "https://static."+envVar.getMainDomain()+"/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         return ResponseEntity.ok()
                 .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))

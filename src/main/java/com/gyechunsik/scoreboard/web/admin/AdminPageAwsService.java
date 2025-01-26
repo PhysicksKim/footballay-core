@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.web.admin;
 
+import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 @Service
 public class AdminPageAwsService {
 
+    private final CustomEnvironmentVariable envVar;
+
     @Value("${aws.cloudfront.domain}")
     private String cloudfrontDomain;
 
@@ -47,7 +50,6 @@ public class AdminPageAwsService {
 
     private final String ADMIN_INDEX_PATH = "/index.html";
     private final String ADMIN_RESOURCE_PATH = "/chuncity/admin";
-    private final String COOKIE_DOMAIN = ".gyechunsik.site";
     private final int COOKIE_MAX_AGE_SEC = 3600;
     private final int STATIC_FILE_EXPIRATION_SEC = 60;
 
@@ -80,7 +82,7 @@ public class AdminPageAwsService {
 
             CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain+"/*", expirationDate);
             Map<String, String> cookiesMap = cookiesToMap(cookiesForCustomPolicy);
-            setCookiesToHttpResponse(response, cookiesMap, COOKIE_DOMAIN, COOKIE_MAX_AGE_SEC);
+            setCookiesToHttpResponse(response, cookiesMap, envVar.getMainDomain(), COOKIE_MAX_AGE_SEC);
 
             log.info("issued and set CloudFront signed Cookies for admin page");
         } catch (IOException e) {
@@ -190,6 +192,9 @@ public class AdminPageAwsService {
     }
 
     private static @NotNull ResponseCookie createCookieFrom(Map.Entry<String, String> cookieEntry, String cookieDomain, long maxAgeInSeconds) {
+        if(!cookieDomain.startsWith(".")) {
+            cookieDomain = "." + cookieDomain;
+        }
         return ResponseCookie.from(cookieEntry.getKey(), cookieEntry.getValue())
                 .domain(cookieDomain)
                 .path("/")

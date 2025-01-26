@@ -75,6 +75,7 @@ dependencies {
 
     // 테스트 관련
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 
     // 테스트용 레디스 컨테이너
     testImplementation "org.junit.jupiter:junit-jupiter:5.8.1"

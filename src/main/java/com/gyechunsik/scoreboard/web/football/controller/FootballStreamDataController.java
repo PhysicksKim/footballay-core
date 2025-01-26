@@ -43,6 +43,7 @@ public class FootballStreamDataController {
 
     /**
      * 이용 가능한 리그 목록 조회
+     *
      * @return ApiResponse<LeagueResponse> 리그 목록
      */
     @GetMapping("/leagues/available")
@@ -73,7 +74,7 @@ public class FootballStreamDataController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/date";
-        if(date == null) {
+        if (date == null) {
             return ResponseEntity.ok(apiCommonResponseService.createFailureResponse("Parameter 'date' is required", requestUrl));
         }
         ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
@@ -82,6 +83,7 @@ public class FootballStreamDataController {
 
     /**
      * 리그에 속한 이용 가능한 경기 일정 조회
+     *
      * @param request { leagueId : 리그 ID }
      * @return ApiResponse<FixtureOfLeagueResponse> 리그에 속한 경기 일정
      */
@@ -101,7 +103,7 @@ public class FootballStreamDataController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         final String requestUrl = "/api/football/fixtures/available/date";
-        if(date == null) {
+        if (date == null) {
             return ResponseEntity.ok(apiCommonResponseService.createFailureResponse("Parameter 'date' is required", requestUrl));
         }
         ZonedDateTime seoulDateTime = date.atStartOfDay(ZoneId.of("Asia/Seoul"));
@@ -110,6 +112,7 @@ public class FootballStreamDataController {
 
     /**
      * {@link FixtureInfoResponse} 라이브 상태 및 이벤트 정보를 포함하여 Fixture 정보를 제공합니다.
+     *
      * @param fixtureId 경기 ID
      * @return ApiResponse<FixtureInfoResponse> 경기 정보
      */
@@ -127,6 +130,7 @@ public class FootballStreamDataController {
 
     /**
      * 경기 이벤트 정보를 제공합니다.
+     *
      * @param fixtureId 경기 ID
      * @return ApiResponse<FixtureEvent> 경기 이벤트 정보
      */
@@ -136,16 +140,24 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getFixtureEvents(requestUrl, fixtureId));
     }
 
+    // TODO : prefkey 추가
     @GetMapping("/fixtures/lineup")
-    public ResponseEntity<ApiResponse<FixtureLineupResponse>> fixturesLineup(@RequestParam long fixtureId) {
+    public ResponseEntity<ApiResponse<FixtureLineupResponse>> fixturesLineup(
+            @RequestParam long fixtureId,
+            @RequestParam(required = false) String preferenceKey
+    ) {
         final String requestUrl = "/api/football/fixtures/lineup";
-        return ResponseEntity.ok(footballStreamWebService.getFixtureLineup(requestUrl, fixtureId));
+        return ResponseEntity.ok(footballStreamWebService.getFixtureLineup(requestUrl, preferenceKey, fixtureId));
     }
 
+    // TODO : prefkey 추가
     @GetMapping("/fixtures/statistics")
-    public ResponseEntity<ApiResponse<MatchStatisticsResponse>> fixturesStatistics(@RequestParam long fixtureId) {
+    public ResponseEntity<ApiResponse<MatchStatisticsResponse>> fixturesStatistics(
+            @RequestParam long fixtureId,
+            @RequestParam(required = false) String preferenceKey
+    ) {
         final String requestUrl = "/api/football/fixtures/statistics";
-        return ResponseEntity.ok(footballStreamWebService.getMatchStatistics(requestUrl, fixtureId));
+        return ResponseEntity.ok(footballStreamWebService.getMatchStatistics(requestUrl, preferenceKey, fixtureId));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

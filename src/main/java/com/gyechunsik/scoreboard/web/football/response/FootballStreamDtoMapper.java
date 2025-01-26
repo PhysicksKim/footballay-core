@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse._League;
 import static com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse._Team;
@@ -303,6 +304,80 @@ public class FootballStreamDtoMapper {
 
     private static boolean isUnregisteredPlayer(FixtureEventWithPlayerDto.EventPlayerDto dto) {
         return dto.playerId() == null || dto.playerId() == 0;
+    }
+
+    /**
+     * Preference PlayerCustomPhoto 를 덮어씌워서 FixtureLineupResponse 를 업데이트합니다.
+     *
+     * @param response
+     * @param photoMap
+     * @return
+     */
+    public static FixtureLineupResponse copyWithCustomPhotos(
+            FixtureLineupResponse response,
+            Map<Long, String> photoMap
+    ) {
+        assert response.lineup() != null;
+        assert response.lineup().home() != null;
+        assert response.lineup().away() != null;
+
+        FixtureLineupResponse._StartLineup home = copyWithCustomPhotosForStartLineup(
+                response.lineup().home(),
+                photoMap
+        );
+        FixtureLineupResponse._StartLineup away = copyWithCustomPhotosForStartLineup(
+                response.lineup().away(),
+                photoMap
+        );
+
+        FixtureLineupResponse._Lineup updatedLineup = new FixtureLineupResponse._Lineup(home, away);
+        return new FixtureLineupResponse(response.fixtureId(), updatedLineup);
+    }
+
+    private static FixtureLineupResponse._StartLineup copyWithCustomPhotosForStartLineup(
+            FixtureLineupResponse._StartLineup original,
+            Map<Long, String> photoMap
+    ) {
+        if (original == null) {
+            return null;
+        }
+        List<FixtureLineupResponse._LineupPlayer> updatedPlayers = original.players().stream()
+                .map(player -> copyWithCustomPhotosForPlayer(player, photoMap))
+                .toList();
+        List<FixtureLineupResponse._LineupPlayer> updatedSubs = original.substitutes().stream()
+                .map(player -> copyWithCustomPhotosForPlayer(player, photoMap))
+                .toList();
+
+        return new FixtureLineupResponse._StartLineup(
+                original.teamId(),
+                original.teamName(),
+                original.teamKoreanName(),
+                original.formation(),
+                updatedPlayers,
+                updatedSubs
+        );
+    }
+
+    private static FixtureLineupResponse._LineupPlayer copyWithCustomPhotosForPlayer(
+            FixtureLineupResponse._LineupPlayer player,
+            Map<Long, String> photoMap
+    ) {
+        if (player == null) {
+            return null;
+        }
+        // photoMap에 플레이어 id가 있으면 해당 URL로 교체, 없으면 원본 그대로
+        String customPhoto = photoMap.getOrDefault(player.id(), player.photo());
+        return new FixtureLineupResponse._LineupPlayer(
+                player.id(),
+                player.koreanName(),
+                player.name(),
+                player.number(),
+                customPhoto,
+                player.position(),
+                player.grid(),
+                player.substitute(),
+                player.tempId()
+        );
     }
 
 }

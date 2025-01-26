@@ -74,6 +74,11 @@ public class PreferenceKeyService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public boolean validateKeyHash(@NotNull String keyHash) {
+        return preferenceKeyRepository.existsByKeyhash(keyHash);
+    }
+
     private static String generateRandomKey() {
         StringBuilder keyBuilder = new StringBuilder(KEY_LENGTH);
         for (int i = 0; i < KEY_LENGTH; i++) {

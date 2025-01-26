@@ -18,14 +18,12 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,13 +86,24 @@ class FootballPreferenceServiceTest {
         PLAYER_LIST.add(playerRepository.save(player2));
 
         // 테스트용 User 생성
+        final String PASSWORD = "password1";
         User user = User.builder()
                 .username(USERNAME)
-                .password("password1")
+                .password(PASSWORD)
                 .enabled(true)
                 .build();
         userRepository.save(user);
         preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
+
+        // SecurityContext 에 인증 정보 추가
+        // SecurityContext context = SecurityContextHolder.createEmptyContext();
+        // SimpleGrantedAuthority authority = new SimpleGrantedAuthority(Role.ROLE_ADMIN.name());
+        // Collection<? extends GrantedAuthority> authorities = List.of(authority);
+        // UsernamePasswordAuthenticationToken authentication =
+        //         new UsernamePasswordAuthenticationToken(USERNAME, PASSWORD, authorities);
+        // authentication.eraseCredentials();
+        // context.setAuthentication(authentication);
+        // SecurityContextHolder.setContext(context);
     }
 
     @AfterEach
@@ -198,7 +207,7 @@ class FootballPreferenceServiceTest {
             em.clear();
 
             // when
-            footballPreferenceService.deactivatePhoto(USERNAME, PLAYER1_ID, dto1.getId());
+            footballPreferenceService.deactivatePhoto(USERNAME, dto1.getId());
             Map<Long, String> squadPhotoMap = footballPreferenceService.getSquadActiveCustomPhotos(USERNAME, TEAM1_ID);
 
             // then
@@ -251,7 +260,7 @@ class FootballPreferenceServiceTest {
             em.clear();
 
             // when
-            footballPreferenceService.deactivatePhoto(USERNAME, PLAYER1_ID, photoDto1.getId());
+            footballPreferenceService.deactivatePhoto(USERNAME, photoDto1.getId());
             Map<Long, String> photoUrlMap = footballPreferenceService.getCustomPhotoUrlsOfPlayers(keyHash, Set.of(PLAYER1_ID, PLAYER2_ID));
 
             // then
@@ -304,7 +313,7 @@ class FootballPreferenceServiceTest {
             em.clear();
 
             // when
-            boolean result = footballPreferenceService.activatePhoto(USERNAME, PLAYER1_ID, photoDto.getId());
+            boolean result = footballPreferenceService.activatePhoto(USERNAME, photoDto.getId());
 
             // then
             assertThat(result).isTrue();
@@ -318,7 +327,7 @@ class FootballPreferenceServiceTest {
             final long invalidPhotoId = 999999L;
 
             // when
-            boolean result = footballPreferenceService.activatePhoto(USERNAME, PLAYER1_ID, invalidPhotoId);
+            boolean result = footballPreferenceService.activatePhoto(USERNAME, invalidPhotoId);
 
             // then
             assertThat(result).isFalse();
@@ -341,7 +350,7 @@ class FootballPreferenceServiceTest {
             em.clear();
 
             // when
-            boolean result = footballPreferenceService.deactivatePhoto(USERNAME, PLAYER1_ID, photoDto.getId());
+            boolean result = footballPreferenceService.deactivatePhoto(USERNAME, photoDto.getId());
 
             // then
             assertThat(result).isTrue();
@@ -360,10 +369,38 @@ class FootballPreferenceServiceTest {
             final long notExistingPhotoId = 999999L;
 
             // when
-            boolean result = footballPreferenceService.deactivatePhoto(USERNAME, PLAYER1_ID, notExistingPhotoId);
+            boolean result = footballPreferenceService.deactivatePhoto(USERNAME, notExistingPhotoId);
 
             // then
             assertThat(result).isTrue();
+        }
+    }
+
+    @Nested
+    class SwitchToDefaultPhotoTest {
+
+        @Test
+        @DisplayName("선수의 모든 커스텀 이미지를 비활성화한다")
+        @WithMockUser(username = USERNAME, password = "password1", roles = "ADMIN")
+        void switchToDefaultPhoto() {
+            // given
+            MultipartFile file1 = CustomPhotoMultipartGenerator.generate();
+            MultipartFile file2 = CustomPhotoMultipartGenerator.generate();
+            User user = userService.findUser(USERNAME);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, file1);
+            playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, file2);
+
+            em.flush();
+            em.clear();
+
+            // when
+            footballPreferenceService.switchToDefaultPhoto(PLAYER1_ID);
+
+            // then
+            List<PlayerCustomPhotoDto> allPhotos =
+                    playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
+            assertThat(allPhotos).hasSize(2);
+            assertThat(allPhotos).allMatch(photo -> !photo.getIsActive());
         }
     }
 }

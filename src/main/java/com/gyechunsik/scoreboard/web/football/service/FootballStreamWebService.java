@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.web.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.dto.*;
+import com.gyechunsik.scoreboard.domain.football.preference.FootballPreferenceService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
@@ -11,15 +12,18 @@ import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureEventsResp
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureInfoResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLineupResponse;
 import com.gyechunsik.scoreboard.web.football.response.fixture.FixtureLiveStatusResponse;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class FootballStreamWebService {
 
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
+    private final FootballPreferenceService footballPreferenceService;
 
     public ApiResponse<LeagueResponse> getLeagueList(String requestUrl) {
         log.info("getLeagueList");
@@ -167,14 +172,31 @@ public class FootballStreamWebService {
         }
     }
 
-    public ApiResponse<FixtureLineupResponse> getFixtureLineup(String requestUrl, long fixtureId) {
-        Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
+    public ApiResponse<FixtureLineupResponse> getFixtureLineup(String requestUrl, @Nullable String preferenceKey, long fixtureId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fixtureId", String.valueOf(fixtureId));
+        if(preferenceKey != null) {
+            params.put("preferenceKey", preferenceKey);
+        }
         log.info("getFixtureLineup. params={}", params);
 
         try {
             FixtureWithLineupDto fixture = footballRoot.getFixtureWithLineup(fixtureId)
                     .orElseThrow(() -> new IllegalArgumentException("라인업 응답이 비어있습니다. fixtureId=" + fixtureId));
             FixtureLineupResponse response = FootballStreamDtoMapper.toFixtureLineupResponse(fixture);
+
+            if(StringUtils.hasText(preferenceKey) && response.lineup() != null) {
+                Assert.notNull(response.lineup().away(), "away lineup is null");
+                Assert.notNull(response.lineup().away(), "away lineup is null");
+
+                Set<Long> playerIds = Stream.concat(
+                        response.lineup().home().players().stream().map(FixtureLineupResponse._LineupPlayer::id),
+                        response.lineup().away().players().stream().map(FixtureLineupResponse._LineupPlayer::id)
+                ).collect(Collectors.toSet());
+
+                Map<Long, String> photoMap = footballPreferenceService.getCustomPhotoUrlsOfPlayers(preferenceKey, playerIds);
+                response = FootballStreamDtoMapper.copyWithCustomPhotos(response, photoMap);
+            }
             return apiCommonResponseService.createSuccessResponse(new FixtureLineupResponse[]{response}, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling method getFixtureLineup() fixtureId : {}", fixtureId, e);
@@ -200,7 +222,7 @@ public class FootballStreamWebService {
         }
     }
 
-    public ApiResponse<MatchStatisticsResponse> getMatchStatistics(String requestUrl, long fixtureId) {
+    public ApiResponse<MatchStatisticsResponse> getMatchStatistics(String requestUrl, @Nullable String preferenceKey, long fixtureId) {
         Map<String, String> params = Map.of("fixtureId", String.valueOf(fixtureId));
         log.info("getMatchStatistics. params={}", params);
         try {

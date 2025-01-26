@@ -14,7 +14,7 @@ import java.util.Date;
 @Service
 public class LiveMatchJobSchedulerService {
 
-    private static final int INTERVAL_SEC = 29;
+    private static final int INTERVAL_SEC = 17;
     private static final int MAX_REPEAT_TIME_SEC = 5 * 60 * 60; // 5 hour * 60 min * 60 sec
     private static final int MAX_REPEAT_COUNT = MAX_REPEAT_TIME_SEC / INTERVAL_SEC;
 
@@ -24,7 +24,7 @@ public class LiveMatchJobSchedulerService {
 
     private final Scheduler scheduler;
 
-    public void addJob(Long fixtureId, ZonedDateTime fixtureKickoffTime) throws SchedulerException {
+    public void addJob(Long fixtureId, ZonedDateTime jobStartTime) throws SchedulerException {
         String jobName = FootballSchedulerName.liveMatchJob(fixtureId);
         String triggerName = FootballSchedulerName.liveMatchTrigger(fixtureId);
         String groupName = FootballSchedulerName.fixtureGroup();
@@ -34,7 +34,7 @@ public class LiveMatchJobSchedulerService {
                 .usingJobData("fixtureId", fixtureId)
                 .build();
 
-        Date startTime = Date.from(fixtureKickoffTime.toInstant());
+        Date startTime = Date.from(jobStartTime.toInstant());
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(triggerName, groupName)
                 .startAt(startTime)

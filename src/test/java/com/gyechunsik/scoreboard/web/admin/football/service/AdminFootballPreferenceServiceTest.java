@@ -47,7 +47,7 @@ class AdminFootballPreferenceServiceTest {
     private final int CODE_FAILURE = apiResponseService.CODE_FAILURE;
 
     private PlayerDto createPlayerDto(long id, String name) {
-        return new PlayerDto(id, name, "kor_" + name, "http://photourl.com/" + id, "F");
+        return new PlayerDto(id, name, "kor_" + name, "https://photourl.com/" + id, "F");
     }
 
     private PlayerCustomPhotoDto createPlayerCustomPhotoDto(long photoId, long playerId, String photoUrl, boolean active) {
@@ -320,20 +320,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
-            when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenReturn(true);
+            when(footballPreferenceService.activatePhoto("user1", photoId)).thenReturn(true);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("success");
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_SUCCESS);
 
-            verify(footballPreferenceService, times(1)).activatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).activatePhoto("user1", photoId);
         }
 
         @Test
@@ -344,20 +343,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
-            when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenReturn(false);
+            when(footballPreferenceService.activatePhoto("user1", photoId)).thenReturn(false);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("failed");
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_SUCCESS);
 
-            verify(footballPreferenceService, times(1)).activatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).activatePhoto("user1", photoId);
         }
 
         @Test
@@ -367,12 +365,11 @@ class AdminFootballPreferenceServiceTest {
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -389,20 +386,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/activate";
 
-            when(footballPreferenceService.activatePhoto("user1", playerId, photoId)).thenThrow(new RuntimeException("Activation failed"));
+            when(footballPreferenceService.activatePhoto("user1", photoId)).thenThrow(new RuntimeException("Activation failed"));
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.activatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_FAILURE);
 
-            verify(footballPreferenceService, times(1)).activatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).activatePhoto("user1", photoId);
         }
 
         @Test
@@ -413,20 +409,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
-            when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenReturn(true);
+            when(footballPreferenceService.deactivatePhoto("user1", photoId)).thenReturn(true);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("success");
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_SUCCESS);
 
-            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", photoId);
         }
 
         @Test
@@ -437,20 +432,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
-            when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenReturn(false);
+            when(footballPreferenceService.deactivatePhoto("user1", photoId)).thenReturn(false);
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).containsExactly("failed");
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_SUCCESS);
 
-            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", photoId);
         }
 
         @Test
@@ -460,12 +454,11 @@ class AdminFootballPreferenceServiceTest {
             Authentication auth = mock(Authentication.class);
             when(auth.isAuthenticated()).thenReturn(false);
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
@@ -482,21 +475,19 @@ class AdminFootballPreferenceServiceTest {
             when(auth.isAuthenticated()).thenReturn(true);
             when(auth.getName()).thenReturn("user1");
 
-            long playerId = 1L;
             long photoId = 10L;
             String requestUrl = "/api/admin/football/player/1/photo/10/deactivate";
 
-            when(footballPreferenceService.deactivatePhoto("user1", playerId, photoId)).thenThrow(new RuntimeException("Deactivation failed"));
+            when(footballPreferenceService.deactivatePhoto("user1", photoId)).thenThrow(new RuntimeException("Deactivation failed"));
 
             // When
-            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, playerId, photoId, requestUrl);
+            ApiResponse<String> response = adminFootballPreferenceService.deactivatePhoto(auth, photoId, requestUrl);
 
             // Then
             assertThat(response.response()).isNull();
             assertThat(response.metaData().responseCode()).isEqualTo(CODE_FAILURE);
 
-            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", playerId, photoId);
+            verify(footballPreferenceService, times(1)).deactivatePhoto("user1", photoId);
         }
     }
-
 }

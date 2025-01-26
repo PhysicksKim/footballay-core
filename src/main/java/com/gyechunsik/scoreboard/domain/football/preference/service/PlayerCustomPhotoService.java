@@ -122,59 +122,28 @@ public class PlayerCustomPhotoService {
     }
 
     /**
-     * 유저의 특정 커스텀 이미지를 비활성화합니다. <br>
-     * 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
-     * {@link PlayerCustomPhoto} 엔티티의 uniqueConstraints 에 따라서 keyHash 와 playerId 가 주어지면 활성화된 엔티티는 고유합니다.
-     *
-     * @param username 커스텀 이미지 설정 user
-     * @param playerId 선수 ID
-     * @param photoId 비활성화할 커스텀 이미지 ID
-     * @return 비활성화 성공 여부. 기존에 활성화된 이미지가 없더라도 true 반환
-     */
-    @Transactional
-    public boolean deactivatePhotoWithUsername(String username, long playerId, long photoId) {
-        try {
-            User user = getUserOrThrow(username);
-            Optional<PlayerCustomPhoto> optionalPhoto = playerCustomPhotoRepository.findById(photoId);
-            if(optionalPhoto.isEmpty()) {
-                log.info("Photo not found with id={}", photoId);
-                return true;
-            }
-
-            PlayerCustomPhoto photo = optionalPhoto.get();
-            validatePhotoKeyUserAndPlayerId(photo, user, playerId);
-
-            log.info("Deactivating photo id={}", photo.getId());
-            photo.setActive(false);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to deactivate photo", e);
-            return false;
-        }
-    }
-
-    /**
      * 유저의 특정 커스텀 이미지를 활성화합니다. <br>
      * 기존 활성화된 이미지가 있으면 비활성화 하고 새로운 이미지를 활성화합니다.
      *
      * @throws IllegalArgumentException 이미지가 존재하지 않거나 username 과 photoId 의 user 가 일치하지 않는 경우
      * @param username 커스텀 이미지를 설정하는 유저 이름
-     * @param playerId 활성화할 선수 ID
      * @param photoId 활성화할 커스텀 이미지 ID
      * @return 활성화된 커스텀 선수 이미지 DTO
      */
     @Transactional
-    public PlayerCustomPhotoDto activatePhotoWithUsername(String username, long playerId, long photoId) {
+    public PlayerCustomPhotoDto activatePhotoWithUsername(String username, long photoId) {
         User user = getUserOrThrow(username);
         PreferenceKey preferenceKey = getKeyOrThrow(user.getId());
-
-        deactivateCurrentActivePhoto(preferenceKey, playerId);
 
         PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId)
                 .orElseThrow(() -> new IllegalArgumentException("PlayerCustomPhoto not found with id: " + photoId));
         if(!photo.getPreferenceKey().getKeyhash().equals(preferenceKey.getKeyhash())) {
             throw new IllegalArgumentException("Photo preferenceKey is not matched with keyHash: " + preferenceKey.getKeyhash());
         }
+
+        long playerId = photo.getPlayer().getId();
+        deactivateCurrentActivePhoto(preferenceKey, playerId);
+
         photo.setActive(true);
         log.info("Activating photo id={}", photo.getId());
 
@@ -188,11 +157,37 @@ public class PlayerCustomPhotoService {
      * @return 비활성화 성공 여부. 이미지가 존재하지 않는 경우에도 true 반환
      */
     @Transactional
-    public boolean deactivatePhotoWithUsername(String username, long playerId) {
+    public boolean deactivatePhotoWithUsernameAndPlayerId(String username, long playerId) {
         try {
             User user = getUserOrThrow(username);
             PreferenceKey key = getKeyOrThrow(user.getId());
             deactivateCurrentActivePhoto(key, playerId);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to deactivate photo", e);
+            return false;
+        }
+    }
+
+    /**
+     * 유저의 특정 커스텀 이미지를 비활성화합니다. <br>
+     * 이미지가 존재하지 않는 경우에도 true 반환합니다. <br>
+     * {@link PlayerCustomPhoto} 엔티티의 uniqueConstraints 에 따라서 keyHash 와 playerId 가 주어지면 활성화된 엔티티는 고유합니다.
+     *
+     * @param username 커스텀 이미지 설정 user
+     * @param photoId 비활성화할 커스텀 이미지 ID
+     * @return 비활성화 성공 여부. 기존에 활성화된 이미지가 없더라도 true 반환
+     */
+    @Transactional
+    public boolean deactivatePhotoWithUsername(String username, long photoId) {
+        try {
+            User user = getUserOrThrow(username);
+            PlayerCustomPhoto photo = playerCustomPhotoRepository.findById(photoId).orElseThrow(() -> new IllegalArgumentException("Photo not found with id: " + photoId));
+
+            validatePhotoKeyUser(photo, user);
+
+            log.info("Deactivating photo id={}", photo.getId());
+            photo.setActive(false);
             return true;
         } catch (Exception e) {
             log.error("Failed to deactivate photo", e);
@@ -236,12 +231,9 @@ public class PlayerCustomPhotoService {
         }
     }
 
-    private void validatePhotoKeyUserAndPlayerId(PlayerCustomPhoto photo, User user, long playerId) {
+    private void validatePhotoKeyUser(PlayerCustomPhoto photo, User user) {
         if(!photo.getPreferenceKey().getUser().getId().equals(user.getId())) {
             throw new IllegalArgumentException("Photo preferenceKey is not matched with userId: " + user.getId());
-        }
-        if(photo.getPlayer().getId() != playerId) {
-            throw new IllegalArgumentException("Photo playerId is not matched with playerId: " + playerId);
         }
     }
 

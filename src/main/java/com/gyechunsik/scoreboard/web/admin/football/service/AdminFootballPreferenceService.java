@@ -46,22 +46,6 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> deletePreferenceKey(@Nullable Authentication authentication, String requestUrl) {
-        try {
-            if(authentication==null || !authentication.isAuthenticated()) {
-                return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/deletePreferenceKey");
-            }
-
-            boolean success = footballPreferenceService.deletePreferenceKey(authentication.getName());
-            String[] response = {success ? "success" : "failed"};
-
-            return apiResponseService.createSuccessResponse(response, requestUrl);
-        } catch (Exception e) {
-            log.error("Failed to delete preference key", e);
-            return apiResponseService.createFailureResponse("failed to delete preference key", requestUrl);
-        }
-    }
-
     public ApiResponse<PreferenceKeyResponse> reissuePreferenceKey(@Nullable Authentication authentication, String requestUrl) {
         try {
             if(authentication==null || !authentication.isAuthenticated()) {
@@ -132,14 +116,14 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> activatePhoto(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> activatePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
                 throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
             }
             String username = auth.getName();
-            boolean success = footballPreferenceService.activatePhoto(username, playerId, photoId);
+            boolean success = footballPreferenceService.activatePhoto(username, photoId);
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
@@ -148,14 +132,14 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> deactivatePhoto(@Nullable Authentication auth, long playerId, long photoId, String requestUrl) {
+    public ApiResponse<String> deactivatePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
                 throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
             }
             String username = auth.getName();
-            boolean success = footballPreferenceService.deactivatePhoto(username, playerId, photoId);
+            boolean success = footballPreferenceService.deactivatePhoto(username, photoId);
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);
         } catch (Exception e) {
@@ -164,13 +148,13 @@ public class AdminFootballPreferenceService {
         }
     }
 
-    public ApiResponse<String> useDefaultProfileImage(Authentication auth, long playerId, String requestUrl) {
+    public ApiResponse<String> useDefaultProfilePhoto(Authentication auth, long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
             if(auth==null || !auth.isAuthenticated()) {
                 throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
             }
-            log.info("useDefaultProfileImage authentication:{} playerId:{}", auth, playerId);
+            log.info("useDefaultProfilePhoto authentication:{} playerId:{}", auth, playerId);
             boolean success = footballPreferenceService.switchToDefaultPhoto(playerId);
             String[] responseArr = {success ? "success" : "failed"};
             return apiResponseService.createSuccessResponse(responseArr, requestUrl, params);

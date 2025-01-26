@@ -43,7 +43,6 @@ class AdminPageAwsServiceTest {
     @Test
     public void signatureVerifyTest() throws Exception {
         // given
-        String redirectUri = "https://gyechunsik.site/admin";
         String encodedIssuetoken = "{%22issuer%22:%22physickskim%22,%22expiresAt%22:1734776900," +
                 "%22purpose%22:%22issue-chuncity-admin-cloudfront-cookie%22," +
                 "%22redirect%22:%22https://gyechunsik.site/admin%22}";

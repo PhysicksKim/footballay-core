@@ -123,14 +123,13 @@ public class AdminFootballCustomPhotoController {
      * @param photoId 이미지 ID
      * @return ResponseEntity indicating success or failure
      */
-    @PatchMapping("/players/{playerId}/photos/{photoId}/activate")
+    @PatchMapping("/photos/{photoId}/activate")
     public ResponseEntity<?> activatePhoto(
             Authentication auth,
-            @PathVariable long playerId,
             @PathVariable long photoId
     ) {
-        final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos/" + photoId + "/activate";
-        ApiResponse<String> response = preferenceWebService.activatePhoto(auth, playerId, photoId, requestUrl);
+        final String requestUrl = CONTROLLER_URL + "/photos/" + photoId + "/activate";
+        ApiResponse<String> response = preferenceWebService.activatePhoto(auth, photoId, requestUrl);
         log.info("Photo Activated: {}", response);
         return ResponseEntity.ok().build();
     }
@@ -143,14 +142,13 @@ public class AdminFootballCustomPhotoController {
      * @param photoId 이미지 ID
      * @return ResponseEntity indicating success or failure
      */
-    @PatchMapping("/players/{playerId}/photos/{photoId}/deactivate")
+    @PatchMapping("/photos/{photoId}/deactivate")
     public ResponseEntity<?> deactivatePhoto(
             Authentication auth,
-            @PathVariable long playerId,
             @PathVariable long photoId
     ) {
-        final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos/" + photoId + "/deactivate";
-        ApiResponse<String> response = preferenceWebService.deactivatePhoto(auth, playerId, photoId, requestUrl);
+        final String requestUrl = CONTROLLER_URL + "/photos/" + photoId + "/deactivate";
+        ApiResponse<String> response = preferenceWebService.deactivatePhoto(auth, photoId, requestUrl);
         log.info("Photo Deactivated: {}", response);
         return ResponseEntity.ok().build();
     }
@@ -163,22 +161,22 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity indicating success or failure
      */
     @PatchMapping("/players/{playerId}/photos/default")
-    public ResponseEntity<?> useDefaultProfileImage(
+    public ResponseEntity<?> useDefaultProfilePhoto(
             Authentication auth,
             @PathVariable long playerId
     ) {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos/default";
-        ApiResponse<String> response = preferenceWebService.useDefaultProfileImage(auth, playerId, requestUrl);
+        ApiResponse<String> response = preferenceWebService.useDefaultProfilePhoto(auth, playerId, requestUrl);
         log.info("All Photos Deactivated: {}", response);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/players/photos/{photoId}")
+    @DeleteMapping("/photos/{photoId}")
     public ResponseEntity<?> deletePhoto(
             Authentication auth,
             @PathVariable long photoId
     ) {
-        final String requestUrl = CONTROLLER_URL + "/players/photos/" + photoId;
+        final String requestUrl = CONTROLLER_URL + "/photos/" + photoId;
         ApiResponse<String> response = preferenceWebService.deletePhoto(auth, photoId, requestUrl);
         log.info("Photo Deleted: {}", response);
         return ResponseEntity.ok().build();

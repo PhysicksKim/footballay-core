@@ -268,7 +268,7 @@ class PlayerCustomPhotoServiceTest {
             PlayerCustomPhotoDto photoDto = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile);
 
             // when
-            playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoDto.getId());
+            playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, photoDto.getId());
             em.flush();
             em.clear();
 
@@ -298,8 +298,8 @@ class PlayerCustomPhotoServiceTest {
             em.clear();
 
             // when
-            boolean result1 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId1);
-            boolean result2 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId2);
+            boolean result1 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, photoId1);
+            boolean result2 = playerCustomPhotoService.deactivatePhotoWithUsername(USERNAME, photoId2);
 
             // then
             assertThat(result1).isTrue();
@@ -320,7 +320,7 @@ class PlayerCustomPhotoServiceTest {
             long photoId = photoDto.getId();
 
             // when
-            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, PLAYER1_ID, photoId);
+            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, photoId);
 
             // then
             assertThat(dto).isNotNull();
@@ -351,7 +351,7 @@ class PlayerCustomPhotoServiceTest {
             em.clear();
 
             // when
-            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, PLAYER1_ID, id1);
+            PlayerCustomPhotoDto dto = playerCustomPhotoService.activatePhotoWithUsername(USERNAME, id1);
 
             // then
             assertThat(dto).isNotNull();
@@ -396,6 +396,72 @@ class PlayerCustomPhotoServiceTest {
             // then
             assertThat(result).isTrue();
         }
+    }
+
+    @Nested
+    class DeactivatePhotoWithUsernameAndPlayerId {
+
+        @DisplayName("커스텀 이미지가 없는 경우에도 true 를 반환")
+        @Test
+        void noCustomPhotoReturnTrue() {
+            // given
+            List<PlayerCustomPhotoDto> photos = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
+            log.info("photos: {}", photos);
+
+            // when
+            boolean result = playerCustomPhotoService.deactivatePhotoWithUsernameAndPlayerId(USERNAME, PLAYER1_ID);
+            log.info("result: {}", result);
+
+            // then
+            assertThat(photos).isEmpty();
+            assertThat(result).isTrue();
+        }
+
+        @DisplayName("하나의 커스텀 이미지 활성화 상태에서 비활성화")
+        @Test
+        void oneActivePhoto() {
+            // given
+            MultipartFile multipartFile = CustomPhotoMultipartGenerator.generate();
+            User user = userRepository.findByUsername(USERNAME).orElseThrow();
+            PlayerCustomPhotoDto photoDto = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile);
+            em.flush();
+            em.clear();
+
+            // when
+            boolean result = playerCustomPhotoService.deactivatePhotoWithUsernameAndPlayerId(USERNAME, PLAYER1_ID);
+
+            // then
+            assertThat(result).isTrue();
+            List<PlayerCustomPhotoDto> photos = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
+            log.info("photos: {}", photos);
+            assertThat(photos).hasSize(1);
+            assertThat(photos.get(0).getIsActive()).isFalse();
+        }
+
+        @DisplayName("여러개의 커스텀 이미지 중 하나만 활성화 상태에서 비활성화")
+        @Test
+        void multiplePhotosOneActive() {
+            // given
+            MultipartFile multipartFile1 = CustomPhotoMultipartGenerator.generate();
+            MultipartFile multipartFile2 = CustomPhotoMultipartGenerator.generate();
+            User user = userRepository.findByUsername(USERNAME).orElseThrow();
+            PlayerCustomPhotoDto photoDto1 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile1);
+            PlayerCustomPhotoDto photoDto2 = playerCustomPhotoService.registerAndUploadCustomPhoto(user.getId(), PLAYER1_ID, multipartFile2);
+            em.flush();
+            em.clear();
+
+            // when
+            boolean result = playerCustomPhotoService.deactivatePhotoWithUsernameAndPlayerId(USERNAME, PLAYER1_ID);
+
+            // then
+            assertThat(result).isTrue();
+            List<PlayerCustomPhotoDto> photos = playerCustomPhotoService.getAllCustomPhotosWithUsername(USERNAME, PLAYER1_ID);
+            log.info("photos: {}", photos);
+            assertThat(photos).hasSize(2);
+            assertThat(photos.get(0).getIsActive()).isFalse();
+            assertThat(photos.get(1).getIsActive()).isFalse();
+        }
+
     }
 
     private static void OneIsActiveAndAnotherIsInactive(PlayerCustomPhoto photo1, PlayerCustomPhoto photo2) {

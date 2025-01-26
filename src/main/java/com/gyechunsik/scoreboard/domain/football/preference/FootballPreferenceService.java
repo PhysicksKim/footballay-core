@@ -32,6 +32,11 @@ public class FootballPreferenceService {
     private final PlayerCustomPhotoService playerCustomPhotoService;
     private final UserService userService;
 
+    public boolean validatePreferenceKey(String keyHash) {
+        log.info("Validating preferenceKey={}", keyHash);
+        return preferenceKeyService.validateKeyHash(keyHash);
+    }
+
     /**
      * PreferenceKey 를 생성합니다.
      *
@@ -101,6 +106,14 @@ public class FootballPreferenceService {
         return extractPhotoUrlMap(photoMap);
     }
 
+    /**
+     * 선수의 커스텀 사진을 조회합니다. <br>
+     * keyHash 가 유효하지 않아 조회되는 데이터가 없다면 빈 Map 을 반환합니다. <br>
+     *
+     * @param keyHash
+     * @param playerIds
+     * @return
+     */
     public Map<Long, String> getCustomPhotoUrlsOfPlayers(String keyHash, Set<Long> playerIds) {
         Map<Long, PlayerCustomPhotoDto> photoMap =
                 playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
@@ -111,18 +124,18 @@ public class FootballPreferenceService {
         return playerCustomPhotoService.getAllCustomPhotosWithUsername(username, playerId);
     }
 
-    public boolean activatePhoto(String username, long playerId, long photoId) {
+    public boolean activatePhoto(String username, long photoId) {
         try {
-            playerCustomPhotoService.activatePhotoWithUsername(username, playerId, photoId);
+            playerCustomPhotoService.activatePhotoWithUsername(username, photoId);
             return true;
         } catch (Exception e) {
-            log.error("Activate photo failed. playerId={}, photoId={}", playerId, photoId, e);
+            log.error("Activate photo failed. photoId={}", photoId, e);
             return false;
         }
     }
 
-    public boolean deactivatePhoto(String username, long playerId, long photoId) {
-        boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, playerId, photoId);
+    public boolean deactivatePhoto(String username, long photoId) {
+        boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, photoId);
         log.info("Deactivate photo success={}", success);
         return success;
     }
@@ -132,7 +145,7 @@ public class FootballPreferenceService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
-        return playerCustomPhotoService.deactivatePhotoWithUsername(username, playerId);
+        return playerCustomPhotoService.deactivatePhotoWithUsernameAndPlayerId(username, playerId);
     }
 
     public boolean deletePhoto(String username, long photoId) {

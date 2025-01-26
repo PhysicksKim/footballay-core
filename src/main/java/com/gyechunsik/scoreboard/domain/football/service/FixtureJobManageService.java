@@ -28,7 +28,10 @@ public class FixtureJobManageService {
     private final static int LINEUP_ANNOUNCE_BEFORE_HOUR = 1;
 
     /**
+     * 특정 Fixture 관련 Job 들을 등록합니다. <br>
+     * 실제 quartz job 등록은 위임하며 이 메서드는 Job 등록 전에 데이터 정합성을 체크하고, Job 등록 후에 Fixture 의 상태를 변경합니다.
      *
+     * @see LiveMatchJobSchedulerService
      * @param fixture Fixture 연관 데이터를 모두 사용하므로 Fetch Join 으로 load 된 Fixture 가 아니면 N+1 이 발생할 수 있습니다.
      */
     public void addFixtureJobs(@NotNull Fixture fixture) {
