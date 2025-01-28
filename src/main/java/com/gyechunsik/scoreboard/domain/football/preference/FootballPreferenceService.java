@@ -135,9 +135,14 @@ public class FootballPreferenceService {
     }
 
     public boolean deactivatePhoto(String username, long photoId) {
-        boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, photoId);
-        log.info("Deactivate photo success={}", success);
-        return success;
+        try{
+            boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, photoId);
+            log.info("Deactivate photo success={}", success);
+            return success;
+        } catch (Exception e) {
+            log.error("Deactivate photo failed. photoId={}", photoId, e);
+            return false;
+        }
     }
 
     @PreAuthorize("hasAnyRole({'ADMIN', 'STREAMER'})")

@@ -363,7 +363,7 @@ class FootballPreferenceServiceTest {
         }
 
         @Test
-        @DisplayName("이미지가 없더라도 deactivatePhoto 성공 시 true 를 반환")
+        @DisplayName("이미지가 없다면 deactivatePhoto 시 false 를 반환")
         void deactivatePhotoNotExisting() {
             // given
             final long notExistingPhotoId = 999999L;
@@ -372,7 +372,7 @@ class FootballPreferenceServiceTest {
             boolean result = footballPreferenceService.deactivatePhoto(USERNAME, notExistingPhotoId);
 
             // then
-            assertThat(result).isTrue();
+            assertThat(result).isFalse();
         }
     }
 

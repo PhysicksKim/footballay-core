@@ -13,7 +13,8 @@ import java.util.Objects;
 
 /**
  * 사용자의 환경설정 키를 저장하는 엔티티입니다. <br>
- * 한국어로 "속성키" 라는 이름을 사용합니다.
+ * 한국어로 "속성키" 라는 이름을 사용합니다. <br>
+ * DB 세팅 시 keyhash 가 대소문자를 구분하도록 table 이 대소문자를 구분 하도록 collation 을 설정해야 합니다. (ex.utf8mb4_bin) <br>
  */
 @Slf4j
 @Getter

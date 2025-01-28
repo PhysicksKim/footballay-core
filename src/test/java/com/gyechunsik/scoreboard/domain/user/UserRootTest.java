@@ -60,6 +60,10 @@ class UserRootTest {
     @DisplayName("savePlayerCustomPhoto 메서드")
     class SavePlayerCustomPhotoTest {
 
+        enum ResponseRole {
+            admin,user
+        }
+
         @DisplayName("유저 정보를 가져옵니다")
         @Test
         void successRetrieveUserInfo() {
@@ -69,8 +73,8 @@ class UserRootTest {
 
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME);
-            assertThat(userInfo.roles()).contains(Role.ROLE_USER.toString());
-            assertThat(userInfo.roles()).doesNotContain(Role.ROLE_ADMIN.toString());
+            assertThat(userInfo.roles()).contains("user");
+            assertThat(userInfo.roles()).doesNotContain("admin");
         }
 
         @DisplayName("관리자 정보를 가져옵니다")
@@ -82,8 +86,8 @@ class UserRootTest {
 
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME2);
-            assertThat(userInfo.roles()).contains(Role.ROLE_ADMIN.toString());
-            assertThat(userInfo.roles()).doesNotContain(Role.ROLE_USER.toString());
+            assertThat(userInfo.roles()).contains("admin");
+            assertThat(userInfo.roles()).doesNotContain("user");
         }
 
         @DisplayName("멀티롤 유저 정보를 가져옵니다")
@@ -95,8 +99,8 @@ class UserRootTest {
 
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME3);
-            assertThat(userInfo.roles()).contains(Role.ROLE_USER.toString());
-            assertThat(userInfo.roles()).contains(Role.ROLE_ADMIN.toString());
+            assertThat(userInfo.roles()).contains("user");
+            assertThat(userInfo.roles()).contains("admin");
         }
     }
 

@@ -225,7 +225,7 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             MultipartFile photoFile = mock(MultipartFile.class);
-            when(photoFile.getContentType()).thenReturn("photo/png");
+            when(photoFile.getContentType()).thenReturn("image/png");
             String requestUrl = "/api/admin/football/player/1/upload";
 
             // When
@@ -292,7 +292,7 @@ class AdminFootballPreferenceServiceTest {
 
             long playerId = 1L;
             MultipartFile photoFile = mock(MultipartFile.class);
-            when(photoFile.getContentType()).thenReturn("photo/png");
+            when(photoFile.getContentType()).thenReturn("image/png");
             String requestUrl = "/api/admin/football/player/1/upload";
 
             doThrow(new RuntimeException("Upload failed")).when(footballPreferenceService).savePlayerCustomPhoto("user1", playerId, photoFile);
