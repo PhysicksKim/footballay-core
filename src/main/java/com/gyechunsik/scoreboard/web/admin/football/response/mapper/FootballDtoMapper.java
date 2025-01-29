@@ -7,6 +7,17 @@ import java.util.List;
 
 public class FootballDtoMapper {
 
+    public static ExternalApiStatusResponse toExternalApiStatusDto(ExternalApiStatusDto externalApiStatusDto) {
+        return new ExternalApiStatusResponse(
+                externalApiStatusDto.current(),
+                externalApiStatusDto.minuteLimit(),
+                externalApiStatusDto.minuteRemaining(),
+                externalApiStatusDto.dayLimit(),
+                externalApiStatusDto.dayRemaining(),
+                externalApiStatusDto.active()
+        );
+    }
+
     public static LiveStatusResponse toLiveStatusDto(LiveStatusDto liveStatusDto) {
         return new LiveStatusResponse(
                 liveStatusDto.longStatus(),

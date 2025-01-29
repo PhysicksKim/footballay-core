@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football;
 
 import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -37,6 +38,16 @@ public class FootballRoot {
     private final FootballAvailableService footballAvailableService;
 
     private final LeagueRepository leagueRepository;
+
+    public ExternalApiStatusDto getExternalApiStatus() {
+        try {
+            ApiStatus apiStatus = footballApiCacheService.status();
+            return FootballDomainDtoMapper.apiStatusDtoFromEntity(apiStatus);
+        } catch (Exception e) {
+            log.error("error while getting _ApiStatus :: {}", e.getMessage());
+            return null;
+        }
+    }
 
     public List<LeagueDto> getLeagues() {
         try {

@@ -4,6 +4,7 @@ import com.gyechunsik.scoreboard.web.admin.football.request.CachePlayerSingleReq
 import com.gyechunsik.scoreboard.web.admin.football.request.LeagueIdRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.PreventUnlinkRequest;
 import com.gyechunsik.scoreboard.web.admin.football.request.TeamIdRequest;
+import com.gyechunsik.scoreboard.web.admin.football.response.ExternalApiStatusResponse;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminFootballCacheWebService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiV1CommonResponseService;
@@ -26,6 +27,18 @@ public class AdminFootballCacheRestController {
 
     private final AdminFootballCacheWebService adminFootballCacheWebService;
     private final ApiV1CommonResponseService apiV1CommonResponseService;
+
+    @GetMapping("/status")
+    public ResponseEntity<?> getApiStatus() {
+        final String requestUrl = "/api/admin/football/cache/status";
+        log.info("get api status");
+        ApiResponse<ExternalApiStatusResponse> apiStatus = adminFootballCacheWebService.getApiStatus(requestUrl);
+        if(apiStatus.metaData().responseCode() != 200) {
+            return ResponseEntity.badRequest().body(apiStatus);
+        } else {
+            return ResponseEntity.ok().body(apiStatus);
+        }
+    }
 
     /**
      * 1. 리그 : 단일 리그 - leagueId

@@ -1,7 +1,10 @@
 package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
+import com.gyechunsik.scoreboard.domain.football.dto.ExternalApiStatusDto;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
+import com.gyechunsik.scoreboard.web.admin.football.response.ExternalApiStatusResponse;
+import com.gyechunsik.scoreboard.web.admin.football.response.mapper.FootballDtoMapper;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,17 @@ public class AdminFootballCacheWebService {
 
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
+
+    public ApiResponse<ExternalApiStatusResponse> getApiStatus(String requestUrl) {
+        try{
+            ExternalApiStatusDto apiStatus = footballRoot.getExternalApiStatus();
+            ExternalApiStatusResponse[] response = {FootballDtoMapper.toExternalApiStatusDto(apiStatus)};
+            return apiCommonResponseService.createSuccessResponse(response, requestUrl);
+        } catch (Exception e) {
+            log.error("error while getting api status :: {}", e.getMessage());
+            return apiCommonResponseService.createFailureResponse("API 상태 조회 실패", requestUrl);
+        }
+    }
 
     public ApiResponse<Void> cacheLeague(Long leagueId, String requestUrl) {
         boolean isSuccess = footballRoot.cacheLeagueById(leagueId);

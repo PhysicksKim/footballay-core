@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.dto;
 
+import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
 import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
@@ -490,4 +491,14 @@ public class FootballDomainDtoMapper {
         return matchPlayer.getPlayer() == null;
     }
 
+    public static ExternalApiStatusDto apiStatusDtoFromEntity(ApiStatus apiStatus) {
+        return new ExternalApiStatusDto(
+                apiStatus.current(),
+                apiStatus.minuteLimit(),
+                apiStatus.minuteRemaining(),
+                apiStatus.dayLimit(),
+                apiStatus.dayRemaining(),
+                apiStatus.active()
+        );
+    }
 }

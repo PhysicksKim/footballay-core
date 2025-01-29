@@ -29,6 +29,16 @@ class ApiCallServiceImplTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @DisplayName("실제 api ; api 상태를 확인합니다")
+    @Test
+    void success_apistatus() throws IOException {
+        // when
+        ExternalApiStatusResponse status = apiCallService.status();
+
+        // then
+        log.info("status : {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(status));
+    }
+
     @DisplayName("실제 api ; 리그 id로 리그 정보를 얻어옵니다")
     @Test
     void success_leagueInfo() throws IOException {

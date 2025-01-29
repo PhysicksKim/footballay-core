@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external;
 
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
+import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiStatus;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 import com.gyechunsik.scoreboard.domain.football.external.lastlog.LastCacheLogService;
 import com.gyechunsik.scoreboard.domain.football.persistence.Fixture;
@@ -76,6 +77,19 @@ public class FootballApiCacheService {
     private final FixtureRepository fixtureRepository;
     private final TeamPlayerRepository teamPlayerRepository;
     private final LiveStatusRepository liveStatusRepository;
+
+    public ApiStatus status() {
+        ExternalApiStatusResponse status = apiCallService.status();
+        ApiStatus apiStatus = new ApiStatus(
+                status.getResponse().getRequests().getCurrent(),
+                status.getHeaders().getXRatelimitLimit(),
+                status.getHeaders().getXRatelimitRemaining(),
+                status.getHeaders().getXRatelimitRequestsLimit(),
+                status.getHeaders().getXRatelimitRequestsRemaining(),
+                status.getResponse().getSubscription().isActive()
+        );
+        return apiStatus;
+    }
 
     /**
      * 리그 아이디로 리그 정보를 캐싱합니다. 직접 리그 아이디를 외부 API 에서 찾아와야 합니다.

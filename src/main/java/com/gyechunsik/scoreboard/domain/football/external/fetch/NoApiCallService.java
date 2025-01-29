@@ -11,6 +11,12 @@ import org.springframework.stereotype.Service;
 public class NoApiCallService implements ApiCallService{
 
     @Override
+    public ExternalApiStatusResponse status() {
+        log.info("No API Call Service. method : status");
+        return null;
+    }
+
+    @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
         log.info("No API Call Service. method : leagueInfo");
         return null;

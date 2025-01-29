@@ -19,6 +19,11 @@ public class MockApiCallServiceImpl
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
+    public ExternalApiStatusResponse status() {
+        return null;
+    }
+
+    @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
         String resourcePath = resolvePathOfLeagueInfo(leagueId);
         String rawString = readFile(resourcePath);

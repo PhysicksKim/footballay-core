@@ -3,10 +3,8 @@ package com.gyechunsik.scoreboard.domain.football.external.fetch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import okhttp3.*;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -23,6 +21,31 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Value("${rapidapi.football.key}")
     private String key;
+
+    @Override
+    public ExternalApiStatusResponse status() {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/status")
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            Headers headers = response.headers();
+
+            if (responseBody == null) {
+                throw new IllegalArgumentException("Api Status body is null");
+            }
+            return mapToStatusResponse(responseBody, headers);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: api status ", exception);
+            throw new RuntimeException("Api-Football call error :: api status", exception);
+        }
+    }
 
     @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
@@ -314,4 +337,24 @@ public class ApiCallServiceImpl implements ApiCallService {
             }
         }
     }
+
+    private @NotNull ExternalApiStatusResponse mapToStatusResponse(ResponseBody responseBody, Headers headers) throws IOException {
+        ExternalApiStatusResponse mappedResponse = objectMapper.readValue(responseBody.string(), ExternalApiStatusResponse.class);
+        ExternalApiStatusResponse._Headers mappedHeaders = new ExternalApiStatusResponse._Headers();
+        mappedHeaders.setXRatelimitLimit(parseIntOrMinusOne(headers.get("X-Ratelimit-Limit")));
+        mappedHeaders.setXRatelimitRemaining(parseIntOrMinusOne(headers.get("X-Ratelimit-Remaining")));
+        mappedHeaders.setXRatelimitRequestsLimit(parseIntOrMinusOne(headers.get("X-Ratelimit-Requests-Limit")));
+        mappedHeaders.setXRatelimitRequestsRemaining(parseIntOrMinusOne(headers.get("X-Ratelimit-Requests-Remaining")));
+        mappedResponse.setHeaders(mappedHeaders);
+        return mappedResponse;
+    }
+
+    private int parseIntOrMinusOne(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
 }

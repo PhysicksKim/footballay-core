@@ -4,6 +4,8 @@ import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 
 public interface ApiCallService {
 
+    ExternalApiStatusResponse status();
+
     LeagueInfoResponse leagueInfo(long leagueId);
 
     LeagueInfoResponse teamCurrentLeaguesInfo(long teamId);
