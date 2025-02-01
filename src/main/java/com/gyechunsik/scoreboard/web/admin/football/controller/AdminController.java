@@ -1,19 +1,20 @@
-package com.gyechunsik.scoreboard.web.admin;
+package com.gyechunsik.scoreboard.web.admin.football.controller;
 
 import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
+import com.gyechunsik.scoreboard.web.admin.football.service.AdminPageAwsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.UnsupportedEncodingException;
@@ -21,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final AdminPageAwsService adminPageAwsService;
@@ -31,7 +33,6 @@ public class AdminController {
     private String activeProfile;
 
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> adminIndexPage(Authentication authentication, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
         boolean isDev = activeProfile.contains("dev");
         boolean hasCloudfrontSignedCookie = adminPageAwsService.hasSignedCookies(request);
