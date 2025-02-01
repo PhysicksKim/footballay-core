@@ -186,7 +186,7 @@ public class FootballStreamWebService {
             FixtureLineupResponse response = FootballStreamDtoMapper.toFixtureLineupResponse(fixture);
 
             if (StringUtils.hasText(preferenceKey) && response.lineup() != null) {
-                log.info("getFixtureLineup. preferenceKey={}", preferenceKey);
+                log.info("lineup with Custom photo. preference key : {}", preferenceKey);
                 Assert.notNull(response.lineup().away(), "away lineup is null");
                 Assert.notNull(response.lineup().away(), "away lineup is null");
 
@@ -201,10 +201,7 @@ public class FootballStreamWebService {
                 Set<Long> playerIds = Stream.concat(startPlayerIds.stream(), substitutePlayerIds.stream()).collect(Collectors.toSet());
 
                 Map<Long, String> photoMap = footballPreferenceService.getCustomPhotoUrlsOfPlayers(preferenceKey, playerIds);
-                log.info("custom photo map for preferenceKey={}, \n {}", preferenceKey, photoMap.entrySet().stream()
-                        .map(entry -> entry.getKey() + ":" + entry.getValue())
-                        .collect(Collectors.joining(", "))
-                );
+
                 response = FootballStreamDtoMapper.copyWithCustomPhotos(response, photoMap);
             }
             return apiCommonResponseService.createSuccessResponse(new FixtureLineupResponse[]{response}, requestUrl, params);

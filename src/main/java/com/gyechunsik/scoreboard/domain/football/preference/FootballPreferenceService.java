@@ -118,8 +118,6 @@ public class FootballPreferenceService {
     public Map<Long, String> getCustomPhotoUrlsOfPlayers(String keyHash, Set<Long> playerIds) {
         Map<Long, PlayerCustomPhotoDto> photoMap =
                 playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
-        log.info("getCustomPhotoUrlsOfPlayers. keyHash={}, playerIds={}, photoMap={}", keyHash, playerIds, photoMap.entrySet()
-                .stream().map(e -> e.getKey() + "=" + e.getValue().getPhotoUrl()).collect(Collectors.joining(" , ")));
         return extractPhotoUrlMap(photoMap);
     }
 

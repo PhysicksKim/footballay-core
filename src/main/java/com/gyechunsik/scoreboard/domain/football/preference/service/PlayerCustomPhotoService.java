@@ -83,21 +83,11 @@ public class PlayerCustomPhotoService {
      */
     @Transactional
     public Map<Long, PlayerCustomPhotoDto> getActiveCustomPhotos(String keyHash, Set<Long> playerIds) {
-        log.info("getActiveCustomPhotos keyHash={}, playerIds={}", keyHash, playerIds);
         PreferenceKey key = getKey(keyHash);
-        log.info("get key [hash={},id={}]", key.getKeyhash(),key.getId());
         List<PlayerCustomPhoto> photos = playerCustomPhotoRepository.findAllActivesByPreferenceKeyAndPlayers(
                 key.getId(), playerIds);
-        log.info("found photos {}", photos.stream()
-                .map(PlayerCustomPhoto::getPhotoUrl)
-                .collect(Collectors.toList())
-        );
 
         photos = ensureSingleActivePhotosWithList(key, photos);
-        log.info("ensureSingleActivePhotosWithList photos {}", photos.stream()
-                .map(PlayerCustomPhoto::getPhotoUrl)
-                .collect(Collectors.toList())
-        );
 
         return toMapUserIdAndPhotoDto(photos);
     }

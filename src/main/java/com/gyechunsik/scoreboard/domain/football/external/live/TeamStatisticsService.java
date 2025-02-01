@@ -112,6 +112,12 @@ public class TeamStatisticsService {
         teamStatisticsRepository.save(awayStatistics);
     }
 
+    public void removeTeamStatistics(long fixtureId) {
+        Fixture fixture = fixtureRepository.findById(fixtureId)
+                .orElseThrow(() -> new IllegalArgumentException("Fixture not found"));
+        teamStatisticsRepository.deleteByFixture(fixture);
+    }
+
     private void addOrUpdateXgToList(String xgValue, Integer elapsed, TeamStatistics teamStatistics) {
         if (xgValue == null) {
             log.info("Expected goals data not found for team : {} {}", teamStatistics.getTeam().getId(), teamStatistics.getTeam().getName());

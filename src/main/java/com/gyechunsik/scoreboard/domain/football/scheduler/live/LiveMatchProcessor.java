@@ -126,10 +126,16 @@ public class LiveMatchProcessor implements LiveMatchTask {
             teamStatisticsService.saveTeamStatistics(response);
         } catch (Exception e) {
             log.error("Unexpected error while saving TeamStatistics :: FixtureId={}", fixtureId, e);
+            log.info("Try to remove Previous Saved TeamStatistics Entities :: FixtureId={}", fixtureId);
+            teamStatisticsService.removeTeamStatistics(fixtureId);
+            log.info("Resave team statistics because of unexpected error :: FixtureId={}", fixtureId);
+            teamStatisticsService.saveTeamStatistics(response);
+            log.info("successfully resolved and resaved team statistics from unexpected error :: FixtureId={}", fixtureId);
         }
         try {
             log.info("fixtureId={} has live fixture data. caching player statistics will be started", fixtureId);
             playerStatisticsService.savePlayerStatistics(response);
+            log.info("success to save player statistics :: FixtureId={}", fixtureId);
         } catch (Exception e) {
             log.error("Unexpected error while saving PlayerStatistics :: FixtureId={}", fixtureId, e);
         }

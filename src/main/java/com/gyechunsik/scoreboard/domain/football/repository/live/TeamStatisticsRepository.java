@@ -21,4 +21,6 @@ public interface TeamStatisticsRepository extends JpaRepository<TeamStatistics, 
      */
     @EntityGraph(attributePaths = {"fixture", "team", "expectedGoalsList"})
     Optional<TeamStatistics> findByFixtureAndTeam(Fixture fixture, Team homeTeam);
+
+    void deleteByFixture(Fixture fixture);
 }
