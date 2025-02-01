@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Football Domain 에서 Preference <b>도메인 진입점</b>입니다. <br>
@@ -117,6 +118,8 @@ public class FootballPreferenceService {
     public Map<Long, String> getCustomPhotoUrlsOfPlayers(String keyHash, Set<Long> playerIds) {
         Map<Long, PlayerCustomPhotoDto> photoMap =
                 playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
+        log.info("getCustomPhotoUrlsOfPlayers. keyHash={}, playerIds={}, photoMap={}", keyHash, playerIds, photoMap.entrySet()
+                .stream().map(e -> e.getKey() + "=" + e.getValue().getPhotoUrl()).collect(Collectors.joining(" , ")));
         return extractPhotoUrlMap(photoMap);
     }
 

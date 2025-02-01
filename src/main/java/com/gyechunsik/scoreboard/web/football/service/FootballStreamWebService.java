@@ -117,7 +117,7 @@ public class FootballStreamWebService {
      * 해당 경기의 정보를 조회합니다.
      *
      * @param requestUrl 요청 URL
-     * @param fixtureId 경기 ID
+     * @param fixtureId  경기 ID
      * @return 경기 정보 응답
      */
     public ApiResponse<FixtureInfoResponse> getFixtureInfo(String requestUrl, long fixtureId) {
@@ -175,7 +175,7 @@ public class FootballStreamWebService {
     public ApiResponse<FixtureLineupResponse> getFixtureLineup(String requestUrl, @Nullable String preferenceKey, long fixtureId) {
         Map<String, String> params = new HashMap<>();
         params.put("fixtureId", String.valueOf(fixtureId));
-        if(preferenceKey != null) {
+        if (preferenceKey != null) {
             params.put("preferenceKey", preferenceKey);
         }
         log.info("getFixtureLineup. params={}", params);
@@ -185,16 +185,26 @@ public class FootballStreamWebService {
                     .orElseThrow(() -> new IllegalArgumentException("라인업 응답이 비어있습니다. fixtureId=" + fixtureId));
             FixtureLineupResponse response = FootballStreamDtoMapper.toFixtureLineupResponse(fixture);
 
-            if(StringUtils.hasText(preferenceKey) && response.lineup() != null) {
+            if (StringUtils.hasText(preferenceKey) && response.lineup() != null) {
+                log.info("getFixtureLineup. preferenceKey={}", preferenceKey);
                 Assert.notNull(response.lineup().away(), "away lineup is null");
                 Assert.notNull(response.lineup().away(), "away lineup is null");
 
-                Set<Long> playerIds = Stream.concat(
+                Set<Long> startPlayerIds = Stream.concat(
                         response.lineup().home().players().stream().map(FixtureLineupResponse._LineupPlayer::id),
                         response.lineup().away().players().stream().map(FixtureLineupResponse._LineupPlayer::id)
                 ).collect(Collectors.toSet());
+                Set<Long> substitutePlayerIds = Stream.concat(
+                        response.lineup().home().substitutes().stream().map(FixtureLineupResponse._LineupPlayer::id),
+                        response.lineup().away().substitutes().stream().map(FixtureLineupResponse._LineupPlayer::id)
+                ).collect(Collectors.toSet());
+                Set<Long> playerIds = Stream.concat(startPlayerIds.stream(), substitutePlayerIds.stream()).collect(Collectors.toSet());
 
                 Map<Long, String> photoMap = footballPreferenceService.getCustomPhotoUrlsOfPlayers(preferenceKey, playerIds);
+                log.info("custom photo map for preferenceKey={}, \n {}", preferenceKey, photoMap.entrySet().stream()
+                        .map(entry -> entry.getKey() + ":" + entry.getValue())
+                        .collect(Collectors.joining(", "))
+                );
                 response = FootballStreamDtoMapper.copyWithCustomPhotos(response, photoMap);
             }
             return apiCommonResponseService.createSuccessResponse(new FixtureLineupResponse[]{response}, requestUrl, params);

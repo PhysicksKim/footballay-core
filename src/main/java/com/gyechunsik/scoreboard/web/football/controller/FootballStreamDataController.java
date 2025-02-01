@@ -140,7 +140,6 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getFixtureEvents(requestUrl, fixtureId));
     }
 
-    // TODO : prefkey 추가
     @GetMapping("/fixtures/lineup")
     public ResponseEntity<ApiResponse<FixtureLineupResponse>> fixturesLineup(
             @RequestParam long fixtureId,
