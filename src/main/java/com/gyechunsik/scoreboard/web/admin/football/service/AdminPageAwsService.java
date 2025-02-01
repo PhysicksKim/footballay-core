@@ -1,4 +1,4 @@
-package com.gyechunsik.scoreboard.web.admin;
+package com.gyechunsik.scoreboard.web.admin.football.service;
 
 import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
 import jakarta.servlet.http.Cookie;
@@ -21,9 +21,6 @@ import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Key;
-import java.security.KeyStore;
-import java.security.PrivateKey;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
@@ -50,7 +47,7 @@ public class AdminPageAwsService {
 
     private final String ADMIN_INDEX_PATH = "/index.html";
     private final String ADMIN_RESOURCE_PATH = "/chuncity/admin";
-    private final int COOKIE_MAX_AGE_SEC = 3600;
+    private final int COOKIE_MAX_AGE_SEC = 2 * 3600 ;
     private final int STATIC_FILE_EXPIRATION_SEC = 60;
 
     private final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
