@@ -23,7 +23,7 @@ public class ScoreBoardController {
     public ResponseEntity<String> scoreboardIndexPage() {
         String path = "https://static."+envVar.getMainDomain()+"/scoreboard/index.html";
         String html = restTemplate.getForObject(path, String.class);
-        log.info("test/template called");
+        log.info("football scoreboard page called");
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_HTML)
                 .body(html);
