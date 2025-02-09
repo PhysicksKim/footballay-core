@@ -1,6 +1,6 @@
 aws:
   cloudfront:
-    domain: "https://static.gyechunsik.site"
+    domain: "https://static.gyechunhoe.com"
     keyPairId: "MOCKKEYPAIRID"
     privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
     publicKeyPath: classpath:MOCKPATHTHISISNOTREAL

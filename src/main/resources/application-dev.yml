@@ -91,7 +91,7 @@ server:
 
 # 개발 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "http://localhost:8080,http://localhost:1212,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechunsik.site, https://gyechunsik.site"
+  allowedorigins: "http://localhost:8080,http://localhost:1212,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechunsik.site,https://gyechunsik.site,https://gyechunhoe.com,https://static.gyechunhoe.com"
 
 logging:
   level:
