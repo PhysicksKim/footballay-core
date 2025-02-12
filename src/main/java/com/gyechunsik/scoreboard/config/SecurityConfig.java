@@ -68,7 +68,8 @@ public class SecurityConfig {
                 .formLogin(form -> form.permitAll()
                         .failureUrl("/login?error")
                         .successHandler(authenticationSuccessHandler)
-                        .failureHandler(authenticationFailureHandler))
+                        // .failureHandler(authenticationFailureHandler)
+                )
                 .anonymous(Customizer.withDefaults())
                 .logout(configure ->
                         configure.logoutSuccessHandler(logoutSuccessHandler))
