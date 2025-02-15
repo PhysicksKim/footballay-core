@@ -270,6 +270,30 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    // standings?league=39&season=2024
+    @Override
+    public StandingsResponse standings(long leagueId, int season) {
+        Request request = new Request.Builder()
+                .url("https://v3.football.api-sports.io/standings?league=" + leagueId + "&season=" + season)
+                .get()
+                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
+                .addHeader("X-RapidAPI-Key", key)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful())
+                throw new IllegalArgumentException("response fail : " + response);
+            ResponseBody responseBody = response.body();
+            if (responseBody == null) {
+                throw new IllegalArgumentException("standings body is null for leagueId=" + leagueId +",season=" + season);
+            }
+            return objectMapper.readValue(responseBody.string(), StandingsResponse.class);
+        } catch (IOException exception) {
+            log.error("Api-Football call error :: leagueId={} ", leagueId, exception);
+            throw new RuntimeException("Api-Football call error :: leagueId=" + leagueId, exception);
+        }
+    }
+
     // Helper method to update player ID in events
     private void updateEventPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {

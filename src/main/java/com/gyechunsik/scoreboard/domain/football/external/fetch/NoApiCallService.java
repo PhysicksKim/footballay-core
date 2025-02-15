@@ -69,4 +69,10 @@ public class NoApiCallService implements ApiCallService{
         log.info("No API Call Service. method : playerSingle");
         return null;
     }
+
+    @Override
+    public StandingsResponse standings(long leagueId, int season) {
+        log.info("No API Call Service. method : standings");
+        return null;
+    }
 }

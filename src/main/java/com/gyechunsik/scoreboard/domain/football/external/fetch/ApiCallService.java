@@ -23,4 +23,6 @@ public interface ApiCallService {
     FixtureSingleResponse fixtureSingle(long fixtureId);
 
     PlayerInfoResponse playerSingle(long playerId, long leagueId, int season);
+
+    StandingsResponse standings(long leagueId, int season);
 }

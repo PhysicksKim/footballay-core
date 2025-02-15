@@ -176,4 +176,22 @@ class ApiCallServiceImplTest {
         // then
         assertThat(playerSingle).isNotNull();
     }
+
+    @DisplayName("실제 API : 리그 id, 시즌으로 리그 순위 정보를 가져옵니다")
+    @Test
+    void success_standings() throws JsonProcessingException {
+        // given
+        long epl = LeagueId.EPL;
+        int season = 2024;
+
+        // when
+        StandingsResponse standings = apiCallService.standings(epl, season);
+        log.info("standings response : {}", objectMapper
+                .writerWithDefaultPrettyPrinter()
+                .writeValueAsString(standings)
+        );
+
+        // then
+        assertThat(standings).isNotNull();
+    }
 }
