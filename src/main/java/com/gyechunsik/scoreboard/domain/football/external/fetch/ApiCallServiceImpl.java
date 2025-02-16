@@ -184,8 +184,6 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // example request
-    // _FixtureSingle | GET : https://v3.football.api-sports.io/fixtures?league=4&season=2024
     @Override
     public FixtureResponse fixturesOfLeagueSeason(long leagueId, int season) {
         Request request = new Request.Builder()
@@ -246,7 +244,6 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // Response | GET : https://v3.football.api-sports.io/players?id=629&league=39&season=2024
     @Override
     public PlayerInfoResponse playerSingle(long playerId, long leagueId, int season) {
         Request request = new Request.Builder()
@@ -270,7 +267,6 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // standings?league=39&season=2024
     @Override
     public StandingsResponse standings(long leagueId, int season) {
         Request request = new Request.Builder()
@@ -294,7 +290,9 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // Helper method to update player ID in events
+    /**
+     * Helper method to update player ID in events
+     */
     private void updateEventPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
@@ -314,7 +312,9 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // Helper method to update player ID in lineups
+    /**
+     * Helper method to update player ID in lineups
+     */
     private void updateLineupPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
@@ -342,7 +342,9 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // Helper method to update player ID in playerStatistics
+    /**
+     * Helper method to update player ID in playerStatistics
+     */
     private void updatePlayerStatisticsIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
