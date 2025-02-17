@@ -119,7 +119,7 @@ class ApiCallServiceImplTest {
         assertThat(playerSquadResponse.getGet()).isEqualTo("players/squads");
     }
 
-    @DisplayName("실제 API : teamId 로 해당 팀이 현재 참여중인 _League 정보들을 가져옵니다")
+    @DisplayName("실제 API : teamId 로 해당 팀이 현재 참여중인 _StandingResponseData 정보들을 가져옵니다")
     @Test
     void success_currentTeamLeaguesInfo() throws JsonProcessingException {
         // given
@@ -186,7 +186,7 @@ class ApiCallServiceImplTest {
 
         // when
         StandingsResponse standings = apiCallService.standings(epl, season);
-        log.info("standings response : {}", objectMapper
+        log.info("standing response : {}", objectMapper
                 .writerWithDefaultPrettyPrinter()
                 .writeValueAsString(standings)
         );

@@ -84,9 +84,9 @@ class LastCacheLogRepositoryTest {
         List<LastCacheLog> findAll = repository.findAll();
 
         // then
-        log.info("Cache _League :: {}", leagueCache);
+        log.info("Cache _StandingResponseData :: {}", leagueCache);
         log.info("Cache _Team :: {}", teamCache);
-        log.info("Find _League :: {}", leagueFind);
+        log.info("Find _StandingResponseData :: {}", leagueFind);
         log.info("Find _Team :: {}", teamFind);
 
         assertThat(savedLastCacheLog).hasSize(2);

@@ -1,9 +1,13 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
+    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=50
     driver-class-name: org.h2.Driver
     username: sa
     password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
 
   security:
     user:
@@ -25,6 +29,9 @@ spring:
             driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
             tablePrefix: QRTZ_
             isClustered: false
+            acquireTriggersWithinLock: false
+            lockHandler:
+                class: org.quartz.impl.jdbcjobstore.StdRowLockSemaphore
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5
@@ -55,11 +62,13 @@ server:
 
 # 개발 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "http://localhost:8080,https://localhost:8080"
+  allowedorigins: "http://localhost:8080,https://localhost:8080,http://localhost:8083,https://localhost:8083"
 
 logging:
   level:
     root: info
+    org:
+      testcontainers: debug
 
 # -dev 환경에서만 사용할 설정
 custom:

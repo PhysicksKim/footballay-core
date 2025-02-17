@@ -117,7 +117,7 @@ public class MockApiCallServiceImpl
         return null;
     }
 
-    // TODO : MOCK standings() api 요청 구현필요
+    // TODO : MOCK standing() api 요청 구현필요
     @Override
     public StandingsResponse standings(long leagueId, int season) {
         return null;

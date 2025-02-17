@@ -111,7 +111,7 @@ class FootballRootTest {
 
         // then
         List<LeagueTeam> all = leagueTeamRepository.findAll();
-        log.info("All _League _Team Relations : _League={}, teams=[{}]",
+        log.info("All _StandingResponseData _Team Relations : _StandingResponseData={}, teams=[{}]",
                 all.get(0).getLeague().getName(),
                 all.stream().map(lt -> lt.getTeam().getName()).toList());
 

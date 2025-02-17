@@ -3,22 +3,28 @@ package com.gyechunsik.scoreboard.domain.football.persistence.standings;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.time.LocalDateTime;
+import lombok.*;
 
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 @Entity
-@Table(name = "standing_entries")
-public class StandingEntry extends BaseDateAuditEntity {
+@Table(name = "standing_team")
+public class StandingTeam extends BaseDateAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "standing_id", nullable = false)
+    private Standing standing;
 
     private int rank;
 
@@ -30,6 +36,12 @@ public class StandingEntry extends BaseDateAuditEntity {
     @Column(name = "group_name")
     private String groupName;
 
+    /**
+     * Form 은 최근 5경기의 승무패를 보여주며, 시즌 초 5경기 미만인 경우 어떻게 표시될지 테스트가 필요합니다. <br>
+     * ex. "WDWLD" (최근 W) <br>
+     * W: Win, D: Draw, L: Lose <br>
+     * index 작을수록 최신 경기 (index 0: 최신 경기)
+     */
     private String form;
 
     private String description;
@@ -45,7 +57,7 @@ public class StandingEntry extends BaseDateAuditEntity {
             @AttributeOverride(name = "goalsFor", column = @Column(name = "all_goals_for")),
             @AttributeOverride(name = "goalsAgainst", column = @Column(name = "all_goals_against"))
     })
-    private MatchStats allStats;
+    private StandingStats allStats;
 
     @Embedded
     @AttributeOverrides({
@@ -56,7 +68,7 @@ public class StandingEntry extends BaseDateAuditEntity {
             @AttributeOverride(name = "goalsFor", column = @Column(name = "home_goals_for")),
             @AttributeOverride(name = "goalsAgainst", column = @Column(name = "home_goals_against"))
     })
-    private MatchStats homeStats;
+    private StandingStats homeStats;
 
     @Embedded
     @AttributeOverrides({
@@ -67,14 +79,6 @@ public class StandingEntry extends BaseDateAuditEntity {
             @AttributeOverride(name = "goalsFor", column = @Column(name = "away_goals_for")),
             @AttributeOverride(name = "goalsAgainst", column = @Column(name = "away_goals_against"))
     })
-    private MatchStats awayStats;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "team_id", nullable = false)
-    private Team team;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "standings_id", nullable = false)
-    private Standings standings;
+    private StandingStats awayStats;
 
 }

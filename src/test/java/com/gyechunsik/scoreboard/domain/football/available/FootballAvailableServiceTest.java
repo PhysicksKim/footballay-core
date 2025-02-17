@@ -36,7 +36,7 @@ class FootballAvailableServiceTest {
     void AddFavoriteLeague() {
         // given
         final Long leagueId = 39L;
-        final String name = "Premier _League";
+        final String name = "Premier _StandingResponseData";
         final String koreanName = "프리미어리그";
         final String logo = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason = 2023;
@@ -74,7 +74,7 @@ class FootballAvailableServiceTest {
     void findFavoriteLeagues() {
         // given
         final Long leagueId1 = 39L;
-        final String name1 = "Premier _League";
+        final String name1 = "Premier _StandingResponseData";
         final String koreanName1 = "프리미어리그";
         final String logo1 = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason1 = 2023;
@@ -136,7 +136,7 @@ class FootballAvailableServiceTest {
     void RemoveFavoriteLeague() {
         // given
         final Long leagueId = 39L;
-        final String name = "Premier _League";
+        final String name = "Premier _StandingResponseData";
         final String koreanName = "프리미어리그";
         final String logo = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason = 2023;

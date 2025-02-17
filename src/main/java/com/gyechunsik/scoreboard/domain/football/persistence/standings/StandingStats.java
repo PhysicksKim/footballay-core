@@ -1,9 +1,15 @@
 package com.gyechunsik.scoreboard.domain.football.persistence.standings;
 
 import jakarta.persistence.*;
+import lombok.*;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Embeddable
-public class MatchStats {
+public class StandingStats {
 
     private int played;
 

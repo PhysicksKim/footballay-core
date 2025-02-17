@@ -8,5 +8,4 @@ public record LeagueDto(
     boolean available,
     Integer currentSeason
 ) {
-
 }

@@ -112,7 +112,7 @@ public class FootballRoot {
         try {
             footballAvailableService.updateAvailableLeague(leagueId, false);
         } catch (Exception e) {
-            log.error("error while removing Available _League :: {}", e.getMessage());
+            log.error("error while removing Available _StandingResponseData :: {}", e.getMessage());
             return false;
         }
         return true;

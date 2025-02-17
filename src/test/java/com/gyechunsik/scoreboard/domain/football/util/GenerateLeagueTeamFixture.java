@@ -13,9 +13,9 @@ import java.util.List;
 
 public class GenerateLeagueTeamFixture {
 
-    // _League
+    // _StandingResponseData
     public static final Long leagueId = 39L;
-    public static final String name = "Premier _League";
+    public static final String name = "Premier _StandingResponseData";
     public static final String koreanName = "프리미어리그";
     public static final String logo = "https://media.api-sports.io/football/leagues/39.png";
     public static final Integer currentSeason = 2023;

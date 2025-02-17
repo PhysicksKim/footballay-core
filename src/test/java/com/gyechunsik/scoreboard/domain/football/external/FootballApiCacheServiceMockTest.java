@@ -2,13 +2,16 @@ package com.gyechunsik.scoreboard.domain.football.external;
 
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.PlayerSquadResponse;
+import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,20 +40,19 @@ class FootballApiCacheServiceMockTest {
     @Autowired
     private FootballApiCacheService footballApiCacheService;
 
+    @MockBean
+    private ApiCallService apiCallService;
+
     @Autowired
     private TeamRepository teamRepository;
     @Autowired
     private PlayerRepository playerRepository;
-
+    @Autowired
+    private TeamPlayerRepository teamPlayerRepository;
     @Autowired
     private EntityManager em;
 
-    @MockBean
-    private ApiCallService apiCallService;
-
     private Team team;
-    @Autowired
-    private TeamPlayerRepository teamPlayerRepository;
 
     @BeforeEach
     public void setup() {
@@ -216,5 +218,6 @@ class FootballApiCacheServiceMockTest {
 
         return mockResponse;
     }
+
 
 }

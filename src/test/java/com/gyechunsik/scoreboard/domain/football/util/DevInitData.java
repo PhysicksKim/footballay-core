@@ -16,7 +16,7 @@ public class DevInitData {
     private final FootballRoot footballRoot;
 
     public void addData() {
-        // Save [ _League, _Team, _Player, _Fixture ] of Euro 2024
+        // Save [ _StandingResponseData, _Team, _Player, _Fixture ] of Euro 2024
         cacheLeagueTeamPlayerFixtureOfEuro2024();
 
         // Save [ AvailableLeague, AvailableFixture ] of Euro 2024

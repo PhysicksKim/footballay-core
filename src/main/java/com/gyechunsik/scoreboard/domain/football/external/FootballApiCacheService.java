@@ -12,6 +12,9 @@ import com.gyechunsik.scoreboard.domain.football.persistence.apicache.ApiCacheTy
 import com.gyechunsik.scoreboard.domain.football.persistence.live.LiveStatus;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.TeamPlayer;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.StandingTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.StandingStats;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.Standing;
 import com.gyechunsik.scoreboard.domain.football.repository.FixtureRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.PlayerRepository;
@@ -19,6 +22,7 @@ import com.gyechunsik.scoreboard.domain.football.repository.TeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.LiveStatusRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.LeagueTeamRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
+import com.gyechunsik.scoreboard.domain.football.repository.standings.StandingsRepository;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +43,8 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse._TeamInfo;
 import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.TeamInfoResponse._TeamResponse;
 
+
+// TODO : @Transactional 은 DB Connection 을 점유하므로 ApiCallService 와 분리해야 합니다. ApiCallService 는 http request 로 인해 길게 1초이상 시간이 걸리므로 db connection 을 불필요하게 점유하는 문제가 발생합니다.
 /**
  * <h3>개발 주의 사항</h3>
  * <pre>
@@ -53,11 +59,11 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
  # 캐싱시 3가지 케이스를 나눠서 처리해야 합니다
  새로 캐싱, 이미 캐싱, 연관관계 끊어짐 처리 3가지 케이스가 있습니다.
  예를 들어 _Team 이 UEFA league 에 속했다가 다음 시즌에 UEFA 에 속하지 않는 경우 연관관계를 끊어줘야 한다.
- Cache _Teams Of _League 메서드에서는 리그에 속한 팀들을 캐싱한다. 이 때 3가지 경우로 나뉠 수 있다.
+ Cache _Teams Of _StandingResponseData 메서드에서는 리그에 속한 팀들을 캐싱한다. 이 때 3가지 경우로 나뉠 수 있다.
  1. api 있고 db 있음 : 해당 team 에 대한 leagueTeam 생성 스킵
  2. api 있고 db 없음 : 새롭게 leagueTeam 생성하여 db에 값을 넣음
  3. api 없고 db 있음 : 해당 leagueTeam 삭제
- 따라서 _League 또는 _Team 을 캐싱하는 경우,
+ 따라서 _StandingResponseData 또는 _Team 을 캐싱하는 경우,
  LeagueTeam 에서 leagueId 일치하는 모든 항목을, TeamPlayer 에서 teamId 일치하는 모든 항목을 찾아서
  3가지 경우를 나눠서 처리해 줘야 한다.
 */
@@ -77,6 +83,7 @@ public class FootballApiCacheService {
     private final FixtureRepository fixtureRepository;
     private final TeamPlayerRepository teamPlayerRepository;
     private final LiveStatusRepository liveStatusRepository;
+    private final StandingsRepository standingsRepository;
 
     public ApiStatus status() {
         ExternalApiStatusResponse status = apiCallService.status();
@@ -272,6 +279,8 @@ public class FootballApiCacheService {
     }
 
     /**
+     * 팀에 속한 선수들을 저장합니다. <br>
+     * 선수들은 아래 케이스에 따라서 새롭게 선수를 저장해야 하거나 팀-선수 연관관계를 업데이트 해야 할 수 있습니다. <br>
      * <h1>Cases</h1>
      * <pre>
      * 1. api 있고 db 있음 : db 에서 api 와 일치하지 않는 값을 업데이트
@@ -282,7 +291,7 @@ public class FootballApiCacheService {
     public List<Player> cacheTeamSquad(long teamId) {
         log.info("cache team squad : {}", teamId);
         Optional<Team> findTeam = teamRepository.findById(teamId);
-        Team optionalTeam = null;
+        Team optionalTeam;
         if (findTeam.isEmpty()) {
             log.info("new team squad cache called! id : {}", teamId);
             optionalTeam = cacheSingleTeam(teamId);
@@ -448,6 +457,78 @@ public class FootballApiCacheService {
         return savedPlayer;
     }
 
+    /**
+     * 리그 순위를 캐싱합니다. <br>
+     * Football-API 에서 응답의 구조는 모든 리그에서 동일하지만, {@link StandingTeam} 의 각 필드 값에 따라 다른 처리를 해야합니다. <br>
+     * 리그별 다른 세부 응답 책임은 캐싱 단계가 아닌 Standing 처리를 담당하는 서비스 도메인이 담당해야 합니다. <br>
+     * @param leagueId
+     * @return
+     */
+    public Standing cacheStandings(long leagueId) {
+        League league = leagueRepository.findById(leagueId)
+                .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다. leagueId="+leagueId));
+        StandingsResponse apiResponse = apiCallService.standings(leagueId, league.getCurrentSeason());
+        var standingsResponse = apiResponse.getStandingData();
+        var standingList = standingsResponse.getStandings();
+        Set<Long> teamIds = extractTeamIds(standingList);
+        Map<Long, Team> teams = teamRepository.findAllById(teamIds).stream()
+                .collect(Collectors.toMap(Team::getId, Function.identity()));
+
+        Standing standingEntity = Standing.builder()
+                .league(league)
+                .season(standingsResponse.getSeason())
+                .build();
+
+        for(var standing : standingList) {
+            Team team = teams.get(standing.getTeam().getId());
+            if(team == null) {
+                log.warn("team not found in db while saving standing. skip this team to save standing. teamId : {}", standing.getTeam().getId());
+                continue;
+            }
+            StandingTeam entry = createStandingTeam(standing, team, league);
+            standingEntity.addStandingTeam(entry);
+        }
+
+        return standingsRepository.save(standingEntity);
+    }
+
+    private StandingTeam createStandingTeam(StandingsResponse._Standing standing, Team team, League league) {
+        StandingStats all = createStandingStats(standing.getAll());
+        StandingStats home = createStandingStats(standing.getHome());
+        StandingStats away = createStandingStats(standing.getAway());
+
+        return StandingTeam.builder()
+                .team(team)
+                .rank(standing.getRank())
+                .points(standing.getPoints())
+                .goalsDiff(standing.getGoalsDiff())
+                .groupName(standing.getGroup())
+                .form(standing.getForm())
+                .status(standing.getStatus())
+                .description(standing.getDescription())
+                .allStats(all)
+                .homeStats(home)
+                .awayStats(away)
+                .build();
+    }
+
+    private static Set<Long> extractTeamIds(List<StandingsResponse._Standing> standingList) {
+        return standingList.stream()
+                .map(standing -> standing.getTeam().getId())
+                .collect(Collectors.toSet());
+    }
+
+    private StandingStats createStandingStats(StandingsResponse._WinDrawLose winDrawLose) {
+        return StandingStats.builder()
+                .played(winDrawLose.getPlayed())
+                .win(winDrawLose.getWin())
+                .draw(winDrawLose.getDraw())
+                .lose(winDrawLose.getLose())
+                .goalsFor(winDrawLose.getGoals().getForGoals())
+                .goalsAgainst(winDrawLose.getGoals().getAgainst())
+                .build();
+    }
+
     private static League toLeagueEntity(_Response leagueResponse) {
         _LeagueResponse leagueInfo = leagueResponse.getLeague();
         int currentSeason = extractCurrentSeason(leagueResponse);
@@ -550,7 +631,7 @@ public class FootballApiCacheService {
                         response.getTeams().getAway().getName())
         );
         League league = findLeague.orElseThrow(
-                () -> new IllegalStateException("_League not found : " +
+                () -> new IllegalStateException("_StandingResponseData not found : " +
                         response.getLeague().getId() +
                         " , league name : " +
                         response.getLeague().getName())

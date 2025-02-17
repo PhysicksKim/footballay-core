@@ -281,7 +281,7 @@ public class ApiCallServiceImpl implements ApiCallService {
                 throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
-                throw new IllegalArgumentException("standings body is null for leagueId=" + leagueId +",season=" + season);
+                throw new IllegalArgumentException("standing body is null for leagueId=" + leagueId +",season=" + season);
             }
             return objectMapper.readValue(responseBody.string(), StandingsResponse.class);
         } catch (IOException exception) {
