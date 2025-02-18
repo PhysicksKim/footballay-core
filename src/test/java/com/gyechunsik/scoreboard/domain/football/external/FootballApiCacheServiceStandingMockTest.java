@@ -40,13 +40,13 @@ public class FootballApiCacheServiceStandingMockTest {
     final int LEAGUE_CURRENT_SEASON = 2025;
     final long[] TEAM_IDS = new long[]{11,12,13};
 
+    static private final ObjectMapper objectMapper = new ObjectMapper();
+
     /**
      * jackson 이 기본적으로 Java 8 의 날짜/시간 API 를 지원하지 않기 때문에,
      * OffsetDateTime 을 write 시 에러가 발생합니다.
      * 따라서 JavaTimeModule 을 등록하고 WRITE_DATES_AS_TIMESTAMPS 를 비활성화해서 해결합니다.
      */
-    static private final ObjectMapper objectMapper = new ObjectMapper();
-
     static {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -78,7 +78,7 @@ public class FootballApiCacheServiceStandingMockTest {
         // when
         StandingsResponse response = apiCallService.standings(leagueId, season);
         log.info("Mock StandingsResponse: {}", objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.getStandingData()));
-        Standing savedStanding = footballApiCacheService.cacheStandings(league.getLeagueId());
+        Standing savedStanding = footballApiCacheService.cacheStandingOfLeague(league.getLeagueId());
 
         // then
         List<Standing> all = standingsRepository.findAll();

@@ -23,7 +23,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "players")
+@Table(name = "player")
 public class Player {
 
     /**

@@ -40,15 +40,6 @@ public class AdminFootballCacheRestController {
         }
     }
 
-    /**
-     * 1. 리그 : 단일 리그 - leagueId
-     * 2. 리그 : 모든 current 리그 - .
-     * 3. 팀 : 단일 팀 캐싱. 팀이 속한 모든 current league 캐싱 - teamId
-     * 4. 팀 : 리그에 속한 팀 - leagueId
-     * 5. 선수 : 팀의 선수단 캐싱 - teamId
-     * 6. 일정 : 리그의 일정 캐싱 - leagueId
-     */
-
     @PostMapping("/leagues")
     public ResponseEntity<ApiResponse<Void>> cacheLeague(@RequestBody LeagueIdRequest leagueIdRequest) {
         final String requestUrl = "/api/admin/football/cache/leagues";
@@ -65,6 +56,15 @@ public class AdminFootballCacheRestController {
         log.info("cache all current leagues");
         return ResponseEntity.ok().body(
                 adminFootballCacheWebService.cacheAllCurrentLeagues(requestUrl)
+        );
+    }
+
+    @PostMapping("/leagues/{leagueId}/standing")
+    public ResponseEntity<ApiResponse<Void>> cacheStandingOfLeague(@PathVariable Long leagueId) {
+        final String requestUrl = "/api/admin/football/cache/leagues/" + leagueId + "/standing";
+        log.info("cache league standing :: leagueId={}", leagueId);
+        return ResponseEntity.ok().body(
+                adminFootballCacheWebService.cacheStandingOfLeague(leagueId, requestUrl)
         );
     }
 

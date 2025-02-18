@@ -27,7 +27,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -69,7 +68,7 @@ import static com.gyechunsik.scoreboard.domain.football.external.fetch.response.
 */
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
+// @Transactional
 @Service
 public class FootballApiCacheService {
 
@@ -464,7 +463,7 @@ public class FootballApiCacheService {
      * @param leagueId
      * @return
      */
-    public Standing cacheStandings(long leagueId) {
+    public Standing cacheStandingOfLeague(long leagueId) {
         League league = leagueRepository.findById(leagueId)
                 .orElseThrow(() -> new RuntimeException("아직 캐싱되지 않은 league 입니다. leagueId="+leagueId));
         StandingsResponse apiResponse = apiCallService.standings(leagueId, league.getCurrentSeason());

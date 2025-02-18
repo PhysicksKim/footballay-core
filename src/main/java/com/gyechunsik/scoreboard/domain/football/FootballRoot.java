@@ -8,6 +8,7 @@ import com.gyechunsik.scoreboard.domain.football.persistence.League;
 import com.gyechunsik.scoreboard.domain.football.persistence.Player;
 import com.gyechunsik.scoreboard.domain.football.persistence.Team;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.Standing;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
@@ -106,13 +107,13 @@ public class FootballRoot {
     /**
      * 즐겨찾기 리그를 삭제합니다.
      * @param leagueId
-     * @return 존재하지 않는 경우 false 를 반환합니다.
+     * @return 존재하지 않거나 알 수 없는 에러가 발생한 경우 false 를 반환합니다.
      */
     public boolean removeAvailableLeague(long leagueId) {
         try {
             footballAvailableService.updateAvailableLeague(leagueId, false);
         } catch (Exception e) {
-            log.error("error while removing Available _StandingResponseData :: {}", e.getMessage());
+            log.error("error while update available league :: {}", e.getMessage());
             return false;
         }
         return true;
@@ -221,6 +222,19 @@ public class FootballRoot {
             log.info("cachedLeague :: {}", cachedLeague);
         } catch (Exception e) {
             log.error("error while caching League :: {}", e.getMessage());
+            return false;
+        }
+        return true;
+    }
+
+    public boolean cacheStandingOfLeague(long leagueId) {
+        try {
+            Standing standing = footballApiCacheService.cacheStandingOfLeague(leagueId);
+            log.info("cachedStandingOfLeague :: {}", leagueId);
+            log.info("cached standing :: {}",
+                    standing.getStandingTeams().stream().map(standingTeam -> standingTeam.getTeam().getName()).toList());
+        } catch (Exception e) {
+            log.error("error while caching Standing of League :: {}", e.getMessage());
             return false;
         }
         return true;

@@ -2,11 +2,9 @@ package com.gyechunsik.scoreboard.domain.football.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.Standing;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -18,7 +16,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "leagues")
+@Entity(name = "league")
 public class League extends BaseDateAuditEntity {
 
     @Id
@@ -35,6 +33,21 @@ public class League extends BaseDateAuditEntity {
 
     @Column(nullable = true)
     private Integer currentSeason;
+
+    /**
+     * 리그의 standings 를 가져올 수 있는지 여부입니다.
+     * 리그별로 standing 처리가 다를 수 있으므로 가능한 리그를 제한합니다.
+     * @see Standing
+     */
+    @Column(nullable = true)
+    private String standingAvailable;
+
+    /**
+     * 하나의 리그에는 season 별로 다양한 standing 이 존재할 수 있습니다.
+     */
+    @Column(nullable = true)
+    @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Standing> standing;
 
     @JsonIgnore
     @ToString.Exclude

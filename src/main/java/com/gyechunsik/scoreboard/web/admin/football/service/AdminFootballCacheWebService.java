@@ -110,6 +110,16 @@ public class AdminFootballCacheWebService {
         return apiCommonResponseService.createSuccessResponse(null, requestUrl);
     }
 
+    public ApiResponse<Void> cacheStandingOfLeague(long leagueId, String requestUrl) {
+        boolean isSuccess = footballRoot.cacheStandingOfLeague(leagueId);
+        if(!isSuccess) {
+            log.error("error while caching standing of league :: leagueId={}", leagueId);
+            return apiCommonResponseService.createFailureResponse("리그 순위 캐싱 실패", requestUrl);
+        }
+        log.info("api leagueId {} standing cached", leagueId);
+        return apiCommonResponseService.createSuccessResponse(null, requestUrl);
+    }
+
     /**
      * 선수 Prevent Unlink 설정 <br>
      * @see Player#getPreventUnlink()

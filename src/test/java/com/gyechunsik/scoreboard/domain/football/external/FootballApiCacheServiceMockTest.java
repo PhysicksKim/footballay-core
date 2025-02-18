@@ -94,7 +94,6 @@ class FootballApiCacheServiceMockTest {
         assertEquals("_Player One", updatedPlayer.getName());
     }
 
-
     @DisplayName("2. Api 응답에 존재 | DB 에 없음 | 새로운 선수 업데이트")
     @Test
     public void whenPlayerExistsInApiAndNotInDb_thenAddPlayerToDb() {
@@ -218,6 +217,5 @@ class FootballApiCacheServiceMockTest {
 
         return mockResponse;
     }
-
 
 }
