@@ -1,3 +1,4 @@
-# Score Board Backend
-
-축구 입중계 타이머용 백엔드 
+# Chuncity Backend  
+  
+축구 라이브 데이터 제공 앱 chuncity 의 백엔드 입니다.   
+  
