@@ -42,15 +42,6 @@ spring:
       port: 6379
       password: 1234
 
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
-#      timeout: 1000
-#      password:
-#      ssl:
-#        enabled: true
-
 server:
   port: 8083
   ssl:

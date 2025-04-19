@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.persistence;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.persistence.live.*;
+import com.gyechunsik.scoreboard.domain.football.persistence.standings.Standing;
 import com.gyechunsik.scoreboard.domain.football.service.FixtureJobManageService;
 import jakarta.persistence.*;
 import lombok.*;

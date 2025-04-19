@@ -7,6 +7,7 @@ import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,15 +40,16 @@ public class League extends BaseDateAuditEntity {
      * 리그별로 standing 처리가 다를 수 있으므로 가능한 리그를 제한합니다.
      * @see Standing
      */
+    @Builder.Default
     @Column(nullable = true)
-    private String standingAvailable;
+    private boolean standingAvailable = false;
 
     /**
      * 하나의 리그에는 season 별로 다양한 standing 이 존재할 수 있습니다.
      */
-    @Column(nullable = true)
+    @Builder.Default
     @OneToMany(mappedBy = "league", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Standing> standing;
+    private List<Standing> standing = new ArrayList<>();
 
     @JsonIgnore
     @ToString.Exclude

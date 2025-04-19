@@ -246,7 +246,7 @@ class FootballRootTest {
         ZonedDateTime beforeEuro2024Start = ZonedDateTime.parse("2024-06-01T00:00:00Z");
 
         // when
-        List<FixtureInfoDto> nextFixturesFromDate = footballRoot.getNextFixturesFromDate(leagueId, beforeEuro2024Start);
+        List<FixtureInfoDto> nextFixturesFromDate = footballRoot.getFixturesOnNearestDate(leagueId, beforeEuro2024Start);
 
         // then
         assertThat(nextFixturesFromDate).isNotEmpty();

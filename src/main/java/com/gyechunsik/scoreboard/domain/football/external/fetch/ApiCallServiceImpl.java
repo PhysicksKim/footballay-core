@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.domain.football.external.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gyechunsik.scoreboard.domain.football.exception.ApiRateLimitException;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -18,6 +19,8 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final int API_REQUEST_LIMIT_CODE = 429;
 
     @Value("${rapidapi.football.key}")
     private String key;
@@ -277,8 +280,13 @@ public class ApiCallServiceImpl implements ApiCallService {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
+            if (response.code() == API_REQUEST_LIMIT_CODE)
+                throw new ApiRateLimitException("when fetching standings, API request limit exceeded. leagueId=" + leagueId + ", season=" + season);
+
             if (!response.isSuccessful())
                 throw new IllegalArgumentException("response fail : " + response);
+
+
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("standing body is null for leagueId=" + leagueId +",season=" + season);

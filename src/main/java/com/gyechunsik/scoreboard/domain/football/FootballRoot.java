@@ -12,6 +12,7 @@ import com.gyechunsik.scoreboard.domain.football.persistence.standings.Standing;
 import com.gyechunsik.scoreboard.domain.football.repository.LeagueRepository;
 import com.gyechunsik.scoreboard.domain.football.service.FootballAvailableService;
 import com.gyechunsik.scoreboard.domain.football.service.FootballDataService;
+import com.gyechunsik.scoreboard.domain.football.service.FootballLeagueStandingService;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public class FootballRoot {
     private final FootballApiCacheService footballApiCacheService;
     private final FootballDataService footballDataService;
     private final FootballAvailableService footballAvailableService;
+    private final FootballLeagueStandingService footballLeagueStandingService;
 
     private final LeagueRepository leagueRepository;
 
@@ -141,23 +143,6 @@ public class FootballRoot {
         }
     }
 
-    // TODO : getFixturesOnNearestDate() 와 중복되므로 이 메서드를 삭제해야함
-    /**
-     * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
-     * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
-     * @return 주어진 날짜로 부터 가장 가까운 fixture 들
-     */
-    public List<FixtureInfoDto> getNextFixturesFromDate(long leagueId, ZonedDateTime zonedDateTime) {
-        try {
-            List<Fixture> fixtures = footballDataService.findFixturesOnNearestDate(leagueId, zonedDateTime);
-            log.info("getNextFixturesFromDate :: {}", fixtures);
-            return FootballDomainDtoMapper.fixtureInfoDtosFromEntities(fixtures);
-        } catch (Exception e) {
-            log.error("error while getting _Fixtures by LeagueId :: {}", e.getMessage());
-            return List.of();
-        }
-    }
-
     /**
      * 주어진 날짜를 기준으로 가장 가까운 fixture 를 찾아 해당 날짜의 fixture 들을 모두 가져옵니다. <br>
      * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
@@ -203,6 +188,14 @@ public class FootballRoot {
             return false;
         }
         return true;
+    }
+
+    public void setLeagueStandingAvailability(long leagueId, boolean isStandingAvailable) {
+        try {
+            footballLeagueStandingService.setIsStandingAvailable(leagueId, isStandingAvailable);
+        } catch (Exception e) {
+            log.error("error while setting League Standing Availability :: {}", e.getMessage());
+        }
     }
 
     public boolean cacheAllCurrentLeagues() {

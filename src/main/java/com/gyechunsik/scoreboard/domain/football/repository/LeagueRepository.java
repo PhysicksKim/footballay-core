@@ -21,4 +21,5 @@ public interface LeagueRepository extends JpaRepository<League, Long> {
      */
     List<League> findAllByAvailableOrderByCreatedDateDesc(Boolean available);
 
+    List<League> findAllByStandingAvailableIsTrue();
 }

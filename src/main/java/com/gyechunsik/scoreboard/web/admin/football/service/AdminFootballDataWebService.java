@@ -151,7 +151,7 @@ public class AdminFootballDataWebService {
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;
         try {
-            fixtures = footballRoot.getNextFixturesFromDate(leagueId, date).stream()
+            fixtures = footballRoot.getFixturesOnNearestDate(leagueId, date).stream()
                     .map(FootballDtoMapper::toFixtureDto)
                     .sorted(Comparator.comparing(FixtureResponse::date))
                     .toArray(FixtureResponse[]::new);
