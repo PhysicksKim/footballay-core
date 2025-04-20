@@ -29,6 +29,22 @@ server:
     whitelabel:
       enabled: false
 
+  # monitoring
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
 # 운영 환경에서 허용할 CORS 출처
 cors:
   allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app"
+
+# monitoring
+management:
+  server:
+    port: 9001          # actuator 전용 포트
+    address: 127.0.0.1  # 오직 로컬에서만 바인딩
+
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics   # 필요한 엔드포인트만
