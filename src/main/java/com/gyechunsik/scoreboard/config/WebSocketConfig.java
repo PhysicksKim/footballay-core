@@ -38,8 +38,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     }
 
     /*
-     yml 파일에서는 List<String> 으로 받아올 수 없는 버그가 있습니다
-     그래서 단일 String 으로 "url1,url2,url3" 이런식으로 받아서 split 으로 처리합니다.
+     yml 로 주입된 값은 List<String> 으로 받아올 수 없는 버그가 있습니다.
+     대신 , 로 구분된 String 으로 받아와 split 으로 처리합니다. ex: "url1,url2,url3"
      */
     @Value("${cors.allowedorigins}")
     private String rawAllowedOrigins;
