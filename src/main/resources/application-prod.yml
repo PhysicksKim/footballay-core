@@ -23,6 +23,11 @@ spring:
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 40
+      connection-timeout: 30000
 
 server:
   error:
