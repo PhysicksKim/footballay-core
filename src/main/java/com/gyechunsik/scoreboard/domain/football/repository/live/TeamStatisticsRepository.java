@@ -16,11 +16,11 @@ public interface TeamStatisticsRepository extends JpaRepository<TeamStatistics, 
     /**
      * fixture, team, expectedGoalsList 를 fetch join 합니다.
      * @param fixture
-     * @param homeTeam
+     * @param team
      * @return
      */
     @EntityGraph(attributePaths = {"fixture", "team", "expectedGoalsList"})
-    Optional<TeamStatistics> findByFixtureAndTeam(Fixture fixture, Team homeTeam);
+    Optional<TeamStatistics> findByFixtureAndTeam(Fixture fixture, Team team);
 
     void deleteByFixture(Fixture fixture);
 }

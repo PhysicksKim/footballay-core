@@ -3,10 +3,12 @@ package com.gyechunsik.scoreboard.domain.football.preference.persistence;
 import com.gyechunsik.scoreboard.domain.user.entity.User;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.Filter;
+import org.hibernate.annotations.FilterDef;
+import org.hibernate.annotations.ParamDef;
+import org.hibernate.annotations.SQLDelete;
 import org.hibernate.type.descriptor.java.BooleanJavaType;
 
 import java.util.Objects;

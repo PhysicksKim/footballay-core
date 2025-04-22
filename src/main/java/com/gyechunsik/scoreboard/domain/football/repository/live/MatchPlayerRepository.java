@@ -37,10 +37,10 @@ public interface MatchPlayerRepository extends JpaRepository<MatchPlayer, Long> 
             @Param("teamId") Long teamId,
             @Param("playerId") Long playerId);
 
-
     @Query("SELECT mp FROM MatchPlayer mp " +
             "JOIN FETCH mp.matchLineup ml " +
             "LEFT JOIN FETCH mp.playerStatistics ps " +
+            "LEFT JOIN FETCH mp.player p " +
             "WHERE ml.fixture = :fixture AND ml.team = :team")
     List<MatchPlayer> findMatchPlayerByFixtureAndTeam(Fixture fixture, Team team);
 

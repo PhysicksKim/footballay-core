@@ -18,35 +18,30 @@ import java.util.List;
 public class FootballDomainDtoMapper {
 
     /**
-     * <code>List<MatchPlayer></code> 의 MatchPlayer.PlayerStatistics 가 로딩된 채로 제공되어야 합니다.
-     *
+     * 통계 정보가 포함된 dto 를 생성합니다.
      * @param fixture
-     * @param liveStatus
-     * @param home
-     * @param away
      * @param homeStats
      * @param awayStats
-     * @param homePlayerStats
-     * @param awayPlayerStats
-     * @return
+     * @param homePlayerStats PlayerStatistics 가 load 된 Home team MatchPlayer List
+     * @param awayPlayerStats PlayerStatistics 가 load 된 Away team MatchPlayer List
+     * @return MatchStatisticsDto
      */
     public static MatchStatisticsDto matchStatisticsDTOFromEntity(
             Fixture fixture,
-            LiveStatus liveStatus,
-            Team home,
-            Team away,
             @Nullable TeamStatistics homeStats,
             @Nullable TeamStatistics awayStats,
             List<MatchPlayer> homePlayerStats,
             List<MatchPlayer> awayPlayerStats
     ) {
+        assertStatsMatchFixtureTeams(fixture, homeStats, awayStats);
+
         log.debug("fixtureId={} DTO mapper start", fixture.getFixtureId());
         MatchStatisticsDto.MatchStatsFixture matchStatsFixture = createFixtureDTO(fixture);
 
-        MatchStatisticsDto.MatchStatsLiveStatus matchStatsLiveStatus = createLiveStatusDTO(liveStatus);
+        MatchStatisticsDto.MatchStatsLiveStatus matchStatsLiveStatus = createLiveStatusDTO(fixture.getLiveStatus());
 
-        MatchStatisticsDto.MatchStatsTeam homeDTO = createTeamDTO(home);
-        MatchStatisticsDto.MatchStatsTeam awayDTO = createTeamDTO(away);
+        MatchStatisticsDto.MatchStatsTeam homeDTO = createTeamDTO(fixture.getHomeTeam());
+        MatchStatisticsDto.MatchStatsTeam awayDTO = createTeamDTO(fixture.getAwayTeam());
 
         MatchStatisticsDto.MatchStatsTeamStatistics homeStatisticsDTO = createTeamStatisticsDTO(homeStats);
         MatchStatisticsDto.MatchStatsTeamStatistics awayStatisticsDTO = createTeamStatisticsDTO(awayStats);
@@ -57,6 +52,146 @@ public class FootballDomainDtoMapper {
         MatchStatisticsDto dto = createMatchStatisticsDTO(matchStatsFixture, matchStatsLiveStatus, homeDTO, awayDTO, homeStatisticsDTO, awayStatisticsDTO, homePlayerStatisticsDTO, awayPlayerStatisticsDTO);
         log.debug("MatchStatisticsDto: {}", dto);
         return dto;
+    }
+
+    public static List<LeagueDto> leagueDtosFromEntities(List<League> leagueEntities) {
+        List<LeagueDto> leagueDtos = new ArrayList<>();
+        for (League league : leagueEntities) {
+            leagueDtos.add(createLeagueDto(league));
+        }
+        return leagueDtos;
+    }
+
+    public static LeagueDto leagueDtoFromEntity(League league) {
+        return createLeagueDto(league);
+    }
+
+    public static List<TeamDto> teamDtosFromEntities(List<Team> teamEntities) {
+        List<TeamDto> teamDtos = new ArrayList<>();
+        for (Team team : teamEntities) {
+            teamDtos.add(createTeamDto(team));
+        }
+        return teamDtos;
+    }
+
+    public static TeamDto teamDtoFromEntity(Team teamEntity) {
+        return createTeamDto(teamEntity);
+    }
+
+
+    public static LiveStatusDto liveStatusDtoFromEntity(LiveStatus liveStatus) {
+        return new LiveStatusDto(
+                liveStatus.getLongStatus(),
+                liveStatus.getShortStatus(),
+                liveStatus.getElapsed(),
+                liveStatus.getHomeScore(),
+                liveStatus.getAwayScore()
+        );
+    }
+
+    public static PlayerDto playerDtoFromEntity(Player player) {
+        return new PlayerDto(
+                player.getId(),
+                player.getName(),
+                player.getKoreanName(),
+                player.getPhotoUrl(),
+                player.getPosition()
+        );
+    }
+
+    public static List<PlayerDto> playerDtosFromEntities(List<Player> squadEntities) {
+        List<PlayerDto> playerDtos = new ArrayList<>();
+        for (Player player : squadEntities) {
+            playerDtos.add(createPlayerDto(player));
+        }
+        return playerDtos;
+    }
+
+    public static FixtureInfoDto fixtureInfoDtoFromEntity(Fixture fixture) {
+        return createFixtureInfoDto(fixture);
+    }
+
+    public static List<FixtureInfoDto> fixtureInfoDtosFromEntities(List<Fixture> fixtures) {
+        List<FixtureInfoDto> fixtureInfoDtos = new ArrayList<>();
+        for (Fixture fixture : fixtures) {
+            fixtureInfoDtos.add(createFixtureInfoDto(fixture));
+        }
+        return fixtureInfoDtos;
+    }
+
+    public static FixtureWithLineupDto fixtureWithLineupDtoFromEntity(Fixture findFixture) {
+        MatchLineup homeLineup = findFixture.getLineups().stream()
+                .filter(lineup -> lineup.getTeam().equals(findFixture.getHomeTeam()))
+                .findFirst()
+                .orElseThrow();
+        MatchLineup awayLineup = findFixture.getLineups().stream()
+                .filter(lineup -> lineup.getTeam().equals(findFixture.getAwayTeam()))
+                .findFirst()
+                .orElseThrow();
+
+        return new FixtureWithLineupDto(
+                fixtureInfoDtoFromEntity(findFixture),
+                lineupDtoFromEntity(homeLineup),
+                lineupDtoFromEntity(awayLineup)
+        );
+    }
+
+    public static FixtureWithLineupDto fixtureWithEmptyLineupDtoFromEntity(Fixture findFixture) {
+        return new FixtureWithLineupDto(
+                fixtureInfoDtoFromEntity(findFixture),
+                emptyLineupDtoFromTeamEntity(findFixture.getHomeTeam()),
+                emptyLineupDtoFromTeamEntity(findFixture.getAwayTeam())
+        );
+    }
+
+    public static LineupDto emptyLineupDtoFromTeamEntity(Team team) {
+        return new LineupDto(
+                createLineupTeamDto(team),
+                "",
+                List.of()
+        );
+    }
+
+    public static LineupDto lineupDtoFromEntity(MatchLineup matchLineup) {
+        return new LineupDto(
+                createLineupTeamDto(matchLineup.getTeam()),
+                matchLineup.getFormation(),
+                lineupPlayerDtoListFromEntities(matchLineup.getMatchPlayers())
+        );
+    }
+
+    public static List<FixtureEventWithPlayerDto> fixtureEventDtosFromEntities(List<FixtureEvent> fixtureEvents) {
+        List<FixtureEventWithPlayerDto> fixtureEventDtos = new ArrayList<>();
+        for (FixtureEvent fixtureEvent : fixtureEvents) {
+            fixtureEventDtos.add(createFixtureEventDto(fixtureEvent));
+        }
+        return fixtureEventDtos;
+    }
+
+    public static ExternalApiStatusDto apiStatusDtoFromEntity(ApiStatus apiStatus) {
+        return new ExternalApiStatusDto(
+                apiStatus.current(),
+                apiStatus.minuteLimit(),
+                apiStatus.minuteRemaining(),
+                apiStatus.dayLimit(),
+                apiStatus.dayRemaining(),
+                apiStatus.active()
+        );
+    }
+
+    private static void assertStatsMatchFixtureTeams(
+            Fixture fixture,
+            @Nullable TeamStatistics homeStats,
+            @Nullable TeamStatistics awayStats
+    ) {
+        if(homeStats != null && homeStats.getTeam().getId() != fixture.getHomeTeam().getId()) {
+            log.error("homeStats teamId={} is not same as fixture home teamId={}", homeStats.getTeam().getId(), fixture.getHomeTeam().getId());
+            throw new IllegalArgumentException("homeStats teamId=" + homeStats.getTeam().getId() + " is not same as fixture home teamId=" + fixture.getHomeTeam().getId());
+        }
+        if(awayStats != null && awayStats.getTeam().getId() != fixture.getAwayTeam().getId()) {
+            log.error("awayStats teamId={} is not same as fixture away teamId={}", awayStats.getTeam().getId(), fixture.getAwayTeam().getId());
+            throw new IllegalArgumentException("awayStats teamId=" + awayStats.getTeam().getId() + " is not same as fixture away teamId=" + fixture.getAwayTeam().getId());
+        }
     }
 
     private static MatchStatisticsDto createMatchStatisticsDTO(
@@ -232,18 +367,6 @@ public class FootballDomainDtoMapper {
         );
     }
 
-    public static List<LeagueDto> leagueDtosFromEntities(List<League> leagueEntities) {
-        List<LeagueDto> leagueDtos = new ArrayList<>();
-        for (League league : leagueEntities) {
-            leagueDtos.add(createLeagueDto(league));
-        }
-        return leagueDtos;
-    }
-
-    public static LeagueDto leagueDtoFromEntity(League league) {
-        return createLeagueDto(league);
-    }
-
     private static LeagueDto createLeagueDto(League league) {
         return new LeagueDto(
                 league.getLeagueId(),
@@ -255,18 +378,6 @@ public class FootballDomainDtoMapper {
         );
     }
 
-    public static List<TeamDto> teamDtosFromEntities(List<Team> teamEntities) {
-        List<TeamDto> teamDtos = new ArrayList<>();
-        for (Team team : teamEntities) {
-            teamDtos.add(createTeamDto(team));
-        }
-        return teamDtos;
-    }
-
-    public static TeamDto teamDtoFromEntity(Team teamEntity) {
-        return createTeamDto(teamEntity);
-    }
-
     private static TeamDto createTeamDto(Team team) {
         return new TeamDto(
                 team.getId(),
@@ -274,34 +385,6 @@ public class FootballDomainDtoMapper {
                 team.getKoreanName(),
                 team.getLogo()
         );
-    }
-
-    public static LiveStatusDto liveStatusDtoFromEntity(LiveStatus liveStatus) {
-        return new LiveStatusDto(
-                liveStatus.getLongStatus(),
-                liveStatus.getShortStatus(),
-                liveStatus.getElapsed(),
-                liveStatus.getHomeScore(),
-                liveStatus.getAwayScore()
-        );
-    }
-
-    public static PlayerDto playerDtoFromEntity(Player player) {
-        return new PlayerDto(
-                player.getId(),
-                player.getName(),
-                player.getKoreanName(),
-                player.getPhotoUrl(),
-                player.getPosition()
-        );
-    }
-
-    public static List<PlayerDto> playerDtosFromEntities(List<Player> squadEntities) {
-        List<PlayerDto> playerDtos = new ArrayList<>();
-        for (Player player : squadEntities) {
-            playerDtos.add(createPlayerDto(player));
-        }
-        return playerDtos;
     }
 
     private static PlayerDto createPlayerDto(Player player) {
@@ -312,18 +395,6 @@ public class FootballDomainDtoMapper {
                 player.getPhotoUrl(),
                 player.getPosition()
         );
-    }
-
-    public static FixtureInfoDto fixtureInfoDtoFromEntity(Fixture fixture) {
-        return createFixtureInfoDto(fixture);
-    }
-
-    public static List<FixtureInfoDto> fixtureInfoDtosFromEntities(List<Fixture> fixtures) {
-        List<FixtureInfoDto> fixtureInfoDtos = new ArrayList<>();
-        for (Fixture fixture : fixtures) {
-            fixtureInfoDtos.add(createFixtureInfoDto(fixture));
-        }
-        return fixtureInfoDtos;
     }
 
     private static FixtureInfoDto createFixtureInfoDto(Fixture fixture) {
@@ -339,47 +410,6 @@ public class FootballDomainDtoMapper {
                 leagueDtoFromEntity(fixture.getLeague()),
                 teamDtoFromEntity(fixture.getHomeTeam()),
                 teamDtoFromEntity(fixture.getAwayTeam())
-        );
-    }
-
-    public static FixtureWithLineupDto fixtureWithLineupDtoFromEntity(Fixture findFixture) {
-        MatchLineup homeLineup = findFixture.getLineups().stream()
-                .filter(lineup -> lineup.getTeam().equals(findFixture.getHomeTeam()))
-                .findFirst()
-                .orElseThrow();
-        MatchLineup awayLineup = findFixture.getLineups().stream()
-                .filter(lineup -> lineup.getTeam().equals(findFixture.getAwayTeam()))
-                .findFirst()
-                .orElseThrow();
-
-        return new FixtureWithLineupDto(
-                fixtureInfoDtoFromEntity(findFixture),
-                lineupDtoFromEntity(homeLineup),
-                lineupDtoFromEntity(awayLineup)
-        );
-    }
-
-    public static FixtureWithLineupDto fixtureWithEmptyLineupDtoFromEntity(Fixture findFixture) {
-        return new FixtureWithLineupDto(
-                fixtureInfoDtoFromEntity(findFixture),
-                emptyLineupDtoFromTeamEntity(findFixture.getHomeTeam()),
-                emptyLineupDtoFromTeamEntity(findFixture.getAwayTeam())
-        );
-    }
-
-    public static LineupDto emptyLineupDtoFromTeamEntity(Team team) {
-        return new LineupDto(
-                createLineupTeamDto(team),
-                "",
-                List.of()
-        );
-    }
-
-    public static LineupDto lineupDtoFromEntity(MatchLineup matchLineup) {
-        return new LineupDto(
-                createLineupTeamDto(matchLineup.getTeam()),
-                matchLineup.getFormation(),
-                lineupPlayerDtoListFromEntities(matchLineup.getMatchPlayers())
         );
     }
 
@@ -433,14 +463,6 @@ public class FootballDomainDtoMapper {
         }
     }
 
-    public static List<FixtureEventWithPlayerDto> fixtureEventDtosFromEntities(List<FixtureEvent> fixtureEvents) {
-        List<FixtureEventWithPlayerDto> fixtureEventDtos = new ArrayList<>();
-        for (FixtureEvent fixtureEvent : fixtureEvents) {
-            fixtureEventDtos.add(createFixtureEventDto(fixtureEvent));
-        }
-        return fixtureEventDtos;
-    }
-
     private static FixtureEventWithPlayerDto createFixtureEventDto(FixtureEvent fixtureEvent) {
         return new FixtureEventWithPlayerDto(
                 fixtureEvent.getSequence(),
@@ -491,14 +513,4 @@ public class FootballDomainDtoMapper {
         return matchPlayer.getPlayer() == null;
     }
 
-    public static ExternalApiStatusDto apiStatusDtoFromEntity(ApiStatus apiStatus) {
-        return new ExternalApiStatusDto(
-                apiStatus.current(),
-                apiStatus.minuteLimit(),
-                apiStatus.minuteRemaining(),
-                apiStatus.dayLimit(),
-                apiStatus.dayRemaining(),
-                apiStatus.active()
-        );
-    }
 }

@@ -2,7 +2,6 @@ package com.gyechunsik.scoreboard.domain.user.entity;
 
 import com.gyechunsik.scoreboard.domain.football.preference.persistence.PreferenceKey;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -15,8 +15,10 @@ import com.gyechunsik.scoreboard.domain.football.repository.live.MatchLineupRepo
 import com.gyechunsik.scoreboard.domain.football.repository.live.MatchPlayerRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.live.TeamStatisticsRepository;
 import com.gyechunsik.scoreboard.domain.football.repository.relations.TeamPlayerRepository;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -184,6 +186,38 @@ public class FootballDataService {
         log.info("PreventUnlink set to {} for player=[{},{}]", preventUnlink, playerId, player.getName());
     }
 
+    public List<Team> getTeamsOfPlayer(long playerId) {
+        Player player = playerRepository.findById(playerId)
+                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
+        List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream()
+                .map(TeamPlayer::getTeam)
+                .toList();
+        log.info("teams of player=[{},{}]={}", playerId, player.getName(), teamsOfPlayer);
+        return teamsOfPlayer;
+    }
+
+    public Optional<TeamStatistics> getTeamStatistics(Fixture fixture, Team team) {
+        return teamStatisticsRepository.findByFixtureAndTeam(fixture, team);
+    }
+
+    @Transactional(readOnly = true)
+    public FixtureMatchStats getFixtureWithMatchStatistics(long fixtureId) {
+        @NotNull Fixture fixture = getFixtureById(fixtureId);
+        LiveStatus liveStatus = fixture.getLiveStatus();
+        Team home = fixture.getHomeTeam();
+        Team away = fixture.getAwayTeam();
+
+        @Nullable TeamStatistics homeStatistics = getTeamStatistics(fixture, home).orElse(null);
+        @Nullable TeamStatistics awayStatistics = getTeamStatistics(fixture, away).orElse(null);
+        List<MatchPlayer> homePlayerStatistics = getPlayerStatistics(fixture, home);
+        List<MatchPlayer> awayPlayerStatistics = getPlayerStatistics(fixture, away);
+        return new FixtureMatchStats(fixture, homeStatistics, awayStatistics, homePlayerStatistics, awayPlayerStatistics);
+    }
+
+    public List<MatchPlayer> getPlayerStatistics(Fixture fixture, Team team) {
+        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
+    }
+
     private static Pageable PageRequestForOnlyOneNearest() {
         return PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
     }
@@ -197,28 +231,6 @@ public class FootballDataService {
                 .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
     }
 
-    public List<Team> getTeamsOfPlayer(long playerId) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
-        List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream()
-                .map(TeamPlayer::getTeam)
-                .toList();
-        log.info("teams of player=[{},{}]={}", playerId, player.getName(), teamsOfPlayer);
-        return teamsOfPlayer;
-    }
-
-    public Optional<TeamStatistics> getTeamStatistics(long fixtureId, long teamId) {
-        Fixture fixture = findFixtureOrThrow(fixtureId);
-        Team team = findTeamOrThrow(teamId);
-        return teamStatisticsRepository.findByFixtureAndTeam(fixture, team);
-    }
-
-    public List<MatchPlayer> getPlayerStatistics(long fixtureId, long teamId) {
-        Fixture fixture = findFixtureOrThrow(fixtureId);
-        Team team = findTeamOrThrow(teamId);
-        return matchPlayerRepository.findMatchPlayerByFixtureAndTeam(fixture, team);
-    }
-
     private Fixture findFixtureOrThrow(long fixtureId) {
         return fixtureRepository.findById(fixtureId)
                 .orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
@@ -229,4 +241,11 @@ public class FootballDataService {
                 .orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
     }
 
+    public record FixtureMatchStats(
+            Fixture fixture,
+            TeamStatistics homeStats,
+            TeamStatistics awayStats,
+            List<MatchPlayer> homePlayerStats,
+            List<MatchPlayer> awayPlayerStats) {
+    }
 }
