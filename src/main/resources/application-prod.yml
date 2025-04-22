@@ -38,6 +38,8 @@ server:
   tomcat:
     mbeanregistry:
       enabled: true
+    threads:
+      max: 200
 
 # 운영 환경에서 허용할 CORS 출처
 cors:
