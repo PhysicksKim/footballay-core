@@ -1,7 +1,10 @@
 package com.gyechunsik.scoreboard.web.football.controller;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.dto.CachedApiResponse;
+import com.gyechunsik.scoreboard.web.common.dto.MetaData;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
+import com.gyechunsik.scoreboard.web.common.service.CachedApiResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.FixtureOfLeagueResponse;
@@ -27,6 +30,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +44,7 @@ public class FootballStreamDataController {
 
     private final FootballStreamWebService footballStreamWebService;
     private final ApiCommonResponseService apiCommonResponseService;
+    private final CachedApiResponseService cachedApiResponseService;
 
     /**
      * 이용 가능한 리그 목록 조회
@@ -151,11 +156,27 @@ public class FootballStreamDataController {
 
     // TODO : prefkey 추가
     @GetMapping("/fixtures/statistics")
-    public ResponseEntity<ApiResponse<MatchStatisticsResponse>> fixturesStatistics(
+    public ResponseEntity<?> fixturesStatistics(
             @RequestParam long fixtureId,
             @RequestParam(required = false) String preferenceKey
     ) {
         final String requestUrl = "/api/football/fixtures/statistics";
+        try {
+            Optional<String> cachedResponseIfExist = cachedApiResponseService.getCachedResponseIfExist(requestUrl, Map.of("fixtureId", String.valueOf(fixtureId)));
+            if(cachedResponseIfExist.isPresent()) {
+                MetaData successMetaData = apiCommonResponseService.createSuccessMetaData(
+                        "requestUrl",
+                        Map.of("fixtureId", String.valueOf(fixtureId))
+                );
+                CachedApiResponse cacheResp = new CachedApiResponse(successMetaData, cachedResponseIfExist.get());
+                log.info("Cache hit of fixtureStatistics for fixtureId: {}", fixtureId);
+                return ResponseEntity.ok()
+                        .header("X-Cache", "HIT")
+                        .body(cacheResp);
+            }
+        } catch (Exception e) {
+            log.error("Error while checking cache: ", e);
+        }
         return ResponseEntity.ok(footballStreamWebService.getMatchStatistics(requestUrl, preferenceKey, fixtureId));
     }
 

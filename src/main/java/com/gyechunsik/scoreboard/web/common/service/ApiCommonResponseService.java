@@ -1,6 +1,7 @@
 package com.gyechunsik.scoreboard.web.common.service;
 
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
+import com.gyechunsik.scoreboard.web.common.dto.MetaData;
 
 import java.util.Map;
 
@@ -21,5 +22,7 @@ public interface ApiCommonResponseService {
     <T> ApiResponse<T> createFailureResponse(String message, String requestUrl);
 
     <T> ApiResponse<T> createFailureResponse(String message, String requestUrl, Map<String, String> params);
+
+    MetaData createSuccessMetaData(String requestId, Map<String, String> params);
 
 }

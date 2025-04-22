@@ -1,10 +1,12 @@
 package com.gyechunsik.scoreboard.web.football.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.FootballRoot;
 import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.domain.football.preference.FootballPreferenceService;
 import com.gyechunsik.scoreboard.web.common.dto.ApiResponse;
 import com.gyechunsik.scoreboard.web.common.service.ApiCommonResponseService;
+import com.gyechunsik.scoreboard.web.common.service.CachedApiResponseService;
 import com.gyechunsik.scoreboard.web.football.request.FixtureOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.request.TeamsOfLeagueRequest;
 import com.gyechunsik.scoreboard.web.football.response.*;
@@ -33,6 +35,7 @@ public class FootballStreamWebService {
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
     private final FootballPreferenceService footballPreferenceService;
+    private final CachedApiResponseService cachedApiResponseService;
 
     public ApiResponse<LeagueResponse> getLeagueList(String requestUrl) {
         log.info("getLeagueList");
@@ -235,6 +238,7 @@ public class FootballStreamWebService {
         try {
             MatchStatisticsDto matchStatisticsDTO = footballRoot.getMatchStatistics(fixtureId);
             MatchStatisticsResponse responseData = MatchStatisticsResponseMapper.toResponse(matchStatisticsDTO);
+            cachedApiResponseService.cacheResponse(requestUrl, params, responseData);
             return apiCommonResponseService.createSuccessResponse(new MatchStatisticsResponse[]{responseData}, requestUrl, params);
         } catch (Exception e) {
             log.error("Error occurred while calling method getMatchStatistics() fixtureId : {}", fixtureId, e);

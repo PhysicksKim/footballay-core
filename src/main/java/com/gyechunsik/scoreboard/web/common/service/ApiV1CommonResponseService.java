@@ -60,4 +60,17 @@ public class ApiV1CommonResponseService implements ApiCommonResponseService {
         return new ApiResponse<>(metaData, null);
     }
 
+    @Override
+    public MetaData createSuccessMetaData(String requestId, Map<String, String> params) {
+        return new MetaData(
+                requestId,
+                ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                STATUS_SUCCESS,
+                CODE_SUCCESS,
+                "Request processed successfully",
+                null,
+                params,
+                VERSION
+        );
+    }
 }
