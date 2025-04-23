@@ -165,11 +165,11 @@ public class FootballStreamDataController {
             Optional<String> cachedResponseIfExist = cachedApiResponseService.getCachedResponseIfExist(requestUrl, Map.of("fixtureId", String.valueOf(fixtureId)));
             if(cachedResponseIfExist.isPresent()) {
                 MetaData successMetaData = apiCommonResponseService.createSuccessMetaData(
-                        "requestUrl",
+                        requestUrl,
                         Map.of("fixtureId", String.valueOf(fixtureId))
                 );
                 CachedApiResponse cacheResp = new CachedApiResponse(successMetaData, cachedResponseIfExist.get());
-                log.info("Cache hit of fixtureStatistics for fixtureId: {}", fixtureId);
+                log.info("Cache hit [requestId={}] of fixtureStatistics for fixtureId: {}", successMetaData.requestId(), fixtureId);
                 return ResponseEntity.ok()
                         .header("X-Cache", "HIT")
                         .body(cacheResp);
