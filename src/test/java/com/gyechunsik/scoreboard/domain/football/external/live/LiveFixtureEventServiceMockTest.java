@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.MockApiCallServiceImpl;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +52,9 @@ class LiveFixtureEventServiceMockTest {
     @InjectMocks
     private LiveFixtureEventService liveFixtureEventService;
 
-    private ApiCallService mockApiCallService = new MockApiCallServiceImpl();
+    private ObjectMapper objectMapper = new ObjectMapper();
+
+    private ApiCallService mockApiCallService = new MockApiCallServiceImpl(objectMapper);
 
     @BeforeEach
     public void setup() {

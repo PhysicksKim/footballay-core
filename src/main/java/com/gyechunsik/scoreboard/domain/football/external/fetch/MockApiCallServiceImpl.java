@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.external.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -10,13 +11,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+@RequiredArgsConstructor
 @Profile("mockapi")
 @Service
 public class MockApiCallServiceImpl
         implements ApiCallService
 {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
     public ExternalApiStatusResponse status() {

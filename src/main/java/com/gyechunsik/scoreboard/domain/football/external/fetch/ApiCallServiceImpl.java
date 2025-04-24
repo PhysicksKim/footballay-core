@@ -2,6 +2,7 @@ package com.gyechunsik.scoreboard.domain.football.external.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.response.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
@@ -11,13 +12,14 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+@RequiredArgsConstructor
 @Slf4j
 @Profile("api")
 @Service
 public class ApiCallServiceImpl implements ApiCallService {
 
     private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Value("${rapidapi.football.key}")
     private String key;

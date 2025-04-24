@@ -1,20 +1,42 @@
 package com.gyechunsik.scoreboard.domain.football.persistence.apicache;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.module.blackbird.BlackbirdModule;
+import com.gyechunsik.scoreboard.config.JacksonConfig;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@Converter
+@Slf4j
+@Component
+@Converter(autoApply = true)
 public class JsonFieldConverter implements AttributeConverter<Map<String, Object>, String> {
 
-    private final static ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    static {
-        objectMapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    /**
+     * @DataJpaTest 에서 ObjectMapper 를 주입받지 못하는 경우를 대비하여 Fallback 을 사용합니다.
+     */
+    private static final ObjectMapper FALLBACK = new JacksonConfig().objectMapper();
+
+    @Autowired
+    public JsonFieldConverter(@Autowired(required = false) ObjectMapper mapper) {
+        if (mapper == null) {
+            log.warn("ObjectMapper not found, using fallback ObjectMapper. If not test, please check your configuration.");
+            this.objectMapper = FALLBACK;
+        } else {
+            this.objectMapper = mapper;
+        }
     }
 
     @Override
@@ -30,7 +52,7 @@ public class JsonFieldConverter implements AttributeConverter<Map<String, Object
     public Map<String, Object> convertToEntityAttribute(String dbData) {
         try {
             return (Map<String, Object>) objectMapper.readValue(dbData, Map.class);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("JSON reading error", e);
         }
     }

@@ -11,8 +11,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@DataJpaTest
 @Slf4j
+@DataJpaTest
 class AnonymousUserTest {
 
     @Autowired

@@ -16,7 +16,7 @@ import java.util.Optional;
 @Service
 public class CachedApiResponseService {
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ObjectMapper OBJECT_MAPPER;
     private final StringRedisTemplate stringRedisTemplate;
 
     public Optional<String> getCachedResponseIfExist(String requestUrl, Map<String, ? extends String> parameters) {

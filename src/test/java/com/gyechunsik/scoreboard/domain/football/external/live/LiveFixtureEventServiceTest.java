@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football.external.live;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
 import com.gyechunsik.scoreboard.domain.football.external.fetch.ApiCallService;
@@ -63,9 +64,12 @@ class LiveFixtureEventServiceTest {
 
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     public void setup() {
-        apiCallService = new MockApiCallServiceImpl();
+        apiCallService = new MockApiCallServiceImpl(objectMapper);
 
         footballApiCacheService.cacheLeague(4L);
         footballApiCacheService.cacheTeamsOfLeague(4L);

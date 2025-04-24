@@ -46,7 +46,8 @@ class FootballStreamDtoMapperTest {
     @Autowired
     private EntityManager em;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {

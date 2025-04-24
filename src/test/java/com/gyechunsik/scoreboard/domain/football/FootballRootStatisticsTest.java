@@ -1,5 +1,6 @@
 package com.gyechunsik.scoreboard.domain.football;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gyechunsik.scoreboard.domain.football.constant.FixtureId;
 import com.gyechunsik.scoreboard.domain.football.dto.MatchStatisticsDto;
 import com.gyechunsik.scoreboard.domain.football.external.FootballApiCacheService;
@@ -47,10 +48,12 @@ public class FootballRootStatisticsTest {
     private FootballRoot footballRoot;
     @Autowired
     private LineupService lineupService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setup() {
-        apiCallService = new MockApiCallServiceImpl();
+        apiCallService = new MockApiCallServiceImpl(objectMapper);
         cacheFootballData();
         em.clear();
     }
