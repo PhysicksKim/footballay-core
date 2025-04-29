@@ -52,11 +52,12 @@ dependencies {
     // Jackson : for json serialize
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.module:jackson-module-blackbird'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.mariadb.jdbc:mariadb-java-client'
-    testRuntimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'com.h2database:h2:2.2.224'
 
     // JJWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'

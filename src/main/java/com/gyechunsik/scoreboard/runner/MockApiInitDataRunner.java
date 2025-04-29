@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * 개발 환경에서 mockapi 저장된 json 을 사용해 초기 데이터를 저장하는 Runner
+ * mockApi 사용 시 초기 데이터를 추가하는 Runner 입니다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 @Profile("mockapi")
-public class DevInitRunner implements ApplicationRunner {
+public class MockApiInitDataRunner implements ApplicationRunner {
 
     private final FootballRoot footballRoot;
 

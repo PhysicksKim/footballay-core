@@ -3,10 +3,7 @@ package com.gyechunsik.scoreboard.domain.football.persistence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gyechunsik.scoreboard.domain.football.persistence.relations.LeagueTeam;
 import com.gyechunsik.scoreboard.entity.BaseDateAuditEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -18,7 +15,8 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "leagues")
+@Entity
+@Table(name = "leagues")
 public class League extends BaseDateAuditEntity {
 
     @Id

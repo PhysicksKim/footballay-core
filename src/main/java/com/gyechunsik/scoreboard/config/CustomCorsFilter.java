@@ -21,7 +21,6 @@ public class CustomCorsFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-
         // CORS 요청인 경우
         if (CorsUtils.isCorsRequest(request)) {
             log.info("CORS request detected. origin : {}", request.getHeader("Origin"));

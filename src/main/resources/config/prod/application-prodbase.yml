@@ -41,10 +41,6 @@ server:
     threads:
       max: 200
 
-# 운영 환경에서 허용할 CORS 출처
-cors:
-  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app"
-
 # monitoring
 management:
   server:
@@ -55,3 +51,7 @@ management:
     web:
       exposure:
         include: health,info,metrics   # 필요한 엔드포인트만
+
+# 운영 환경에서 허용할 CORS 출처
+cors:
+  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app"

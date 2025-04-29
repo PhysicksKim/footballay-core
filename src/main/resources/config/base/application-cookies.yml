@@ -2,6 +2,3 @@ cookies:
   remember-me:
     name: "remember-me"
     max-age: 1209600 # 2주 (단위: 초)
-  user-info:
-    name: "user-info"
-    max-age: 1209600 # 2주 (단위: 초)

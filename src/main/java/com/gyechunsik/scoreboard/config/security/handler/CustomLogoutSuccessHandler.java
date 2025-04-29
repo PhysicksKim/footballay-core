@@ -16,7 +16,6 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
 
     @Override
     public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        // 쿠키 만료
         super.onLogoutSuccess(request, response, authentication);
     }
 }

@@ -1,5 +1,8 @@
 package com.gyechunsik.scoreboard.utils;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +15,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 
+@Slf4j
 @Component
 public class ImageValidator {
 
-    private static final Logger log = LoggerFactory.getLogger(ImageValidator.class);
     private final Tika tika;
 
     public ImageValidator() {
@@ -24,10 +27,12 @@ public class ImageValidator {
 
     /**
      * 파일이 비어있는지 확인
-     *
      * @param file 업로드할 파일
      */
-    public void validateFileNotEmpty(MultipartFile file) {
+    public void validateFileNotEmpty(@Nullable MultipartFile file) {
+        if (file == null) {
+            throw new IllegalArgumentException("파일이 null 입니다.");
+        }
         if (file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어 있습니다.");
         }
@@ -35,11 +40,12 @@ public class ImageValidator {
 
     /**
      * 파일의 Content Type 이 일치하는지 확인
-     *
      * @param file 업로드할 파일
      */
-    public void validateContentType(MultipartFile file, String... allowContentTypes) {
+    public void validateContentType(@Nullable MultipartFile file, @NotNull String... allowContentTypes) {
         validateFileNotEmpty(file);
+        assert file != null;
+
         if (allowContentTypes.length == 0) {
             return;
         }
@@ -56,12 +62,13 @@ public class ImageValidator {
 
     /**
      * Apache Tika 를 사용하여 파일의 실제 서명이 일치하는지 확인
-     *
      * @param file 업로드할 파일
      */
-    public void validateFileSignature(MultipartFile file, MediaType... allowMediaType) {
+    public void validateFileSignature(@Nullable MultipartFile file, @NotNull MediaType... allowMediaType) {
         try {
             validateFileNotEmpty(file);
+            assert file != null;
+
             String detectedType = tika.detect(file.getInputStream());
             for (MediaType mediaType : allowMediaType) {
                 if (mediaType.toString().equals(detectedType)) {
@@ -77,12 +84,13 @@ public class ImageValidator {
 
     /**
      * 이미지의 크기 확인
-     *
      * @param file 업로드할 파일
      */
-    public void validateImageDimensions(MultipartFile file, int width, int height) {
+    public void validateImageDimensions(@Nullable MultipartFile file, int width, int height) {
         try {
             validateFileNotEmpty(file);
+            assert file != null;
+
             BufferedImage image = ImageIO.read(file.getInputStream());
             if (image == null) {
                 throw new IllegalArgumentException("유효한 이미지 파일이 아닙니다.");
@@ -90,7 +98,7 @@ public class ImageValidator {
             int imgWidth = image.getWidth();
             int imgHeight = image.getHeight();
             if (imgWidth != width || imgHeight != height) {
-                throw new IllegalArgumentException("이미지의 크기는 "+width+"px x "+height+"px이어야 합니다.");
+                throw new IllegalArgumentException("이미지의 크기는 " + width + "px x " + height + "px이어야 합니다.");
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.", e);

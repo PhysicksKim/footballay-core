@@ -28,12 +28,12 @@ import java.util.Objects;
 @Table(name = "preference_keys")
 @SQLDelete(sql = "UPDATE preference_keys SET enabled = false WHERE id = ?")
 @FilterDef(
-        name = "enabledFilter",
-        parameters = @ParamDef(name = "enabled", type = BooleanJavaType.class)
+        name = "SoftDeleteFilter",
+        parameters = @ParamDef(name = "softDeleteBool", type = BooleanJavaType.class)
 )
 @Filter(
-        name = "enabledFilter",
-        condition = "enabled = :enabled"
+        name = "SoftDeleteFilter",
+        condition = "enabled = :softDeleteBool"
 )
 public class PreferenceKey extends BaseDateAuditEntity {
 

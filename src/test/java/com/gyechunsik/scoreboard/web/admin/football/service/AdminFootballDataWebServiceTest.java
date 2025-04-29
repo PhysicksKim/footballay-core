@@ -37,7 +37,7 @@ import static org.mockito.Mockito.doNothing;
  * mockapi profile 활성화 시, 실제 External Api 대신 MockApiCallService 가 호출됩니다.
  * mockapi 또는 api 중 하나의 프로파일을 꼭 활성화 시켜야 합니다.
  * <h3>dev profile</h3>
- * dev profile 활성화 시, DevInitRunner 가 실행되어 개발용 데이터들이 삽입됩니다.
+ * dev profile 활성화 시, MockApiInitDataRunner 가 실행되어 개발용 데이터들이 삽입됩니다.
  */
 @Slf4j
 @ActiveProfiles({"mockapi","dev"})

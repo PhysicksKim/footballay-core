@@ -12,7 +12,8 @@ import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Soft delete 를 위해 {@link IncludeDeleted} 를 사용하기 위해서 필터를 활성화/비활성화 하는 Aspect 입니다.
+ * soft delete 된 엔티티를 포함해서 조회하고 싶은 경우 사용합니다.
+ * @see IncludeDeleted
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -22,24 +23,25 @@ public class HibernateFilterAspect {
 
     private final SessionFactory sessionFactory;
 
+    private static final String SOFT_DELETE_FILTER_NAME = "SoftDeleteFilter";
+
     /**
-     * {@link IncludeDeleted} 사용 시 soft delete 를 포함하여 엔티티를 조회하기 위해 {@link Before} 시점에 필터를 비활성화 합니다.
-     * @param joinPoint
+     * 엔티티 조회 전 필터 비활성화
      */
     @Before("@annotation(IncludeDeleted)")
-    public void disableEnabledFilter(JoinPoint joinPoint) {
+    public void disableSoftDeleteFilter(JoinPoint joinPoint) {
         Session session = sessionFactory.getCurrentSession();
-        session.disableFilter("enabledFilter");
+        session.disableFilter(SOFT_DELETE_FILTER_NAME);
     }
 
     /**
-     * {@link IncludeDeleted} 사용 시 soft delete 를 포함하여 엔티티를 조회한 후에 필터를 다시 활성화 합니다.
-     * @param joinPoint
+     * 엔티티 조회 후 필터 재활성화
      */
     @After("@annotation(IncludeDeleted)")
-    public void restoreEnabledFilter(JoinPoint joinPoint) {
+    public void restoreSoftDeleteFilter(JoinPoint joinPoint) {
         Session session = sessionFactory.getCurrentSession();
-        Filter filter = session.enableFilter("enabledFilter");
-        filter.setParameter("enabled", true);
+        Filter filter = session.enableFilter(SOFT_DELETE_FILTER_NAME);
+        filter.setParameter("softDeleteBool", true);
+        filter.validate();
     }
 }
