@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,7 @@ public class AdminFootballDataWebService {
     public ApiResponse<AvailableFixtureResponse> getAvailableFixtures(long leagueId, ZonedDateTime date, String requestUrl) {
         Map<String, String> params = Map.of(
                 "leagueId", String.valueOf(leagueId),
-                "date", date.toString()
+                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
         try {
             date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
@@ -146,7 +147,7 @@ public class AdminFootballDataWebService {
     public ApiResponse<FixtureResponse> getFixturesFromDate(long leagueId, ZonedDateTime date, String requestUrl) {
         Map<String, String> params = Map.of(
                 "leagueId", String.valueOf(leagueId),
-                "date", date.toString()
+                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;
@@ -206,7 +207,7 @@ public class AdminFootballDataWebService {
     public ApiResponse<FixtureResponse> getFixturesOnDate(long leagueId, ZonedDateTime date, String requestUrl) {
         Map<String, String> params = Map.of(
                 "leagueId", String.valueOf(leagueId),
-                "date", date.toString()
+                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
         );
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;

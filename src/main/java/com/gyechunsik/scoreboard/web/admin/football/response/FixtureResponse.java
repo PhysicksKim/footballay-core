@@ -6,7 +6,7 @@ public record FixtureResponse(
         long fixtureId,
         String referee,
         String timezone,
-        ZonedDateTime date,
+        String date,
         long timestamp,
         LiveStatusResponse liveStatus,
         LeagueResponse league,

@@ -22,6 +22,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -251,7 +252,7 @@ public class FootballStreamWebService {
     }
 
     private Map<String, String> createParams(long leagueId, ZonedDateTime dateTime) {
-        return Map.of("leagueId", String.valueOf(leagueId), "date", dateTime.toString());
+        return Map.of("leagueId", String.valueOf(leagueId), "date", dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     private void validateRequest(FixtureOfLeagueRequest request, String requestUrl, Map<String, String> params) {

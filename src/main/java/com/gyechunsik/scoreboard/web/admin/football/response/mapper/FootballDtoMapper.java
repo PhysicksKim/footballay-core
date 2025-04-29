@@ -3,6 +3,8 @@ package com.gyechunsik.scoreboard.web.admin.football.response.mapper;
 import com.gyechunsik.scoreboard.domain.football.dto.*;
 import com.gyechunsik.scoreboard.web.admin.football.response.*;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class FootballDtoMapper {
@@ -59,7 +61,7 @@ public class FootballDtoMapper {
                 fixture.fixtureId(),
                 fixture.referee(),
                 fixture.timezone(),
-                fixture.date(),
+                formatZonedDateTime(fixture.date()),
                 fixture.timestamp(),
                 toLiveStatusDto(fixture.liveStatus()),
                 toLeagueDto(fixture.league()),
@@ -74,7 +76,7 @@ public class FootballDtoMapper {
                 fixtureInfoDto.fixtureId(),
                 fixtureInfoDto.referee(),
                 fixtureInfoDto.timezone(),
-                fixtureInfoDto.date(),
+                formatZonedDateTime(fixtureInfoDto.date()), // 여기 date() 가 ZonedDateTime 이라서 String 으로 바꿔줘야 함
                 fixtureInfoDto.timestamp(),
                 fixtureInfoDto.available(),
                 toLiveStatusDto(fixtureInfoDto.liveStatus()),
@@ -112,5 +114,10 @@ public class FootballDtoMapper {
                 ))
                 .toArray(TeamsOfPlayerResponse._Team[]::new);
         return new TeamsOfPlayerResponse(_player, _teams);
+    }
+
+    private static String formatZonedDateTime(ZonedDateTime zonedDateTime) {
+        if (zonedDateTime == null) return null;
+        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 }

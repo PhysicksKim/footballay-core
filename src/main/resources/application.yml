@@ -11,6 +11,9 @@ spring:
         - api
         - aws
         - secret
+      devrealapi:
+        - mockpath
+        - api
       mocks:
         - mockpath
         - mockapi
