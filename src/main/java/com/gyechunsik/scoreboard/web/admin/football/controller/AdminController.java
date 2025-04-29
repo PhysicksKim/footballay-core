@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.admin.football.controller;
 
-import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
+import com.gyechunsik.scoreboard.config.AppEnvironmentVariable;
 import com.gyechunsik.scoreboard.web.admin.football.service.AdminPageAwsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ public class AdminController {
 
     private final AdminPageAwsService adminPageAwsService;
     private final RestTemplate restTemplate = new RestTemplate();
-    private final CustomEnvironmentVariable envVar;
+    private final AppEnvironmentVariable envVar;
 
     @Value("${spring.profiles.active:}")
     private String activeProfile;
@@ -76,7 +76,7 @@ public class AdminController {
     }
 
     private String rewriteStaticFilePathsToLocalhostPaths(String html) {
-        final String ADMIN_STATIC_FILE_PATH = "https://static."+envVar.getMainDomain()+"/chuncity/admin/";
+        final String ADMIN_STATIC_FILE_PATH = "https://static."+envVar.getDomain()+"/chuncity/admin/";
         final String LOCALHOST_STATIC_FILE_PATH = "https://localhost:8083/admin/";
         return html.replaceAll(ADMIN_STATIC_FILE_PATH, LOCALHOST_STATIC_FILE_PATH);
     }

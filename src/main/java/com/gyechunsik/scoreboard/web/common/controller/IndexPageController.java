@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.common.controller;
 
-import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
+import com.gyechunsik.scoreboard.config.AppEnvironmentVariable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -18,11 +18,11 @@ public class IndexPageController {
 
     private final RestTemplate restTemplate;
 
-    private final CustomEnvironmentVariable envVar;
+    private final AppEnvironmentVariable envVar;
 
     @GetMapping("/")
     public ResponseEntity<String> scoreboardIndexPage() {
-        String path = "https://static."+envVar.getMainDomain()+"/indexpage/index.html";
+        String path = "https://static."+envVar.getDomain()+"/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("main Page");
         return ResponseEntity.ok()

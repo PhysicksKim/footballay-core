@@ -1,0 +1,57 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: GyechunsikScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            tablePrefix: QRTZ_
+            isClustered: false
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 40
+      connection-timeout: 30000
+
+server:
+  error:
+    whitelabel:
+      enabled: false
+
+  # monitoring
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 200
+
+# 운영 환경에서 허용할 CORS 출처
+cors:
+  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app"
+
+# monitoring
+management:
+  server:
+    port: 9001          # actuator 전용 포트
+    address: 127.0.0.1  # 오직 로컬에서만 바인딩
+
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics   # 필요한 엔드포인트만

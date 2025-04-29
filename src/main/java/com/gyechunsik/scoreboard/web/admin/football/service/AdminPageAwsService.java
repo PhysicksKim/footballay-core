@@ -1,6 +1,6 @@
 package com.gyechunsik.scoreboard.web.admin.football.service;
 
-import com.gyechunsik.scoreboard.config.CustomEnvironmentVariable;
+import com.gyechunsik.scoreboard.config.AppEnvironmentVariable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Service
 public class AdminPageAwsService {
 
-    private final CustomEnvironmentVariable envVar;
+    private final AppEnvironmentVariable envVar;
 
     @Value("${aws.cloudfront.domain}")
     private String cloudfrontDomain;
@@ -79,7 +79,7 @@ public class AdminPageAwsService {
 
             CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain+"/*", expirationDate);
             Map<String, String> cookiesMap = cookiesToMap(cookiesForCustomPolicy);
-            setCookiesToHttpResponse(response, cookiesMap, envVar.getMainDomain(), COOKIE_MAX_AGE_SEC);
+            setCookiesToHttpResponse(response, cookiesMap, envVar.getDomain(), COOKIE_MAX_AGE_SEC);
 
             log.info("issued and set CloudFront signed Cookies for admin page");
         } catch (IOException e) {

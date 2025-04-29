@@ -102,12 +102,10 @@ public class SecurityConfig {
 
             // /login 이면서 POST인 경우 => CSRF 필터 적용
             if ("/login".equals(uri) && "POST".equalsIgnoreCase(method)) {
-                log.info("CSRF 필터 적용: {}", uri);
+                log.info("login POST request. CSRF 필터 적용: {}", uri);
                 return false; // CSRF 필터 적용
             }
 
-            // 그 외 모든 요청 => CSRF 무시
-            log.info("CSRF 필터 무시: {}", uri);
             return true;
         };
     }
