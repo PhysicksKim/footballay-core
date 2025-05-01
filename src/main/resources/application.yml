@@ -23,6 +23,9 @@ spring:
         enabled: false
   jackson:
     time-zone: Asia/Seoul
+  web:
+    resources:
+      add-mappings: false
 
 logging:
   level:
@@ -31,5 +34,6 @@ logging:
       springframework: INFO
       hibernate: INFO
 
+# footballay.com 과 gyechunhoe.com 의 메인 페이지 구분시
 app:
   domain: "gyechunhoe.com"
