@@ -49,3 +49,6 @@ out/
 
 !docker/**
 !docker/dev/**
+
+.DS_Store
+**/.DS_Store
