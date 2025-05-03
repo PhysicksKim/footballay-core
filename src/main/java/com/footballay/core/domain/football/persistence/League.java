@@ -43,7 +43,7 @@ public class League extends BaseDateAuditEntity {
      */
     @Builder.Default
     @Column(nullable = true)
-    private boolean standingAvailable = false;
+    private Boolean standingAvailable = false;
 
     /**
      * 하나의 리그에는 season 별로 다양한 standing 이 존재할 수 있습니다.

@@ -25,7 +25,7 @@ public class Standing extends BaseDateAuditEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "league_id", nullable = false)
+    @JoinColumn(name = "league_id", nullable = true) // Migration 동안 true
     private League league;
 
     private int season;
