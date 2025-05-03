@@ -5,7 +5,7 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
 }
 
-group = 'com.gyechunhoe'
+group = 'com.footballay'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -30,6 +30,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 
+    // Monitoring
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-core'
+
     // AWS
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
     implementation 'software.amazon.awssdk:s3:2.29.36'
@@ -47,11 +51,13 @@ dependencies {
 
     // Jackson : for json serialize
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.module:jackson-module-blackbird'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.mariadb.jdbc:mariadb-java-client'
-    runtimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'com.h2database:h2:2.2.224'
 
     // JJWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'

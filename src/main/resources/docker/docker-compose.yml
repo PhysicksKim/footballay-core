@@ -1,18 +1,17 @@
-# fix-player branch 를 위한 docker-compose.yml 파일입니다.
 services:
   redis:
     image: redis:7.2.4-alpine
-    container_name: fix-player-redis-scoreboard
+    container_name: footballay-dev-redis
     command: redis-server --requirepass 1234 --port 6379
     ports:
       - "6379:6379"
 
   mariadb:
     image: mariadb:latest
-    container_name: fix-player-mariadb-scoreboard
+    container_name: footballay-dev-mariadb
     environment:
       MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_DATABASE: scoreboard
+      MARIADB_DATABASE: footballay
       MARIADB_USER: dev
       MARIADB_PASSWORD: dev1234
       TZ: Asia/Seoul

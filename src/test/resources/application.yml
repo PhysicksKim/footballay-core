@@ -1,10 +1,9 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=50
+    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
-
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -41,6 +40,15 @@ spring:
       host: localhost
       port: 6379
       password: 1234
+
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#      timeout: 1000
+#      password:
+#      ssl:
+#        enabled: true
 
 server:
   port: 8083
@@ -96,3 +104,6 @@ path:
       photo:
         prefix: "chuncity/dev/players"
         suffix: "devphoto"
+
+app:
+  domain: "gyechunhoe.com"

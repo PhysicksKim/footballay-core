@@ -38,18 +38,17 @@ out/
 .vscode/
 
 ### secret keys ###
-application-secret.yml
-application-devsecret.yml
-application-aws.yml
-application-path.yml
-
-### Dev Files
-application-api.yml
+**/application-secret.yml
+**/application-aws.yml
+**/application-path.yml
+**/application-api.yml
+!src/main/resources/config/dev/**
 
 ### AWS Cloudfront pem key files
 /src/main/resources/keys/
 
-dev/
-
 !docker/**
 !docker/dev/**
+
+.DS_Store
+**/.DS_Store
