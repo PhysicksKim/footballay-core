@@ -54,4 +54,4 @@ management:
 
 # 운영 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app"
+  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,chuncity://chuncity.app,footballay://footballay.app"
