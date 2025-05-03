@@ -91,5 +91,16 @@ path:
         prefix: "chuncity/dev/players"
         suffix: "devphoto"
 
+# footballay.com 과 gyechunhoe.com 의 메인 페이지 구분시
 app:
+  # DEPRECATED: use app.domain instead
   domain: "gyechunhoe.com"
+
+  footballay:
+    domain: "footballay.com"
+    static:
+      domain: "static.footballay.com"
+  gyechunhoe:
+    domain: "gyechunhoe.com"
+    static:
+      domain: "static.gyechunhoe.com"

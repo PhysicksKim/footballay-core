@@ -22,7 +22,7 @@ public class IndexPageController {
 
     @GetMapping("/")
     public ResponseEntity<String> footballayIndexPage() {
-        String path = "https://static."+envVar.getDomain()+"/indexpage/index.html";
+        String path = "https://static."+envVar.getGYE_DOMAIN()+"/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("footballay main Page");
         return ResponseEntity.ok()

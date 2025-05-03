@@ -11,6 +11,12 @@ import org.springframework.stereotype.Component;
 public class AppEnvironmentVariable {
 
     @Value("${app.domain}")
-    private String domain;
+    private String GYE_DOMAIN;
+
+    @Value("${app.footballay.domain}")
+    private String FOOTBALLAY_DOMAIN;
+
+    @Value("${app.footballay.static.domain}")
+    private String FOOTBALLAY_STATIC_DOMAIN;
 
 }

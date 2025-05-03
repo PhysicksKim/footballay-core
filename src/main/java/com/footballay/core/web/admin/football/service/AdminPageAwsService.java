@@ -79,7 +79,7 @@ public class AdminPageAwsService {
 
             CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain+"/*", expirationDate);
             Map<String, String> cookiesMap = cookiesToMap(cookiesForCustomPolicy);
-            setCookiesToHttpResponse(response, cookiesMap, envVar.getDomain(), COOKIE_MAX_AGE_SEC);
+            setCookiesToHttpResponse(response, cookiesMap, envVar.getFOOTBALLAY_DOMAIN(), COOKIE_MAX_AGE_SEC);
 
             log.info("issued and set CloudFront signed Cookies for admin page");
         } catch (IOException e) {

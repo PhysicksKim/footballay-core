@@ -22,10 +22,13 @@ class AppEnvironmentVariableTest {
     @Test
     void getEnvVal() {
         // when
-        String mainDomain = appEnvironmentVariable.getDomain();
+        String gyeDomain = appEnvironmentVariable.getGYE_DOMAIN();
+        String footballayDomain = appEnvironmentVariable.getFOOTBALLAY_DOMAIN();
 
         // then
-        log.info("mainDomain: {}", mainDomain);
-        assertThat(StringUtils.hasText(mainDomain)).isTrue();
+        log.info("gyechunhoe domain : {}", gyeDomain);
+        log.info("footballay domain : {}", footballayDomain);
+        assertThat(StringUtils.hasText(gyeDomain)).isTrue();
+        assertThat(StringUtils.hasText(footballayDomain)).isTrue();
     }
 }

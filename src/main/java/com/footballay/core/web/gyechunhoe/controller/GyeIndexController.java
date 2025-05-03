@@ -24,7 +24,7 @@ public class GyeIndexController {
 
     @GetMapping
     public ResponseEntity<String> gyechunhoeIndexPage() {
-        String path = "https://static."+envVar.getDomain()+"/indexpage/index.html";
+        String path = "https://static."+envVar.getGYE_DOMAIN()+"/indexpage/index.html";
         String html = restTemplate.getForObject(path, String.class);
         log.info("gyechunhoe main Page");
         return ResponseEntity.ok()

@@ -2,12 +2,14 @@ package com.footballay.core.web.admin.football.controller;
 
 import com.footballay.core.config.AppEnvironmentVariable;
 import com.footballay.core.web.admin.football.service.AdminPageAwsService;
+import com.footballay.core.web.admin.football.service.AdminPageService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -16,8 +18,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.UnsupportedEncodingException;
-
 @Slf4j
 @RequiredArgsConstructor
 @Controller
@@ -25,28 +25,17 @@ import java.io.UnsupportedEncodingException;
 public class AdminController {
 
     private final AdminPageAwsService adminPageAwsService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final AdminPageService adminPageService;
+    private final RestTemplate restTemplate;
     private final AppEnvironmentVariable envVar;
 
     @Value("${spring.profiles.active:}")
     private String activeProfile;
 
     @GetMapping("/admin")
-    public ResponseEntity<String> adminIndexPage(Authentication authentication, HttpServletRequest request, HttpServletResponse response) throws UnsupportedEncodingException {
-        boolean isDev = activeProfile.contains("dev");
-        boolean hasCloudfrontSignedCookie = adminPageAwsService.hasSignedCookies(request);
-        if (!isDev && !hasCloudfrontSignedCookie) {
-            // prod 환경: 자체 쿠키 발급
-            adminPageAwsService.setCloudFrontSignedCookie(response);
-            log.info("issued CloudFront signed Cookie for admin page for authenticated user:{}", authentication.getName());
-        }
-
-        // Signed URL 을 이용하여 index.html 가져오기
-        String signedUrl = adminPageAwsService.generateSignedUrlForAdminPage();
-        String html = restTemplate.getForObject(signedUrl, String.class);
-        if (isDev) {
-            html = rewriteStaticFilePathsToLocalhostPaths(html);
-        }
+    public ResponseEntity<String> adminIndexPage(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
+        String adminPageUri = adminPageService.getAdminPageUri();
+        String html = restTemplate.getForObject(adminPageUri, String.class);
         return ResponseEntity.ok().body(html);
     }
 
@@ -76,7 +65,7 @@ public class AdminController {
     }
 
     private String rewriteStaticFilePathsToLocalhostPaths(String html) {
-        final String ADMIN_STATIC_FILE_PATH = "https://static."+envVar.getDomain()+"/chuncity/admin/";
+        final String ADMIN_STATIC_FILE_PATH = "https://static."+envVar.getFOOTBALLAY_DOMAIN()+"/footballay/admin/";
         final String LOCALHOST_STATIC_FILE_PATH = "https://localhost:8083/admin/";
         return html.replaceAll(ADMIN_STATIC_FILE_PATH, LOCALHOST_STATIC_FILE_PATH);
     }
