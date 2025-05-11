@@ -22,12 +22,12 @@ public class ScoreBoardController {
 
     @GetMapping
     public ResponseEntity<String> scoreboardIndexPage() {
-        String path = UriComponentsBuilder.newInstance()
+        String uri = UriComponentsBuilder.newInstance()
                 .scheme("https")
                 .host(envVar.getFOOTBALLAY_STATIC_DOMAIN())
                 .pathSegment("footballay", "scoreboard", "index.html")
                 .toUriString();
-        String html = restTemplate.getForObject(path, String.class);
+        String html = restTemplate.getForObject(uri, String.class);
         log.info("football scoreboard page called");
         return ResponseEntity.ok().body(html);
     }
