@@ -34,6 +34,7 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 @Entity
+@Table(name = "fixtures")
 public class Fixture {
 
     @Id

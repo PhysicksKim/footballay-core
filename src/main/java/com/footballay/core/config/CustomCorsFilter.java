@@ -13,8 +13,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Slf4j
-@Order(1) // 높은 우선순위 설정
-@Component
+// @Order(1) // 높은 우선순위 설정
+// @Component
 public class CustomCorsFilter extends OncePerRequestFilter {
 
     @Override
@@ -23,9 +23,10 @@ public class CustomCorsFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         // CORS 요청인 경우
         if (CorsUtils.isCorsRequest(request)) {
-            log.info("CORS request detected. origin : {}", request.getHeader("Origin"));
+            log.info("CORS request detected. origin : {}, requestUri : {}", request.getHeader("Origin"), request.getRequestURI());
             String origin = request.getHeader("Origin");
             if (origin == null) {
+                log.info("Origin header is null");
                 origin = "unknown";
             }
 

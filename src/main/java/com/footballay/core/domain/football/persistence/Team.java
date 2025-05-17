@@ -3,10 +3,7 @@ package com.footballay.core.domain.football.persistence;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.footballay.core.domain.football.persistence.relations.LeagueTeam;
 import com.footballay.core.domain.football.persistence.relations.TeamPlayer;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -19,6 +16,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "teams")
 public class Team {
 
     @Id

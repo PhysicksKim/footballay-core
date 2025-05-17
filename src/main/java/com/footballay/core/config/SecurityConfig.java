@@ -23,6 +23,8 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Slf4j
 @Configuration
@@ -31,6 +33,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private final WebMvcConfigurer corsConfigurer;
     @Value("${custom.login.remember-me-key}")
     private String REMEMBER_ME_KEY;
 
@@ -47,6 +50,8 @@ public class SecurityConfig {
     private final LogoutSuccessHandler logoutSuccessHandler;
     private final AccessDeniedHandler accessDeniedHandler;
 
+    private final CorsConfigurationSource corsConfigurationSource;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -55,6 +60,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(
+                        corsConfigurationSource
+                ))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfConfigurationSource())
                         .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()) // 커스텀 핸들러 설정
@@ -112,9 +120,6 @@ public class SecurityConfig {
 
     private CsrfTokenRepository csrfConfigurationSource() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        // 쿠키 및 헤더 이름은 기본값을 사용합니다.
-        // repository.setCookieName("XSRF-TOKEN");
-        // repository.setHeaderName("X-XSRF-TOKEN");
         repository.setCookiePath("/");
         repository.setCookieCustomizer(cookie -> {
             cookie.secure(true);
@@ -123,6 +128,5 @@ public class SecurityConfig {
         });
         return repository;
     }
-
 
 }

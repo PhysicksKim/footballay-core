@@ -30,10 +30,16 @@ public class AdminUserRoleController {
         return ResponseEntity.ok().body(adminUserRoleService.getUserInfo(authentication, "/api/admin/role"));
     }
 
+    /**
+     * AWS cloudfront -> Cloudflare 로 이전함에 따라서 deprecated 됐습니다.
+     * @param response
+     * @return
+     */
+    @Deprecated(since = "2025-05-18")
     @PostMapping("/cloudfront-cookie")
     public ResponseEntity<?> issueCloudfrontSignedCookie(HttpServletResponse response) {
-        log.info("쿠키 재발급");
-        adminPageAwsService.setCloudFrontSignedCookie(response);
+        log.info("[DEPRECATED] AWS signed 쿠키 재발급. deprecated 되어 쿠키를 발급하지 않고 endpoint 만 남겨둡니다");
+        // adminPageAwsService.setCloudFrontSignedCookie(response);
         return ResponseEntity.ok().build();
     }
 
