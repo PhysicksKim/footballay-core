@@ -57,6 +57,7 @@ dependencies {
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.mariadb.jdbc:mariadb-java-client'
+    implementation 'org.postgresql:postgresql'
     testRuntimeOnly 'com.h2database:h2:2.2.224'
 
     // JJWT

@@ -17,7 +17,7 @@ import lombok.*;
 @Entity
 public class LiveStatus {
 
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(mappedBy = "liveStatus", fetch = FetchType.LAZY)
