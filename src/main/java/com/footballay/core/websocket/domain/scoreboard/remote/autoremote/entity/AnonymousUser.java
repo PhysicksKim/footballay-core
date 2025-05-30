@@ -14,8 +14,6 @@ import java.util.UUID;
 @Entity
 public class AnonymousUser extends BaseDateAuditEntity {
 
-    // @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
-    // @Column(updatable = false, nullable = false)
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

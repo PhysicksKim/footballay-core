@@ -22,11 +22,25 @@ public class GyeIndexController {
 
     private final AppEnvironmentVariable envVar;
 
+    private static final String GYE_DOMAIN_PREFIX = "https://static.";
+    private static final String GYE_MAIN_PAGE_PATH = "/indexpage/index.html";
+    private static final String GYE_TEST_MAIN_PAGE_PATH = "/test-main-page/index.html";
+
     @GetMapping
-    public ResponseEntity<String> gyechunhoeIndexPage() {
-        String path = "https://static."+envVar.getGYE_DOMAIN()+"/indexpage/index.html";
+    public ResponseEntity<String> gyechunhoeMainPage() {
+        String path = GYE_DOMAIN_PREFIX + envVar.getGYE_DOMAIN() + GYE_MAIN_PAGE_PATH;
         String html = restTemplate.getForObject(path, String.class);
         log.info("gyechunhoe main Page");
+        return ResponseEntity.ok()
+                .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
+                .body(html);
+    }
+
+    @GetMapping("/hwkemf/test-main-page")
+    public ResponseEntity<String> testMainPage() {
+        String path = GYE_DOMAIN_PREFIX + envVar.getGYE_DOMAIN() + GYE_TEST_MAIN_PAGE_PATH;
+        String html = restTemplate.getForObject(path, String.class);
+        log.info("gyechunhoe test main Page");
         return ResponseEntity.ok()
                 .contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
                 .body(html);
