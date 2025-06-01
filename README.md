@@ -1,7 +1,11 @@
-# Chuncity Backend  
+# Footballay Backend  
   
-축구 라이브 데이터 제공 앱 chuncity 의 백엔드 입니다.   
-  
+축구 라이브 데이터 제공 앱 Footballay 의 백엔드 입니다.   
+
+# Architecture 
+
+![footballay-architecture](https://github.com/user-attachments/assets/609d6dca-7d79-41f0-b434-70e376d69e23)
+
 
 ---
 
