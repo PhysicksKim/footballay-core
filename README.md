@@ -30,3 +30,15 @@ create table persistent_logins (
 );
 ```
 [🔗 Spring Security docs - Security Database Schema](https://docs.spring.io/spring-security/reference/servlet/appendix/database-schema.html#_persistent_login_remember_me_schema)  
+
+### 4. Add admin user and authority
+
+```sql
+INSERT INTO users(username,password,nickname,enabled,created_date, modified_date)
+    VALUES ('qwer','{noop}qwer','qwer',true,NOW(),NOW());
+```
+
+```sql
+INSERT INTO footballay_core.authorities (user_id,authority,created_date,modified_date)
+    VALUES (1,'ROLE_ADMIN',NOW(),NOW());
+```
