@@ -20,17 +20,17 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
 
     List<Fixture> findFixturesByLeague(League league, Pageable pageable);
 
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
             "JOIN FETCH f.awayTeam at " +
             "WHERE f.league = :league " +
-            "AND CAST( f.date AS DATE ) = (SELECT CAST( MIN(f2.date) AS DATE) FROM FixtureCore f2 WHERE f2.date >= :date)")
+            "AND CAST( f.date AS DATE ) = (SELECT CAST( MIN(f2.date) AS DATE) FROM Fixture f2 WHERE f2.date >= :date)")
     List<Fixture> findNextFixturesAfterDate(@Param("league") League league, @Param("date") LocalDateTime date);
 
     // @EntityGraph(attributePaths = {"liveStatus", "homeTeam", "awayTeam", "league"})
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -38,7 +38,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
             "WHERE f.fixtureId = :fixtureId")
     Optional<Fixture> findById(@NotNull Long fixtureId);
 
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
             "JOIN FETCH f.awayTeam at " +
@@ -51,7 +51,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
      * 해당 리그의 date 이후의 이용 가능한 fixture 를 조회합니다.
      * 이를 위해 Index ( league , isAvailable , date ) 로 생성합니다.
      */
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -72,7 +72,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
      * @param pageable 날짜 이후 첫 번째 fixture 만 얻으려는 경우 PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
      * @return
      */
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -83,7 +83,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     )
     List<Fixture> findFixturesByLeagueAndDateAfter(League league, LocalDateTime date, Pageable pageable);
 
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -104,7 +104,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
      * @param pageable 날짜 이후 첫 번째 available fixture 만 얻으려는 경우 PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "date"));
      * @return
      */
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -116,7 +116,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     )
     List<Fixture> findAvailableFixturesByLeagueAndDateAfter(League league, LocalDateTime date, Pageable pageable);
 
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +
@@ -129,7 +129,7 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     )
     List<Fixture> findAvailableFixturesByLeagueAndDateRange(League league, LocalDateTime startOfDay, LocalDateTime endOfDay);
 
-    @Query("SELECT f FROM FixtureCore f " +
+    @Query("SELECT f FROM Fixture f " +
             "LEFT JOIN FETCH f.liveStatus ls " +
             "JOIN FETCH f.league l " +
             "JOIN FETCH f.homeTeam ht " +

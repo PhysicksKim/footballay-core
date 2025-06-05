@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
 
-    @Query("SELECT t FROM TeamCore t JOIN FETCH t.leagueTeams lt WHERE lt.league = :league")
+    @Query("SELECT t FROM Team t JOIN FETCH t.leagueTeams lt WHERE lt.league = :league")
     List<Team> findTeamsByLeague(@Param("league") League league);
 
 }

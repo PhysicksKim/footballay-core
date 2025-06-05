@@ -17,7 +17,7 @@ data class LeagueApiSportsMeta(
     @OneToMany(
         cascade = [CascadeType.ALL],
         fetch = FetchType.LAZY,
-        mappedBy = "leagueApiSportsMeta"
+        mappedBy = "apiSportsMeta"
     )
     var season: List<LeagueApiSportsSeason> = emptyList(),
 
