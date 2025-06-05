@@ -1,5 +1,6 @@
 HELP.md
 .gradle
+.kotlin
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -42,10 +43,15 @@ out/
 **/application-aws.yml
 **/application-path.yml
 **/application-api.yml
+**/application-apirefacsecret.yml
+src/main/resources/config/dev/application-apirefacsecret.yml
 !src/main/resources/config/dev/**
 
 ### AWS Cloudfront pem key files
 /src/main/resources/keys/
+
+### secret ai context
+.ai/secret/**
 
 !docker/**
 !docker/dev/**
