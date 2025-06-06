@@ -34,8 +34,6 @@ class PlayerCustomPhotoServiceTest {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private PreferenceKeyRepository preferenceKeyRepository;
-    @Autowired
     private PlayerCustomPhotoRepository playerCustomPhotoRepository;
     @Autowired
     private PreferenceKeyService preferenceKeyService;
@@ -55,18 +53,9 @@ class PlayerCustomPhotoServiceTest {
         playerRepository.save(player2);
         // add user
         User user = User.builder().username(USERNAME).password("password1").enabled(true).build();
-        userRepository.save(user);
+        user = userRepository.save(user);
         preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
     }
-
-    @AfterEach
-    void tearDown() {
-        playerCustomPhotoRepository.deleteAll();
-        preferenceKeyRepository.deleteAll();
-        userRepository.deleteAll();
-        playerRepository.deleteAll();
-    }
-
 
     @Nested
     class RegisterAndUploadCustomPhoto {
@@ -74,7 +63,9 @@ class PlayerCustomPhotoServiceTest {
         @Test
         void success_registerPlayerCustomPhoto() {
             // given
+            log.info("START TEST");
             MultipartFile multipartFile = CustomPhotoMultipartGenerator.generate();
+            log.info("BEFORE USER REPO FIND");
             User user = userRepository.findByUsername(USERNAME).orElseThrow();
             log.info("preferenceKey: {}", preferenceKey.getKeyhash());
             // when
