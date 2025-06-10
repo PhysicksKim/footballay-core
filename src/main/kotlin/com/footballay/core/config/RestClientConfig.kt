@@ -1,15 +1,22 @@
 package com.footballay.core.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.web.client.RestClient
 
 @Configuration
-class RestClientConfig {
+class RestClientConfig (
+    private val objectMapper: ObjectMapper
+){
 
-    // 빈 이름을 "restClient"로 주거나, 완전히 다른 이름으로 바꿔버리면 충돌이 사라집니다.
     @Bean
     fun restClient(): RestClient {
-        return RestClient.create()
+        return RestClient.builder()
+            .messageConverters{
+                it.add(MappingJackson2HttpMessageConverter(objectMapper))
+            }
+            .build()
     }
 }

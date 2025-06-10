@@ -1,5 +1,6 @@
 package com.footballay.core.config;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +17,9 @@ import java.util.List;
 
 @Configuration
 public class WebConfig {
+
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WebConfig.class);
+
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -42,7 +45,10 @@ public class WebConfig {
         return restTemplate;
     }
 
-    public WebConfig(final CorsConfigurationSource corsConfigurationSource) {
+    public WebConfig(
+            @Qualifier("corsConfigurationSource")
+            final CorsConfigurationSource corsConfigurationSource
+    ) {
         this.corsConfigurationSource = corsConfigurationSource;
     }
 }

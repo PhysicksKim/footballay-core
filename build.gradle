@@ -9,8 +9,6 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.spring' version '1.8.22'
     id 'org.jetbrains.kotlin.plugin.jpa' version '1.8.22'
     id 'org.jetbrains.kotlin.kapt' version '1.8.22'  // kotlin annotation processing
-
-    id 'io.freefair.lombok' version '8.13.1' // 최신 버전으로 교체하세요
 }
 
 group = 'com.footballay'
@@ -19,6 +17,9 @@ version = '0.0.1-SNAPSHOT'
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+kapt {
+    useBuildCache = true
 }
 
 configurations {
@@ -123,6 +124,7 @@ tasks.withType(KotlinCompile).configureEach {
         freeCompilerArgs = ["-Xjsr305=strict"]  // Spring과 상호 운용성 강화
     }
 }
+
 kotlin {
     jvmToolchain(17)
 }
