@@ -3,6 +3,7 @@ package com.footballay.core.config;
 import com.footballay.core.config.security.handler.SpaCsrfTokenRequestHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +34,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final WebMvcConfigurer corsConfigurer;
     @Value("${custom.login.remember-me-key}")
     private String REMEMBER_ME_KEY;
 
