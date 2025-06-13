@@ -1,19 +1,6 @@
 package com.footballay.core.infra.apisports.fetch.response
 
-/*
-    "get": "leagues",
-    "parameters": {
-        "current": "true"
-    },
-    "errors": [],
-    "results": 1184,
-    "paging": {
-        "current": 1,
-        "total": 1
-    },
-    "response": [
- */
-data class ApiSportsV3Response<T>(
+data class ApiSportsV3Envelope<T : ApiSportsResponse>(
     val get: String,
     val parameters: Map<String, String>,
     val errors: List<String>,
@@ -25,4 +12,13 @@ data class ApiSportsV3Response<T>(
 data class Paging(
     val current: Int,
     val total: Int
+)
+
+data class ApiSportsV3LiveStatusEnvelope<T : ApiSportsResponse> (
+    val get: String,
+    val parameters: List<Any>,
+    val errors: List<String>,
+    val results: Int,
+    val paging: Paging,
+    val response: T
 )

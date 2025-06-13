@@ -1,17 +1,19 @@
 package com.footballay.core.infra.apisports.fetch.apisports
 
 import com.footballay.core.bodyObject
-import com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse
 import com.footballay.core.infra.apisports.config.ApiSportsProperties
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsV3Response
-import com.footballay.core.infra.apisports.fetch.response.fixtures.ApiSportsFixtureSingle
-import com.footballay.core.infra.apisports.fetch.response.leagues.ApiSportsLeaguesCurrent
+import com.footballay.core.infra.apisports.fetch.response.*
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
+/**
+ * Implementation of [ApiSportsV3FetchService] to fetch data from API Sports v3.
+ *
+ * Functions *TAKE SECONDS!* Don't use when the endpoint is called frequently.
+ */
 @Component
 class ApiSportsV3FetchImpl (
     private val restClient: RestClient,
@@ -20,37 +22,85 @@ class ApiSportsV3FetchImpl (
 
     private val log = logger()
 
-    override fun fetchLeaguesCurrent(): ApiSportsV3Response<ApiSportsLeaguesCurrent> {
-        val uri : URI = UriComponentsBuilder.newInstance()
-            .scheme(properties.scheme)
-            .host(properties.host)
-            .path(properties.paths.leagues)
-            .queryParam("current", true).build().toUri()
-        log.info("Request leagues current from API Sports: $uri")
+    override fun fetchStatus(): ApiSportsV3LiveStatusEnvelope<ApiSportsStatus> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.status).build().toUri()
+        logNameAndUri("status", uri)
 
-        return restClient.get()
-            .uri(uri)
-            .header(properties.headers.xRapidapiHostName,properties.headers.xRapidapiHostValue)
-            .header(properties.headers.xRapidapiKeyName,properties.headers.xRapidapiKeyValue)
-            .retrieve()
-            .bodyObject<ApiSportsV3Response<ApiSportsLeaguesCurrent>>()
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3LiveStatusEnvelope<ApiSportsStatus>>()
+            ?: throw IllegalStateException("Response body is null of ApiSports Status")
+    }
+
+    override fun fetchLeaguesCurrent(): ApiSportsV3Envelope<ApiSportsLeague.Current> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.leaguesCurrent)
+            .queryParam("current", true).build().toUri()
+        logNameAndUri("leagues current", uri)
+
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3Envelope<ApiSportsLeague.Current>>()
             ?: throw IllegalStateException("Response body is null of ApiSports League Current")
     }
 
-    override fun fetchFixtureSingle(fixtureApiId: Long): ApiSportsV3Response<ApiSportsFixtureSingle> {
-        val uri : URI = UriComponentsBuilder.newInstance()
-            .scheme(properties.scheme)
-            .host(properties.host)
-            .path(properties.paths.fixtures)
-            .queryParam("id", fixtureApiId).build().toUri()
-        log.info("Request fixture single from API Sports: $uri")
+    override fun fetchTeamsOfLeague(leagueApiId: Long, season: Int): ApiSportsV3Envelope<ApiSportsTeam.OfLeague> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.teamsOfLeague)
+            .queryParam("league", leagueApiId)
+            .queryParam("season", season).build().toUri()
+        logNameAndUri("teams of league", uri)
 
-        return restClient.get()
-            .uri(uri)
-            .header(properties.headers.xRapidapiHostName, properties.headers.xRapidapiHostValue)
-            .header(properties.headers.xRapidapiKeyName, properties.headers.xRapidapiKeyValue)
-            .retrieve()
-            .bodyObject<ApiSportsV3Response<ApiSportsFixtureSingle>>()
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3Envelope<ApiSportsTeam.OfLeague>>()
+            ?: throw IllegalStateException("Response body is null of ApiSports Teams of League")
+    }
+
+    override fun fetchSquadOfTeam(teamApiId: Long): ApiSportsV3Envelope<ApiSportsPlayer.OfTeam> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.squadOfTeam)
+            .queryParam("team", teamApiId).build().toUri()
+        logNameAndUri("squad of team", uri)
+
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3Envelope<ApiSportsPlayer.OfTeam>>()
+            ?: throw IllegalStateException("Response body is null of ApiSports Squad of Team")
+    }
+
+    override fun fetchFixturesOfLeague(leagueApiId: Long, season: String): ApiSportsV3Envelope<ApiSportsFixture.OfLeague> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.fixturesOfLeague)
+            .queryParam("league", leagueApiId)
+            .queryParam("season", season).build().toUri()
+        logNameAndUri("fixtures of league", uri)
+
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.OfLeague>>()
+            ?: throw IllegalStateException("Response body is null of ApiSports Fixtures of League")
+    }
+
+    override fun fetchFixtureSingle(fixtureApiId: Long): ApiSportsV3Envelope<ApiSportsFixture.Single> {
+        val uri : URI = ApiSportsUriBuilder()
+            .path(ApiSportsPaths.fixtureSingle)
+            .queryParam("id", fixtureApiId).build().toUri()
+        logNameAndUri("fixture single",uri)
+
+        return ApiSportsRestClientRequestBuild(uri)
+            .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.Single>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Fixture Single")
     }
+
+    private fun ApiSportsRestClientRequestBuild(uri: URI) = restClient.get()
+        .uri(uri)
+        .header(properties.headers.xRapidapiHostName, properties.headers.xRapidapiHostValue)
+        .header(properties.headers.xRapidapiKeyName, properties.headers.xRapidapiKeyValue)
+        .retrieve()
+
+    private fun ApiSportsUriBuilder() = UriComponentsBuilder.newInstance()
+        .scheme(properties.scheme)
+        .host(properties.host)
+
+    private fun logNameAndUri(reqName:String, uri: URI) {
+        log.info("Request [$reqName] from API Sports: $uri")
+    }
+
 }

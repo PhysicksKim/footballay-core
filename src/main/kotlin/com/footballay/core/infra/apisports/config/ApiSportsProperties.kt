@@ -7,7 +7,6 @@ class ApiSportsProperties(
     val scheme: String,
     val host: String,
     val headers: ApiSportsHeaders,
-    val paths: ApiSportsPaths
 )
 
 data class ApiSportsHeaders(
@@ -15,9 +14,4 @@ data class ApiSportsHeaders(
     val xRapidapiHostValue: String,
     val xRapidapiKeyName: String,
     val xRapidapiKeyValue: String,
-)
-
-data class ApiSportsPaths(
-    val fixtures: String,
-    val leagues: String,
 )
