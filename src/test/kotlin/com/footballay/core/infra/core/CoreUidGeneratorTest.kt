@@ -9,7 +9,7 @@ internal class CoreUidGeneratorTest {
 
     private val UidLength = 16
     private val generator = CoreUidGenerator()
-    private val allowedChars = CoreUidGenerator.allowedChars.toSet()
+    private val allowedChars = CoreUidGenerator.ALLOWED_CHARS.toSet()
 
     @DisplayName("UID 가 허용문자조합에 따라서 생성되었는지 검사합니다")
     @Test
@@ -21,7 +21,7 @@ internal class CoreUidGeneratorTest {
         uid.all {
             it in allowedChars
         }.also { isValid ->
-            assertThat(isValid).isTrue.withFailMessage("UID must only contain characters: ${CoreUidGenerator.allowedChars}")
+            assertThat(isValid).isTrue.withFailMessage("UID must only contain characters: ${CoreUidGenerator.ALLOWED_CHARS}")
         }
     }
 
@@ -30,7 +30,7 @@ internal class CoreUidGeneratorTest {
     fun `invalid uid return false`() {
         assertThat(generator.isValidUid("a")).isFalse()
             .withFailMessage("Too short UID should be invalid")
-        assertThat(generator.isValidUid("x".repeat(CoreUidGenerator.length + 1))).isFalse()
+        assertThat(generator.isValidUid("x".repeat(CoreUidGenerator.UID_LENGTH + 1))).isFalse()
             .withFailMessage("Too long UID should be invalid")
         assertThat(generator.isValidUid("")).isFalse()
             .withFailMessage("Empty string should be invalid")

@@ -1,14 +1,15 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.6'
     id 'io.spring.dependency-management' version '1.1.4'
 
-    id 'org.jetbrains.kotlin.jvm' version '1.8.22'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.8.22'
-    id 'org.jetbrains.kotlin.plugin.jpa' version '1.8.22'
-    id 'org.jetbrains.kotlin.kapt' version '1.8.22'  // kotlin annotation processing
+    id 'org.jetbrains.kotlin.jvm' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.jpa' version '2.1.21'
+    id 'org.jetbrains.kotlin.kapt' version '2.1.21' // kotlin annotation processing
 }
 
 group = 'com.footballay'
@@ -119,9 +120,12 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 tasks.withType(KotlinCompile).configureEach {
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs = ["-Xjsr305=strict"]  // Spring과 상호 운용성 강화
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+
+        freeCompilerArgs.set([
+                "-Xjsr305=strict",  // Spring과 상호 운용성 강화
+        ])
     }
 }
 

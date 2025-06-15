@@ -3,7 +3,6 @@ package com.footballay.core.infra.apisports
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsCoverageCreateDto
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsCreateDto
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsSeasonCreateDto
-import com.footballay.core.infra.apisports.dto.ApiSportsTeamSaveDto
 import com.footballay.core.infra.core.util.UidGenerator
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsCoverage
@@ -13,16 +12,15 @@ import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSport
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import jakarta.transaction.Transactional
-import org.springframework.stereotype.Service
+import org.springframework.stereotype.Component
 
-@Service
-class ApiSportsSyncService(
+@Component
+class LeagueApiSportsSyncer(
     // Api sports repos
-    private val leagueApiSportsRepository: LeagueApiSportsRepository,
+    private val leagueApiRepository: LeagueApiSportsRepository,
     private val leagueSeasonRepository: LeagueApiSportsSeasonRepository,
     // Core repos
     private val leagueCoreRepository: LeagueCoreRepository,
-
     // Utility
     private val uidGenerator: UidGenerator
 ) {
@@ -30,7 +28,7 @@ class ApiSportsSyncService(
     @Transactional
     fun saveLeagues(dtos: List<LeagueApiSportsCreateDto>) {
         val apiIdList: List<Long> = dtos.map { it.apiId }
-        val apiIdEntityMap: Map<Long, LeagueApiSports> = leagueApiSportsRepository
+        val apiIdEntityMap: Map<Long, LeagueApiSports> = leagueApiRepository
             .findLeagueApiSportsInApiId(apiIdList)
             .associateBy { it.apiId }
 
@@ -53,7 +51,7 @@ class ApiSportsSyncService(
             apiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity))
             apiEntity
         }
-        leagueApiSportsRepository.saveAll(case1Entities)
+        leagueApiRepository.saveAll(case1Entities)
 
         val newLeagueCoresForCase2 = case2Dtos.map { dto ->
             val apiEntity = apiIdEntityMap[dto.apiId]!!
@@ -62,7 +60,7 @@ class ApiSportsSyncService(
             apiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity))
             apiEntity
         }
-        leagueApiSportsRepository.saveAll(newLeagueCoresForCase2)
+        leagueApiRepository.saveAll(newLeagueCoresForCase2)
 
         val newLeagueApiSportsForCase3 = case3Dtos.map { dto ->
             val newCore = leagueCoreRepository.save(createCoreEntityBy(dto))
@@ -70,12 +68,7 @@ class ApiSportsSyncService(
             newApiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, newApiEntity))
             newApiEntity
         }
-        leagueApiSportsRepository.saveAll(newLeagueApiSportsForCase3)
-    }
-
-    @Transactional
-    fun saveTeamsOfLeague(dto: ApiSportsTeamSaveDto) {
-
+        leagueApiRepository.saveAll(newLeagueApiSportsForCase3)
     }
 
     private fun createSeasonEntities(
