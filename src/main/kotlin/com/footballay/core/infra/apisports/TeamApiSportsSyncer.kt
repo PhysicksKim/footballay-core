@@ -10,12 +10,13 @@ import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsR
 import com.footballay.core.infra.persistence.apisports.repository.VenueApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
+import com.footballay.core.infra.persistence.core.entity.LeagueTeamCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
+import com.footballay.core.infra.persistence.core.repository.LeagueTeamCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.logger
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
-import kotlin.math.log
 
 @Component
 class TeamApiSportsSyncer(
@@ -26,6 +27,7 @@ class TeamApiSportsSyncer(
     // Core repos
     private val leagueCoreRepository: LeagueCoreRepository,
     private val teamCoreRepository: TeamCoreRepository,
+    private val leagueTeamCoreRepository: LeagueTeamCoreRepository,
     // etc
     private val uidGenerator: UidGenerator
 ) {
@@ -61,7 +63,6 @@ class TeamApiSportsSyncer(
      * 기존 TeamApiSports 엔티티들을 조회하고 apiId로 매핑하여 반환
      */
     private fun findAndMapExistingTeamApiSports(teamApiIds: List<Long>): Map<Long, TeamApiSports> {
-        // 커스텀 레포지토리 메서드 추가 필요
         val existingTeamApiSports = teamApiRepository.findAllByApiIdIn(teamApiIds)
         return existingTeamApiSports.associateBy { it.apiId ?: -1L }
     }
@@ -137,8 +138,8 @@ class TeamApiSportsSyncer(
         val teamCore = createTeamCore(dto)
         val savedTeamCore = teamCoreRepository.save(teamCore)
 
-        // 2. LeagueCore와 TeamCore 연관관계 설정
-//        savedTeamCore.addLeague(leagueCore)
+        // 2. LeagueCore와 TeamCore 연관관계 생성 (명시적으로 repository 사용)
+        createLeagueTeamRelationship(leagueCore, savedTeamCore)
 
         // 3. Venue 생성 (있는 경우)
         val venueEntity = dto.venue?.let { processVenueEntity(it, null) }
@@ -208,36 +209,65 @@ class TeamApiSportsSyncer(
     }
 
     /**
-     * LeagueCore와 TeamCore 간의 연관관계 업데이트
+     * LeagueCore와 TeamCore 간의 연관관계 생성 (명시적으로 repository 사용)
+     */
+    private fun createLeagueTeamRelationship(leagueCore: LeagueCore, teamCore: TeamCore) {
+        val leagueId = leagueCore.id ?: throw IllegalStateException("LeagueCore must be saved before creating relationship")
+        val teamId = teamCore.id ?: throw IllegalStateException("TeamCore must be saved before creating relationship")
+        
+        // 이미 존재하는 관계인지 확인
+        if (!leagueTeamCoreRepository.existsByLeagueIdAndTeamId(leagueId, teamId)) {
+            val leagueTeamCore = LeagueTeamCore(
+                league = leagueCore,
+                team = teamCore
+            )
+            leagueTeamCoreRepository.save(leagueTeamCore)
+            log.info("Created league-team relationship: leagueId=$leagueId, teamId=$teamId")
+        } else {
+            log.info("League-team relationship already exists: leagueId=$leagueId, teamId=$teamId")
+        }
+    }
+
+    /**
+     * LeagueCore와 TeamCore 간의 연관관계 업데이트 (명시적으로 repository 사용)
      */
     private fun updateLeagueTeamRelationships(
         leagueCore: LeagueCore,
         processedTeamApiSportsList: List<TeamApiSports>,
         dtoTeamApiIds: List<Long>
     ) {
-        // 1. 현재 리그에 연결된 팀 가져오기
-        val teamsInLeague = leagueCore.leagueTeams.mapNotNull { it.team }.toSet()
-
+        val leagueId = leagueCore.id ?: throw IllegalStateException("LeagueCore must have an ID")
+        
+        // 1. 현재 리그에 연결된 모든 팀들 조회
+        val currentLeagueTeams = leagueTeamCoreRepository.findByLeagueId(leagueId)
+            .mapNotNull { it.team }
+        
         // 2. 처리된 TeamApiSports에서 TeamCore 추출
-        val processedTeamCores = processedTeamApiSportsList.mapNotNull { it.teamCore }.toSet()
+        val processedTeamCores = processedTeamApiSportsList.mapNotNull { it.teamCore }
 
-        // 3. 연관관계 업데이트
-        // a) Dto에 있지만 현재 리그에 없는 팀들은 추가
+        // 3. 새로 추가되어야 할 연관관계 생성
         processedTeamCores.forEach { teamCore ->
-            if (!teamsInLeague.contains(teamCore)) {
-                leagueCore.addTeam(teamCore)
+            val teamId = teamCore.id ?: return@forEach
+            
+            if (!leagueTeamCoreRepository.existsByLeagueIdAndTeamId(leagueId, teamId)) {
+                val leagueTeamCore = LeagueTeamCore(
+                    league = leagueCore,
+                    team = teamCore
+                )
+                leagueTeamCoreRepository.save(leagueTeamCore)
+                log.info("Added team to league: leagueId=$leagueId, teamId=$teamId, teamName=${teamCore.name}")
             }
         }
 
-        // b) 현재 리그에 있지만 Dto에 없는 팀들은 제거 (강등 등의 이유)
+        // 4. 제거되어야 할 연관관계 삭제 (강등 등의 이유)
         val processedTeamApiIds = processedTeamApiSportsList.mapNotNull { it.apiId }.toSet()
-        teamsInLeague.forEach { teamCore ->
+        
+        currentLeagueTeams.forEach { teamCore ->
             if (teamCore.apiId != null && !dtoTeamApiIds.contains(teamCore.apiId)) {
-                leagueCore.removeTeam(teamCore)
+                val teamId = teamCore.id ?: return@forEach
+                leagueTeamCoreRepository.deleteByLeagueIdAndTeamId(leagueId, teamId)
+                log.info("Removed team from league: leagueId=$leagueId, teamId=$teamId, teamName=${teamCore.name}, apiId=${teamCore.apiId}")
             }
         }
-
-        // 변경사항 저장
-        leagueCoreRepository.save(leagueCore)
     }
 }
