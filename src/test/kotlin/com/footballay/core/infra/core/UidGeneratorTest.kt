@@ -17,7 +17,7 @@ class UidGeneratorTest {
     lateinit var uidGenerator: UidGenerator
 
     @Test
-    fun `generateUid should return a valid UID`() {
+    fun `generateUid는 유효한 UID를 반환해야 한다`() {
         val uid = uidGenerator.generateUid()
         log.info("Generated UID: $uid")
         assert(uidGenerator.isValidUid(uid)) { "Generated UID is not valid" }

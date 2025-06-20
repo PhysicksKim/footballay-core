@@ -2,6 +2,7 @@ package com.footballay.core.infra.apisports.fetch.apisports
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.infra.apisports.APISPORTS_FIXTURE_ID_MAU_FUL
+import com.footballay.core.infra.apisports.fetch.impl.ApiSportsV3FetchImpl
 import com.footballay.core.logger
 import com.footballay.core.prettyPrintJson
 import org.assertj.core.api.Assertions.assertThat
@@ -23,7 +24,7 @@ class ApiSportsV3FetchImplTest {
     private val log = logger()
 
     @Test
-    fun getStatus() {
+    fun `상태 조회 테스트`() {
         log.info("Testing getStatus")
         val requestStatus = apiSportsV3FetchImpl.fetchStatus()
         log.info("Response: ${prettyPrintJson(objectMapper, requestStatus)}")
@@ -33,7 +34,7 @@ class ApiSportsV3FetchImplTest {
     }
 
     @Test
-    fun getLeaguesCurrent() {
+    fun `현재 리그 조회 테스트`() {
         log.info("Testing getLeagues")
         val requestLeaguesCurrent = apiSportsV3FetchImpl.fetchLeaguesCurrent()
         log.info("Response: ${prettyPrintJson(objectMapper, requestLeaguesCurrent)}")
@@ -43,7 +44,7 @@ class ApiSportsV3FetchImplTest {
     }
 
     @Test
-    fun getTeamsOfLeague() {
+    fun `리그 팀 조회 테스트`() {
         log.info("Testing getTeamsOfLeague")
         val requestTeamsOfLeague = apiSportsV3FetchImpl.fetchTeamsOfLeague(leagueApiId = 39, season = 2023)
         log.info("Response: ${prettyPrintJson(objectMapper, requestTeamsOfLeague)}")
@@ -53,7 +54,7 @@ class ApiSportsV3FetchImplTest {
     }
 
     @Test
-    fun getSquadOfTeam() {
+    fun `팀 스쿼드 조회 테스트`() {
         log.info("Testing getSquadOfTeam")
         val requestSquadOfTeam = apiSportsV3FetchImpl.fetchSquadOfTeam(teamApiId = 40)
         log.info("Response: ${prettyPrintJson(objectMapper, requestSquadOfTeam)}")
@@ -63,7 +64,7 @@ class ApiSportsV3FetchImplTest {
     }
 
     @Test
-    fun getFixturesOfLeague() {
+    fun `리그 경기 조회 테스트`() {
         log.info("Testing getFixturesOfLeague")
         val requestFixturesOfLeague = apiSportsV3FetchImpl.fetchFixturesOfLeague(leagueApiId = 39, season = "2023")
         log.info("Response: ${prettyPrintJson(objectMapper, requestFixturesOfLeague)}")
@@ -73,7 +74,7 @@ class ApiSportsV3FetchImplTest {
     }
 
     @Test
-    fun getFixtureSingle() {
+    fun `단일 경기 조회 테스트`() {
         log.info("Testing getFixtureSingle")
         val requestFixtureSingle = apiSportsV3FetchImpl.fetchFixtureSingle(APISPORTS_FIXTURE_ID_MAU_FUL)
         log.info("Response: ${prettyPrintJson(objectMapper, requestFixtureSingle)}")

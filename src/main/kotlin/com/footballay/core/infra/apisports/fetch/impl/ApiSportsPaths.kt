@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.fetch.apisports
+package com.footballay.core.infra.apisports.fetch.impl
 
 class ApiSportsPaths {
     companion object {

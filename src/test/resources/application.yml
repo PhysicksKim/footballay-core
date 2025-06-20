@@ -1,111 +1,126 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:footballay-core;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
+    profiles:
+        group:
+            devrealapi:
+                - mockpath
+                - api
+            mocks:
+                - mockpath
+                - mockapi
+            mockapi:
+                - mockpath
+                - mockapi
 
-  security:
-    user:
-      name: admin
-      password: admin
+    datasource:
+        url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
+        driver-class-name: org.h2.Driver
+        username: sa
+        password:
+    jpa:
+        hibernate:
+            ddl-auto: create-drop
+        show-sql: true
 
-  quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: always
-    properties:
-      org:
-        quartz:
-          scheduler:
-            instanceName: TestFootballayScheduler
-            instanceId: AUTO
-          jobStore:
-            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.HSQLDBDelegate
-            tablePrefix: QRTZ_
-            isClustered: false
-          threadPool:
-            class: org.quartz.simpl.SimpleThreadPool
-            threadCount: 5
+    security:
+        user:
+            name: admin
+            password: admin
+
+#    quartz:
+#        job-store-type: jdbc
+#        jdbc:
+#            initialize-schema: always
+#        properties:
+#            org:
+#                quartz:
+#                    scheduler:
+#                        instanceName: MyScheduler
+#                        instanceId: AUTO
+#                    jobStore:
+#                        class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+#                        driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+#                        tablePrefix: QRTZ_
+#                        isClustered: false
+#                    threadPool:
+#                        class: org.quartz.simpl.SimpleThreadPool
+#                        threadCount: 5
+
+    data:
+        redis:
+            host: localhost
+            port: 6379
+            password: 1234
 
 server:
-  port: 8083
-  ssl:
-    key-store: classpath:keystore.p12
-    key-store-password: -wva9.ea7)}}
-    key-store-type: PKCS12
-    key-alias: myalias
-    enabled: true
+    port: 8083
+    ssl:
+        key-store: classpath:keystore.p12
+        key-store-password: -wva9.ea7)}}
+        key-store-type: PKCS12
+        key-alias: myalias
+        enabled: true
 
 # 개발 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: 'http://localhost:8080,https://localhost:8080'
+    allowedorigins: 'http://localhost:8080,https://localhost:8080'
 
 logging:
-  level:
-    root: info
+    level:
+        root: info
 
 # -dev 환경에서만 사용할 설정
 custom:
-  login:
-    remember-me-key: remember-me-key-only-for-dev
+    login:
+        remember-me-key: remember-me-key-only-for-dev
 
 # 세션 쿠키 설정
 cookies:
-  remember-me:
-    name: 'remember-me'
-    max-age: 1209600
-    # 2주 (단위: 초)
-  user-info:
-    name: 'user-info'
-    max-age: 1209600 # 2주 (단위: 초)
+    remember-me:
+        name: 'remember-me'
+        max-age: 1209600
+        # 2주 (단위: 초)
+    user-info:
+        name: 'user-info'
+        max-age: 1209600 # 2주 (단위: 초)
 
 # Aws Service 관련 bean 생성을 위한 mock 값들
 aws:
-  cloudfront:
-    domain: 'https://MOCKDOMAIN.com'
-    keyPairId: 'MOCKKEYPAIRID'
-    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
-    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
-  s3:
-    region: 'MOCKREGION'
-    accessKey: 'MOCKACCESS'
-    secretKey: 'MOCKSECRET'
-    bucket-name: 'MOCKBUCKETNAME'
-    public-domain: 'https://MOCOKS3DOMAIN.com'
+    cloudfront:
+        domain: 'https://MOCKDOMAIN.com'
+        keyPairId: 'MOCKKEYPAIRID'
+        privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+        publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    s3:
+        region: 'MOCKREGION'
+        accessKey: 'MOCKACCESS'
+        secretKey: 'MOCKSECRET'
+        bucket-name: 'MOCKBUCKETNAME'
+        public-domain: 'https://MOCOKS3DOMAIN.com'
 
 path:
-  football:
-    players:
-      photo:
-        prefix: 'chuncity/dev/players'
-        suffix: 'devphoto'
+    football:
+        players:
+            photo:
+                prefix: 'chuncity/dev/players'
+                suffix: 'devphoto'
 
 # footballay.com 과 gyechunhoe.com 의 메인 페이지 구분시
 app:
-  # DEPRECATED: use app.domain instead
-  domain: 'gyechunhoe.com'
-
-  footballay:
-    domain: 'footballay.com'
-    static:
-      domain: 'static.footballay.com'
-  gyechunhoe:
+    # DEPRECATED: use app.domain instead
     domain: 'gyechunhoe.com'
-    static:
-      domain: 'static.gyechunhoe.com'
+
+    footballay:
+        domain: 'footballay.com'
+        static:
+            domain: 'static.footballay.com'
+    gyechunhoe:
+        domain: 'gyechunhoe.com'
+        static:
+            domain: 'static.gyechunhoe.com'
 
 footballay:
-  apisports:
-    url: https://v3.football.api-sports.io
-    headers:
-      x-rapidapi-host: v3.football.api-sports.io
-      x-rapidapi-key: __CENSOREDKEY__
+    apisports:
+        url: https://v3.football.api-sports.io
+        headers:
+            x-rapidapi-host: v3.football.api-sports.io
+            x-rapidapi-key: __CENSOREDKEY__

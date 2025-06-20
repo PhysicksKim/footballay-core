@@ -58,8 +58,10 @@ data class FixtureCore(
     var awayTeam: TeamCore,
 
     var goalsHome: Int? = null,
-
     var goalsAway: Int? = null,
+
+    @Column(nullable = false)
+    var finished: Boolean = false,
 
     @Column(nullable = false)
     var available: Boolean = false,

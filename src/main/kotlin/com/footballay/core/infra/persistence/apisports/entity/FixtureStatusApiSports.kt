@@ -11,8 +11,4 @@ data class FixtureStatusApiSports(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
 
-    var longStatus: String? = null,
-    var shortStatus: String? = null,
-    var elapsed: Int? = null,
-    var extra: Int? = null
 )

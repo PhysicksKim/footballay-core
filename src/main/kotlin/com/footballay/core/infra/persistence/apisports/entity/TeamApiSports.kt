@@ -19,6 +19,9 @@ data class TeamApiSports(
     @JoinColumn(name = "venue_id", referencedColumnName = "id")
     var venue: VenueApiSports? = null, // API 응답의 team.venue
 
+    /**
+     * ApiSports 에서는 coverage 를 벗어나거나 캐싱 문제가 있는 경우 id 가 null 일 수 있습니다. <br>
+     */
     var apiId: Long? = null, // API 응답의 team.id
     var name: String? = null, // API 응답의 team.name
     var code: String? = null, // API 응답의 team.code

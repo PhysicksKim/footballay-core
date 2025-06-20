@@ -55,6 +55,7 @@ class LeagueApiSportsSyncer(
 
         val newLeagueCoresForCase2 = case2Dtos.map { dto ->
             val apiEntity = apiIdEntityMap[dto.apiId]!!
+            updateApiEntity(apiEntity, dto)
             val newCore = leagueCoreRepository.save(createCoreEntityBy(dto))
             apiEntity.leagueCore = newCore
             apiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity))

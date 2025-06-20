@@ -4,9 +4,8 @@ import com.footballay.core.infra.persistence.core.entity.TeamCore
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
-interface TeamCoreRepository : JpaRepository<TeamCore, Long> {
-    fun findByApiId(apiId: Long): TeamCore?
+import org.springframework.stereotype.Repository
 
-    @Query("SELECT t FROM TeamCore t LEFT JOIN FETCH t.leagueTeams WHERE t.apiId IN :apiIds")
-    fun findAllByApiIdInWithLeagues(apiIds: List<Long>): List<TeamCore>
+@Repository
+interface TeamCoreRepository : JpaRepository<TeamCore, Long> {
 } 

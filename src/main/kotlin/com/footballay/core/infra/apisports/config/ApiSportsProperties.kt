@@ -4,14 +4,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "footballay.apisports")
 class ApiSportsProperties(
-    val scheme: String,
-    val host: String,
-    val headers: ApiSportsHeaders,
+    val scheme: String = "https",
+    val host: String = "v3.football.api-sports.io",
+    val headers: ApiSportsHeaders = ApiSportsHeaders(),
 )
 
 data class ApiSportsHeaders(
-    val xRapidapiHostName: String,
-    val xRapidapiHostValue: String,
-    val xRapidapiKeyName: String,
-    val xRapidapiKeyValue: String,
+    val xRapidapiHostName: String = "x-rapidapi-host",
+    val xRapidapiHostValue: String = "v3.football.api-sports.io",
+    val xRapidapiKeyName: String = "x-rapid",
+    val xRapidapiKeyValue: String = "mock-api-key"
 )

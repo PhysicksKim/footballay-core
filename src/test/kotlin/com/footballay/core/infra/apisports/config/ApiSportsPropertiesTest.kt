@@ -18,7 +18,7 @@ class ApiSportsPropertiesTest {
     private lateinit var apiSportsProperties: ApiSportsProperties
 
     @Test
-    fun `properties load test`() {
+    fun `프로퍼티 로딩 테스트`() {
         val scheme = apiSportsProperties.scheme
         val host = apiSportsProperties.host
         val headers = apiSportsProperties.headers

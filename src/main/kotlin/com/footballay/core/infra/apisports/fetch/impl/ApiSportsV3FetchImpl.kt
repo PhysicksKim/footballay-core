@@ -1,24 +1,27 @@
-package com.footballay.core.infra.apisports.fetch.apisports
+package com.footballay.core.infra.apisports.fetch.impl
 
 import com.footballay.core.bodyObject
 import com.footballay.core.infra.apisports.config.ApiSportsProperties
+import com.footballay.core.infra.apisports.fetch.ApiSportsV3Fetcher
 import com.footballay.core.infra.apisports.fetch.response.*
 import com.footballay.core.logger
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 
 /**
- * Implementation of [ApiSportsV3FetchService] to fetch data from API Sports v3.
+ * Implementation of [ApiSportsV3Fetcher] to fetch data from API Sports v3.
  *
  * Functions *TAKE SECONDS!* Don't use when the endpoint is called frequently.
  */
+@Profile("!mockapi")
 @Component
 class ApiSportsV3FetchImpl (
     private val restClient: RestClient,
     private val properties: ApiSportsProperties
-) : ApiSportsV3FetchService {
+) : ApiSportsV3Fetcher {
 
     private val log = logger()
 

@@ -33,10 +33,11 @@ data class TeamCore(
     @Column(nullable = false)
     var available: Boolean = false,
 
-    /**
-     * Core 엔티티에도 apiId를 두면, 동일 팀 중복여부 검사 시 편함
-     */
-    var apiId: Long? = null,
+    // api id 는 절대 core 에 두면 안됩니다. api id 는 api 에 종속적이기 때문입니다. <br>
+//    /**
+//     * Core 엔티티에도 apiId를 두면, 동일 팀 중복여부 검사 시 편함
+//     */
+//    var apiId: Long? = null,
 
     /**
      * Provider data Sync 과정에서 자동으로 생성된 core 인 경우입니다. <br>

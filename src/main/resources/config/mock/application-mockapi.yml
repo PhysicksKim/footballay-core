@@ -1,0 +1,10 @@
+# Mock용 더미 ApiSports 설정
+footballay:
+    apisports:
+        scheme: https
+        host: mock.api-sports.io
+        headers:
+            x-rapidapi-host-name: 'X-RapidAPI-Host'
+            x-rapidapi-host-value: 'mock.api-sports.io'
+            x-rapidapi-key-name: 'X-RapidAPI-Key'
+            x-rapidapi-key-value: 'mock-api-key'
