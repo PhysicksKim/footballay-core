@@ -54,3 +54,6 @@ out/
 **/.DS_Store
 
 .ai
+
+monitoring/prometheus/credentials.yml
+monitoring/prometheus/secrets/*

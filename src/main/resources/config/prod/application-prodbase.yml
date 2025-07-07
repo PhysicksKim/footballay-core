@@ -18,7 +18,7 @@ spring:
           jobStore:
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            tablePrefix: QRTZ_
+            tablePrefix: footballay_core.QRTZ_
             isClustered: false
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
@@ -50,7 +50,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics   # 필요한 엔드포인트만
+        include: health,info,metrics,prometheus   # 필요한 엔드포인트만
+
 
 # 운영 환경에서 허용할 CORS 출처
 cors:
