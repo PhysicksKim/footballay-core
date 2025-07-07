@@ -4,7 +4,7 @@ import com.footballay.core.infra.persistence.core.entity.TeamCore
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "refac_team_api_sports")
+@Table(name = "refac_team_apisports")
 data class TeamApiSports(
 
     @Id
@@ -30,4 +30,8 @@ data class TeamApiSports(
     var national: Boolean? = null, // API 응답의 team.national
     var logo: String? = null, // API 응답의 team.logo
 
-)
+) {
+    override fun toString(): String {
+        return "TeamApiSports(id=$id, apiId=$apiId, name=$name, code=$code, teamCoreId=${teamCore?.id})"
+    }
+}

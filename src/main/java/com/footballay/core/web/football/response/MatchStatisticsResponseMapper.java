@@ -3,7 +3,6 @@ package com.footballay.core.web.football.response;
 import com.footballay.core.domain.football.dto.MatchStatisticsDto;
 import java.util.List;
 import static com.footballay.core.domain.football.dto.MatchStatisticsDto.*;
-// TODO : 미등록 선수에 대한 통계 Response 생성 전략 필요
 public class MatchStatisticsResponseMapper {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MatchStatisticsResponseMapper.class);
 

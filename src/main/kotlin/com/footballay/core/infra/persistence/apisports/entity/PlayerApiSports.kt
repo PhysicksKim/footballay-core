@@ -5,7 +5,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(
-    name = "refac_player_api_sports"
+    name = "refac_player_apisports"
 )
 data class PlayerApiSports(
     @Id

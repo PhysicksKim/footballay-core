@@ -13,7 +13,6 @@ class LeagueCoreService (
     val uidGenerator: UidGenerator
 ) {
 
-    // TODO : 읽기 검토는 완수했으나 테스트 코드로 검증이 필요합니다.
     @Transactional
     fun saveLeagues(dtos: List<LeagueCreateDto>): List<LeagueCore> {
         dtos.forEach { dto ->

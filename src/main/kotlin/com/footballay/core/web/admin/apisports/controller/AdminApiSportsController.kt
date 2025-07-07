@@ -109,8 +109,6 @@ class AdminApiSportsController(
         }
     }
 
-    // TODO : Fixtures of League 추가
-
     /**
      * API 상태 확인용 헬스체크 엔드포인트
      * 

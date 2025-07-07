@@ -25,13 +25,13 @@ class ApiSportsV3FetchImpl (
 
     private val log = logger()
 
-    override fun fetchStatus(): ApiSportsV3LiveStatusEnvelope<ApiSportsStatus> {
+    override fun fetchStatus(): ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus> {
         val uri : URI = ApiSportsUriBuilder()
             .path(ApiSportsPaths.status).build().toUri()
         logNameAndUri("status", uri)
 
         return ApiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3LiveStatusEnvelope<ApiSportsStatus>>()
+            .bodyObject<ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Status")
     }
 
@@ -69,7 +69,7 @@ class ApiSportsV3FetchImpl (
             ?: throw IllegalStateException("Response body is null of ApiSports Squad of Team")
     }
 
-    override fun fetchFixturesOfLeague(leagueApiId: Long, season: String): ApiSportsV3Envelope<ApiSportsFixture.OfLeague> {
+    override fun fetchFixturesOfLeague(leagueApiId: Long, season: Int): ApiSportsV3Envelope<ApiSportsFixture.OfLeague> {
         val uri : URI = ApiSportsUriBuilder()
             .path(ApiSportsPaths.fixturesOfLeague)
             .queryParam("league", leagueApiId)

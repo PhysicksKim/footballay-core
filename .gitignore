@@ -59,6 +59,8 @@ src/main/resources/config/dev/application-apirefacsecret.yml
 .DS_Store
 **/.DS_Store
 
+/monitoring/*
+
 .ai
 
 monitoring/prometheus/credentials.yml

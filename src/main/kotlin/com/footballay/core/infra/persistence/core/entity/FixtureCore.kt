@@ -19,7 +19,7 @@ data class FixtureCore(
     /**
      * 외부 노출 ID
      */
-    @Column(name = "uid", unique = true, nullable = false)
+    @Column(name = "uid", unique = true, nullable = false, updatable = false)
     var uid: String,
 
     /**
@@ -51,11 +51,11 @@ data class FixtureCore(
     @ManyToOne(fetch = FetchType.LAZY)
     var league: LeagueCore,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    var homeTeam: TeamCore,
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    var homeTeam: TeamCore?,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    var awayTeam: TeamCore,
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    var awayTeam: TeamCore?,
 
     var goalsHome: Int? = null,
     var goalsAway: Int? = null,

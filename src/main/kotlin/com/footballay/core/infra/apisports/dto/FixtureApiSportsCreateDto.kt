@@ -9,26 +9,29 @@ data class FixtureApiSportsCreateDto (
     var timestamp: Long? = null,
     var round: String? = null,
 
-    // related entities
+    var homeTeam: TeamOfFixtureApiSportsCreateDto? = null,
+    var awayTeam: TeamOfFixtureApiSportsCreateDto? = null,
+
+    // involved values with related entities
     var venue: VenueOfFixtureApiSportsCreateDto? = null,
-    var season: SeasonOfFixtureApiSportsCreateDto? = null,
+    var leagueApiId: Long? = null,
+    var seasonYear: String? = null,
 
     // embedded entities
     var status: StatusOfFixtureApiSportsCreateDto? = null,
     var score: ScoreOfFixtureApiSportsCreateDto? = null
 )
 
+data class TeamOfFixtureApiSportsCreateDto (
+    var apiId: Long? = null,
+    var name: String? = null,
+    var logo: String? = null,
+)
+
 data class VenueOfFixtureApiSportsCreateDto (
     var apiId: Long? = null,
     var name: String? = null,
     var city: String? = null
-)
-
-data class SeasonOfFixtureApiSportsCreateDto (
-    var apiId: Long? = null,
-    var name: String? = null,
-    var startDate: String? = null,
-    var endDate: String? = null
 )
 
 data class StatusOfFixtureApiSportsCreateDto (

@@ -20,7 +20,7 @@ object ApiSportsFixture {
             val id: Long,
             val referee: String?,
             val timezone: String,
-            val date: OffsetDateTime,
+            val date: OffsetDateTime?,
             val timestamp: Long,
             val periods: Periods,
             val venue: Venue,
@@ -28,18 +28,18 @@ object ApiSportsFixture {
         ) {
             data class Periods(val first: Long, val second: Long)
             data class Status(val long: String, val short: String, val elapsed: Int?, val extra: Int?)
-            data class Venue(val id: Long, val name: String, val city: String)
+            data class Venue(val id: Long?, val name: String?, val city: String?)
         }
 
         data class League(
-            val id: Int,
+            val id: Long,
             val name: String,
-            val country: String,
-            val logo: String,
+            val country: String?,
+            val logo: String?,
             val flag: String?,
-            val season: Int,
-            val round: String,
-            val standings: Boolean
+            val season: Int?,
+            val round: String?,
+            val standings: Boolean?
         )
 
         data class Teams(
@@ -47,30 +47,18 @@ object ApiSportsFixture {
             val away: Team
         ) {
             data class Team(
-                val id: Long,
+                val id: Long?,
                 val name: String,
                 val logo: String,
                 val winner: Boolean?,
-                val colors: Colors? = null
-            ) {
-                data class Colors(
-                    val player: KitColors,
-                    val goalkeeper: KitColors
-                ) {
-                    data class KitColors(
-                        val primary: String,
-                        val number: String,
-                        val border: String
-                    )
-                }
-            }
+            )
         }
 
         data class Goals(val home: Int?, val away: Int?)
 
         data class Score(
-            val halftime: Pair,
-            val fulltime: Pair,
+            val halftime: Pair?,
+            val fulltime: Pair?,
             val extratime: Pair?,
             val penalty: Pair?
         ) {
@@ -80,31 +68,49 @@ object ApiSportsFixture {
         data class Event(
             val time: Time,
             val team: Team,
-            val player: Player,
+            val player: Player?,
             val assist: Player?,
             val type: String,
             val detail: String,
             val comments: String?
         ) {
             data class Time(val elapsed: Int, val extra: Int?)
-            data class Team(val id: Long, val name: String, val logo: String)
+            data class Team(val id: Long?, val name: String?, val logo: String?)
             data class Player(val id: Long?, val name: String?)
         }
 
+        data class LineupTeam(
+            val id: Long?,
+            val name: String?,
+            val logo: String?,
+            val colors: Colors? = null
+        ) {
+            data class Colors(
+                val player: ColorDetail? = null,
+                val goalkeeper: ColorDetail? = null
+            ) {
+                data class ColorDetail(
+                    val primary: String?,
+                    val number: String?,
+                    val border: String?
+                )
+            }
+        }
+
         data class Lineup(
-            val team: Teams.Team,
+            val team: LineupTeam,
             val coach: Coach,
             val formation: String,
-            val startXI: List<StartPlayer>,
-            val substitutes: List<StartPlayer>
+            val startXI: List<LineupPlayer>,
+            val substitutes: List<LineupPlayer>
         ) {
             data class Coach(val id: Long?, val name: String?, val photo: String?)
-            data class StartPlayer(val player: Player) {
+            data class LineupPlayer(val player: Player) {
                 data class Player(
                     val id: Long?,
-                    val name: String,
+                    val name: String?,
                     val number: Int?,
-                    val pos: String,
+                    val pos: String?,
                     val grid: String?
                 )
             }
@@ -112,9 +118,35 @@ object ApiSportsFixture {
 
         data class TeamStatistics(
             val team: Event.Team,
-            val statistics: List<Statistic>
+            val statistics: List<StatItem>
         ) {
-            data class Statistic(val type: String, val value: Any?)
+            data class StatItem(
+                val type: String,
+                val value: String?
+            ) {
+                fun getIntValue(): Int? = value?.toIntOrNull()
+                fun getStringValue(): String = value ?: ""
+            }
+
+            // 명시적인 getter 메서드들
+            fun getShotsOnGoal(): Int? = statistics.find { it.type == "Shots on Goal" }?.getIntValue()
+            fun getShotsOffGoal(): Int? = statistics.find { it.type == "Shots off Goal" }?.getIntValue()
+            fun getTotalShots(): Int? = statistics.find { it.type == "Total Shots" }?.getIntValue()
+            fun getBlockedShots(): Int? = statistics.find { it.type == "Blocked Shots" }?.getIntValue()
+            fun getShotsInsideBox(): Int? = statistics.find { it.type == "Shots insidebox" }?.getIntValue()
+            fun getShotsOutsideBox(): Int? = statistics.find { it.type == "Shots outsidebox" }?.getIntValue()
+            fun getFouls(): Int? = statistics.find { it.type == "Fouls" }?.getIntValue()
+            fun getCornerKicks(): Int? = statistics.find { it.type == "Corner Kicks" }?.getIntValue()
+            fun getOffsides(): Int? = statistics.find { it.type == "Offsides" }?.getIntValue()
+            fun getBallPossession(): String? = statistics.find { it.type == "Ball Possession" }?.getStringValue()
+            fun getYellowCards(): Int? = statistics.find { it.type == "Yellow Cards" }?.getIntValue()
+            fun getRedCards(): Int? = statistics.find { it.type == "Red Cards" }?.getIntValue()
+            fun getGoalkeeperSaves(): Int? = statistics.find { it.type == "Goalkeeper Saves" }?.getIntValue()
+            fun getTotalPasses(): Int? = statistics.find { it.type == "Total passes" }?.getIntValue()
+            fun getPassesAccurate(): Int? = statistics.find { it.type == "Passes accurate" }?.getIntValue()
+            fun getPassesPercentage(): String? = statistics.find { it.type == "Passes %" }?.getStringValue()
+            fun getExpectedGoals(): String? = statistics.find { it.type == "expected_goals" }?.getStringValue()
+            fun getGoalsPrevented(): Int? = statistics.find { it.type == "goals_prevented" }?.getIntValue()
         }
 
         data class PlayerStatistics(
@@ -125,7 +157,7 @@ object ApiSportsFixture {
                 val player: Detail,
                 val statistics: List<StatDetail>
             ) {
-                data class Detail(val id: Long, val name: String, val photo: String?)
+                data class Detail(val id: Long?, val name: String?, val photo: String?)
                 data class StatDetail(
                     val games: GameStats,
                     val offsides: Int?,
@@ -152,8 +184,14 @@ object ApiSportsFixture {
                     data class FoulStats(val drawn: Int?, val committed: Int?)
                     data class CardStats(val yellow: Int?, val red: Int?)
                     data class PenaltyStats(
-                        val won: Int?, val commited: Int?, val scored: Int?,
-                        val missed: Int?, val saved: Int?
+                        val won: Int?,
+                        /**
+                         * ApiSports 측의 오타로 commited 로 제공됩니다
+                         */
+                        val commited: Int?,
+                        val scored: Int?,
+                        val missed: Int?,
+                        val saved: Int?
                     )
                 }
             }
@@ -184,7 +222,7 @@ object ApiSportsFixture {
         }
 
         data class League(
-            val id: Int,
+            val id: Long,
             val name: String,
             val country: String,
             val logo: String,

@@ -1,14 +1,16 @@
 package com.footballay.core.infra.facade
 
-import com.footballay.core.infra.apisports.LeagueApiSportsSyncer
-import com.footballay.core.infra.apisports.TeamApiSportsSyncer
-import com.footballay.core.infra.apisports.PlayerApiSportsSyncer
+import com.footballay.core.infra.apisports.syncer.LeagueApiSportsSyncer
+import com.footballay.core.infra.apisports.syncer.TeamApiSportsSyncer
+import com.footballay.core.infra.apisports.syncer.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
 import com.footballay.core.infra.apisports.dto.*
 import com.footballay.core.infra.apisports.fetch.ApiSportsV3Fetcher
+import com.footballay.core.infra.apisports.fetch.response.ApiSportsFixture
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsLeague
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsPlayer
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsTeam
+import com.footballay.core.infra.apisports.syncer.FixtureApiSportsSyncer
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 
@@ -18,7 +20,8 @@ class ApiSportsSyncFacade(
     private val teamSyncer: TeamApiSportsSyncer,
     private val playerSyncer: PlayerApiSportsSyncer,
     private val fetcher: ApiSportsV3Fetcher,
-    private val leagueQueryService: LeagueApiSportsQueryService
+    private val leagueQueryService: LeagueApiSportsQueryService,
+    private val fixtureSyncer: FixtureApiSportsSyncer
 ) {
 
     val log = logger()
@@ -112,7 +115,61 @@ class ApiSportsSyncFacade(
         return syncedCount
     }
 
-    // ==================== Private Mapping Methods ====================
+    fun syncFixturesOfLeagueWithSeason(leagueApiId: Long, season: Int): Int {
+        log.info("Starting sync fixtures of league with season for leagueApiId: $leagueApiId, season: $season")
+
+        val fixturesResp = fetcher.fetchFixturesOfLeague(leagueApiId, season)
+        val dtos = fixturesResp.response.map { mapToFixtureCreateDto(it) }
+
+        fixtureSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+        return dtos.size
+    }
+
+    private fun mapToFixtureCreateDto(response: ApiSportsFixture.OfLeague): FixtureApiSportsCreateDto {
+        log.debug("Mapping fixture: ${response.fixture.id} for league ${response.league.name}")
+
+        return FixtureApiSportsCreateDto(
+            apiId = response.fixture.id,
+            referee = response.fixture.referee,
+            timezone = response.fixture.timezone,
+            date = response.fixture.date.toString(),
+            timestamp = response.fixture.timestamp,
+            round = response.league.round,
+            homeTeam = TeamOfFixtureApiSportsCreateDto(
+                apiId = response.teams.home.id.toLong(),
+                name = response.teams.home.name,
+                logo = response.teams.home.logo
+            ),
+            awayTeam = TeamOfFixtureApiSportsCreateDto(
+                apiId = response.teams.away.id.toLong(),
+                name = response.teams.away.name,
+                logo = response.teams.away.logo
+            ),
+            venue = VenueOfFixtureApiSportsCreateDto(
+                apiId = response.fixture.venue.id,
+                name = response.fixture.venue.name,
+                city = response.fixture.venue.city
+            ),
+            leagueApiId = response.league.id.toLong(),
+            seasonYear = response.league.season.toString(),
+            status = StatusOfFixtureApiSportsCreateDto(
+                longStatus = response.fixture.status.long,
+                shortStatus = response.fixture.status.short,
+                elapsed = response.fixture.status.elapsed,
+                extra = response.fixture.status.extra
+            ),
+            score = ScoreOfFixtureApiSportsCreateDto(
+                halftimeHome = response.score.halftime.home,
+                halftimeAway = response.score.halftime.away,
+                fulltimeHome = response.score.fulltime.home,
+                fulltimeAway = response.score.fulltime.away,
+                extratimeHome = response.score.extratime?.home,
+                extratimeAway = response.score.extratime?.away,
+                penaltyHome = response.score.penalty?.home,
+                penaltyAway = response.score.penalty?.away
+            )
+        )
+    }
 
     private fun mapToLeagueCreateDto(response: ApiSportsLeague.Current): LeagueApiSportsCreateDto {
         log.debug("Mapping league: ${response.league.name} (${response.league.id})")
@@ -187,7 +244,7 @@ class ApiSportsSyncFacade(
         log.debug("Mapping player: ${player.name} (${player.id})")
         
         return PlayerApiSportsCreateDto(
-            apiId = player.id.toLong(),
+            apiId = player.id,
             name = player.name,
             age = player.age,
             number = player.number,

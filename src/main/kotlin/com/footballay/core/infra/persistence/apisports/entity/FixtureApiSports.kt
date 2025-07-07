@@ -4,10 +4,19 @@ import jakarta.persistence.*
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
+import org.apache.commons.lang3.builder.ToStringExclude
+import org.hibernate.annotations.Cache
+import org.hibernate.annotations.CacheConcurrencyStrategy
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "refac_fixtures_api_sports")
+@Table(
+    name = "refac_fixtures_apisports",
+    indexes = [
+        Index(name = "idx_fixture_apisports_core_id", columnList = "fixture_core_id")
+    ]
+)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 data class FixtureApiSports(
 
     @Id
@@ -27,6 +36,12 @@ data class FixtureApiSports(
     var timestamp: Long? = null,
     var round: String? = null,
 
+    @Embedded
+    var status: ApiSportsStatus? = null,
+
+    @Embedded
+    var score: ApiSportsScore? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "venue_id")
     var venue: VenueApiSports? = null,
@@ -34,12 +49,6 @@ data class FixtureApiSports(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id")
     var season: LeagueApiSportsSeason,
-
-    @Embedded
-    var status: ApiSportsStatus? = null,
-
-    @Embedded
-    var score: ApiSportsScore? = null,
 
     @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id")
@@ -51,4 +60,10 @@ data class FixtureApiSports(
 
     @OneToMany(mappedBy = "fixtureApi", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     var events: MutableList<ApiSportsMatchEvent> = mutableListOf(),
-)
+){
+    override fun toString(): String {
+        return "FixtureApiSports(id=$id, core.id=${core?.id}, apiId=$apiId, referee=$referee, timezone=$timezone, " +
+                "date=$date, timestamp=$timestamp, round=$round, venue.id=${venue?.id}, status=$status, " +
+                "score=$score, homeTeam.id=${homeTeam?.id}, awayTeam.id=${awayTeam?.id})"
+    }
+}

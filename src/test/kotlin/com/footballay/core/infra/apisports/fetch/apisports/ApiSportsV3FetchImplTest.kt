@@ -66,7 +66,7 @@ class ApiSportsV3FetchImplTest {
     @Test
     fun `리그 경기 조회 테스트`() {
         log.info("Testing getFixturesOfLeague")
-        val requestFixturesOfLeague = apiSportsV3FetchImpl.fetchFixturesOfLeague(leagueApiId = 39, season = "2023")
+        val requestFixturesOfLeague = apiSportsV3FetchImpl.fetchFixturesOfLeague(leagueApiId = 39, season = 2023)
         log.info("Response: ${prettyPrintJson(objectMapper, requestFixturesOfLeague)}")
         assertThat(requestFixturesOfLeague.response)
             .withFailMessage("Response fixtures of league is empty")

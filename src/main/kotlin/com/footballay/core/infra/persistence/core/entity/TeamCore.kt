@@ -1,5 +1,6 @@
 package com.footballay.core.infra.persistence.core.entity
 
+import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import jakarta.persistence.*
 
 @Entity
@@ -30,14 +31,14 @@ data class TeamCore(
 
     var national: Boolean = false,
 
-    @Column(nullable = false)
-    var available: Boolean = false,
-
     // api id 는 절대 core 에 두면 안됩니다. api id 는 api 에 종속적이기 때문입니다. <br>
 //    /**
 //     * Core 엔티티에도 apiId를 두면, 동일 팀 중복여부 검사 시 편함
 //     */
 //    var apiId: Long? = null,
+
+    @OneToOne(mappedBy = "teamCore", cascade = [CascadeType.ALL], optional = true)
+    var teamApiSports : TeamApiSports? = null,
 
     /**
      * Provider data Sync 과정에서 자동으로 생성된 core 인 경우입니다. <br>
@@ -50,7 +51,14 @@ data class TeamCore(
         mappedBy = "team",
         orphanRemoval = true
     )
-    var leagueTeams: MutableSet<LeagueTeamCore> = mutableSetOf()
+    var leagueTeams: MutableSet<LeagueTeamCore> = mutableSetOf(),
+
+    @OneToMany(
+        mappedBy = "team",
+        orphanRemoval = true
+    )
+    var teamPlayers: MutableSet<TeamPlayerCore> = mutableSetOf()
+
 )  {
     fun addLeague(league: LeagueCore) {
         val existingRelation = leagueTeams.any { it.league.id == league.id && it.team.id == this.id }
@@ -74,6 +82,10 @@ data class TeamCore(
 
     fun getLeagues(): Set<LeagueCore> {
         return leagueTeams.mapNotNull { it.league }.toSet()
+    }
+
+    override fun toString(): String {
+        return "TeamCore(id=$id, uid=$uid, name=$name, code=$code, teamApiSportsId=${teamApiSports?.id})"
     }
 }
 

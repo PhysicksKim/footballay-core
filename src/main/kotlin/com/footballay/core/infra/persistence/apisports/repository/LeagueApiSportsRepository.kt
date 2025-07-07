@@ -22,6 +22,7 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
     /**
      * API ID로 리그 조회
      */
+    @EntityGraph(attributePaths = ["leagueCore"])
     fun findByApiId(apiId: Long): LeagueApiSports?
     
     /**

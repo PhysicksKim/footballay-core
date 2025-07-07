@@ -5,6 +5,7 @@ import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * ApiSports 리그 데이터 읽기 전용 서비스
@@ -20,6 +21,7 @@ class LeagueApiSportsQueryService(
     /**
      * API ID로 리그 정보 조회
      */
+    @Transactional(readOnly = true)
     fun findByApiId(apiId: Long): LeagueApiSportsInfo? {
         log.debug("Querying league by apiId: $apiId")
         
@@ -30,6 +32,7 @@ class LeagueApiSportsQueryService(
     /**
      * API ID로 리그 정보 조회 (필수)
      */
+    @Transactional(readOnly = true)
     fun findByApiIdOrThrow(apiId: Long): LeagueApiSportsInfo {
         return findByApiId(apiId) 
             ?: throw IllegalArgumentException("League not found with apiId: $apiId")
@@ -38,6 +41,7 @@ class LeagueApiSportsQueryService(
     /**
      * 특정 국가의 리그들 조회
      */
+    @Transactional(readOnly = true)
     fun findByCountryCode(countryCode: String): List<LeagueApiSportsInfo> {
         log.debug("Querying leagues by countryCode: $countryCode")
         

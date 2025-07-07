@@ -7,12 +7,12 @@ object ApiSportsPlayer {
         val players: List<PlayerInfo>
     ) : PlayerResponse {
         data class TeamInfo(
-            val id: Int,
+            val id: Long,
             val name: String,
             val logo: String
         )
         data class PlayerInfo(
-            val id: Int,
+            val id: Long,
             val name: String,
             val age: Int,
             val number: Int?,

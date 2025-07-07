@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TeamApiSportsRepository : JpaRepository<TeamApiSports, Long> {
+
+    fun findByApiId(apiId: Long): TeamApiSports?
+
     fun findAllByApiIdIn(apiIds: List<Long>): List<TeamApiSports>
 
     @Query("SELECT t FROM TeamApiSports t LEFT JOIN FETCH t.teamCore WHERE t.apiId = :apiId")

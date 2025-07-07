@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(
-    name = "refac_league_api_sports_seasons"
+    name = "refac_league_apisports_seasons"
 )
 data class LeagueApiSportsSeason(
 
@@ -20,7 +20,7 @@ data class LeagueApiSportsSeason(
     var coverage: LeagueApiSportsCoverage? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "league_api_sports_id", referencedColumnName = "id")
+    @JoinColumn(name = "league_apisports_id", referencedColumnName = "id")
     var leagueApiSports: LeagueApiSports? = null
 
 )

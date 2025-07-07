@@ -3,14 +3,14 @@ package com.footballay.core.infra.apisports.fetch
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsFixture
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsLeague
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsPlayer
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsStatus
+import com.footballay.core.infra.apisports.fetch.response.ApiSportsAccountStatus
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsTeam
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsV3Envelope
 import com.footballay.core.infra.apisports.fetch.response.ApiSportsV3LiveStatusEnvelope
 
 interface ApiSportsV3Fetcher {
 
-    fun fetchStatus() : ApiSportsV3LiveStatusEnvelope<ApiSportsStatus>
+    fun fetchStatus() : ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus>
 
     fun fetchLeaguesCurrent() : ApiSportsV3Envelope<ApiSportsLeague.Current>
 
@@ -25,7 +25,7 @@ interface ApiSportsV3Fetcher {
 
     fun fetchFixturesOfLeague(
         leagueApiId: Long,
-        season: String,
+        season: Int,
     ) : ApiSportsV3Envelope<ApiSportsFixture.OfLeague>
 
     fun fetchFixtureSingle(

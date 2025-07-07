@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.dto
 
 data class PlayerApiSportsCreateDto(
-    val apiId: Long, // API 응답의 player.id 불완전한 경우 null 존재 가능
+    val apiId: Long?, // API 응답의 player.id 불완전한 경우 null 존재 가능
     val name: String? = null, // API 응답의 player.name
     val firstname: String? = null, // API 응답의 player.firstname
     val lastname: String? = null, // API 응답의 player.lastname

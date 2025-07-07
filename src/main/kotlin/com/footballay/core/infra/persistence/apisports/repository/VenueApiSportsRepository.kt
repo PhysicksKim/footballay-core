@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface VenueApiSportsRepository : JpaRepository<VenueApiSports, Long> {
+    fun findAllByApiIdIn(apiIds: List<Long>): List<VenueApiSports>
+    fun findByApiId(apiId: Long): VenueApiSports?
 }
