@@ -1,0 +1,27 @@
+<included>
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${lokiUrl}</url>
+            <auth>
+                <username>${lokiUsername}</username>
+                <password>${lokiPassword}</password>
+            </auth>
+        </http>
+
+        <batch>
+            <maxItems>100</maxItems>
+            <timeoutMs>2000</timeoutMs>
+        </batch>
+
+        <labels>
+            application = footballay
+            host        = ${HOSTNAME:-unknown}
+        </labels>
+        <layout class="com.github.loki4j.logback.JsonLayout"/>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="LOKI"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</included>

@@ -57,3 +57,6 @@ out/
 
 monitoring/prometheus/credentials.yml
 monitoring/prometheus/secrets/*
+
+.env/**
+.env

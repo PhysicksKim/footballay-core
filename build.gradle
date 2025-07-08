@@ -32,8 +32,9 @@ dependencies {
 
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-core'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-core' // Micrometer 모니터링
+    implementation 'io.micrometer:micrometer-registry-prometheus' // Prometheus 모니터링
+    implementation 'com.github.loki4j:loki-logback-appender:1.4.2' // Loki 로그 수집
 
     // AWS
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
