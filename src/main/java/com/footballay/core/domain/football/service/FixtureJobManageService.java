@@ -34,7 +34,7 @@ public class FixtureJobManageService {
      * @see LiveMatchJobSchedulerService
      * @param fixture Fixture 연관 데이터를 모두 사용하므로 Fetch Join 으로 load 된 Fixture 가 아니면 N+1 이 발생할 수 있습니다.
      */
-    public void addFixtureJobs(@NotNull Fixture fixture) {
+    public void addFixtureJobs(@NotNull Fixture fixture) throws SchedulerException {
         long fixtureId = fixture.getFixtureId();
         try {
             dataIntegrityService.cleanUpFixtureLiveData(fixture);
@@ -44,6 +44,7 @@ public class FixtureJobManageService {
             log.info("add job finished for fixtureId={}", fixtureId);
         } catch (SchedulerException e) {
             log.error("Failed to add fixture jobs for fixtureId={}", fixtureId, e);
+            throw e;
         }
     }
 

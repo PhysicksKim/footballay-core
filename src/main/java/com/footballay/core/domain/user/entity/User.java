@@ -39,6 +39,7 @@ public class User extends BaseDateAuditEntity {
     @Column(nullable = false)
     private boolean enabled;
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Authority> authorities = new HashSet<>();
 

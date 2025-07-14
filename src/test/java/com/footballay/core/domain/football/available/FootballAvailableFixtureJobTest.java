@@ -19,10 +19,14 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestExecutionListeners;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -55,6 +59,18 @@ public class FootballAvailableFixtureJobTest {
 
     @Autowired
     private FootballAvailableService footballAvailableService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @AfterEach
+    public void logH2Locks() {
+        List<Map<String, Object>> locks = jdbcTemplate.queryForList(
+                "SELECT TABLE_SCHEMA, TABLE_NAME, SESSION_ID, LOCK_TYPE " +
+                        "FROM INFORMATION_SCHEMA.LOCKS"
+        );
+        log.info(">>> H2 LOCKS STATE: {}", locks);
+    }
 
     private long fixtureId;
 
@@ -120,7 +136,10 @@ public class FootballAvailableFixtureJobTest {
 
         // Step 3: AvailableFixture 제거
         footballAvailableService.removeAvailableFixture(fixtureId);
+        log.info("check H2 locks before waiting for job removal");
+        logH2Locks();
         waitUntilJobAllRemoved();
+        log.info("check H2 locks after waiting for job removal");
 
         // Step 4: Job 들이 제거됐는지 확인
         Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.anyGroup());

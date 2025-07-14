@@ -27,7 +27,7 @@ public class TestQuartzJobWaitUtil {
                 return !scheduler.checkExists(jobKey);
             } catch (SchedulerException e) {
                 // 예외 처리
-                return true;
+                throw new RuntimeException(e);
             }
         });
     }

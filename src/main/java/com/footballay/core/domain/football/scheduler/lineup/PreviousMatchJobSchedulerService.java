@@ -48,7 +48,12 @@ public class PreviousMatchJobSchedulerService {
     public void removeJob(long fixtureId) throws SchedulerException {
         String jobName = FootballSchedulerName.previousMatchJob(fixtureId);
         String jobGroup = FootballSchedulerName.fixtureGroup();
-        scheduler.deleteJob(new JobKey(jobName, jobGroup));
+        try{
+            scheduler.deleteJob(new JobKey(jobName, jobGroup));
+        } catch (SchedulerException e) {
+            log.error("Failed to remove job for fixtureId={}", fixtureId, e);
+            throw e;
+        }
         log.info("removeJob :: jobName={}, jobGroup={}", jobName, jobGroup);
     }
 }

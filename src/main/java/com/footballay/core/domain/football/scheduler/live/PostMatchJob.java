@@ -15,18 +15,23 @@ public class PostMatchJob implements Job {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-        long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
-        log.info("PostMatchJob executed, fixture ID : {}", fixtureId);
+        try {
+            long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
+            log.info("PostMatchJob executed, fixture ID : {}", fixtureId);
 
-        liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
-        if(checkPostJobDelete.isLongAfterMatchFinished(fixtureId)) {
-            try {
-                context.getScheduler().deleteJob(context.getJobDetail().getKey());
-                log.info("PostMatchJob Job deleted :: key={}", context.getJobDetail().getKey());
-            } catch (Exception e) {
-                log.error("PostMatchJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
-                throw new RuntimeException(e);
+            liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
+            if(checkPostJobDelete.isLongAfterMatchFinished(fixtureId)) {
+                try {
+                    context.getScheduler().deleteJob(context.getJobDetail().getKey());
+                    log.info("PostMatchJob Job deleted :: key={}", context.getJobDetail().getKey());
+                } catch (Exception e) {
+                    log.error("PostMatchJob key=[{}] delete failed", context.getJobDetail().getKey(), e);
+                    throw new RuntimeException(e);
+                }
             }
+        } catch (Exception e) {
+            log.error("PostMatchJob execution failed", e);
+            throw new JobExecutionException(e);
         }
     }
 }

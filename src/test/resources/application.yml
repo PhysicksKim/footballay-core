@@ -1,12 +1,16 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
+    url: jdbc:h2:mem:footballay-core;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
     password:
   jpa:
     hibernate:
       ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
 
   security:
     user:
@@ -21,11 +25,11 @@ spring:
       org:
         quartz:
           scheduler:
-            instanceName: MyScheduler
+            instanceName: TestFootballayScheduler
             instanceId: AUTO
           jobStore:
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
-            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.HSQLDBDelegate
             tablePrefix: QRTZ_
             isClustered: false
           threadPool:
@@ -49,7 +53,7 @@ server:
 
 # 개발 환경에서 허용할 CORS 출처
 cors:
-  allowedorigins: "http://localhost:8080,https://localhost:8080"
+  allowedorigins: 'http://localhost:8080,https://localhost:8080'
 
 logging:
   level:
@@ -63,44 +67,44 @@ custom:
 # 세션 쿠키 설정
 cookies:
   remember-me:
-    name: "remember-me"
+    name: 'remember-me'
     max-age: 1209600
     # 2주 (단위: 초)
   user-info:
-    name: "user-info"
+    name: 'user-info'
     max-age: 1209600 # 2주 (단위: 초)
 
 # Aws Service 관련 bean 생성을 위한 mock 값들
 aws:
   cloudfront:
-    domain: "https://MOCKDOMAIN.com"
-    keyPairId: "MOCKKEYPAIRID"
+    domain: 'https://MOCKDOMAIN.com'
+    keyPairId: 'MOCKKEYPAIRID'
     privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
     publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
   s3:
-    region: "MOCKREGION"
-    accessKey: "MOCKACCESS"
-    secretKey: "MOCKSECRET"
-    bucket-name: "MOCKBUCKETNAME"
-    public-domain: "https://MOCOKS3DOMAIN.com"
+    region: 'MOCKREGION'
+    accessKey: 'MOCKACCESS'
+    secretKey: 'MOCKSECRET'
+    bucket-name: 'MOCKBUCKETNAME'
+    public-domain: 'https://MOCOKS3DOMAIN.com'
 
 path:
   football:
     players:
       photo:
-        prefix: "chuncity/dev/players"
-        suffix: "devphoto"
+        prefix: 'chuncity/dev/players'
+        suffix: 'devphoto'
 
 # footballay.com 과 gyechunhoe.com 의 메인 페이지 구분시
 app:
   # DEPRECATED: use app.domain instead
-  domain: "gyechunhoe.com"
+  domain: 'gyechunhoe.com'
 
   footballay:
-    domain: "footballay.com"
+    domain: 'footballay.com'
     static:
-      domain: "static.footballay.com"
+      domain: 'static.footballay.com'
   gyechunhoe:
-    domain: "gyechunhoe.com"
+    domain: 'gyechunhoe.com'
     static:
-      domain: "static.gyechunhoe.com"
+      domain: 'static.gyechunhoe.com'

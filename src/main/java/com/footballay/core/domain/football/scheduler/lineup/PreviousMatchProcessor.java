@@ -4,9 +4,12 @@ import com.footballay.core.domain.football.external.fetch.ApiCallService;
 import com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.footballay.core.domain.football.external.lineup.LineupService;
 import com.footballay.core.domain.football.service.FixtureDataIntegrityService;
+import com.footballay.core.monitor.alert.port.MatchAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import static com.footballay.core.domain.football.scheduler.MatchTimeUtil.beforeStart10Minutes;
 
 /**
  * 경기 시작 전 1시간 전 ~ 킥오프시각 까지 동작합니다.
@@ -34,6 +37,7 @@ public class PreviousMatchProcessor implements PreviousMatchTask {
 
     private final FixtureDataIntegrityService fixtureDataIntegrityService;
     private final LineupService lineupService;
+    private final MatchAlertService matchAlertService;
 
     /**
      * 주어진 경기 ID에 대한 라인업 데이터를 요청하고 데이터베이스에 저장합니다.
@@ -48,13 +52,15 @@ public class PreviousMatchProcessor implements PreviousMatchTask {
      */
     @Override
     public boolean requestAndSaveLineup(long fixtureId) {
+        FixtureSingleResponse response = null;
         try {
-            FixtureSingleResponse response = requestData(fixtureId);
+            response = requestData(fixtureId);
             boolean existLineupData = lineupService.existLineupDataInResponse(response);
 
             // Response 에 Lineup Data 가 없는 경우
             if(!existLineupData) {
                 log.info("not exist lineup data in fixtureId={} response", fixtureId);
+                sendAlertIfLineupDelayed(fixtureId, response);
                 return false;
             }
 
@@ -63,12 +69,51 @@ public class PreviousMatchProcessor implements PreviousMatchTask {
             boolean needToCleanUpAndReSaveLineup = lineupService.isNeedToCleanUpAndReSaveLineup(response);
             if(needToCleanUpAndReSaveLineup) {
                 log.info("fixtureId={} need to clean up and re-save Lineup", fixtureId);
-                return cleanUpAndResaveLineup(response, fixtureId);
+                boolean isSuccess = cleanUpAndResaveLineup(response, fixtureId);
+                sendAlertIfSuccess(fixtureId, isSuccess);
+                return isSuccess;
             }
             return false;
         } catch (Exception e) {
             log.error("fixtureId={} lineup cache failed", fixtureId, e);
+            if(response != null) {
+                sendAlertLineupFail(fixtureId, response);
+            }
             return false;
+        }
+    }
+
+    private void sendAlertIfSuccess(long fixtureId, boolean isSuccess) {
+        if(isSuccess) {
+            matchAlertService.alertLineupSuccessOnce(
+                    String.valueOf(fixtureId),
+                    "The lineup for the prior match has been successfully saved."
+            );
+        }
+    }
+
+    private void sendAlertLineupFail(long fixtureId, FixtureSingleResponse response) {
+        if(response == null) {
+            log.debug("response is null while notifying, fixtureId={}", fixtureId);
+            return;
+        }
+        matchAlertService.alertLineupFailureOnce(
+                String.valueOf(fixtureId),
+                "An error occurred while processing the lineup data for the match."
+        );
+    }
+
+    private void sendAlertIfLineupDelayed(long fixtureId, FixtureSingleResponse response) {
+        if(response == null) {
+            log.debug("response is null while notifying, fixtureId={}", fixtureId);
+            return;
+        }
+        String kickoffTime = response.getResponse().get(0).getFixture().getDate();
+        if (beforeStart10Minutes(kickoffTime)) {
+            matchAlertService.alertLineupFailureOnce(
+                    String.valueOf(fixtureId),
+                    "Lineup data is missing 10 minutes before the match starts."
+            );
         }
     }
 

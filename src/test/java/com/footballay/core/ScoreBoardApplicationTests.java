@@ -1,10 +1,13 @@
 package com.footballay.core;
 
-// @SpringBootTest
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
 class ScoreBoardApplicationTests {
 
-    // @Test
-    // void contextLoads() {
-    // }
+    @Test
+    void contextLoads() {
+    }
 
 }

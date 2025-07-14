@@ -207,7 +207,7 @@ public class FootballRoot {
         try {
             footballAvailableService.removeAvailableFixture(fixtureId);
         } catch (Exception e) {
-            log.error("error while removing Available Fixture :: {}", e.getMessage());
+            log.error("error while removing Available Fixture", e);
             return false;
         }
         return true;

@@ -18,17 +18,21 @@ import com.footballay.core.domain.football.repository.live.LiveStatusRepository;
 import com.footballay.core.domain.football.repository.relations.LeagueTeamRepository;
 import com.footballay.core.domain.football.scheduler.lineup.PreviousMatchProcessor;
 import com.footballay.core.domain.football.scheduler.live.LiveMatchProcessor;
+import com.footballay.core.util.QuartzConnectionResetListener;
 import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
@@ -47,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Transactional
 @ActiveProfiles({"dev", "mockapi"})
+@ExtendWith(QuartzConnectionResetListener.class)
 class FootballRootTest {
 
     @Autowired

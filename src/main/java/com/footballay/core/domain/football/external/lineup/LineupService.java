@@ -11,6 +11,7 @@ import com.footballay.core.domain.football.repository.PlayerRepository;
 import com.footballay.core.domain.football.repository.TeamRepository;
 import com.footballay.core.domain.football.repository.live.MatchLineupRepository;
 import com.footballay.core.domain.football.repository.live.MatchPlayerRepository;
+import com.footballay.core.monitor.alert.port.MatchAlertService;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class LineupService {
     private final FixtureRepository fixtureRepository;
     private final MatchLineupRepository matchLineupRepository;
     private final MatchPlayerRepository matchPlayerRepository;
+    private final MatchAlertService matchAlertService;
 
     /**
      * FixtureSingleResponse 에서 라인업 데이터의 존재 여부를 확인합니다.
@@ -171,7 +173,11 @@ public class LineupService {
         matchLineupRepository.save(homeMatchLineup);
         matchLineupRepository.save(awayMatchLineup);
 
-        return isAllRegisteredPlayers(new ResponseValues(response));
+        boolean isAllRegistered = isAllRegisteredPlayers(responseValues);
+        if(!isAllRegistered) {
+            matchAlertService.alertIdNullWarn(String.valueOf(responseValues.fixtureId), "Id null player exist");
+        }
+        return isAllRegistered;
     }
 
     private List<MatchPlayer> collectPlayers(List<MatchPlayer> list1, List<MatchPlayer> list2) {

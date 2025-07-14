@@ -10,6 +10,8 @@ import com.footballay.core.domain.football.persistence.Fixture;
 import com.footballay.core.domain.football.persistence.live.MatchLineup;
 import com.footballay.core.domain.football.persistence.live.MatchPlayer;
 import com.footballay.core.domain.football.service.FixtureDataIntegrityService;
+import com.footballay.core.monitor.alert.NotificationException;
+import com.footballay.core.monitor.alert.port.MatchAlertService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,8 @@ public class LiveMatchProcessor implements LiveMatchTask {
     private final TeamStatisticsService teamStatisticsService;
     private final PlayerStatisticsService playerStatisticsService;
 
+    private final MatchAlertService matchAlertService;
+
     /**
      * `fixtureId` 를 받아서 해당 경기의 라이브 정보를 캐싱합니다. <br>
      * 라이브 정보란 매치 중 라이브로 변경되는 데이터들을 말합니다. <br>
@@ -46,8 +50,10 @@ public class LiveMatchProcessor implements LiveMatchTask {
             FixtureSingleResponse fixtureSingleResponse = requestData(fixtureId);
             isFinished = saveDataAndIsFinished(fixtureSingleResponse);
             log.info("fixtureId={} live data cache done. isFinished={}", fixtureId, isFinished);
+            matchAlertService.alertFixtureSuccessOnce(String.valueOf(fixtureId), "Live match data save success");
         } catch (Exception e) {
             log.error("fixtureId={} live data cache FAILED. isFinished={}", fixtureId, isFinished, e);
+            matchAlertService.alertFixtureExceptionOnce(String.valueOf(fixtureId), "Live match data save exception " + e.getMessage());
         }
         return isFinished;
     }
