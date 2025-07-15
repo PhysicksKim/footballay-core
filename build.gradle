@@ -87,14 +87,15 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     // 테스트용 레디스 컨테이너
-    testImplementation "org.junit.jupiter:junit-jupiter:5.8.1"
-    testImplementation "org.testcontainers:testcontainers:1.19.5"
-    testImplementation "org.testcontainers:junit-jupiter:1.19.5"
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+    testImplementation 'org.testcontainers:testcontainers:1.19.5'
+    testImplementation 'org.testcontainers:junit-jupiter:1.19.5'
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
 
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 }
 
 tasks.named('test') {

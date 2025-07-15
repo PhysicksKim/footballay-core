@@ -1,6 +1,5 @@
-package com.footballay.core;
+package com.footballay.core.config;
 
-import com.footballay.core.config.AbstractRedisTestContainerInit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 @Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
-public class RedisContainerIntegrationTest extends AbstractRedisTestContainerInit {
+public class RedisContainerIntegrationTest {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;

@@ -1,6 +1,5 @@
 package com.footballay.core.websocket.domain.scoreboard.remote.autoremote.service;
 
-import com.footballay.core.config.AbstractRedisTestContainerInit;
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.entity.AnonymousUser;
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
@@ -33,7 +32,7 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("mockapi")
 @Transactional
 @SpringBootTest
-class AutoRemoteServiceTest extends AbstractRedisTestContainerInit {
+class AutoRemoteServiceTest {
 
     @Autowired
     private RedisRemoteCodeService redisRemoteCodeService;

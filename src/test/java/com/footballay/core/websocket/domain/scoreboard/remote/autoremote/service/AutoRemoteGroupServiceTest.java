@@ -1,6 +1,5 @@
 package com.footballay.core.websocket.domain.scoreboard.remote.autoremote.service;
 
-import com.footballay.core.config.AbstractRedisTestContainerInit;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
-class AutoRemoteGroupServiceTest extends AbstractRedisTestContainerInit {
+class AutoRemoteGroupServiceTest {
 
     @Autowired
     private AutoRemoteService autoRemoteService;

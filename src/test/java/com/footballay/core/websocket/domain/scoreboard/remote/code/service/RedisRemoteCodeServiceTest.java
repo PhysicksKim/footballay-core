@@ -1,6 +1,5 @@
 package com.footballay.core.websocket.domain.scoreboard.remote.code.service;
 
-import com.footballay.core.config.AbstractRedisTestContainerInit;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +23,9 @@ import static org.mockito.Mockito.when;
 @Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
-public class RedisRemoteCodeServiceTest extends AbstractRedisTestContainerInit {
+public class RedisRemoteCodeServiceTest
+        // extends AbstractRedisTestContainerInit
+{
 
     @Autowired
     private RedisRemoteCodeService redisRemoteCodeService;
