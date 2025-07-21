@@ -5,18 +5,13 @@ import com.footballay.core.domain.user.entity.Authority;
 import com.footballay.core.domain.user.entity.Role;
 import com.footballay.core.domain.user.entity.User;
 import com.footballay.core.domain.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Collection;
 
-@Slf4j
-@RequiredArgsConstructor
 @Component
 public class UserRoot {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserRoot.class);
     private final UserService userService;
 
     @Transactional(readOnly = true)
@@ -31,17 +26,18 @@ public class UserRoot {
     }
 
     private static String[] toRoleResponse(Collection<Authority> authorities) {
-        return authorities.stream()
-                .map(authority -> {
-                    Role role = authority.getAuthority();
-                    return switch (role) {
-                        case ROLE_ADMIN -> "admin";
-                        case ROLE_STREAMER -> "streamer";
-                        case ROLE_USER -> "user";
-                        default -> "unknown";
-                    };
-                })
-                .toArray(String[]::new);
+        return authorities.stream().map(authority -> {
+            Role role = authority.getAuthority();
+            return switch (role) {
+                case ROLE_ADMIN -> "admin";
+                case ROLE_STREAMER -> "streamer";
+                case ROLE_USER -> "user";
+                default -> "unknown";
+            };
+        }).toArray(String[]::new);
     }
 
+    public UserRoot(final UserService userService) {
+        this.userService = userService;
+    }
 }

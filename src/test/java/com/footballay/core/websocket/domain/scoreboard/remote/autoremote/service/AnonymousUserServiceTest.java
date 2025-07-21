@@ -4,7 +4,6 @@ import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.entity.
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.entity.AutoRemoteGroup;
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,38 +16,32 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.UUID;
-
 import static org.mockito.Mockito.when;
 
-@Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
 class AnonymousUserServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AnonymousUserServiceTest.class);
     @Autowired
     private EntityManager em;
-
     @Autowired
     private AutoRemoteService autoRemoteService;
     @Autowired
     private AutoRemoteRedisRepository autoRemoteRedisRepository;
-
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
-
     @MockBean
     private Principal mockPrincipal;
-
     private static final String MOCK_PRINCIPAL_NAME = "THIS_WILL_BE_JSESSIONID_userservicetest";
 
     @BeforeEach
     void setUp() {
         when(mockPrincipal.getName()).thenReturn(MOCK_PRINCIPAL_NAME);
     }
+
     @AfterEach
     void cleanUp() {
         stringRedisTemplate.delete(stringRedisTemplate.keys("*"));
@@ -60,11 +53,9 @@ class AnonymousUserServiceTest {
     void CreateAndSaveAnonymousUser() {
         // given
         AutoRemoteGroup autoRemoteGroup = persistAutoRemoteGroup();
-
         // when
         AnonymousUser savedUser = autoRemoteService.createAndSaveAnonymousUser(autoRemoteGroup);
         log.info("savedUser: {}", savedUser);
-
         // then
         Assertions.assertThat(savedUser).isNotNull();
         Assertions.assertThat(savedUser.getId()).isNotNull();
@@ -82,17 +73,13 @@ class AnonymousUserServiceTest {
         log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
-
         final String userUuid = savedUser.getId().toString();
         log.info("userUuid: {}", userUuid);
-
         // when
         autoRemoteService.validateAndCacheUserToRedis(mockPrincipal, userUuid);
-        String cachedUserKey = ReflectionTestUtils.
-                invokeMethod(AutoRemoteRedisRepository.class, "keyForPrincipalToUuid", MOCK_PRINCIPAL_NAME);
+        String cachedUserKey = ReflectionTestUtils.invokeMethod(AutoRemoteRedisRepository.class, "keyForPrincipalToUuid", MOCK_PRINCIPAL_NAME);
         assert cachedUserKey != null;
         String cachedUserValue = stringRedisTemplate.opsForValue().get(cachedUserKey);
-
         // then
         Assertions.assertThat(cachedUserValue).isNotNull();
         Assertions.assertThat(cachedUserValue).isEqualTo(userUuid);
@@ -108,11 +95,9 @@ class AnonymousUserServiceTest {
         log.info("savedUser: {}", savedUser);
         em.flush();
         em.clear();
-
         // when & then
         final String NOT_EXIST_UUID = UUID.randomUUID().toString();
         log.info("NOT_EXIST_UUID: {}", NOT_EXIST_UUID);
-
         // then
         Assertions.assertThatThrownBy(() -> {
             autoRemoteService.validateAndCacheUserToRedis(mockPrincipal, NOT_EXIST_UUID);

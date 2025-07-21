@@ -3,25 +3,18 @@ package com.footballay.core.domain.football.preference.service;
 import com.footballay.core.domain.football.preference.persistence.PreferenceKey;
 import com.footballay.core.domain.football.preference.repository.PreferenceKeyRepository;
 import com.footballay.core.domain.user.entity.User;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.util.Optional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class PreferenceKeyService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PreferenceKeyService.class);
     private final PreferenceKeyRepository preferenceKeyRepository;
-
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int KEY_LENGTH = 32;
-
     private static final SecureRandom RANDOM = new SecureRandom();
 
     @Transactional
@@ -33,19 +26,13 @@ public class PreferenceKeyService {
     public PreferenceKey generatePreferenceKeyForUser(User user) {
         String keyHash = generateKeyHash();
         log.info("Generated preferenceKey={}", keyHash);
-
-        PreferenceKey preferKey = PreferenceKey.builder()
-                .user(user)
-                .keyhash(keyHash)
-                .build();
+        PreferenceKey preferKey = PreferenceKey.builder().user(user).keyhash(keyHash).build();
         return preferenceKeyRepository.save(preferKey);
     }
 
     @Transactional
     public PreferenceKey reissuePreferenceKeyForUser(User user) {
-        PreferenceKey preferenceKey = preferenceKeyRepository.findByUser(user).orElseThrow(
-                () -> new IllegalStateException("PreferenceKey not found for user=" + user)
-        );
+        PreferenceKey preferenceKey = preferenceKeyRepository.findByUser(user).orElseThrow(() -> new IllegalStateException("PreferenceKey not found for user=" + user));
         String newKeyHash = generateKeyHash();
         preferenceKey.setKeyhash(newKeyHash);
         return preferenceKeyRepository.save(preferenceKey);
@@ -60,9 +47,9 @@ public class PreferenceKeyService {
      */
     @Transactional
     public boolean deletePreferenceKeyForUser(User user) {
-        try{
+        try {
             Optional<PreferenceKey> preferenceKey = preferenceKeyRepository.findByUser(user);
-            if(preferenceKey.isEmpty()) {
+            if (preferenceKey.isEmpty()) {
                 log.warn("PreferenceKey not found for user={}", user);
                 return false;
             }
@@ -95,4 +82,7 @@ public class PreferenceKeyService {
         return key;
     }
 
+    public PreferenceKeyService(final PreferenceKeyRepository preferenceKeyRepository) {
+        this.preferenceKeyRepository = preferenceKeyRepository;
+    }
 }

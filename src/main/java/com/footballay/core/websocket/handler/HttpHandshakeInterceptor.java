@@ -1,29 +1,22 @@
 package com.footballay.core.websocket.handler;
 
 import jakarta.servlet.http.HttpSession;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
-
 import java.util.Map;
 
-@Slf4j
 public class HttpHandshakeInterceptor implements HandshakeInterceptor {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HttpHandshakeInterceptor.class);
 
     @Override
-    public boolean beforeHandshake(
-            ServerHttpRequest request,
-            ServerHttpResponse response,
-            WebSocketHandler wsHandler,
-            Map<String, Object> attributes
-    ) throws Exception {
+    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         if (request instanceof ServletServerHttpRequest) {
             ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
             HttpSession session = servletRequest.getServletRequest().getSession();
-            if(session == null) {
+            if (session == null) {
                 throw new IllegalStateException("세션이 없습니다");
             }
             attributes.put("webSession", session);

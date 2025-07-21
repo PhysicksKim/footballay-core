@@ -13,23 +13,17 @@ import com.footballay.core.domain.football.repository.live.MatchLineupRepository
 import com.footballay.core.domain.football.repository.live.MatchPlayerRepository;
 import com.footballay.core.monitor.alert.port.MatchAlertService;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.*;
 import java.util.stream.Collectors;
-
 import static com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse._Lineups;
 
-@Slf4j
-@RequiredArgsConstructor
 @Transactional
 @Service
 public class LineupService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LineupService.class);
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final FixtureRepository fixtureRepository;
@@ -61,37 +55,28 @@ public class LineupService {
      */
     public boolean isNeedToCleanUpAndReSaveLineup(FixtureSingleResponse response) {
         ResponseValues responseValues = ResponseValues.of(response);
-        if(responseValues == null) {
-            throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " +
-                    "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.");
+        if (responseValues == null) {
+            throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " + "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.");
         }
-
         // API 라인업 정보가 없다면 : 다시 저장할 필요가 없습니다
         //  혹시나 불완전한 이전 데이터가 잔존한다 하더라도 라인업 데이터가 없다면 라인업을 다시 저장할 필요가 없습니다.
         boolean notExistLineup = !this.existLineupDataInResponse(response);
-        if(notExistLineup) {
+        if (notExistLineup) {
             log.info("[Lineup Save Need : X] lineup is not exist in response. fixtureId={}", responseValues.fixtureId);
             return false;
         }
-
-        Fixture fixture = fixtureRepository.findById(responseValues.fixtureId).orElseThrow(
-                () -> new IllegalArgumentException("Fixture 데이터가 존재하지 않습니다. fixtureId=" + responseValues.fixtureId)
-        );
+        Fixture fixture = fixtureRepository.findById(responseValues.fixtureId).orElseThrow(() -> new IllegalArgumentException("Fixture 데이터가 존재하지 않습니다. fixtureId=" + responseValues.fixtureId));
         Team home = teamRepository.findById(responseValues.homeTeamId).orElseThrow();
         Team away = teamRepository.findById(responseValues.awayTeamId).orElseThrow();
-
         Optional<MatchLineup> optionalHomeLineup = matchLineupRepository.findTeamLineupByFixture(fixture, home);
         Optional<MatchLineup> optionalAwayLineup = matchLineupRepository.findTeamLineupByFixture(fixture, away);
-
         // API 라인업 정보가 있고, DB 라인업 데이터는 없다면 : 다시 저장해야 합니다
-        if(optionalHomeLineup.isEmpty() || optionalAwayLineup.isEmpty()) {
+        if (optionalHomeLineup.isEmpty() || optionalAwayLineup.isEmpty()) {
             log.info("[Lineup Save Need : O] lineup data is not exist in database. fixtureId={}", responseValues.fixtureId);
             return true;
         }
-
         MatchLineup homeLineup = optionalHomeLineup.get();
         MatchLineup awayLineup = optionalAwayLineup.get();
-
         // API 라인업 정보가 있고, DB 라인업 데이터는 있는데, 등록|미등록 선수 숫자가 불일치 한다면 : 다시 저장해야 합니다
         return needToReSaveBecauseOfRegisterPlayerCountMismatch(responseValues, homeLineup, awayLineup);
     }
@@ -112,59 +97,39 @@ public class LineupService {
      */
     public boolean saveLineup(FixtureSingleResponse response) {
         ResponseValues responseValues = ResponseValues.of(response);
-        if(responseValues == null) {
-            throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " +
-                    "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.");
+        if (responseValues == null) {
+            throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " + "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.");
         }
-        if(responseValues.homeLineup == null || responseValues.awayLineup == null) {
+        if (responseValues.homeLineup == null || responseValues.awayLineup == null) {
             log.warn("라인업 정보가 없는데 saveLineup 을 요청했습니다. fixtureId={}", responseValues.fixtureId);
             return false;
         }
-        Fixture fixture = fixtureRepository.findById(responseValues.fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("경기 정보가 아직 캐싱되지 않았습니다."));
-        Team homeTeam = teamRepository.findById(responseValues.homeTeamId)
-                .orElseThrow(() -> new IllegalArgumentException("홈팀이 아직 캐싱되지 않았습니다."));
-        Team awayTeam = teamRepository.findById(responseValues.awayTeamId)
-                .orElseThrow(() -> new IllegalArgumentException("어웨이팀이 아직 캐싱되지 않았습니다."));
-
-        if(!matchLineupRepository.findAllByFixture(fixture).isEmpty()) {
+        Fixture fixture = fixtureRepository.findById(responseValues.fixtureId).orElseThrow(() -> new IllegalArgumentException("경기 정보가 아직 캐싱되지 않았습니다."));
+        Team homeTeam = teamRepository.findById(responseValues.homeTeamId).orElseThrow(() -> new IllegalArgumentException("홈팀이 아직 캐싱되지 않았습니다."));
+        Team awayTeam = teamRepository.findById(responseValues.awayTeamId).orElseThrow(() -> new IllegalArgumentException("어웨이팀이 아직 캐싱되지 않았습니다."));
+        if (!matchLineupRepository.findAllByFixture(fixture).isEmpty()) {
             log.warn("fixtureId={} 에 이미 라인업 정보가 존재합니다. cleanup 이후 다시 저장해야 합니다.", responseValues.fixtureId);
             throw new IllegalStateException("fixtureId=" + responseValues.fixtureId + " 에 이미 라인업 정보가 존재합니다. cleanup 이후 다시 저장해야 합니다.");
         }
-
         // 라인업 정보를 이용해 Player 를 저장 또는 업데이트 합니다.
         // (a) 존재하지 않는 player 를 저장하거나, (b) 존재한다면 number 정보를 업데이트 해줍니다.
         cacheAndUpdateFromLineupPlayers(responseValues.homeLineup);
         cacheAndUpdateFromLineupPlayers(responseValues.awayLineup);
-
         _Lineups homeLineupData = responseValues.homeLineup;
         _Lineups awayLineupData = responseValues.awayLineup;
-
         // 1. MatchLineup Entity 생성
-        MatchLineup homeLineup = MatchLineup.builder()
-                .fixture(fixture)
-                .formation(homeLineupData.getFormation())
-                .team(homeTeam)
-                .build();
-        MatchLineup awayLineup = MatchLineup.builder()
-                .fixture(fixture)
-                .formation(awayLineupData.getFormation())
-                .team(awayTeam)
-                .build();
+        MatchLineup homeLineup = MatchLineup.builder().fixture(fixture).formation(homeLineupData.getFormation()).team(homeTeam).build();
+        MatchLineup awayLineup = MatchLineup.builder().fixture(fixture).formation(awayLineupData.getFormation()).team(awayTeam).build();
         MatchLineup homeMatchLineup = matchLineupRepository.save(homeLineup);
         MatchLineup awayMatchLineup = matchLineupRepository.save(awayLineup);
-
         // 2. MatchPlayer Entity 생성
         List<MatchPlayer> homeMatchPlayerList = buildAndSaveMatchPlayerEntity(homeLineupData, homeMatchLineup, false);
         List<MatchPlayer> homeSubstitutePlayerList = buildAndSaveMatchPlayerEntity(homeLineupData, homeMatchLineup, true);
         List<MatchPlayer> awayMatchPlayerList = buildAndSaveMatchPlayerEntity(awayLineupData, awayMatchLineup, false);
         List<MatchPlayer> awaySubstitutePlayerList = buildAndSaveMatchPlayerEntity(awayLineupData, awayMatchLineup, true);
         log.info("fixtureId={} 라인업 정보 저장 완료", responseValues.fixtureId);
-        log.info("홈팀 라인업 정보 저장 완료. fixtureId={}, teamId={}, startXI.size={}, subs.size={}",
-                responseValues.fixtureId, homeTeam.getId(), homeMatchPlayerList.size(), homeSubstitutePlayerList.size());
-        log.info("어웨이팀 라인업 정보 저장 완료. fixtureId={}, teamId={}, startXI.size={}, subs.size={}",
-                responseValues.fixtureId, awayTeam.getId(), awayMatchPlayerList.size(), awaySubstitutePlayerList.size());
-
+        log.info("홈팀 라인업 정보 저장 완료. fixtureId={}, teamId={}, startXI.size={}, subs.size={}", responseValues.fixtureId, homeTeam.getId(), homeMatchPlayerList.size(), homeSubstitutePlayerList.size());
+        log.info("어웨이팀 라인업 정보 저장 완료. fixtureId={}, teamId={}, startXI.size={}, subs.size={}", responseValues.fixtureId, awayTeam.getId(), awayMatchPlayerList.size(), awaySubstitutePlayerList.size());
         // 3. 라인업을 통한 1차캐시 연관관계 조회시 문제가 생기지 않도록, 연관관계 엔티티를 넣어줍니다.
         List<MatchPlayer> collectingHomePlayers = collectPlayers(homeMatchPlayerList, homeSubstitutePlayerList);
         List<MatchPlayer> collectingAwayPlayers = collectPlayers(awayMatchPlayerList, awaySubstitutePlayerList);
@@ -172,9 +137,8 @@ public class LineupService {
         awayMatchLineup.setMatchPlayers(collectingAwayPlayers);
         matchLineupRepository.save(homeMatchLineup);
         matchLineupRepository.save(awayMatchLineup);
-
         boolean isAllRegistered = isAllRegisteredPlayers(responseValues);
-        if(!isAllRegistered) {
+        if (!isAllRegistered) {
             matchAlertService.alertIdNullWarn(String.valueOf(responseValues.fixtureId), "Id null player exist");
         }
         return isAllRegistered;
@@ -202,18 +166,8 @@ public class LineupService {
     private boolean needToReSaveBecauseOfRegisterPlayerCountMismatch(ResponseValues responseValues, MatchLineup homeLineup, MatchLineup awayLineup) {
         PlayerCount homePlayerCount = countPlayers(homeLineup);
         PlayerCount awayPlayerCount = countPlayers(awayLineup);
-
-        boolean needToResaveHome = isPlayerCountMismatch(
-                responseValues.homeTeamLineupPlayerIds.size(),
-                responseValues.homeUnregisteredPlayers.size(),
-                homePlayerCount
-        );
-        boolean needToResaveAway = isPlayerCountMismatch(
-                responseValues.awayTeamLineupPlayerIds.size(),
-                responseValues.awayUnregisteredPlayers.size(),
-                awayPlayerCount
-        );
-
+        boolean needToResaveHome = isPlayerCountMismatch(responseValues.homeTeamLineupPlayerIds.size(), responseValues.homeUnregisteredPlayers.size(), homePlayerCount);
+        boolean needToResaveAway = isPlayerCountMismatch(responseValues.awayTeamLineupPlayerIds.size(), responseValues.awayUnregisteredPlayers.size(), awayPlayerCount);
         return needToResaveHome || needToResaveAway;
     }
 
@@ -245,36 +199,19 @@ public class LineupService {
     protected void cacheAndUpdateFromLineupPlayers(_Lineups lineupResponse) {
         List<_Lineups._StartPlayer> startXI = lineupResponse.getStartXI();
         List<_Lineups._StartPlayer> substitutes = lineupResponse.getSubstitutes();
-
         // id 가 null 인 선수는 무시하고 넘어갑니다. id 가 null 인 선수는 Player 로 저장되지 않고 MatchPlayer 에만 저장됩니다.
         Map<Long, _Lineups._StartPlayer> playerResponseMap = new HashMap<>();
-        playerResponseMap.putAll(startXI.stream()
-                .filter(player -> player.getPlayer().getId() != null)
-                .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
-        playerResponseMap.putAll(substitutes.stream()
-                .filter(player -> player.getPlayer().getId() != null)
-                .collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
-
+        playerResponseMap.putAll(startXI.stream().filter(player -> player.getPlayer().getId() != null).collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
+        playerResponseMap.putAll(substitutes.stream().filter(player -> player.getPlayer().getId() != null).collect(Collectors.toMap(player -> player.getPlayer().getId(), player -> player)));
         Set<Long> playerIds = playerResponseMap.keySet();
-        Set<Long> findPlayers = playerRepository.findAllById(playerIds).stream()
-                .map(Player::getId)
-                .collect(Collectors.toSet());
-
-        Set<Long> existPlayerIds = playerIds.stream()
-                .filter(findPlayers::contains)
-                .collect(Collectors.toSet());
+        Set<Long> findPlayers = playerRepository.findAllById(playerIds).stream().map(Player::getId).collect(Collectors.toSet());
+        Set<Long> existPlayerIds = playerIds.stream().filter(findPlayers::contains).collect(Collectors.toSet());
         updateExistPlayers(playerResponseMap, existPlayerIds);
-
-        Set<Long> missingPlayerIds = playerIds.stream()
-                .filter(playerId -> !findPlayers.contains(playerId))
-                .collect(Collectors.toSet());
-        if(missingPlayerIds.isEmpty()) {
+        Set<Long> missingPlayerIds = playerIds.stream().filter(playerId -> !findPlayers.contains(playerId)).collect(Collectors.toSet());
+        if (missingPlayerIds.isEmpty()) {
             return;
         }
-        List<_Lineups._StartPlayer> missingPlayers = playerResponseMap.entrySet().stream()
-                .filter(entry -> missingPlayerIds.contains(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .toList();
+        List<_Lineups._StartPlayer> missingPlayers = playerResponseMap.entrySet().stream().filter(entry -> missingPlayerIds.contains(entry.getKey())).map(Map.Entry::getValue).toList();
         convertAndCacheMissingPlayers(missingPlayers);
         logCachedMissingPlayers(lineupResponse, missingPlayerIds);
     }
@@ -311,14 +248,7 @@ public class LineupService {
     private void convertAndCacheMissingPlayers(List<_Lineups._StartPlayer> missingPlayers) {
         final String photoUrl_prefix = "https://media.api-sports.io/football/players/";
         final String photoUrl_suffix = ".png";
-        List<Player> players = missingPlayers.stream()
-                .map(playerResponse -> Player.builder()
-                        .id(playerResponse.getPlayer().getId())
-                        .name(playerResponse.getPlayer().getName())
-                        .number(playerResponse.getPlayer().getNumber())
-                        .photoUrl(photoUrl_prefix + playerResponse.getPlayer().getId() + photoUrl_suffix)
-                        .build())
-                .toList();
+        List<Player> players = missingPlayers.stream().map(playerResponse -> Player.builder().id(playerResponse.getPlayer().getId()).name(playerResponse.getPlayer().getName()).number(playerResponse.getPlayer().getNumber()).photoUrl(photoUrl_prefix + playerResponse.getPlayer().getId() + photoUrl_suffix).build()).toList();
         playerRepository.saveAll(players);
     }
 
@@ -336,9 +266,7 @@ public class LineupService {
      */
     private List<MatchPlayer> buildAndSaveMatchPlayerEntity(_Lineups lineups, MatchLineup matchLineup, boolean isSubstitute) {
         List<MatchPlayer> matchPlayerList = new ArrayList<>();
-
         List<_Lineups._StartPlayer> startPlayers = (isSubstitute ? lineups.getSubstitutes() : lineups.getStartXI());
-
         Map<Long, _Lineups._Player> playerResponseMap = new HashMap<>();
         List<_Lineups._Player> idNullPlayerList = new ArrayList<>();
         startPlayers.forEach(startPlayer -> {
@@ -349,35 +277,18 @@ public class LineupService {
                 playerResponseMap.put(player.getId(), player);
             }
         });
-
         // id 존재하는 선수들은 playerRepository 에서 찾아서 저장
         List<Player> findPlayers = playerRepository.findAllById(playerResponseMap.keySet());
         findPlayers.forEach(playerEntity -> {
             _Lineups._Player playerResponse = playerResponseMap.get(playerEntity.getId());
-            MatchPlayer matchPlayer = MatchPlayer.builder()
-                    .matchLineup(matchLineup)
-                    .player(playerEntity)
-                    .position(playerResponse.getPos())
-                    .grid(playerResponse.getGrid())
-                    .substitute(isSubstitute)
-                    .build();
+            MatchPlayer matchPlayer = MatchPlayer.builder().matchLineup(matchLineup).player(playerEntity).position(playerResponse.getPos()).grid(playerResponse.getGrid()).substitute(isSubstitute).build();
             matchPlayerList.add(matchPlayer);
         });
-
         // id 가 null 인 선수들은 playerRepository 에 저장되지 않고 MatchPlayer 에만 저장
         idNullPlayerList.forEach(responsePlayer -> {
-            MatchPlayer matchPlayer = MatchPlayer.builder()
-                    .matchLineup(matchLineup)
-                    .unregisteredPlayerName(responsePlayer.getName())
-                    .unregisteredPlayerNumber(responsePlayer.getNumber())
-                    .temporaryId(UUID.randomUUID())
-                    .position(responsePlayer.getPos())
-                    .grid(responsePlayer.getGrid())
-                    .substitute(isSubstitute)
-                    .build();
+            MatchPlayer matchPlayer = MatchPlayer.builder().matchLineup(matchLineup).unregisteredPlayerName(responsePlayer.getName()).unregisteredPlayerNumber(responsePlayer.getNumber()).temporaryId(UUID.randomUUID()).position(responsePlayer.getPos()).grid(responsePlayer.getGrid()).substitute(isSubstitute).build();
             matchPlayerList.add(matchPlayer);
         });
-
         return matchPlayerRepository.saveAll(matchPlayerList);
     }
 
@@ -390,10 +301,9 @@ public class LineupService {
     private PlayerCount countPlayers(MatchLineup lineup) {
         int registered = 0;
         int unregistered = 0;
-        if(lineup == null || lineup.getMatchPlayers() == null) {
+        if (lineup == null || lineup.getMatchPlayers() == null) {
             return new PlayerCount(registered, unregistered);
         }
-
         for (MatchPlayer matchPlayer : lineup.getMatchPlayers()) {
             if (matchPlayer.getPlayer() == null) {
                 unregistered++;
@@ -417,12 +327,10 @@ public class LineupService {
      */
     private boolean isPlayerCountMismatch(int expectedRegistered, int expectedUnregistered, PlayerCount actualCount) {
         boolean isMismatch = actualCount.registered != expectedRegistered || actualCount.unregistered != expectedUnregistered;
-        if(isMismatch) {
-            log.info("[Lineup Save Need : O] 라인업 데이터의 등록/미등록 선수 수가 불일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}",
-                    expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
+        if (isMismatch) {
+            log.info("[Lineup Save Need : O] 라인업 데이터의 등록/미등록 선수 수가 불일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}", expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
         } else {
-            log.info("[Lineup Save Need : X] 라인업 데이터의 등록/미등록 선수 수가 일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}",
-                    expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
+            log.info("[Lineup Save Need : X] 라인업 데이터의 등록/미등록 선수 수가 일치합니다. expectedRegistered={}, expectedUnregistered={}, actualRegistered={}, actualUnregistered={}", expectedRegistered, expectedUnregistered, actualCount.registered, actualCount.unregistered);
         }
         return isMismatch;
     }
@@ -432,6 +340,7 @@ public class LineupService {
         String teamName = lineupResponse.getTeam().getName();
         log.info("라인업 선수 중 아직 캐싱되지 않은 선수를 저장했습니다. missingPlayers={},team={id={},name={}}", missingPlayerIds, teamId, teamName);
     }
+
 
     private static class PlayerCount {
         int registered;
@@ -443,6 +352,7 @@ public class LineupService {
         }
     }
 
+
     /**
      * FixtureSingleResponse 에서 필요한 데이터를 추출하여 간략하고 명료하게 값에 접근할 수 있도록 합니다.
      */
@@ -450,17 +360,17 @@ public class LineupService {
         private final long fixtureId;
         private final long homeTeamId;
         private final long awayTeamId;
-
         private final Set<Long> homeTeamLineupPlayerIds;
         private final Set<Long> awayTeamLineupPlayerIds;
         private final List<_Lineups._StartPlayer> homeUnregisteredPlayers;
         private final List<_Lineups._StartPlayer> awayUnregisteredPlayers;
-
-        @Nullable private final _Lineups homeLineup;
-        @Nullable private final _Lineups awayLineup;
+        @Nullable
+        private final _Lineups homeLineup;
+        @Nullable
+        private final _Lineups awayLineup;
 
         private ResponseValues(FixtureSingleResponse response) {
-            try{
+            try {
                 this.fixtureId = response.getResponse().get(0).getFixture().getId();
                 this.homeTeamId = response.getResponse().get(0).getTeams().getHome().getId();
                 this.awayTeamId = response.getResponse().get(0).getTeams().getAway().getId();
@@ -468,25 +378,22 @@ public class LineupService {
                 this.awayTeamLineupPlayerIds = new HashSet<>();
                 this.homeUnregisteredPlayers = new ArrayList<>();
                 this.awayUnregisteredPlayers = new ArrayList<>();
-
                 _Lineups homeLineup = null;
                 _Lineups awayLineup = null;
                 for (_Lineups lineup : response.getResponse().get(0).getLineups()) {
-                    if(lineup.getTeam().getId() == homeTeamId) {
+                    if (lineup.getTeam().getId() == homeTeamId) {
                         homeLineup = lineup;
                     } else {
                         awayLineup = lineup;
                     }
                 }
-                if(homeLineup != null && awayLineup != null) {
+                if (homeLineup != null && awayLineup != null) {
                     this.homeLineup = homeLineup;
                     this.awayLineup = awayLineup;
-
                     List<_Lineups._StartPlayer> homeStartXI = homeLineup.getStartXI();
                     List<_Lineups._StartPlayer> homeSubstitutes = homeLineup.getSubstitutes();
                     List<_Lineups._StartPlayer> awayStartXI = awayLineup.getStartXI();
                     List<_Lineups._StartPlayer> awaySubstitutes = awayLineup.getSubstitutes();
-
                     addPlayerIds(homeStartXI, homeTeamLineupPlayerIds, homeUnregisteredPlayers);
                     addPlayerIds(homeSubstitutes, homeTeamLineupPlayerIds, homeUnregisteredPlayers);
                     addPlayerIds(awayStartXI, awayTeamLineupPlayerIds, awayUnregisteredPlayers);
@@ -496,14 +403,13 @@ public class LineupService {
                     this.awayLineup = null;
                 }
             } catch (Exception e) {
-                throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " +
-                        "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.", e);
+                throw new IllegalArgumentException("FixtureSingleResponse 에서 필요한 데이터를 추출하는데 실패했습니다. " + "API 응답 구조가 예상과 다르거나 FixtureId 및 home/away team 데이터가 API Response 에 존재하지 않습니다.", e);
             }
         }
 
         private void addPlayerIds(List<_Lineups._StartPlayer> playerList, Set<Long> idSet, List<_Lineups._StartPlayer> unregisteredPlayers) {
             for (_Lineups._StartPlayer startPlayer : playerList) {
-                if(startPlayer.getPlayer().getId() == null ) {
+                if (startPlayer.getPlayer().getId() == null) {
                     unregisteredPlayers.add(startPlayer);
                 } else {
                     idSet.add(startPlayer.getPlayer().getId());
@@ -512,10 +418,19 @@ public class LineupService {
         }
 
         public static ResponseValues of(FixtureSingleResponse response) {
-            if(response == null || response.getResponse() == null || response.getResponse().get(0) == null) {
+            if (response == null || response.getResponse() == null || response.getResponse().get(0) == null) {
                 return null;
             }
             return new ResponseValues(response);
         }
+    }
+
+    public LineupService(final TeamRepository teamRepository, final PlayerRepository playerRepository, final FixtureRepository fixtureRepository, final MatchLineupRepository matchLineupRepository, final MatchPlayerRepository matchPlayerRepository, final MatchAlertService matchAlertService) {
+        this.teamRepository = teamRepository;
+        this.playerRepository = playerRepository;
+        this.fixtureRepository = fixtureRepository;
+        this.matchLineupRepository = matchLineupRepository;
+        this.matchPlayerRepository = matchPlayerRepository;
+        this.matchAlertService = matchAlertService;
     }
 }

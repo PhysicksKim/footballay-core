@@ -4,29 +4,23 @@ import com.footballay.core.domain.football.persistence.League;
 import com.footballay.core.domain.football.repository.LeagueRepository;
 import com.footballay.core.domain.football.service.FootballAvailableService;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @SpringBootTest
 @ActiveProfiles("mockapi")
 class FootballAvailableServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballAvailableServiceTest.class);
     @Autowired
     private FootballAvailableService footballAvailableService;
-
     @Autowired
     private LeagueRepository leagueRepository;
-
     @Autowired
     private EntityManager em;
 
@@ -40,23 +34,13 @@ class FootballAvailableServiceTest {
         final String koreanName = "프리미어리그";
         final String logo = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason = 2023;
-
-        League league = League.builder()
-                .leagueId(leagueId)
-                .name(name)
-                .koreanName(koreanName)
-                .logo(logo)
-                .currentSeason(currentSeason)
-                .build();
+        League league = League.builder().leagueId(leagueId).name(name).koreanName(koreanName).logo(logo).currentSeason(currentSeason).build();
         League save = leagueRepository.save(league);
-
         em.flush();
         em.clear();
-
         // when
         footballAvailableService.updateAvailableLeague(leagueId, true);
         List<League> availableLeague = footballAvailableService.getAvailableLeagues();
-
         // then
         assertThat(availableLeague).isNotNull();
         assertThat(availableLeague).hasSize(1);
@@ -78,40 +62,22 @@ class FootballAvailableServiceTest {
         final String koreanName1 = "프리미어리그";
         final String logo1 = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason1 = 2023;
-
         final Long leagueId2 = 4L;
         final String name2 = "Euro Championship";
         final String koreanName2 = "유로피언 챔피언십";
-        final String logo2 =  "https://media.api-sports.io/football/leagues/4.png";
+        final String logo2 = "https://media.api-sports.io/football/leagues/4.png";
         final Integer currentSeason2 = 2024;
-
-        League league1 = League.builder()
-                .leagueId(leagueId1)
-                .name(name1)
-                .koreanName(koreanName1)
-                .logo(logo1)
-                .currentSeason(currentSeason1)
-                .build();
-        League league2 = League.builder()
-                .leagueId(leagueId2)
-                .name(name2)
-                .koreanName(koreanName2)
-                .logo(logo2)
-                .currentSeason(currentSeason2)
-                .build();
-
+        League league1 = League.builder().leagueId(leagueId1).name(name1).koreanName(koreanName1).logo(logo1).currentSeason(currentSeason1).build();
+        League league2 = League.builder().leagueId(leagueId2).name(name2).koreanName(koreanName2).logo(logo2).currentSeason(currentSeason2).build();
         League save1 = leagueRepository.save(league1);
         League save2 = leagueRepository.save(league2);
         footballAvailableService.updateAvailableLeague(leagueId1, true);
         footballAvailableService.updateAvailableLeague(leagueId2, true);
-
         em.flush();
         em.clear();
-
         // when
         List<League> availableLeagues = footballAvailableService.getAvailableLeagues();
         log.info("availableLeagues :: {}", availableLeagues);
-
         // then
         assertThat(availableLeagues).isNotNull();
         assertThat(availableLeagues).hasSize(2);
@@ -140,27 +106,16 @@ class FootballAvailableServiceTest {
         final String koreanName = "프리미어리그";
         final String logo = "https://media.api-sports.io/football/leagues/39.png";
         final Integer currentSeason = 2023;
-
-        League league = League.builder()
-                .leagueId(leagueId)
-                .name(name)
-                .koreanName(koreanName)
-                .logo(logo)
-                .currentSeason(currentSeason)
-                .build();
+        League league = League.builder().leagueId(leagueId).name(name).koreanName(koreanName).logo(logo).currentSeason(currentSeason).build();
         League save = leagueRepository.save(league);
         footballAvailableService.updateAvailableLeague(leagueId, true);
-
         em.flush();
         em.clear();
-
         // when
         footballAvailableService.updateAvailableLeague(leagueId, false);
         List<League> availableLeagues = footballAvailableService.getAvailableLeagues();
-
         // then
         assertThat(availableLeagues).isNotNull();
         assertThat(availableLeagues).hasSize(0);
     }
-
 }

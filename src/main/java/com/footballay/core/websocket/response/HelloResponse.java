@@ -1,12 +1,16 @@
 package com.footballay.core.websocket.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 public class HelloResponse {
     private String name;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public HelloResponse(final String name) {
+        this.name = name;
+    }
+
+    public HelloResponse() {
+    }
 }

@@ -6,23 +6,18 @@ import com.footballay.core.web.admin.football.response.PlayerResponse;
 import com.footballay.core.web.admin.football.response.PreferenceKeyResponse;
 import com.footballay.core.web.admin.football.service.AdminFootballPreferenceService;
 import com.footballay.core.web.common.dto.ApiResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Slf4j
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/admin/football")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole(\'ADMIN\')")
 public class AdminFootballCustomPhotoController {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballCustomPhotoController.class);
     private final AdminFootballPreferenceService preferenceWebService;
-
     private static final String CONTROLLER_URL = "/api/admin/football";
 
     /**
@@ -34,13 +29,12 @@ public class AdminFootballCustomPhotoController {
     public ResponseEntity<?> createPreferenceKey(Authentication auth) {
         final String requestUrl = CONTROLLER_URL + "/preference";
         ApiResponse<PreferenceKeyResponse> preferenceKey = preferenceWebService.createPreferenceKey(auth, requestUrl);
-        if(preferenceKey.metaData().responseCode() == 200) {
+        if (preferenceKey.metaData().responseCode() == 200) {
             String generatedKeyHash = preferenceKey.response()[0].keyHash();
             log.info("PreferenceKey auth:{}, hash:{}", auth, generatedKeyHash);
             return ResponseEntity.ok().body(preferenceKey);
         }
         return ResponseEntity.badRequest().body(preferenceKey);
-
     }
 
     /**
@@ -65,10 +59,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity with Squad Info and Custom Photos
      */
     @GetMapping("/teams/{teamId}/squad/custom")
-    public ResponseEntity<?> getSquadWithCustomPhotos(
-            Authentication auth,
-            @PathVariable long teamId
-    ) {
+    public ResponseEntity<?> getSquadWithCustomPhotos(Authentication auth, @PathVariable long teamId) {
         final String requestUrl = CONTROLLER_URL + "/teams/" + teamId + "/squad/custom";
         ApiResponse<PlayerResponse> response = preferenceWebService.getSquadCustomPhotos(auth, teamId, requestUrl);
         log.info("Squad with Custom Photos: {}", response);
@@ -84,10 +75,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity with List of Registered Photos
      */
     @GetMapping("/players/{playerId}/photos")
-    public ResponseEntity<?> getPlayerRegisteredPhotos(
-            Authentication auth,
-            @PathVariable long playerId
-    ) {
+    public ResponseEntity<?> getPlayerRegisteredPhotos(Authentication auth, @PathVariable long playerId) {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos";
         ApiResponse<PlayerPhotosResponse> response = preferenceWebService.getPlayerRegisteredPhotos(auth, playerId, requestUrl);
         log.info("Player Registered Photos: {}", response);
@@ -104,11 +92,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity indicating success or failure
      */
     @PostMapping("/players/{playerId}/photos")
-    public ResponseEntity<?> uploadPlayerPhoto(
-            Authentication auth,
-            @PathVariable long playerId,
-            @RequestPart MultipartFile photo
-    ) {
+    public ResponseEntity<?> uploadPlayerPhoto(Authentication auth, @PathVariable long playerId, @RequestPart MultipartFile photo) {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos";
         ApiResponse<String> response = preferenceWebService.uploadPlayerPhoto(auth, playerId, photo, requestUrl);
         log.info("Player Photo Uploaded: {}", response);
@@ -124,10 +108,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity indicating success or failure
      */
     @PatchMapping("/photos/{photoId}/activate")
-    public ResponseEntity<?> activatePhoto(
-            Authentication auth,
-            @PathVariable long photoId
-    ) {
+    public ResponseEntity<?> activatePhoto(Authentication auth, @PathVariable long photoId) {
         final String requestUrl = CONTROLLER_URL + "/photos/" + photoId + "/activate";
         ApiResponse<String> response = preferenceWebService.activatePhoto(auth, photoId, requestUrl);
         log.info("Photo Activated: {}", response);
@@ -143,10 +124,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity indicating success or failure
      */
     @PatchMapping("/photos/{photoId}/deactivate")
-    public ResponseEntity<?> deactivatePhoto(
-            Authentication auth,
-            @PathVariable long photoId
-    ) {
+    public ResponseEntity<?> deactivatePhoto(Authentication auth, @PathVariable long photoId) {
         final String requestUrl = CONTROLLER_URL + "/photos/" + photoId + "/deactivate";
         ApiResponse<String> response = preferenceWebService.deactivatePhoto(auth, photoId, requestUrl);
         log.info("Photo Deactivated: {}", response);
@@ -161,10 +139,7 @@ public class AdminFootballCustomPhotoController {
      * @return ResponseEntity indicating success or failure
      */
     @PatchMapping("/players/{playerId}/photos/default")
-    public ResponseEntity<?> useDefaultProfilePhoto(
-            Authentication auth,
-            @PathVariable long playerId
-    ) {
+    public ResponseEntity<?> useDefaultProfilePhoto(Authentication auth, @PathVariable long playerId) {
         final String requestUrl = CONTROLLER_URL + "/players/" + playerId + "/photos/default";
         ApiResponse<String> response = preferenceWebService.useDefaultProfilePhoto(auth, playerId, requestUrl);
         log.info("All Photos Deactivated: {}", response);
@@ -172,13 +147,14 @@ public class AdminFootballCustomPhotoController {
     }
 
     @DeleteMapping("/photos/{photoId}")
-    public ResponseEntity<?> deletePhoto(
-            Authentication auth,
-            @PathVariable long photoId
-    ) {
+    public ResponseEntity<?> deletePhoto(Authentication auth, @PathVariable long photoId) {
         final String requestUrl = CONTROLLER_URL + "/photos/" + photoId;
         ApiResponse<String> response = preferenceWebService.deletePhoto(auth, photoId, requestUrl);
         log.info("Photo Deleted: {}", response);
         return ResponseEntity.ok().build();
+    }
+
+    public AdminFootballCustomPhotoController(final AdminFootballPreferenceService preferenceWebService) {
+        this.preferenceWebService = preferenceWebService;
     }
 }

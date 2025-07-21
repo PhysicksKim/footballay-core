@@ -15,44 +15,33 @@ import com.footballay.core.domain.football.repository.LeagueRepository;
 import com.footballay.core.domain.football.repository.PlayerRepository;
 import com.footballay.core.domain.football.repository.TeamRepository;
 import com.footballay.core.domain.football.repository.live.FixtureEventRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 import static com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse._Events;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@Slf4j
 class LiveFixtureEventServiceMockTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveFixtureEventServiceMockTest.class);
     @Mock
     private TeamRepository teamRepository;
-
     @Mock
     private FixtureRepository fixtureRepository;
-
     @Mock
     private LeagueRepository leagueRepository;
-
     @Mock
     private FixtureEventRepository fixtureEventRepository;
-
     @Mock
     private PlayerRepository playerRepository;
-
     @InjectMocks
     private LiveFixtureEventService liveFixtureEventService;
-
     private ObjectMapper objectMapper = new ObjectMapper();
-
     private ApiCallService mockApiCallService = new MockApiCallServiceImpl(objectMapper);
 
     @BeforeEach
@@ -69,20 +58,15 @@ class LiveFixtureEventServiceMockTest {
         Team away = new Team();
         List<FixtureEvent> fixtureEventList = new ArrayList<>();
         Player player = new Player();
-
-        FixtureSingleResponse response =
-                mockApiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
+        FixtureSingleResponse response = mockApiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         // Mock the repositories
         when(fixtureRepository.findById(any(Long.class))).thenReturn(Optional.of(fixture));
         when(leagueRepository.findById(any(Long.class))).thenReturn(Optional.of(league));
         when(teamRepository.findById(any(Long.class))).thenReturn(Optional.of(home), Optional.of(away));
         when(fixtureEventRepository.findByFixtureOrderBySequenceDesc(any(Fixture.class))).thenReturn(fixtureEventList);
         when(playerRepository.findById(any(Long.class))).thenReturn(Optional.of(player));
-
         // Call the method under test
         liveFixtureEventService.saveLiveEvent(response);
-
         // Verify the interactions with the repositories
         List<_Events> events = response.getResponse().get(0).getEvents();
         verify(fixtureRepository, times(1)).findById(any(Long.class));

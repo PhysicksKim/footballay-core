@@ -17,30 +17,25 @@ import com.footballay.core.domain.football.repository.live.MatchLineupRepository
 import com.footballay.core.domain.football.repository.live.MatchPlayerRepository;
 import com.footballay.core.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Slf4j
 @ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 class LineupServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LineupServiceTest.class);
     @Autowired
     LineupService lineupService;
-
     @Autowired
     private ApiCallService apiCallService;
     @Autowired
@@ -53,7 +48,6 @@ class LineupServiceTest {
     private MatchPlayerRepository matchPlayerRepository;
     @Autowired
     private PlayerRepository playerRepository;
-
     @Autowired
     private EntityManager em;
     @Autowired
@@ -70,13 +64,10 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         List<Fixture> fixtures = footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         // when
         log.info("BEFORE fixture single response API request");
         FixtureSingleResponse fixtureSingleResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         lineupService.saveLineup(fixtureSingleResponse);
-
         // then
         fixtureRepository.findById(FixtureId.FIXTURE_SINGLE_1145526).ifPresent(fixture -> {
             log.info("fixture :: {}", fixture);
@@ -86,24 +77,14 @@ class LineupServiceTest {
         MatchLineup homeMatchLineup = matchLineupRepository.findByFixtureAndTeam(fixture, fixture.getHomeTeam()).orElseThrow();
         MatchLineup awayMatchLineup = matchLineupRepository.findByFixtureAndTeam(fixture, fixture.getAwayTeam()).orElseThrow();
         log.info("homeMatchLineup :: {}", homeMatchLineup);
-
         List<MatchPlayer> homeLineupPlayers = matchPlayerRepository.findByMatchLineup(homeMatchLineup);
         homeLineupPlayers.forEach(startPlayer -> {
-            log.info("startPlayer :: (id={},name={},isSub={})",
-                    startPlayer.getPlayer().getId(),
-                    startPlayer.getPlayer().getName(),
-                    startPlayer.getSubstitute()
-            );
+            log.info("startPlayer :: (id={},name={},isSub={})", startPlayer.getPlayer().getId(), startPlayer.getPlayer().getName(), startPlayer.getSubstitute());
         });
         List<MatchPlayer> awayLineupPlayers = matchPlayerRepository.findByMatchLineup(awayMatchLineup);
         awayLineupPlayers.forEach(startPlayer -> {
-            log.info("startPlayer :: (id={},name={},isSub={})",
-                    startPlayer.getPlayer().getId(),
-                    startPlayer.getPlayer().getName(),
-                    startPlayer.getSubstitute()
-            );
+            log.info("startPlayer :: (id={},name={},isSub={})", startPlayer.getPlayer().getId(), startPlayer.getPlayer().getName(), startPlayer.getSubstitute());
         });
-
         // assert
         assertThat(all.size()).isEqualTo(2);
         assertThat(homeLineupPlayers).size().isGreaterThan(11);
@@ -121,16 +102,12 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         // Fetch the fixture single response
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         // Modify the response to have no lineup data
         response.getResponse().get(0).setLineups(new ArrayList<>());
-
         // when
         boolean needResave = lineupService.isNeedToCleanUpAndReSaveLineup(response);
-
         // then
         assertThat(needResave).isFalse();
     }
@@ -146,9 +123,7 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         // Modify the response to set some player IDs to null to simulate unregistered players
         response.getResponse().get(0).getLineups().forEach(lineup -> {
             if (!lineup.getStartXI().isEmpty()) {
@@ -164,24 +139,19 @@ class LineupServiceTest {
                 }
             }
         });
-
         // when
         boolean result = lineupService.saveLineup(response);
-
         // then
         assertThat(result).isFalse(); // Since there are unregistered players
-
         // Verify that MatchLineup and MatchPlayer have been saved
         Fixture fixture = fixtureRepository.findById(FixtureId.FIXTURE_SINGLE_1145526).orElseThrow();
         List<MatchLineup> matchLineups = matchLineupRepository.findAllByFixture(fixture);
         assertThat(matchLineups).hasSize(2);
-
         // Verify that unregistered players have been handled correctly
         matchLineups.forEach(matchLineup -> {
             List<MatchPlayer> matchPlayers = matchPlayerRepository.findByMatchLineup(matchLineup);
             assertThat(matchPlayers).isNotEmpty();
-            boolean hasUnregisteredPlayer = matchPlayers.stream()
-                    .anyMatch(mp -> mp.getPlayer() == null && mp.getUnregisteredPlayerName() != null);
+            boolean hasUnregisteredPlayer = matchPlayers.stream().anyMatch(mp -> mp.getPlayer() == null && mp.getUnregisteredPlayerName() != null);
             assertThat(hasUnregisteredPlayer).isTrue();
         });
     }
@@ -197,11 +167,9 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         // Initial lineup save
         FixtureSingleResponse initialResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         lineupService.saveLineup(initialResponse);
-
         // Modify the response to remove a player
         FixtureSingleResponse modifiedResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         modifiedResponse.getResponse().get(0).getLineups().forEach(lineup -> {
@@ -209,10 +177,8 @@ class LineupServiceTest {
                 lineup.getStartXI().remove(0);
             }
         });
-
         // when
         boolean needResave = lineupService.isNeedToCleanUpAndReSaveLineup(modifiedResponse);
-
         // then
         assertThat(needResave).isTrue();
     }
@@ -228,10 +194,8 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         lineupService.saveLineup(response);
-
         // when
         assertThrows(IllegalStateException.class, () -> lineupService.saveLineup(response));
     }
@@ -247,13 +211,10 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         lineupService.saveLineup(response);
-
         em.flush();
         em.clear();
-
         // Modify the player numbers
         response.getResponse().get(0).getLineups().forEach(lineup -> {
             lineup.getStartXI().forEach(player -> {
@@ -267,11 +228,9 @@ class LineupServiceTest {
                 }
             });
         });
-
         // when
         lineupService.cacheAndUpdateFromLineupPlayers(response.getResponse().get(0).getLineups().get(0));
         lineupService.cacheAndUpdateFromLineupPlayers(response.getResponse().get(0).getLineups().get(1));
-
         // then
         response.getResponse().get(0).getLineups().forEach(lineup -> {
             lineup.getStartXI().forEach(playerResponse -> {
@@ -306,15 +265,11 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         // Remove the lineup data
         response.getResponse().get(0).setLineups(new ArrayList<>());
-
         // when
         boolean result = lineupService.saveLineup(response);
-
         // then
         assertThat(result).isFalse(); // Since there's no lineup data
     }
@@ -330,20 +285,15 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
         // Initial lineup save
         FixtureSingleResponse initialResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
         lineupService.saveLineup(initialResponse);
-
         em.flush();
         em.clear();
-
         // Fetch the same response
         FixtureSingleResponse sameResponse = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         // when
         boolean needResave = lineupService.isNeedToCleanUpAndReSaveLineup(sameResponse);
-
         // then
         assertThat(needResave).isFalse();
     }
@@ -359,32 +309,22 @@ class LineupServiceTest {
             footballApiCacheService.cacheTeamSquad(team.getId());
         }
         footballApiCacheService.cacheFixturesOfLeague(league.getLeagueId());
-
-
         // Fetch the fixture single response
         FixtureSingleResponse response = apiCallService.fixtureSingle(FixtureId.FIXTURE_SINGLE_1145526);
-
         // Delete some players from the database to simulate missing players
-        List<Long> playerIdsToRemove = response.getResponse().get(0).getLineups().stream()
-                .flatMap(lineup -> lineup.getStartXI().stream())
-                .map(player -> player.getPlayer().getId())
-                .limit(2) // Remove two players
-                .collect(Collectors.toList());
-
+        List<Long> playerIdsToRemove =  // Remove two players
+        response.getResponse().get(0).getLineups().stream().flatMap(lineup -> lineup.getStartXI().stream()).map(player -> player.getPlayer().getId()).limit(2).collect(Collectors.toList());
         playerIdsToRemove.forEach(playerId -> {
             Optional<Player> byId = playerRepository.findById(playerId);
-            if(byId.isPresent()) {
+            if (byId.isPresent()) {
                 teamPlayerRepository.deleteAll(teamPlayerRepository.findTeamsByPlayer(byId.get()));
                 playerRepository.deleteById(playerId);
             }
         });
-
         // when
         boolean result = lineupService.saveLineup(response);
-
         // then
         assertThat(result).isTrue();
-
         // Verify that the missing players have been re-cached
         playerIdsToRemove.forEach(playerId -> {
             assertThat(playerRepository.findById(playerId)).isPresent();

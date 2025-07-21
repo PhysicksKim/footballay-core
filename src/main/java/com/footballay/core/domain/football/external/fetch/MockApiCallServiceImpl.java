@@ -2,22 +2,16 @@ package com.footballay.core.domain.football.external.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.footballay.core.domain.football.external.fetch.response.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-@RequiredArgsConstructor
 @Profile("mockapi")
 @Service
-public class MockApiCallServiceImpl
-        implements ApiCallService
-{
-
+public class MockApiCallServiceImpl implements ApiCallService {
     private final ObjectMapper objectMapper;
 
     @Override
@@ -131,7 +125,7 @@ public class MockApiCallServiceImpl
     }
 
     private String resolvePathOfAllLeagueCurrent() {
-        return getMockApiJsonFilePath("league/current/currentleagues","","");
+        return getMockApiJsonFilePath("league/current/currentleagues", "", "");
     }
 
     private String resolvePathOfLeagueInfo(long leagueId) {
@@ -139,7 +133,6 @@ public class MockApiCallServiceImpl
     }
 
     /**
-     *
      * @param teamId
      * @return "league/{teamId}_team_leagues.json"
      */
@@ -148,15 +141,12 @@ public class MockApiCallServiceImpl
     }
 
     /**
-     *
      * @param leagueId
      * @param currentSeason
      * @return "league/{leagueId}_teams_by_league.json"
      */
     private String resolvePathOfTeamsByLeague(long leagueId, int currentSeason) {
-        if(currentSeason != 2023 && leagueId != 39 && currentSeason != 2024 && leagueId != 4)
-            throw new IllegalArgumentException("Mock league 는 [leagueId=39,currentSeason=2023],[leagueId=4,currentSeason=2024] 만 가능합니다. " +
-                    "주어진 leagueId=" + leagueId + ",currentSeason=" + currentSeason);
+        if (currentSeason != 2023 && leagueId != 39 && currentSeason != 2024 && leagueId != 4) throw new IllegalArgumentException("Mock league 는 [leagueId=39,currentSeason=2023],[leagueId=4,currentSeason=2024] 만 가능합니다. " + "주어진 leagueId=" + leagueId + ",currentSeason=" + currentSeason);
         return getMockApiJsonFilePath("league/", String.valueOf(leagueId), "_teams_by_league");
     }
 
@@ -169,7 +159,7 @@ public class MockApiCallServiceImpl
     }
 
     private String resolvePathOfFixturesOfLeagueSeason(long leagueId, int season) {
-        return getMockApiJsonFilePath("fixture/", leagueId +"_"+ season, "_fixtures_of_league_season");
+        return getMockApiJsonFilePath("fixture/", leagueId + "_" + season, "_fixtures_of_league_season");
     }
 
     private String resolvePathOfFixtureSingle(long fixtureId) {
@@ -184,5 +174,9 @@ public class MockApiCallServiceImpl
      */
     private String getMockApiJsonFilePath(String typePath, String id, String suffix) {
         return "/devdata/mockapi/" + typePath + id + suffix + ".json";
+    }
+
+    public MockApiCallServiceImpl(final ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

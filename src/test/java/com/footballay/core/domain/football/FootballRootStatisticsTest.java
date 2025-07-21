@@ -10,35 +10,26 @@ import com.footballay.core.domain.football.external.lineup.LineupService;
 import com.footballay.core.domain.football.external.live.PlayerStatisticsService;
 import com.footballay.core.domain.football.external.live.TeamStatisticsService;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 public class FootballRootStatisticsTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballRootStatisticsTest.class);
     @Autowired
     private PlayerStatisticsService playerStatisticsService;
-
     @Autowired
     private TeamStatisticsService teamStatisticsService;
-
     @Autowired
     private FootballApiCacheService footballApiCacheService;
-
     @Autowired
     private EntityManager em;
-
     private ApiCallService apiCallService;
-
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
-
     @Autowired
     private FootballRoot footballRoot;
     @Autowired
@@ -59,13 +50,11 @@ public class FootballRootStatisticsTest {
         footballApiCacheService.cacheTeamSquad(777);
         footballApiCacheService.cacheTeamSquad(27);
         footballApiCacheService.cacheFixturesOfLeague(4L);
-
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
         lineupService.saveLineup(response);
         teamStatisticsService.saveTeamStatistics(response);
         playerStatisticsService.savePlayerStatistics(response);
     }
-
     // TODO : Remove after FullMatchStatistics refactoring
     // /**
     //  * getMatchStatistics 의 Eager 로딩 검증 테스트

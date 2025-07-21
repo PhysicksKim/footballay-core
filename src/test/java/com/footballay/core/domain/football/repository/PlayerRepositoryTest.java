@@ -3,25 +3,21 @@ package com.footballay.core.domain.football.repository;
 import com.footballay.core.domain.football.persistence.Player;
 import com.footballay.core.domain.football.persistence.Team;
 import com.footballay.core.domain.football.repository.relations.TeamPlayerRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.generate;
 import static com.footballay.core.domain.football.util.GeneratePlayersOfTeam.generatePlayersOfTeam;
 
-@Slf4j
 @Transactional
 @DataJpaTest
 class PlayerRepositoryTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PlayerRepositoryTest.class);
     @Autowired
     private TeamRepository teamRepository;
     @Autowired
@@ -38,15 +34,10 @@ class PlayerRepositoryTest {
         List<Player> players = generatePlayersOfTeam(team);
         teamRepository.save(team);
         playerRepository.saveAll(players);
-        teamPlayerRepository.saveAll(
-                players.stream().map(player -> player.toTeamPlayer(team)).toList()
-        );
-
+        teamPlayerRepository.saveAll(players.stream().map(player -> player.toTeamPlayer(team)).toList());
         // when
         List<Player> allPlayersByTeamId = playerRepository.findAllByTeam(team.getId());
-
         // then
         Assertions.assertThat(allPlayersByTeamId).containsAll(players);
     }
-
 }

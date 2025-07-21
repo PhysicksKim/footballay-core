@@ -1,7 +1,5 @@
 package com.footballay.core.config;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,16 +10,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
-@Slf4j
-@RequiredArgsConstructor
 @Configuration
 public class WebConfig {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WebConfig.class);
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
@@ -29,19 +24,13 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                UrlBasedCorsConfigurationSource src = (UrlBasedCorsConfigurationSource)corsConfigurationSource;
+                UrlBasedCorsConfigurationSource src = (UrlBasedCorsConfigurationSource) corsConfigurationSource;
                 CorsConfiguration cfg = src.getCorsConfigurations().get("/**");
-
                 log.info("CORS allow origins : {}", Arrays.toString(cfg.getAllowedOriginPatterns().toArray()));
                 log.info("CORS allow methods : {}", Arrays.toString(cfg.getAllowedMethods().toArray()));
                 log.info("CORS allow headers : {}", Arrays.toString(cfg.getAllowedHeaders().toArray()));
                 log.info("CORS allow credentials : {}", cfg.getAllowCredentials());
-
-                registry.addMapping("/**")
-                        .allowedOriginPatterns(cfg.getAllowedOriginPatterns().toArray(new String[0]))
-                        .allowedMethods(cfg.getAllowedMethods().toArray(new String[0]))
-                        .allowedHeaders(cfg.getAllowedHeaders().toArray(new String[0]))
-                        .allowCredentials(cfg.getAllowCredentials());
+                registry.addMapping("/**").allowedOriginPatterns(cfg.getAllowedOriginPatterns().toArray(new String[0])).allowedMethods(cfg.getAllowedMethods().toArray(new String[0])).allowedHeaders(cfg.getAllowedHeaders().toArray(new String[0])).allowCredentials(cfg.getAllowCredentials());
             }
         };
     }
@@ -49,9 +38,11 @@ public class WebConfig {
     @Bean
     public RestTemplate restTemplate() {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getMessageConverters()
-                .add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
+        restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(StandardCharsets.UTF_8));
         return restTemplate;
     }
 
+    public WebConfig(final CorsConfigurationSource corsConfigurationSource) {
+        this.corsConfigurationSource = corsConfigurationSource;
+    }
 }

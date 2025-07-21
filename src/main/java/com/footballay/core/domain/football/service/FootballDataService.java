@@ -16,8 +16,6 @@ import com.footballay.core.domain.football.repository.live.MatchPlayerRepository
 import com.footballay.core.domain.football.repository.live.TeamStatisticsRepository;
 import com.footballay.core.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,7 +23,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -33,12 +30,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-@Slf4j
 @Transactional
-@RequiredArgsConstructor
 @Service
 public class FootballDataService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballDataService.class);
     private final LeagueRepository leagueRepository;
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
@@ -48,15 +43,10 @@ public class FootballDataService {
     private final TeamPlayerRepository teamPlayerRepository;
     private final TeamStatisticsRepository teamStatisticsRepository;
     private final MatchPlayerRepository matchPlayerRepository;
-
-    private static final Supplier<IllegalArgumentException> LEAGUE_NOT_EXIST_THROW_SUPPLIER
-            = () -> new IllegalArgumentException("존재하지 않는 리그입니다.");
-    private static final Supplier<IllegalArgumentException> TEAM_NOT_EXIST_THROW_SUPPLIER
-            = () -> new IllegalArgumentException("존재하지 않는 팀입니다.");
-    private static final Supplier<IllegalArgumentException> PLAYER_NOT_EXIST_THROW_SUPPLIER
-            = () -> new IllegalArgumentException("존재하지 않는 선수입니다.");
-    private static final Supplier<IllegalArgumentException> FIXTURE_NOT_EXIST_THROW_SUPPLIER
-            = () -> new IllegalArgumentException("존재하지 않는 경기입니다.");
+    private static final Supplier<IllegalArgumentException> LEAGUE_NOT_EXIST_THROW_SUPPLIER = () -> new IllegalArgumentException("존재하지 않는 리그입니다.");
+    private static final Supplier<IllegalArgumentException> TEAM_NOT_EXIST_THROW_SUPPLIER = () -> new IllegalArgumentException("존재하지 않는 팀입니다.");
+    private static final Supplier<IllegalArgumentException> PLAYER_NOT_EXIST_THROW_SUPPLIER = () -> new IllegalArgumentException("존재하지 않는 선수입니다.");
+    private static final Supplier<IllegalArgumentException> FIXTURE_NOT_EXIST_THROW_SUPPLIER = () -> new IllegalArgumentException("존재하지 않는 경기입니다.");
 
     /**
      * 캐싱된 리그를 오름차순으로 조회합니다.
@@ -94,25 +84,15 @@ public class FootballDataService {
         LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDateFrom);
         League league = getLeagueById(leagueId);
         log.info("findFixturesOnNearestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
-
         // Find the first fixture after the given date
-        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateAfter(
-                league,
-                localDateTime,
-                PageRequestForOnlyOneNearest()
-        );
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateAfter(league, localDateTime, PageRequestForOnlyOneNearest());
         if (fixturesByLeagueAndDate.isEmpty()) {
             return List.of();
         }
-
         // Get the date of the nearest fixture
         Fixture nearestFixture = fixturesByLeagueAndDate.get(0);
         LocalDateTime nearestDate = nearestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
-        List<Fixture> fixturesOfNearestDate = fixtureRepository.findFixturesByLeagueAndDateRange(
-                league,
-                nearestDate,
-                nearestDate.plusDays(1).minusSeconds(1)
-        );
+        List<Fixture> fixturesOfNearestDate = fixtureRepository.findFixturesByLeagueAndDateRange(league, nearestDate, nearestDate.plusDays(1).minusSeconds(1));
         log.info("date of nearest fixture={}, size of nearestDateFixtures={}", nearestDate, fixturesOfNearestDate.size());
         return fixturesOfNearestDate;
     }
@@ -121,12 +101,7 @@ public class FootballDataService {
         LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDate);
         League league = getLeagueById(leagueId);
         log.info("findFixturesOnDate :: leagueId={}, matchDate={}", leagueId, matchDate);
-
-        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateRange(
-                league,
-                localDateTime,
-                localDateTime.plusDays(1).minusSeconds(1)
-        );
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findFixturesByLeagueAndDateRange(league, localDateTime, localDateTime.plusDays(1).minusSeconds(1));
         log.info("size of fixturesOfTheDay={}", fixturesByLeagueAndDate.size());
         return fixturesByLeagueAndDate;
     }
@@ -136,8 +111,7 @@ public class FootballDataService {
     }
 
     public Fixture getFixtureWithEager(long fixtureId) {
-        return fixtureRepository.findFixtureByIdWithDetails(fixtureId)
-                .orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
+        return fixtureRepository.findFixtureByIdWithDetails(fixtureId).orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
     }
 
     public List<FixtureEvent> getFixtureEvents(Fixture fixture) {
@@ -150,18 +124,13 @@ public class FootballDataService {
 
     public Player addTeamPlayerRelationManually(long teamId, long playerId) {
         Team team = findTeamOrThrow(teamId);
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
+        Player player = playerRepository.findById(playerId).orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
         Optional<TeamPlayer> findTeamPlayer = teamPlayerRepository.findByTeamAndPlayer(team, player);
         if (findTeamPlayer.isPresent()) {
             log.info("TeamPlayer relation already exists :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
             return player;
         }
-
-        TeamPlayer teamPlayer = TeamPlayer.builder()
-                .player(player)
-                .team(team)
-                .build();
+        TeamPlayer teamPlayer = TeamPlayer.builder().player(player).team(team).build();
         teamPlayerRepository.save(teamPlayer);
         log.info("TeamPlayer relation added manually :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
         setPreventUnlink(playerId, true);
@@ -170,8 +139,7 @@ public class FootballDataService {
 
     public Player removeTeamPlayerRelationManually(long teamId, long playerId) {
         Team team = findTeamOrThrow(teamId);
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
+        Player player = playerRepository.findById(playerId).orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
         teamPlayerRepository.deleteByTeamAndPlayer(team, player);
         log.info("TeamPlayer relation removed manually :: team=[{},{}], playerId=[{},{}]", teamId, team.getName(), playerId, player.getName());
         setPreventUnlink(playerId, true);
@@ -179,19 +147,15 @@ public class FootballDataService {
     }
 
     public void setPreventUnlink(long playerId, boolean preventUnlink) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
+        Player player = playerRepository.findById(playerId).orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
         player.setPreventUnlink(preventUnlink);
         playerRepository.save(player);
         log.info("PreventUnlink set to {} for player=[{},{}]", preventUnlink, playerId, player.getName());
     }
 
     public List<Team> getTeamsOfPlayer(long playerId) {
-        Player player = playerRepository.findById(playerId)
-                .orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
-        List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream()
-                .map(TeamPlayer::getTeam)
-                .toList();
+        Player player = playerRepository.findById(playerId).orElseThrow(PLAYER_NOT_EXIST_THROW_SUPPLIER);
+        List<Team> teamsOfPlayer = teamPlayerRepository.findTeamsByPlayer(player).stream().map(TeamPlayer::getTeam).toList();
         log.info("teams of player=[{},{}]={}", playerId, player.getName(), teamsOfPlayer);
         return teamsOfPlayer;
     }
@@ -202,13 +166,15 @@ public class FootballDataService {
 
     @Transactional(readOnly = true)
     public FixtureMatchStats getFixtureWithMatchStatistics(long fixtureId) {
-        @NotNull Fixture fixture = getFixtureById(fixtureId);
+        @NotNull
+        Fixture fixture = getFixtureById(fixtureId);
         LiveStatus liveStatus = fixture.getLiveStatus();
         Team home = fixture.getHomeTeam();
         Team away = fixture.getAwayTeam();
-
-        @Nullable TeamStatistics homeStatistics = getTeamStatistics(fixture, home).orElse(null);
-        @Nullable TeamStatistics awayStatistics = getTeamStatistics(fixture, away).orElse(null);
+        @Nullable
+        TeamStatistics homeStatistics = getTeamStatistics(fixture, home).orElse(null);
+        @Nullable
+        TeamStatistics awayStatistics = getTeamStatistics(fixture, away).orElse(null);
         List<MatchPlayer> homePlayerStatistics = getPlayerStatistics(fixture, home);
         List<MatchPlayer> awayPlayerStatistics = getPlayerStatistics(fixture, away);
         return new FixtureMatchStats(fixture, homeStatistics, awayStatistics, homePlayerStatistics, awayPlayerStatistics);
@@ -227,25 +193,30 @@ public class FootballDataService {
     }
 
     private League getLeagueById(long leagueId) {
-        return leagueRepository.findById(leagueId)
-                .orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
+        return leagueRepository.findById(leagueId).orElseThrow(LEAGUE_NOT_EXIST_THROW_SUPPLIER);
     }
 
     private Fixture findFixtureOrThrow(long fixtureId) {
-        return fixtureRepository.findById(fixtureId)
-                .orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
+        return fixtureRepository.findById(fixtureId).orElseThrow(FIXTURE_NOT_EXIST_THROW_SUPPLIER);
     }
 
     private Team findTeamOrThrow(long teamId) {
-        return teamRepository.findById(teamId)
-                .orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
+        return teamRepository.findById(teamId).orElseThrow(TEAM_NOT_EXIST_THROW_SUPPLIER);
     }
 
-    public record FixtureMatchStats(
-            Fixture fixture,
-            TeamStatistics homeStats,
-            TeamStatistics awayStats,
-            List<MatchPlayer> homePlayerStats,
-            List<MatchPlayer> awayPlayerStats) {
+
+    public record FixtureMatchStats(Fixture fixture, TeamStatistics homeStats, TeamStatistics awayStats, List<MatchPlayer> homePlayerStats, List<MatchPlayer> awayPlayerStats) {
+    }
+
+    public FootballDataService(final LeagueRepository leagueRepository, final TeamRepository teamRepository, final PlayerRepository playerRepository, final FixtureRepository fixtureRepository, final FixtureEventRepository fixtureEventRepository, final MatchLineupRepository matchLineupRepository, final TeamPlayerRepository teamPlayerRepository, final TeamStatisticsRepository teamStatisticsRepository, final MatchPlayerRepository matchPlayerRepository) {
+        this.leagueRepository = leagueRepository;
+        this.teamRepository = teamRepository;
+        this.playerRepository = playerRepository;
+        this.fixtureRepository = fixtureRepository;
+        this.fixtureEventRepository = fixtureEventRepository;
+        this.matchLineupRepository = matchLineupRepository;
+        this.teamPlayerRepository = teamPlayerRepository;
+        this.teamStatisticsRepository = teamStatisticsRepository;
+        this.matchPlayerRepository = matchPlayerRepository;
     }
 }

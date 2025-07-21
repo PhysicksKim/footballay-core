@@ -20,7 +20,6 @@ import com.footballay.core.domain.football.scheduler.lineup.PreviousMatchProcess
 import com.footballay.core.domain.football.scheduler.live.LiveMatchProcessor;
 import com.footballay.core.util.QuartzConnectionResetListener;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,12 +33,10 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.*;
 import static com.footballay.core.util.TestJobKeyUtil.createLiveMatchJobKey;
 import static com.footballay.core.util.TestJobKeyUtil.createPreviousMatchJobKey;
@@ -47,19 +44,16 @@ import static com.footballay.core.util.TestQuartzJobWaitUtil.waitForJobToBeRemov
 import static com.footballay.core.util.TestQuartzJobWaitUtil.waitForJobToBeScheduled;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @SpringBootTest
 @Transactional
 @ActiveProfiles({"dev", "mockapi"})
 @ExtendWith(QuartzConnectionResetListener.class)
 class FootballRootTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballRootTest.class);
     @Autowired
     private FootballRoot footballRoot;
-
     @Autowired
     private Scheduler scheduler;
-
     @Autowired
     private LeagueTeamRepository leagueTeamRepository;
     @Autowired
@@ -68,7 +62,6 @@ class FootballRootTest {
     private PlayerRepository playerRepository;
     @Autowired
     private FixtureRepository fixtureRepository;
-
     @Autowired
     private EntityManager em;
     @Autowired
@@ -92,10 +85,8 @@ class FootballRootTest {
     void successCacheLeagueById() {
         // given
         final Long leagueId = LeagueId.EURO;
-
         // when
         boolean isSuccess = footballRoot.cacheLeagueById(leagueId);
-
         // then
         Optional<League> leagueOptional = leagueRepository.findById(leagueId);
         assertThat(isSuccess).isTrue();
@@ -110,16 +101,11 @@ class FootballRootTest {
         // given
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
-
         // when
         boolean isSuccess = footballRoot.cacheTeamsOfLeague(leagueId);
-
         // then
         List<LeagueTeam> all = leagueTeamRepository.findAll();
-        log.info("All _League _Team Relations : _League={}, teams=[{}]",
-                all.get(0).getLeague().getName(),
-                all.stream().map(lt -> lt.getTeam().getName()).toList());
-
+        log.info("All _League _Team Relations : _League={}, teams=[{}]", all.get(0).getLeague().getName(), all.stream().map(lt -> lt.getTeam().getName()).toList());
         assertThat(isSuccess).isTrue();
         assertThat(all).isNotEmpty();
         assertThat(all.get(0).getLeague().getName()).isNotNull();
@@ -134,13 +120,10 @@ class FootballRootTest {
         final Long teamId = TeamId.PORTUGAL;
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
-
         // when
         boolean isSuccess = footballRoot.cacheSquadOfTeam(teamId);
-
         em.flush();
         em.clear();
-
         // then
         playerRepository.findAllByTeam(teamId).forEach(player -> {
             log.info("_Player : {}", player);
@@ -157,10 +140,8 @@ class FootballRootTest {
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
-
         // when
         boolean isSuccess = footballRoot.cacheAllFixturesOfLeague(leagueId);
-
         // then
         Optional<League> leagueOptional = leagueRepository.findById(leagueId);
         League league = leagueOptional.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
@@ -180,10 +161,8 @@ class FootballRootTest {
         League league2 = list.get(1).league;
         leagueRepository.save(league1);
         leagueRepository.save(league2);
-
         // when
         List<LeagueDto> leagues = footballRoot.getLeagues();
-
         // then
         assertThat(leagues).isNotEmpty();
         assertThat(leagues).hasSize(2);
@@ -200,14 +179,11 @@ class FootballRootTest {
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
-
         // leagueTeams 연관관계 collection 을 채우기 위해 1차 캐시 flush clear 해야합니다
         em.flush();
         em.clear();
-
         // when
         List<TeamDto> teams = footballRoot.getTeamsOfLeague(leagueId);
-
         // then
         assertThat(teams).isNotEmpty();
         teams.forEach(team -> {
@@ -224,14 +200,11 @@ class FootballRootTest {
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
         footballRoot.cacheSquadOfTeam(teamId);
-
         // leagueTeams 연관관계 collection 을 채우기 위해 1차 캐시 flush clear 해야합니다
         em.flush();
         em.clear();
-
         // when
         List<PlayerDto> players = footballRoot.getSquadOfTeam(teamId);
-
         // then
         assertThat(players).isNotEmpty();
         players.forEach(player -> {
@@ -247,12 +220,9 @@ class FootballRootTest {
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.cacheTeamsOfLeague(leagueId);
         footballRoot.cacheAllFixturesOfLeague(leagueId);
-
         ZonedDateTime beforeEuro2024Start = ZonedDateTime.parse("2024-06-01T00:00:00Z");
-
         // when
         List<FixtureInfoDto> nextFixturesFromDate = footballRoot.getNextFixturesFromDate(leagueId, beforeEuro2024Start);
-
         // then
         assertThat(nextFixturesFromDate).isNotEmpty();
         nextFixturesFromDate.forEach(fixture -> {
@@ -267,10 +237,8 @@ class FootballRootTest {
         // given
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
-
         // when
         footballRoot.addAvailableLeague(leagueId);
-
         // then
         List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isNotEmpty();
@@ -285,10 +253,8 @@ class FootballRootTest {
         final Long leagueId = LeagueId.EURO;
         footballRoot.cacheLeagueById(leagueId);
         footballRoot.addAvailableLeague(leagueId);
-
         // when
         footballRoot.removeAvailableLeague(leagueId);
-
         // then
         List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
         assertThat(availableLeagues).isEmpty();
@@ -311,26 +277,17 @@ class FootballRootTest {
         LiveStatus saveLiveStatus = liveStatusRepository.save(createFullTimeLiveStatus());
         fixture.setLiveStatus(saveLiveStatus);
         fixtureRepository.save(fixture);
-
         em.flush();
         em.clear();
-
         // when
         long fixtureId = fixture.getFixtureId();
         FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
-
         // then
         assertThat(addAvailableFixture.available()).isTrue();
     }
 
     private static LiveStatus createFullTimeLiveStatus() {
-        return LiveStatus.builder()
-                .elapsed(90)
-                .longStatus("Match Finished")
-                .shortStatus("FT")
-                .homeScore(1)
-                .awayScore(0)
-                .build();
+        return LiveStatus.builder().elapsed(90).longStatus("Match Finished").shortStatus("FT").homeScore(1).awayScore(0).build();
     }
 
     @Test
@@ -350,19 +307,13 @@ class FootballRootTest {
         LiveStatus liveStatus = liveStatusRepository.save(createNotStartedLiveStatus());
         fixture.setLiveStatus(liveStatus);
         fixtureRepository.save(fixture);
-
         em.flush();
         em.clear();
-
         // when
         long fixtureId = fixture.getFixtureId();
         FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
-
-        List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(
-                league.getLeagueId(),
-                ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
+        List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(league.getLeagueId(), ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault()));
         log.info("available fixtures = {}", availableFixtures);
-
         // then
         assertThat(addAvailableFixture.available()).isTrue();
         assertThat(availableFixtures).isNotEmpty();
@@ -371,11 +322,7 @@ class FootballRootTest {
     }
 
     private static LiveStatus createNotStartedLiveStatus() {
-        return LiveStatus.builder()
-                .longStatus("Not started")
-                .shortStatus("NS")
-                .elapsed(0)
-                .build();
+        return LiveStatus.builder().longStatus("Not started").shortStatus("NS").elapsed(0).build();
     }
 
     @Test
@@ -395,20 +342,15 @@ class FootballRootTest {
         LiveStatus liveStatus = liveStatusRepository.save(createNotStartedLiveStatus());
         fixture.setLiveStatus(liveStatus);
         fixtureRepository.save(fixture);
-
         em.flush();
         em.clear();
-
         long fixtureId = fixture.getFixtureId();
         FixtureInfoDto addAvailableFixture = footballRoot.addAvailableFixture(fixtureId);
-
         em.flush();
         em.clear();
-
         // when
         boolean isSuccess = footballRoot.removeAvailableFixture(fixtureId);
         waitUntilJobRemoved(fixtureId);
-
         // then
         assertThat(addAvailableFixture.available()).isTrue();
         assertThat(isSuccess).isTrue();
@@ -420,7 +362,6 @@ class FootballRootTest {
     private void waitUntilJobRemoved(long fixtureId) {
         JobKey previousMatchJobKey = createPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = createLiveMatchJobKey(fixtureId);
-
         waitForJobToBeRemoved(scheduler, previousMatchJobKey);
         waitForJobToBeRemoved(scheduler, liveMatchJobKey);
     }
@@ -436,14 +377,10 @@ class FootballRootTest {
         footballApiCacheService.cacheFixturesOfLeague(LeagueId.EURO);
         startLineupProcessor.requestAndSaveLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
         liveMatchProcessor.requestAndSaveLiveMatchData(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA);
-
         em.flush();
         em.clear();
-
         // when
-        FixtureWithLineupDto eagerFixture = footballRoot.getFixtureWithLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
-
+        FixtureWithLineupDto eagerFixture = footballRoot.getFixtureWithLineup(FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 경기입니다."));
         // then
         assertThat(eagerFixture.homeLineup().team().name()).isNotNull();
         assertThat(eagerFixture.awayLineup().team().name()).isNotNull();
@@ -454,9 +391,7 @@ class FootballRootTest {
     private void waitUntilJobAdded(long fixtureId) {
         JobKey previousMatchJobKey = createPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = createLiveMatchJobKey(fixtureId);
-
         waitForJobToBeScheduled(scheduler, liveMatchJobKey);
         waitForJobToBeScheduled(scheduler, previousMatchJobKey);
     }
-
 }

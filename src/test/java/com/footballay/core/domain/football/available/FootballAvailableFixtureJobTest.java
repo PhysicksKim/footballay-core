@@ -7,7 +7,6 @@ import com.footballay.core.domain.football.scheduler.FootballSchedulerName;
 import com.footballay.core.domain.football.scheduler.lineup.PreviousMatchTask;
 import com.footballay.core.domain.football.scheduler.live.LiveMatchTask;
 import com.footballay.core.domain.football.service.FootballAvailableService;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -30,7 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,35 +37,26 @@ import static org.mockito.Mockito.when;
 /**
  * AvailableFixture 추가/제거 시 Job 이 제대로 추가/제거되는지 테스트
  */
-@Slf4j
 @SpringBootTest
 @ActiveProfiles({"dev", "mockapi"})
 public class FootballAvailableFixtureJobTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballAvailableFixtureJobTest.class);
     @MockBean
     private FixtureRepository fixtureRepository;
-
     @Autowired
     private Scheduler scheduler;
-
     @MockBean
     private PreviousMatchTask previousMatchTask;
-
     @MockBean
     private LiveMatchTask liveMatchTask;
-
     @Autowired
     private FootballAvailableService footballAvailableService;
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @AfterEach
     public void logH2Locks() {
-        List<Map<String, Object>> locks = jdbcTemplate.queryForList(
-                "SELECT TABLE_SCHEMA, TABLE_NAME, SESSION_ID, LOCK_TYPE " +
-                        "FROM INFORMATION_SCHEMA.LOCKS"
-        );
+        List<Map<String, Object>> locks = jdbcTemplate.queryForList("SELECT TABLE_SCHEMA, TABLE_NAME, SESSION_ID, LOCK_TYPE " + "FROM INFORMATION_SCHEMA.LOCKS");
         log.info(">>> H2 LOCKS STATE: {}", locks);
     }
 
@@ -81,14 +69,7 @@ public class FootballAvailableFixtureJobTest {
         mockFixture.setDate(dateTime);
         mockFixture.setTimezone("Asia/Seoul");
         mockFixture.setTimestamp(dateTime.atZone(ZoneId.of("Asia/Seoul")).toEpochSecond());
-
-        LiveStatus liveStatus = LiveStatus.builder()
-                .elapsed(90)
-                .longStatus("Match Finished")
-                .shortStatus("FT")
-                .homeScore(1)
-                .awayScore(0)
-                .build();
+        LiveStatus liveStatus = LiveStatus.builder().elapsed(90).longStatus("Match Finished").shortStatus("FT").homeScore(1).awayScore(0).build();
         mockFixture.setLiveStatus(liveStatus);
         when(fixtureRepository.findById(fixtureId)).thenReturn(Optional.of(mockFixture));
     }
@@ -103,16 +84,13 @@ public class FootballAvailableFixtureJobTest {
     public void testJobsAddedWhenAvailableFixtureIsAdded() throws Exception {
         fixtureId = 10001L;
         mockFixtureRepository(fixtureId);
-
         // Step 1: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
-
         // Step 2: Job들이 추가됐는지 확인
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
         waitUntilJobAllEnrolled(liveMatchJobKey);
-
         assertNotNull(scheduler.getJobDetail(lineupJobKey), "PreviousMatchJob should have been registered.");
         assertNotNull(scheduler.getJobDetail(liveMatchJobKey), "LiveMatchJob should have been registered.");
     }
@@ -122,25 +100,20 @@ public class FootballAvailableFixtureJobTest {
     public void testJobsRemovedWhenAvailableFixtureIsRemoved() throws Exception {
         fixtureId = 10002L;
         mockFixtureRepository(fixtureId);
-
         // Step 1: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
-
         // Step 2: Job 들이 추가됐는지 확인
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
-
         assertNotNull(scheduler.getJobDetail(lineupJobKey), "PreviousMatchJob should have been registered.");
         assertNotNull(scheduler.getJobDetail(liveMatchJobKey), "LiveMatchJob should have been registered.");
-
         // Step 3: AvailableFixture 제거
         footballAvailableService.removeAvailableFixture(fixtureId);
         log.info("check H2 locks before waiting for job removal");
         logH2Locks();
         waitUntilJobAllRemoved();
         log.info("check H2 locks after waiting for job removal");
-
         // Step 4: Job 들이 제거됐는지 확인
         Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.anyGroup());
         assertThat(jobKeys).isEmpty();
@@ -153,22 +126,17 @@ public class FootballAvailableFixtureJobTest {
     public void testPostMatchJobAddedWhenJobsFinish() throws Exception {
         fixtureId = 10003L;
         mockFixtureRepository(fixtureId);
-
         // Step 1: Job Task 가 한번 실행되고 끝나도록 설정
         when(previousMatchTask.requestAndSaveLineup(fixtureId)).thenReturn(true); // StartLineupTask가 끝남
         when(liveMatchTask.requestAndSaveLiveMatchData(fixtureId)).thenReturn(true); // LiveFixtureTask가 끝남
-
         // Step 2: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
-
         // Step 3: PreviousMatchJob 과 LiveMatchJob 이 등록되었는지 확인
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
-
         // Step 4: 등록된 Job 들을 즉시 트리거
         triggerJobNow(scheduler, lineupJobKey, liveMatchJobKey);
-
         // Step 5: PostMatchJob 이 추가됐는지 확인
         JobKey postMatchJobKey = getPostMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(postMatchJobKey);
@@ -180,29 +148,22 @@ public class FootballAvailableFixtureJobTest {
     public void testPostMatchJobRemovedWhenAvailableFixtureIsRemoved() throws Exception {
         fixtureId = 10004L;
         mockFixtureRepository(fixtureId);
-
         // Step 1: Job Task 가 한번 실행되고 끝나도록 설정
         when(previousMatchTask.requestAndSaveLineup(fixtureId)).thenReturn(true);
         when(liveMatchTask.requestAndSaveLiveMatchData(fixtureId)).thenReturn(true);
-
         // Step 2: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
-
         // Step 3: PreviousMatchJob 과 LiveMatchJob 이 등록되었는지 확인
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
-
         // Step 4: 등록된 Job 들을 즉시 트리거
         triggerJobNow(scheduler, lineupJobKey, liveMatchJobKey);
-
         // Step 5: PostMatchJob 이 추가됐는지 확인
         JobKey postMatchJobKey = getPostMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(postMatchJobKey);
-
         // Step 6: AvailableFixture 제거
         footballAvailableService.removeAvailableFixture(fixtureId);
-
         // Step 7: PostMatchJob 이 제거됐는지 확인
         waitUntilJobAllRemoved();
         assertNull(scheduler.getJobDetail(postMatchJobKey), "PostMatchJob should have been removed.");
@@ -253,5 +214,4 @@ public class FootballAvailableFixtureJobTest {
             }
         }
     }
-
 }

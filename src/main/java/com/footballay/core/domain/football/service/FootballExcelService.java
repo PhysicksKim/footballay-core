@@ -2,15 +2,12 @@ package com.footballay.core.domain.football.service;
 
 import com.footballay.core.domain.football.persistence.Player;
 import com.footballay.core.domain.football.repository.PlayerRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.util.Units;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,19 +17,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class FootballExcelService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballExcelService.class);
     private final PlayerRepository playerRepository;
+
     public ByteArrayInputStream createPlayerExcel(List<Player> players) throws IOException {
         String[] COLUMNs = {"ID", "Name", "Korean Name", "Number", "Photo"};
-
-        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-
+        try (
+            Workbook workbook = new XSSFWorkbook();
+            ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Players");
-
             // 열 너비 및 행 높이 설정
             int photoColumnIdx = 4;
             sheet.setColumnWidth(photoColumnIdx, 30 * 256); // 사진 열 너비 넓게 설정
@@ -40,28 +35,23 @@ public class FootballExcelService {
             sheet.setColumnWidth(1, 20 * 256); // Name 열 너비
             sheet.setColumnWidth(2, 20 * 256); // Korean Name 열 너비
             sheet.setColumnWidth(3, 10 * 256); // Number 열 너비
-
             int rowHeightInPoints = 100; // 행 높이 (100px)
-
             // 헤더 생성
             Row headerRow = sheet.createRow(0);
             for (int col = 0; col < COLUMNs.length; col++) {
                 Cell cell = headerRow.createCell(col);
                 cell.setCellValue(COLUMNs[col]);
             }
-
             // 데이터 생성
             int rowIdx = 1;
             log.info("excel data write start");
             for (Player player : players) {
                 Row row = sheet.createRow(rowIdx);
                 row.setHeightInPoints(rowHeightInPoints); // 각 행의 높이 지정
-
                 row.createCell(0).setCellValue(player.getId());
                 row.createCell(1).setCellValue(player.getName());
                 row.createCell(2).setCellValue(player.getKoreanName() != null ? player.getKoreanName() : "");
                 row.createCell(3).setCellValue(player.getNumber() != null ? player.getNumber() : 0);
-
                 // 이미지 삽입
                 if (player.getPhotoUrl() != null && !player.getPhotoUrl().isEmpty()) {
                     try (InputStream inputStream = new URL(player.getPhotoUrl()).openStream()) {
@@ -69,7 +59,6 @@ public class FootballExcelService {
                         int pictureIdx = workbook.addPicture(bytes, Workbook.PICTURE_TYPE_PNG);
                         CreationHelper helper = workbook.getCreationHelper();
                         Drawing<?> drawing = sheet.createDrawingPatriarch();
-
                         ClientAnchor anchor = helper.createClientAnchor();
                         anchor.setCol1(photoColumnIdx);
                         anchor.setRow1(rowIdx);
@@ -82,10 +71,8 @@ public class FootballExcelService {
                         e.printStackTrace();
                     }
                 }
-
                 rowIdx++;
             }
-
             workbook.write(out);
             log.info("excel data write end");
             return new ByteArrayInputStream(out.toByteArray());
@@ -107,35 +94,32 @@ public class FootballExcelService {
                 if (row.getRowNum() == 0) {
                     continue; // Skip header row
                 }
-                if(row.getCell(0) == null) {
+                if (row.getCell(0) == null) {
                     continue;
                 }
                 String koreanName;
-                try{
+                try {
                     Long playerId;
                     if (row.getCell(0).getCellType() == CellType.NUMERIC) {
                         playerId = (long) row.getCell(0).getNumericCellValue();
                     } else {
                         playerId = Long.parseLong(row.getCell(0).getStringCellValue());
                     }
-
                     String name = getCellValue(row.getCell(1));
                     koreanName = getCellValue(row.getCell(2));
                     String number = getCellValue(row.getCell(3));
-
-                    if(playerId != 0) {
+                    if (playerId != 0) {
                         log.info("playerId: {}, name: {}, koreanName: {}, number: {}", playerId, name, koreanName, number);
                     }
                     Optional<Player> find = playerRepository.findById(playerId);
-                    if(find.isEmpty()) {
+                    if (find.isEmpty()) {
                         log.warn("Player not found: {}", playerId);
                     }
                     Player player = find.get();
-
-                    if(koreanName != null && !koreanName.isEmpty()) {
+                    if (koreanName != null && !koreanName.isEmpty()) {
                         player.setKoreanName(koreanName);
                     }
-                    if(number != null && !number.isEmpty() && !number.equals("0")) {
+                    if (number != null && !number.isEmpty() && !number.equals("0")) {
                         int uniformNum = Integer.parseInt(number);
                         player.setNumber(uniformNum);
                     }
@@ -159,26 +143,29 @@ public class FootballExcelService {
         if (cell == null) {
             return "";
         }
-
         switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                // 숫자가 날짜일 수 있으므로, 날짜 포맷인지 확인
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue().toString();
-                } else {
-                    return String.valueOf((long) cell.getNumericCellValue()); // 숫자값을 문자열로 변환
-                }
-            case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue());
-            case FORMULA:
-                // 수식 셀의 경우 수식을 평가한 결과를 가져옵니다.
-                return cell.getCellFormula();
-            case BLANK:
-                return "";
-            default:
-                return "";
+        case STRING: 
+            return cell.getStringCellValue();
+        case NUMERIC: 
+            // 숫자가 날짜일 수 있으므로, 날짜 포맷인지 확인
+            if (DateUtil.isCellDateFormatted(cell)) {
+                return cell.getDateCellValue().toString();
+            } else {
+                return String.valueOf((long) cell.getNumericCellValue()); // 숫자값을 문자열로 변환
+            }
+        case BOOLEAN: 
+            return String.valueOf(cell.getBooleanCellValue());
+        case FORMULA: 
+            // 수식 셀의 경우 수식을 평가한 결과를 가져옵니다.
+            return cell.getCellFormula();
+        case BLANK: 
+            return "";
+        default: 
+            return "";
         }
+    }
+
+    public FootballExcelService(final PlayerRepository playerRepository) {
+        this.playerRepository = playerRepository;
     }
 }

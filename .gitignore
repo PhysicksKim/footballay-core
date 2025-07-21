@@ -60,3 +60,6 @@ monitoring/prometheus/secrets/*
 
 .env/**
 .env
+
+lombok.config
+lombok.jar

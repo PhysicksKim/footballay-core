@@ -2,20 +2,15 @@ package com.footballay.core.web.common.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class CachedApiResponseService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CachedApiResponseService.class);
     private final ObjectMapper OBJECT_MAPPER;
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -27,7 +22,7 @@ public class CachedApiResponseService {
 
     public void cacheResponse(String requestUrl, Map<String, ? extends String> parameters, Object response) throws JsonProcessingException {
         String key = generateKey(requestUrl, parameters);
-        stringRedisTemplate.opsForValue().set(key, OBJECT_MAPPER.writeValueAsString(new Object[]{response}), Duration.ofSeconds(10));
+        stringRedisTemplate.opsForValue().set(key, OBJECT_MAPPER.writeValueAsString(new Object[] {response}), Duration.ofSeconds(10));
         log.info("Cached response for key: {}", key);
     }
 
@@ -39,4 +34,8 @@ public class CachedApiResponseService {
         return keyBuilder.toString();
     }
 
+    public CachedApiResponseService(final ObjectMapper OBJECT_MAPPER, final StringRedisTemplate stringRedisTemplate) {
+        this.OBJECT_MAPPER = OBJECT_MAPPER;
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
 }

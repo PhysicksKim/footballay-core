@@ -2,14 +2,12 @@ package com.footballay.core.domain.football.comparator;
 
 import com.footballay.core.domain.football.dto.LineupDto;
 import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer> {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StartLineupComparator.class);
     private static final Map<String, Integer> POSITION_PRIORITY;
 
     static {
@@ -32,37 +30,28 @@ public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer>
     public int compare(LineupDto.LineupPlayer target, LineupDto.LineupPlayer reference) {
         boolean targetIsSub = target.substitute();
         boolean referenceIsSub = reference.substitute();
-
         if (!targetIsSub && referenceIsSub) return -1;
         if (targetIsSub && !referenceIsSub) return 1;
-
         try {
             if (targetIsSub) {
                 // 후보의 경우 포지션 G D M F 순으로 정렬
-                int positionCompare = Integer.compare(
-                        POSITION_PRIORITY.get(getSafePositionToUpperCase(target)),
-                        POSITION_PRIORITY.get(getSafePositionToUpperCase(reference))
-                );
+                int positionCompare = Integer.compare(POSITION_PRIORITY.get(getSafePositionToUpperCase(target)), POSITION_PRIORITY.get(getSafePositionToUpperCase(reference)));
                 if (positionCompare != 0) {
                     return positionCompare;
                 }
-
                 // 포지션 동일 시 등번호(number) 순으로 정렬
                 Integer targetNumber = getSafeNumber(target);
                 Integer referenceNumber = getSafeNumber(reference);
-
                 if (targetNumber == null && referenceNumber != null) {
                     return 1;
                 }
                 if (targetNumber != null && referenceNumber == null) {
                     return -1;
                 }
-
                 int numberComp = safeNumberCompare(targetNumber, referenceNumber);
                 if (numberComp != 0) {
                     return numberComp;
                 }
-
                 // 모두 동일 시 player id 순으로 정렬.
                 return compareSafePlayerId(target, reference);
             } else {
@@ -71,7 +60,6 @@ public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer>
                     log.error("grid is null. target: {}, reference: {}", target, reference);
                     return 0;
                 }
-
                 String[] grid1 = target.grid().split(":");
                 String[] grid2 = reference.grid().split(":");
                 int xCompare = Integer.compare(Integer.parseInt(grid1[0]), Integer.parseInt(grid2[0]));
@@ -87,20 +75,15 @@ public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer>
         if (isRegisteredPlayer(target) && isRegisteredPlayer(reference)) {
             return Long.compare(target.playerId(), reference.playerId());
         }
-
-        if (isUnregisteredPlayer(target) && isUnregisteredPlayer(reference)
-                && hasTempId(target) && hasTempId(reference)) {
+        if (isUnregisteredPlayer(target) && isUnregisteredPlayer(reference) && hasTempId(target) && hasTempId(reference)) {
             return target.tempId().compareTo(reference.tempId());
         }
-
-        if (isUnregisteredPlayer(target)
-                && isRegisteredPlayer(reference)) {
+        if (isUnregisteredPlayer(target) && isRegisteredPlayer(reference)) {
             return 1;
-        } else if (isRegisteredPlayer(target)
-                && isUnregisteredPlayer(reference)) { // targetPlayer != null && referencePlayer == null
+        } else if (isRegisteredPlayer(target) && isUnregisteredPlayer(reference)) {
+            // targetPlayer != null && referencePlayer == null
             return -1;
         }
-
         return 0;
     }
 
@@ -111,7 +94,8 @@ public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer>
      * @param matchPlayer 경기 선수
      * @return 선수의 등번호
      */
-    private static @Nullable Integer getSafeNumber(LineupDto.LineupPlayer matchPlayer) {
+    @Nullable
+    private static Integer getSafeNumber(LineupDto.LineupPlayer matchPlayer) {
         if (matchPlayer.playerId() != null && matchPlayer.playerId() != 0) {
             return matchPlayer.number();
         } else {
@@ -145,5 +129,4 @@ public class StartLineupComparator implements Comparator<LineupDto.LineupPlayer>
     private static boolean hasTempId(LineupDto.LineupPlayer matchPlayer) {
         return matchPlayer.tempId() != null;
     }
-
 }

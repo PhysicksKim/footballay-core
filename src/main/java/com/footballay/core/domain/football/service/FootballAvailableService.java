@@ -4,15 +4,12 @@ import com.footballay.core.domain.football.persistence.Fixture;
 import com.footballay.core.domain.football.persistence.League;
 import com.footballay.core.domain.football.repository.FixtureRepository;
 import com.footballay.core.domain.football.repository.LeagueRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -21,14 +18,11 @@ import java.time.temporal.ChronoUnit;
 import java.time.zone.ZoneRulesException;
 import java.util.List;
 
-@Slf4j
 @Transactional
-@RequiredArgsConstructor
 @Service
 public class FootballAvailableService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballAvailableService.class);
     private final FixtureJobManageService fixtureJobManageService;
-
     private final LeagueRepository leagueRepository;
     private final FixtureRepository fixtureRepository;
 
@@ -48,26 +42,19 @@ public class FootballAvailableService {
 
     public void addAvailableFixture(long fixtureId) throws SchedulerException {
         log.info("addAvailableFixture :: fixtureId={}", fixtureId);
-        Fixture fixture =
-                fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
-        if(fixture.isAvailable()) {
+        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow(() -> new IllegalArgumentException("fixture not found"));
+        if (fixture.isAvailable()) {
             throw new IllegalArgumentException("fixture is already available");
         }
-
         fixtureJobManageService.addFixtureJobs(fixture);
-
         fixture.setAvailable(true);
         fixtureRepository.save(fixture);
     }
 
     public void removeAvailableFixture(long fixtureId) throws SchedulerException {
         log.info("removeAvailableFixture :: fixtureId={}", fixtureId);
-        Fixture fixture = fixtureRepository.findById(fixtureId)
-                .orElseThrow(() -> new IllegalArgumentException("fixture not found"));
-
+        Fixture fixture = fixtureRepository.findById(fixtureId).orElseThrow(() -> new IllegalArgumentException("fixture not found"));
         fixtureJobManageService.removeFixtureJobs(fixture);
-
         fixture.setAvailable(false);
         fixtureRepository.save(fixture);
     }
@@ -86,25 +73,15 @@ public class FootballAvailableService {
         LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDateFrom);
         League league = getLeagueById(leagueId);
         log.info("findAvailableFixturesOnNearestDate :: leagueId={}, matchDateFrom={}", leagueId, matchDateFrom);
-
         // Find the first fixture after the given date
-        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateAfter(
-                league,
-                localDateTime,
-                PageRequestForOnlyOneNearest()
-        );
+        List<Fixture> fixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateAfter(league, localDateTime, PageRequestForOnlyOneNearest());
         if (fixturesByLeagueAndDate.isEmpty()) {
             return List.of();
         }
-
         // Get the date of the nearest fixture
         Fixture nearestFixture = fixturesByLeagueAndDate.get(0);
         LocalDateTime nearestDate = nearestFixture.getDate().truncatedTo(ChronoUnit.DAYS);
-        List<Fixture> availableFixturesOfNearestDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
-                league,
-                nearestDate,
-                nearestDate.plusDays(1).minusSeconds(1)
-        );
+        List<Fixture> availableFixturesOfNearestDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(league, nearestDate, nearestDate.plusDays(1).minusSeconds(1));
         log.info("date of nearest fixture={}, size of availableFixturesOfNearestDate={}", nearestDate, availableFixturesOfNearestDate.size());
         return availableFixturesOfNearestDate;
     }
@@ -113,12 +90,7 @@ public class FootballAvailableService {
         LocalDateTime localDateTime = toLocalDateTimeTruncated(matchDate);
         League league = getLeagueById(leagueId);
         log.info("findAvailableFixturesOnDate :: leagueId={}, matchDate={}", leagueId, matchDate);
-
-        List<Fixture> availableFixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(
-                league,
-                localDateTime,
-                localDateTime.plusDays(1).minusSeconds(1)
-        );
+        List<Fixture> availableFixturesByLeagueAndDate = fixtureRepository.findAvailableFixturesByLeagueAndDateRange(league, localDateTime, localDateTime.plusDays(1).minusSeconds(1));
         log.info("size of availableFixturesOfTheDay={}", availableFixturesByLeagueAndDate.size());
         return availableFixturesByLeagueAndDate;
     }
@@ -134,8 +106,7 @@ public class FootballAvailableService {
     private ZonedDateTime toSeoulZonedDateTime(LocalDateTime kickoffTime, String timeZone, long timestamp) {
         try {
             ZoneId zoneId = ZoneId.of(timeZone);
-            return ZonedDateTime.of(kickoffTime, zoneId)
-                    .withZoneSameInstant(ZoneId.of("Asia/Seoul"));
+            return ZonedDateTime.of(kickoffTime, zoneId).withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         } catch (ZoneRulesException e) {
             Instant instant = Instant.ofEpochSecond(timestamp);
             return ZonedDateTime.ofInstant(instant, ZoneId.of("Asia/Seoul"));
@@ -146,4 +117,9 @@ public class FootballAvailableService {
         return leagueRepository.findById(leagueId).orElseThrow();
     }
 
+    public FootballAvailableService(final FixtureJobManageService fixtureJobManageService, final LeagueRepository leagueRepository, final FixtureRepository fixtureRepository) {
+        this.fixtureJobManageService = fixtureJobManageService;
+        this.leagueRepository = leagueRepository;
+        this.fixtureRepository = fixtureRepository;
+    }
 }

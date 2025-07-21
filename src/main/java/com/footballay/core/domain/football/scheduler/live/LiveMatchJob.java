@@ -1,17 +1,12 @@
 package com.footballay.core.domain.football.scheduler.live;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
-
 import java.time.LocalDateTime;
 
-@Slf4j
-@RequiredArgsConstructor
 public class LiveMatchJob implements Job {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveMatchJob.class);
     private final LiveMatchTask liveMatchTask;
     private final LiveMatchJobSchedulerService liveMatchJobSchedulerService;
 
@@ -20,14 +15,12 @@ public class LiveMatchJob implements Job {
         try {
             long fixtureId = context.getMergedJobDataMap().getLong("fixtureId");
             log.info("LiveMatchJob executed at {}, fixture ID : {}", LocalDateTime.now(), fixtureId);
-
             boolean isFixtureFinished = liveMatchTask.requestAndSaveLiveMatchData(fixtureId);
             if (isFixtureFinished) {
                 log.info("LiveMatch is finished. Deleting job");
                 try {
                     context.getScheduler().deleteJob(context.getJobDetail().getKey());
                     log.info("Job deleted :: key={}", context.getJobDetail().getKey());
-
                     liveMatchJobSchedulerService.addPostMatchJob(fixtureId);
                     log.info("PostMatchJob added :: fixtureId={}", fixtureId);
                 } catch (Exception e) {
@@ -39,5 +32,10 @@ public class LiveMatchJob implements Job {
             log.error("LiveMatchJob execution failed", e);
             throw new JobExecutionException(e);
         }
+    }
+
+    public LiveMatchJob(final LiveMatchTask liveMatchTask, final LiveMatchJobSchedulerService liveMatchJobSchedulerService) {
+        this.liveMatchTask = liveMatchTask;
+        this.liveMatchJobSchedulerService = liveMatchJobSchedulerService;
     }
 }

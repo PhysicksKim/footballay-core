@@ -18,7 +18,6 @@ import com.footballay.core.domain.football.repository.PlayerRepository;
 import com.footballay.core.domain.football.repository.live.FixtureEventRepository;
 import com.footballay.core.domain.football.repository.live.MatchPlayerRepository;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,24 +25,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
 import static com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse._Events;
 import static com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse._Lineups;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @Transactional
 @ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 class LiveFixtureEventServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveFixtureEventServiceTest.class);
     @Autowired
     private LiveFixtureEventService liveFixtureEventService;
-
     @Autowired
     private FootballApiCacheService footballApiCacheService;
     @Autowired
@@ -56,21 +51,16 @@ class LiveFixtureEventServiceTest {
     private PlayerRepository playerRepository;
     @Autowired
     private FixtureEventRepository fixtureEventRepository;
-
     @Autowired
     private EntityManager em;
-
     private ApiCallService apiCallService;
-
     private static final long FIXTURE_ID = FixtureId.FIXTURE_SINGLE_1145526;
-
     @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     public void setup() {
         apiCallService = new MockApiCallServiceImpl(objectMapper);
-
         footballApiCacheService.cacheLeague(4L);
         footballApiCacheService.cacheTeamsOfLeague(4L);
         footballApiCacheService.cacheTeamSquad(777);
@@ -84,20 +74,15 @@ class LiveFixtureEventServiceTest {
         // given
         FixtureSingleResponse response = apiCallService.fixtureSingle(FIXTURE_ID);
         lineupService.saveLineup(response);
-
         em.flush();
         em.clear();
-
         // when
         liveFixtureEventService.saveLiveEvent(response);
-
         em.flush();
         em.clear();
-
         // then
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
-        fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture)
-                .forEach(fixtureEvent -> log.info("fixtureEvent={}", fixtureEvent));
+        fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture).forEach(fixtureEvent -> log.info("fixtureEvent={}", fixtureEvent));
     }
 
     @DisplayName("동일한 수의 이벤트 요청이 있을 때 중복 저장이 되지 않음을 확인")
@@ -109,19 +94,15 @@ class LiveFixtureEventServiceTest {
         liveFixtureEventService.saveLiveEvent(initialResponse);
         em.flush();
         em.clear();
-
         // when
         FixtureSingleResponse subsequentResponse = apiCallService.fixtureSingle(FIXTURE_ID);
         liveFixtureEventService.saveLiveEvent(subsequentResponse);
-
         // then
         List<_Events> events = subsequentResponse.getResponse().get(0).getEvents();
         int eventCount = events.size();
-
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
         List<FixtureEvent> savedEvents = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
         int savedEventCount = savedEvents.size();
-
         assertThat(savedEventCount).isEqualTo(eventCount);
     }
 
@@ -137,27 +118,22 @@ class LiveFixtureEventServiceTest {
         teamAUnregiPlayer.setId(null);
         final String unregisterPlayerName = "Unregistered Player";
         teamAUnregiPlayer.setName(unregisterPlayerName);
-
         lineupService.saveLineup(response);
-
         // Modify the event to have an unregistered player
         List<_Events> respEvents = response.getResponse().get(0).getEvents();
-        for(_Events event : respEvents) {
-            if(Objects.equals(event.getTeam().getId(), teamAId)) {
+        for (_Events event : respEvents) {
+            if (Objects.equals(event.getTeam().getId(), teamAId)) {
                 _Events._Player eventPlayer = event.getPlayer();
                 eventPlayer.setId(null);
                 eventPlayer.setName(unregisterPlayerName);
                 break;
             }
         }
-
         // when
         liveFixtureEventService.saveLiveEvent(response);
-
         // then
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
         List<FixtureEvent> events = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
-
         Optional<FixtureEvent> first = events.stream().filter(event -> Objects.requireNonNull(event.getPlayer()).getUnregisteredPlayerName() != null).findFirst();
         assertThat(first).isPresent();
         FixtureEvent eventWithUnregiPlayer = first.get();
@@ -180,28 +156,23 @@ class LiveFixtureEventServiceTest {
         teamAUnregiPlayer.setId(null);
         final String unregisterPlayerName = "Unregistered Player";
         teamAUnregiPlayer.setName(unregisterPlayerName);
-
         lineupService.saveLineup(response);
-
         // Modify the event to have an unregistered player
         final String noLineupUnregiPlayerName = "No Lineup Unregistered Player";
         List<_Events> respEvents = response.getResponse().get(0).getEvents();
-        for(_Events event : respEvents) {
-            if(Objects.equals(event.getTeam().getId(), teamAId)) {
+        for (_Events event : respEvents) {
+            if (Objects.equals(event.getTeam().getId(), teamAId)) {
                 _Events._Player eventPlayer = event.getPlayer();
                 eventPlayer.setId(null);
                 eventPlayer.setName(noLineupUnregiPlayerName);
                 break;
             }
         }
-
         // when
         liveFixtureEventService.saveLiveEvent(response);
-
         // then
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
         List<FixtureEvent> events = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
-
         Optional<FixtureEvent> first = events.stream().filter(event -> Objects.requireNonNull(event.getPlayer()).getUnregisteredPlayerName() != null).findFirst();
         assertThat(first).isPresent();
         FixtureEvent eventWithUnregiPlayer = first.get();
@@ -222,23 +193,18 @@ class LiveFixtureEventServiceTest {
         liveFixtureEventService.saveLiveEvent(prevResponse);
         em.flush();
         em.clear();
-
         // when
         FixtureSingleResponse subsequentResponse = apiCallService.fixtureSingle(FIXTURE_ID);
         List<_Events> events = subsequentResponse.getResponse().get(0).getEvents();
         events.remove(events.size() - 1);
         subsequentResponse.getResponse().get(0).setEvents(events);
-
         liveFixtureEventService.saveLiveEvent(subsequentResponse);
-
         // then
         Fixture fixture = fixtureRepository.findById(FIXTURE_ID).orElseThrow();
         List<FixtureEvent> savedEvents = fixtureEventRepository.findByFixtureOrderBySequenceDesc(fixture);
-
         int prevEventsCount = eventsOfPrevResponse.size();
         int savedEventCount = savedEvents.size();
         int eventCount = events.size();
-
         assertThat(prevEventsCount).isNotEqualTo(eventCount);
         assertThat(savedEventCount).isEqualTo(eventCount);
         assertThat(savedEventCount).isLessThan(prevEventsCount);
@@ -255,24 +221,19 @@ class LiveFixtureEventServiceTest {
         player.setId(playerId);
         player.setName(playerName);
         playerRepository.save(player);
-
         // MatchPlayer 생성 및 저장
         MatchPlayer matchPlayer = new MatchPlayer();
         matchPlayer.setPlayer(player);
         matchPlayerRepository.save(matchPlayer);
-
         // 이벤트 생성 (등록된 선수 포함)
         _Events._Player eventPlayer = new _Events._Player();
         eventPlayer.setId(playerId);
         eventPlayer.setName(playerName);
         _Events event = createEvent(eventPlayer, null, "Goal", "Normal Goal", 10, 0, "Team A", 1L);
-
         // FixtureEvent 생성 (등록된 MatchPlayer 포함)
         FixtureEvent fixtureEvent = createFixtureEvent(matchPlayer, null, EventType.GOAL, "Normal Goal", 10, 0, "Team A", 1L);
-
         // when
         boolean result = liveFixtureEventService.isSameEvent(event, fixtureEvent);
-
         // then
         assertThat(result).isTrue();
     }
@@ -288,31 +249,25 @@ class LiveFixtureEventServiceTest {
         player1.setId(playerId1);
         player1.setName(playerName1);
         playerRepository.save(player1);
-
         Long playerId2 = 101L;
         String playerName2 = "Player 2";
         Player player2 = new Player();
         player2.setId(playerId2);
         player2.setName(playerName2);
         playerRepository.save(player2);
-
         // MatchPlayer 생성 및 저장 (fixtureEvent에 사용)
         MatchPlayer matchPlayer = new MatchPlayer();
         matchPlayer.setPlayer(player2); // 다른 선수
         matchPlayerRepository.save(matchPlayer);
-
         // 이벤트 생성 (player1 사용)
         _Events._Player eventPlayer = new _Events._Player();
         eventPlayer.setId(playerId1);
         eventPlayer.setName(playerName1);
         _Events event = createEvent(eventPlayer, null, "Goal", "Normal Goal", 10, 0, "Team A", 1L);
-
         // FixtureEvent 생성 (matchPlayer 사용, player2)
         FixtureEvent fixtureEvent = createFixtureEvent(matchPlayer, null, EventType.GOAL, "Normal Goal", 10, 0, "Team A", 1L);
-
         // when
         boolean result = liveFixtureEventService.isSameEvent(event, fixtureEvent);
-
         // then
         assertThat(result).isFalse();
     }
@@ -326,19 +281,15 @@ class LiveFixtureEventServiceTest {
         MatchPlayer matchPlayer = new MatchPlayer();
         matchPlayer.setUnregisteredPlayerName(unregisteredPlayerName);
         matchPlayerRepository.save(matchPlayer);
-
         // 이벤트 생성 (미등록 선수)
         _Events._Player eventPlayer = new _Events._Player();
         eventPlayer.setId(null);
         eventPlayer.setName(unregisteredPlayerName);
         _Events event = createEvent(eventPlayer, null, "Goal", "Normal Goal", 10, 0, "Team A", 1L);
-
         // FixtureEvent 생성 (미등록 MatchPlayer 포함)
         FixtureEvent fixtureEvent = createFixtureEvent(matchPlayer, null, EventType.GOAL, "Normal Goal", 10, 0, "Team A", 1L);
-
         // when
         boolean result = liveFixtureEventService.isSameEvent(event, fixtureEvent);
-
         // then
         assertThat(result).isTrue();
     }
@@ -354,24 +305,19 @@ class LiveFixtureEventServiceTest {
         player.setId(playerId);
         player.setName(playerName);
         playerRepository.save(player);
-
         // 이벤트 생성 (등록된 선수)
         _Events._Player eventPlayer = new _Events._Player();
         eventPlayer.setId(playerId);
         eventPlayer.setName(playerName);
         _Events event = createEvent(eventPlayer, null, "Goal", "Normal Goal", 10, 0, "Team A", 1L);
-
         // FixtureEvent 생성 (미등록 MatchPlayer)
         String unregisteredPlayerName = "Unknown Player";
         MatchPlayer matchPlayer = new MatchPlayer();
         matchPlayer.setUnregisteredPlayerName(unregisteredPlayerName);
         matchPlayerRepository.save(matchPlayer);
-
         FixtureEvent fixtureEvent = createFixtureEvent(matchPlayer, null, EventType.GOAL, "Normal Goal", 10, 0, "Team A", 1L);
-
         // when
         boolean result = liveFixtureEventService.isSameEvent(event, fixtureEvent);
-
         // then
         assertThat(result).isFalse();
     }
@@ -387,25 +333,20 @@ class LiveFixtureEventServiceTest {
         player.setId(playerId);
         player.setName(playerName);
         playerRepository.save(player);
-
         // MatchPlayer 생성 및 저장 (등록된 선수)
         MatchPlayer matchPlayer = new MatchPlayer();
         matchPlayer.setPlayer(player);
         matchPlayerRepository.save(matchPlayer);
-
         // 이벤트 생성 (미등록 선수)
         String unregisteredPlayerName = "Unknown Player";
         _Events._Player eventPlayer = new _Events._Player();
         eventPlayer.setId(null);
         eventPlayer.setName(unregisteredPlayerName);
         _Events event = createEvent(eventPlayer, null, "Goal", "Normal Goal", 10, 0, "Team A", 1L);
-
         // FixtureEvent 생성 (등록된 MatchPlayer)
         FixtureEvent fixtureEvent = createFixtureEvent(matchPlayer, null, EventType.GOAL, "Normal Goal", 10, 0, "Team A", 1L);
-
         // when
         boolean result = liveFixtureEventService.isSameEvent(event, fixtureEvent);
-
         // then
         assertThat(result).isFalse();
     }

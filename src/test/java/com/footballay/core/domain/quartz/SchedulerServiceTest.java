@@ -1,6 +1,5 @@
 package com.footballay.core.domain.quartz;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,14 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@Slf4j
-@ActiveProfiles({"dev","mockapi"})
+@ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 class SchedulerServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SchedulerServiceTest.class);
     @Autowired
     private SchedulerService schedulerService;
-
     @Autowired
     private Scheduler scheduler;
 
@@ -33,5 +30,4 @@ class SchedulerServiceTest {
         schedulerService.start();
         Thread.sleep(10000);
     }
-
 }

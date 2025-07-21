@@ -2,11 +2,11 @@ spring:
   jpa:
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     hibernate:
       ddl-auto: update
-#    show-sql: true
+    open-in-view: false
+  #    show-sql: true
 
   devtools:
     restart:

@@ -13,24 +13,17 @@ import com.footballay.core.domain.football.service.FixtureDataIntegrityService;
 import com.footballay.core.monitor.alert.NotificationException;
 import com.footballay.core.monitor.alert.port.MatchAlertService;
 import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class LiveMatchProcessor implements LiveMatchTask {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveMatchProcessor.class);
     private final ApiCallService apiCallService;
-
     private final FixtureDataIntegrityService fixtureDataIntegrityService;
     private final LineupService lineupService;
-
     private final LiveFixtureEventService liveFixtureService;
     private final TeamStatisticsService teamStatisticsService;
     private final PlayerStatisticsService playerStatisticsService;
-
     private final MatchAlertService matchAlertService;
 
     /**
@@ -60,7 +53,7 @@ public class LiveMatchProcessor implements LiveMatchTask {
 
     private FixtureSingleResponse requestData(long fixtureId) {
         FixtureSingleResponse response = apiCallService.fixtureSingle(fixtureId);
-        log.info("Successfully got API Response FROM 'ApiCallService' of fixtureId={}", fixtureId);
+        log.info("Successfully got API Response FROM \'ApiCallService\' of fixtureId={}", fixtureId);
         if (response.getResponse().isEmpty()) {
             throw new IllegalArgumentException("FixtureSingle 응답에 Response 데이터가 없습니다. :: \n\n" + response.getResponse());
         }
@@ -76,9 +69,9 @@ public class LiveMatchProcessor implements LiveMatchTask {
     }
 
     private void checkAndResaveLineupIfNeed(FixtureSingleResponse response, long fixtureId) {
-        try{
+        try {
             boolean needToReSaveLineup = lineupService.isNeedToCleanUpAndReSaveLineup(response);
-            if(!needToReSaveLineup) {
+            if (!needToReSaveLineup) {
                 log.info("no need to save Lineup while saving live data");
                 return;
             }
@@ -153,5 +146,15 @@ public class LiveMatchProcessor implements LiveMatchTask {
      */
     private boolean updateLiveStatusAndIsFinished(FixtureSingleResponse response) {
         return liveFixtureService.updateLiveStatus(response);
+    }
+
+    public LiveMatchProcessor(final ApiCallService apiCallService, final FixtureDataIntegrityService fixtureDataIntegrityService, final LineupService lineupService, final LiveFixtureEventService liveFixtureService, final TeamStatisticsService teamStatisticsService, final PlayerStatisticsService playerStatisticsService, final MatchAlertService matchAlertService) {
+        this.apiCallService = apiCallService;
+        this.fixtureDataIntegrityService = fixtureDataIntegrityService;
+        this.lineupService = lineupService;
+        this.liveFixtureService = liveFixtureService;
+        this.teamStatisticsService = teamStatisticsService;
+        this.playerStatisticsService = playerStatisticsService;
+        this.matchAlertService = matchAlertService;
     }
 }

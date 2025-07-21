@@ -3,7 +3,6 @@ package com.footballay.core.config;
 import com.footballay.core.websocket.handler.CustomHandshakeHandler;
 import com.footballay.core.websocket.handler.HttpHandshakeInterceptor;
 import com.footballay.core.websocket.handler.StompChannelInterceptor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -12,7 +11,6 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
-
 import java.util.Arrays;
 
 /**
@@ -22,11 +20,10 @@ import java.util.Arrays;
  * 실행 환경 변수로 active profile 을 다르게 설정해줌으로써 cors allow origin 값을 다르게 설정합니다.
  * </pre>
  */
-@Slf4j
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(WebSocketConfig.class);
     private final StompChannelInterceptor stompHandler;
 
     /**
@@ -53,17 +50,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         String[] allowOriginArray = rawAllowedOrigins.split(",");
         log.info("allow origins : {}", Arrays.toString(allowOriginArray));
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins(allowOriginArray)
-                .setHandshakeHandler(new CustomHandshakeHandler())
-                .addInterceptors(new HttpHandshakeInterceptor());
+        registry.addEndpoint("/ws").setAllowedOrigins(allowOriginArray).setHandshakeHandler(new CustomHandshakeHandler()).addInterceptors(new HttpHandshakeInterceptor());
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // 클라이언트로 메시지를 라우팅할 때 사용할 prefix를 설정합니다.
-        registry.enableSimpleBroker("/topic","/queue");
-        registry.setApplicationDestinationPrefixes("/app","/chat");
+        registry.enableSimpleBroker("/topic", "/queue");
+        registry.setApplicationDestinationPrefixes("/app", "/chat");
         registry.setUserDestinationPrefix("/user");
     }
 
@@ -71,5 +65,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(stompHandler);
     }
-
 }

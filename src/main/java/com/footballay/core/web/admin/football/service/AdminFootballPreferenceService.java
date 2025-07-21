@@ -10,35 +10,28 @@ import com.footballay.core.web.admin.football.response.PreferenceKeyResponse;
 import com.footballay.core.web.admin.football.response.mapper.FootballPreferenceMapper;
 import com.footballay.core.web.common.dto.ApiResponse;
 import com.footballay.core.web.common.service.ApiCommonResponseService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class AdminFootballPreferenceService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballPreferenceService.class);
     private final FootballPreferenceService footballPreferenceService;
     private final ApiCommonResponseService apiResponseService;
     private final FootballRoot footballRoot;
 
     public ApiResponse<PreferenceKeyResponse> createPreferenceKey(@Nullable Authentication authentication, String requestUrl) {
-        try{
-            if(authentication==null || !authentication.isAuthenticated()) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
                 return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/createPreferenceKey");
             }
-
             String keyHash = footballPreferenceService.createPreferenceKey(authentication.getName());
             PreferenceKeyResponse[] response = {FootballPreferenceMapper.toPreferenceKeyResponse(keyHash)};
-
             return apiResponseService.createSuccessResponse(response, requestUrl);
         } catch (Exception e) {
             log.error("Failed to create preference key", e);
@@ -48,13 +41,11 @@ public class AdminFootballPreferenceService {
 
     public ApiResponse<PreferenceKeyResponse> reissuePreferenceKey(@Nullable Authentication authentication, String requestUrl) {
         try {
-            if(authentication==null || !authentication.isAuthenticated()) {
+            if (authentication == null || !authentication.isAuthenticated()) {
                 return apiResponseService.createFailureResponse("Not authenticated", "/api/admin/football/reissuePreferenceKey");
             }
-
             String keyHash = footballPreferenceService.reissuePreferenceKey(authentication.getName());
             PreferenceKeyResponse[] response = {FootballPreferenceMapper.toPreferenceKeyResponse(keyHash)};
-
             return apiResponseService.createSuccessResponse(response, requestUrl);
         } catch (Exception e) {
             log.error("Failed to reissue preference key", e);
@@ -65,8 +56,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<PlayerResponse> getSquadCustomPhotos(@Nullable Authentication auth, long teamId, String requestUrl) {
         Map<String, String> params = Map.of("teamId", String.valueOf(teamId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             String username = auth.getName();
             List<PlayerDto> squadOfTeam = footballRoot.getSquadOfTeam(teamId);
@@ -82,8 +73,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<PlayerPhotosResponse> getPlayerRegisteredPhotos(@Nullable Authentication auth, long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             String username = auth.getName();
             PlayerDto playerDto = footballRoot.getPlayer(playerId);
@@ -99,13 +90,12 @@ public class AdminFootballPreferenceService {
     public ApiResponse<String> uploadPlayerPhoto(@Nullable Authentication auth, long playerId, MultipartFile photoFile, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
-            if(photoFile==null || !"image/png".equals(photoFile.getContentType())) {
-                throw new IllegalArgumentException("Invalid photo file contentType:"+(photoFile==null ? "null" : photoFile.getContentType()));
+            if (photoFile == null || !"image/png".equals(photoFile.getContentType())) {
+                throw new IllegalArgumentException("Invalid photo file contentType:" + (photoFile == null ? "null" : photoFile.getContentType()));
             }
-
             String username = auth.getName();
             footballPreferenceService.savePlayerCustomPhoto(username, playerId, photoFile);
             String[] responseArr = {"success"};
@@ -119,8 +109,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<String> activatePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             String username = auth.getName();
             boolean success = footballPreferenceService.activatePhoto(username, photoId);
@@ -135,8 +125,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<String> deactivatePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             String username = auth.getName();
             boolean success = footballPreferenceService.deactivatePhoto(username, photoId);
@@ -151,8 +141,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<String> useDefaultProfilePhoto(Authentication auth, long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             log.info("useDefaultProfilePhoto authentication:{} playerId:{}", auth, playerId);
             boolean success = footballPreferenceService.switchToDefaultPhoto(playerId);
@@ -167,8 +157,8 @@ public class AdminFootballPreferenceService {
     public ApiResponse<String> deletePhoto(@Nullable Authentication auth, long photoId, String requestUrl) {
         Map<String, String> params = Map.of("photoId", String.valueOf(photoId));
         try {
-            if(auth==null || !auth.isAuthenticated()) {
-                throw new IllegalArgumentException("Not authenticated Authentication:"+auth);
+            if (auth == null || !auth.isAuthenticated()) {
+                throw new IllegalArgumentException("Not authenticated Authentication:" + auth);
             }
             String username = auth.getName();
             boolean success = footballPreferenceService.deletePhoto(username, photoId);
@@ -187,7 +177,12 @@ public class AdminFootballPreferenceService {
             PlayerResponse responseDto = FootballPreferenceMapper.toPlayerDtoWithCustomPhoto(player, photoUrl);
             responseList.add(responseDto);
         }
-        return responseList.toArray(new PlayerResponse[]{});
+        return responseList.toArray(new PlayerResponse[] {});
     }
 
+    public AdminFootballPreferenceService(final FootballPreferenceService footballPreferenceService, final ApiCommonResponseService apiResponseService, final FootballRoot footballRoot) {
+        this.footballPreferenceService = footballPreferenceService;
+        this.apiResponseService = apiResponseService;
+        this.footballRoot = footballRoot;
+    }
 }

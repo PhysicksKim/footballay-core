@@ -2,23 +2,20 @@ package com.footballay.core.domain.football.persistence.apicache;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.footballay.core.config.JacksonConfig;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import java.util.Map;
 
-@Slf4j
 @Component
 @Converter(autoApply = true)
 public class JsonFieldConverter implements AttributeConverter<Map<String, Object>, String> {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JsonFieldConverter.class);
     private final ObjectMapper objectMapper;
-
     /**
      * @DataJpaTest 에서 ObjectMapper 를 주입받지 못하는 경우를 대비하여 Fallback 을 사용합니다.
      */
@@ -46,7 +43,7 @@ public class JsonFieldConverter implements AttributeConverter<Map<String, Object
     @Override
     public Map<String, Object> convertToEntityAttribute(String dbData) {
         try {
-            return (Map<String, Object>) objectMapper.readValue(dbData, Map.class);
+            return objectMapper.readValue(dbData, new TypeReference<Map<String, Object>>() {});
         } catch (JacksonException e) {
             throw new RuntimeException("JSON reading error", e);
         }

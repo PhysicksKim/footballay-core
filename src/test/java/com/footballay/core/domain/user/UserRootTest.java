@@ -5,28 +5,21 @@ import com.footballay.core.domain.user.entity.Role;
 import com.footballay.core.domain.user.entity.User;
 import com.footballay.core.domain.user.repository.AuthorityRepository;
 import com.footballay.core.domain.user.repository.UserRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import java.util.Arrays;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @SpringBootTest
 class UserRootTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserRootTest.class);
     @Autowired
     private UserRoot userRoot;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private AuthorityRepository authorityRepository;
-
     private static final String TEST_USERNAME = "usertester";
     private static final String TEST_PASSWORD = "test1";
     private static final String TEST_NICKNAME = "유저테스터";
@@ -42,7 +35,6 @@ class UserRootTest {
         User user = saveUser(TEST_USERNAME, TEST_NICKNAME, TEST_PASSWORD);
         User admin = saveUser(TEST_USERNAME2, TEST_NICKNAME2, TEST_PASSWORD2);
         User multiRole = saveUser(TEST_USERNAME3, TEST_NICKNAME3, TEST_PASSWORD3);
-
         saveAuthority(user, Role.ROLE_USER);
         saveAuthority(admin, Role.ROLE_ADMIN);
         saveAuthority(multiRole, Role.ROLE_USER);
@@ -55,12 +47,13 @@ class UserRootTest {
         userRepository.deleteAll();
     }
 
+
     @Nested
     @DisplayName("savePlayerCustomPhoto 메서드")
     class SavePlayerCustomPhotoTest {
 
         enum ResponseRole {
-            admin,user
+            admin, user;
         }
 
         @DisplayName("유저 정보를 가져옵니다")
@@ -69,7 +62,6 @@ class UserRootTest {
             // when
             UserInfoDto userInfo = userRoot.getUserInfo(TEST_USERNAME);
             logUserInfoDto(userInfo);
-
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME);
             assertThat(userInfo.roles()).contains("user");
@@ -82,7 +74,6 @@ class UserRootTest {
             // when
             UserInfoDto userInfo = userRoot.getUserInfo(TEST_USERNAME2);
             logUserInfoDto(userInfo);
-
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME2);
             assertThat(userInfo.roles()).contains("admin");
@@ -95,7 +86,6 @@ class UserRootTest {
             // when
             UserInfoDto userInfo = userRoot.getUserInfo(TEST_USERNAME3);
             logUserInfoDto(userInfo);
-
             // then
             assertThat(userInfo.nickname()).isEqualTo(TEST_NICKNAME3);
             assertThat(userInfo.roles()).contains("user");
@@ -111,11 +101,7 @@ class UserRootTest {
     }
 
     private User saveUser(String username, String nickname, String password) {
-        User user = User.builder()
-                .username(username)
-                .nickname(nickname)
-                .password(password)
-                .build();
+        User user = User.builder().username(username).nickname(nickname).password(password).build();
         userRepository.save(user);
         return user;
     }
@@ -124,5 +110,4 @@ class UserRootTest {
         log.info("nickname={}", userInfo.nickname());
         log.info("roles={}", Arrays.toString(userInfo.roles()));
     }
-
 }

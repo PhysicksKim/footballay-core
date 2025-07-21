@@ -15,11 +15,8 @@ import com.footballay.core.domain.football.repository.LeagueRepository;
 import com.footballay.core.domain.football.service.FootballAvailableService;
 import com.footballay.core.domain.football.service.FootballDataService;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -32,15 +29,12 @@ import java.util.Optional;
  * 여러 Service 간의 CRUD 가 이뤄질 때 의도적으로 Domain Root 계층에서 Transaction 이 종료되도록 하기 위함입니다. <br>
  * 예를 들어 팀-선수 간 연관관계 맵핑 엔티티들을 추가한 후 읽을 때, 쓰기와 읽기간 Transaction 이 분리되도록 합니다.
  */
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class FootballRoot {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballRoot.class);
     private final FootballApiCacheService footballApiCacheService;
     private final FootballDataService footballDataService;
     private final FootballAvailableService footballAvailableService;
-
     private final LeagueRepository leagueRepository;
 
     public ExternalApiStatusDto getExternalApiStatus() {
@@ -69,11 +63,8 @@ public class FootballRoot {
     }
 
     public LeagueDto addAvailableLeague(long leagueId) {
-        League league = leagueRepository.findById(leagueId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
-
+        League league = leagueRepository.findById(leagueId).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 리그입니다."));
         footballAvailableService.updateAvailableLeague(leagueId, true);
-
         return FootballDomainDtoMapper.leagueDtoFromEntity(league);
     }
 
@@ -146,7 +137,6 @@ public class FootballRoot {
     }
 
     // TODO : getFixturesOnNearestDate() 와 중복되므로 이 메서드를 삭제해야함
-
     /**
      * 주어진 날짜를 기준으로 가장 가까운 날짜의 fixture 들을 모두 가져옵니다.
      * 주어진 날짜는 항상 00:00:00 으로 재설정 됩니다.
@@ -261,8 +251,7 @@ public class FootballRoot {
         try {
             List<Player> players = footballApiCacheService.cacheTeamSquad(teamId);
             log.info("cachedSquadOfTeam :: {}", teamId);
-            log.info("cached players :: {}",
-                    players.stream().map(Player::getName).toList());
+            log.info("cached players :: {}", players.stream().map(Player::getName).toList());
         } catch (Exception e) {
             log.error("error while caching Squad of Team :: {}", e.getMessage());
             return false;
@@ -280,8 +269,7 @@ public class FootballRoot {
         try {
             List<Fixture> fixtures = footballApiCacheService.cacheFixturesOfLeague(leagueId);
             log.info("cachedAllFixturesOfLeague :: {}", leagueId);
-            log.info("cached fixtures :: {}",
-                    fixtures.stream().map(Fixture::getFixtureId).toList());
+            log.info("cached fixtures :: {}", fixtures.stream().map(Fixture::getFixtureId).toList());
         } catch (Exception e) {
             log.error("error while caching All Fixtures of League :: {}", e.getMessage(), e);
             return false;
@@ -403,7 +391,6 @@ public class FootballRoot {
             Fixture findFixture = footballDataService.getFixtureById(fixtureId);
             Team home = findFixture.getHomeTeam();
             Team away = findFixture.getAwayTeam();
-
             List<MatchLineup> lineups = new ArrayList<>();
             Optional<MatchLineup> homeLineup = footballDataService.getStartLineup(findFixture, home);
             Optional<MatchLineup> awayLineup = footballDataService.getStartLineup(findFixture, away);
@@ -411,7 +398,6 @@ public class FootballRoot {
                 log.info("lineup is not exist id={}", fixtureId);
                 return Optional.of(FootballDomainDtoMapper.fixtureWithEmptyLineupDtoFromEntity(findFixture));
             }
-
             homeLineup.ifPresent(lineups::add);
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
@@ -451,17 +437,12 @@ public class FootballRoot {
      * @param fixtureId 조회할 fixtureId
      * @return 통계정보를 포함한 Dto. Error 발생 시 null 을 반환합니다.
      */
-    public @Nullable MatchStatisticsDto getMatchStatistics(long fixtureId) {
+    @Nullable
+    public MatchStatisticsDto getMatchStatistics(long fixtureId) {
         log.info("getMatchStatistics :: fixtureId={}", fixtureId);
         try {
             var matchStats = footballDataService.getFixtureWithMatchStatistics(fixtureId);
-            MatchStatisticsDto dto = FootballDomainDtoMapper.matchStatisticsDTOFromEntity(
-                    matchStats.fixture(),
-                    matchStats.homeStats(),
-                    matchStats.awayStats(),
-                    matchStats.homePlayerStats(),
-                    matchStats.awayPlayerStats()
-            );
+            MatchStatisticsDto dto = FootballDomainDtoMapper.matchStatisticsDTOFromEntity(matchStats.fixture(), matchStats.homeStats(), matchStats.awayStats(), matchStats.homePlayerStats(), matchStats.awayPlayerStats());
             log.debug("return getMatchStatistics :: {}", dto);
             return dto;
         } catch (Exception e) {
@@ -470,4 +451,10 @@ public class FootballRoot {
         }
     }
 
+    public FootballRoot(final FootballApiCacheService footballApiCacheService, final FootballDataService footballDataService, final FootballAvailableService footballAvailableService, final LeagueRepository leagueRepository) {
+        this.footballApiCacheService = footballApiCacheService;
+        this.footballDataService = footballDataService;
+        this.footballAvailableService = footballAvailableService;
+        this.leagueRepository = leagueRepository;
+    }
 }

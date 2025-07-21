@@ -1,14 +1,10 @@
 package com.footballay.core.websocket.domain.scoreboard.remote.code;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
 import org.springframework.util.StringUtils;
-
 import java.security.SecureRandom;
 
-@Getter
 public class RemoteCode {
-
     private final String remoteCode;
 
     protected RemoteCode(@NotBlank String remoteCode) {
@@ -19,9 +15,7 @@ public class RemoteCode {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         RemoteCode that = (RemoteCode) o;
-
         return getRemoteCode() != null ? getRemoteCode().equals(that.getRemoteCode()) : that.getRemoteCode() == null;
     }
 
@@ -41,21 +35,20 @@ public class RemoteCode {
     }
 
     public static RemoteCode of(@NotBlank String remoteCode) {
-        if(!StringUtils.hasText(remoteCode)) {
+        if (!StringUtils.hasText(remoteCode)) {
             throw new IllegalArgumentException("noshow:remoteCode should not null or empty.");
         }
-        if(remoteCode.length() != CodeGenerator.LENGTH) {
+        if (remoteCode.length() != CodeGenerator.LENGTH) {
             throw new IllegalArgumentException("noshow:remoteCode length should be " + CodeGenerator.LENGTH);
         }
-        if(remoteCode.chars().anyMatch(c -> CodeGenerator.CHARACTERS.indexOf(c) == -1)) {
+        if (remoteCode.chars().anyMatch(c -> CodeGenerator.CHARACTERS.indexOf(c) == -1)) {
             throw new IllegalArgumentException("noshow:remoteCode should be composed of {" + CodeGenerator.CHARACTERS + '}');
         }
-
         return new RemoteCode(remoteCode);
     }
 
-    private static class CodeGenerator {
 
+    private static class CodeGenerator {
         private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
         private static final int LENGTH = 6;
         private static final SecureRandom random = new SecureRandom();
@@ -68,5 +61,9 @@ public class RemoteCode {
             }
             return stringBuilder.toString();
         }
+    }
+
+    public String getRemoteCode() {
+        return this.remoteCode;
     }
 }

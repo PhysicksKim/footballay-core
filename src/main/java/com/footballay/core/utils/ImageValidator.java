@@ -2,21 +2,18 @@ package com.footballay.core.utils;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 
-@Slf4j
 @Component
 public class ImageValidator {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ImageValidator.class);
     private final Tika tika;
 
     public ImageValidator() {
@@ -43,19 +40,16 @@ public class ImageValidator {
     public void validateContentType(@Nullable MultipartFile file, @NotNull String... allowContentTypes) {
         validateFileNotEmpty(file);
         assert file != null;
-
         if (allowContentTypes.length == 0) {
             return;
         }
-
         String contentType = file.getContentType();
         for (String memeType : allowContentTypes) {
             if (memeType.equalsIgnoreCase(contentType)) {
                 return;
             }
         }
-        throw new IllegalArgumentException("파일의 형식이 일치하지 않습니다. 주어진 파일형식=" + contentType
-                + " 허용된 파일형식=" + Arrays.toString(allowContentTypes));
+        throw new IllegalArgumentException("파일의 형식이 일치하지 않습니다. 주어진 파일형식=" + contentType + " 허용된 파일형식=" + Arrays.toString(allowContentTypes));
     }
 
     /**
@@ -66,15 +60,13 @@ public class ImageValidator {
         try {
             validateFileNotEmpty(file);
             assert file != null;
-
             String detectedType = tika.detect(file.getInputStream());
             for (MediaType mediaType : allowMediaType) {
                 if (mediaType.toString().equals(detectedType)) {
                     return;
                 }
             }
-            throw new IllegalArgumentException("파일의 서명이 일치하지 않습니다. 주어진 파일형식=" + detectedType
-                    + " 허용된 파일형식=" + Arrays.toString(allowMediaType));
+            throw new IllegalArgumentException("파일의 서명이 일치하지 않습니다. 주어진 파일형식=" + detectedType + " 허용된 파일형식=" + Arrays.toString(allowMediaType));
         } catch (IOException e) {
             throw new IllegalArgumentException("파일을 분석하는 중 오류가 발생했습니다.", e);
         }
@@ -88,7 +80,6 @@ public class ImageValidator {
         try {
             validateFileNotEmpty(file);
             assert file != null;
-
             BufferedImage image = ImageIO.read(file.getInputStream());
             if (image == null) {
                 throw new IllegalArgumentException("유효한 이미지 파일이 아닙니다.");
@@ -102,5 +93,4 @@ public class ImageValidator {
             throw new IllegalArgumentException("이미지 파일을 읽는 중 오류가 발생했습니다.", e);
         }
     }
-
 }

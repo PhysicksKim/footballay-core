@@ -7,25 +7,19 @@ import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.reposit
 import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.repository.AutoRemoteRedisRepository;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.service.RedisRemoteCodeService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 @Transactional
 public class AutoRemoteService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AutoRemoteService.class);
     private final RedisRemoteCodeService remoteCodeService;
-
     private final AutoRemoteRedisRepository autoRemoteRedisRepository;
     private final AutoRemoteGroupRepository groupRepository;
     private final AnonymousUserRepository userRepository;
@@ -37,10 +31,9 @@ public class AutoRemoteService {
      */
     @Transactional
     public AnonymousUser createAndSaveAnonymousUser(AutoRemoteGroup autoRemoteGroup) {
-        if(autoRemoteGroup == null) {
+        if (autoRemoteGroup == null) {
             throw new IllegalArgumentException("noshow:AutoRemoteGroup 이 존재하지 않습니다.");
         }
-
         AnonymousUser anonymousUser = new AnonymousUser(); // UUID는 자동으로 생성됩니다.
         anonymousUser.setAutoRemoteGroup(autoRemoteGroup); // AutoRemoteGroup을 설정합니다.
         anonymousUser.setLastConnectedAt(LocalDateTime.now());
@@ -63,19 +56,15 @@ public class AutoRemoteService {
         if (principal == null || !StringUtils.hasText(nickname)) {
             throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
-
         String userUuid = findPreCachedUserUUID(principal);
         if (userUuid == null) {
             throw new IllegalArgumentException("noshow:존재하지 않는 익명 유저 UUID 입니다.");
         }
         UUID uuid = UUID.fromString(userUuid);
-        AnonymousUser findUser = userRepository.findById(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("noshow:일치하는 익명 유저가 없습니다."));
-
+        AnonymousUser findUser = userRepository.findById(uuid).orElseThrow(() -> new IllegalArgumentException("noshow:일치하는 익명 유저가 없습니다."));
         AutoRemoteGroup autoRemoteGroup = findUser.getAutoRemoteGroup();
         String findRemoteCode = getActiveRemoteCodeFrom(autoRemoteGroup);
         RemoteCode remoteCode;
-
         if (isActiveRemoteCodeExist(findRemoteCode)) {
             log.info("RemoteCode 가 존재합니다. RemoteCode: {}", findRemoteCode);
             remoteCode = RemoteCode.of(findRemoteCode);
@@ -83,11 +72,9 @@ public class AutoRemoteService {
         } else {
             log.info("RemoteCode 가 존재하지 않습니다. RemoteCode 를 발급합니다.");
             // cleanPrevRemoteGroup(autoRemoteGroup);
-            remoteCode = remoteCodeService
-                    .generateCodeAndSubscribe(principal.getName(), nickname);
+            remoteCode = remoteCodeService.generateCodeAndSubscribe(principal.getName(), nickname);
             activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
-
         autoRemoteGroup.setLastActiveAt(LocalDateTime.now());
         return remoteCode;
     }
@@ -117,14 +104,9 @@ public class AutoRemoteService {
             log.info("userUUID: {}", userUUID);
             throw new IllegalArgumentException("noshow:잘못된 요청입니다. 사용자 UUID 또는 Principal 이 존재하지 않습니다.");
         }
-
         UUID uuid = UUID.fromString(userUUID);
-        AnonymousUser findUser = userRepository.findById(uuid)
-                .orElseThrow(() -> new IllegalArgumentException("noshow:존재하지 않는 익명 유저입니다."));
-
-        autoRemoteRedisRepository
-                .setUserPreCacheForCookie(principal.getName(), userUUID);
-
+        AnonymousUser findUser = userRepository.findById(uuid).orElseThrow(() -> new IllegalArgumentException("noshow:존재하지 않는 익명 유저입니다."));
+        autoRemoteRedisRepository.setUserPreCacheForCookie(principal.getName(), userUUID);
         findUser.setLastConnectedAt(LocalDateTime.now());
     }
 
@@ -157,20 +139,15 @@ public class AutoRemoteService {
     }
 
     private String getActiveRemoteCodeFrom(AutoRemoteGroup autoRemoteGroup) {
-        return autoRemoteRedisRepository
-                .findRemoteCodeFromAutoGroupId(autoRemoteGroup.getId().toString());
+        return autoRemoteRedisRepository.findRemoteCodeFromAutoGroupId(autoRemoteGroup.getId().toString());
     }
 
     public String findPreCachedUserUUID(Principal principal) {
-        return autoRemoteRedisRepository
-                .findPrincipalToUuid(principal.getName()).orElseThrow(() -> new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다."));
+        return autoRemoteRedisRepository.findPrincipalToUuid(principal.getName()).orElseThrow(() -> new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다."));
     }
+
     public UUID findPreCachedUserUUID(String username) {
-        String preCachedUserUUID = autoRemoteRedisRepository
-                .findPrincipalToUuid(username)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다.")
-                );
+        String preCachedUserUUID = autoRemoteRedisRepository.findPrincipalToUuid(username).orElseThrow(() -> new IllegalArgumentException("noshow:유저 정보가 존재하지 않습니다."));
         log.info("get uuid for cookie from principalName : {}", preCachedUserUUID);
         return UUID.fromString(preCachedUserUUID);
     }
@@ -181,8 +158,7 @@ public class AutoRemoteService {
         if (optionalGroupId.isPresent()) {
             // 이미 누군가 자동 연결 그룹을 생성했다면, 기존 그룹에 참여합니다.
             log.info("기존에 생성된 그룹에 참여");
-            autoRemoteGroup = getAutoRemoteGroup(optionalGroupId.get())
-                    .orElseThrow(() -> new IllegalArgumentException("noshow:캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
+            autoRemoteGroup = getAutoRemoteGroup(optionalGroupId.get()).orElseThrow(() -> new IllegalArgumentException("noshow:캐싱된 원격 그룹과 일치하는 원격 그룹이 존재하지 않습니다."));
         } else {
             // 아직 자동 연결 그룹이 생성되지 않았다면, 새로 그룹을 만듭니다.
             log.info("기존 그룹이 없으므로 새롭게 그룹 생성");
@@ -191,10 +167,8 @@ public class AutoRemoteService {
             log.info("autoRemoteGroup id : {}", autoRemoteGroup.getId());
             this.activateAutoRemoteGroup(remoteCode, autoRemoteGroup.getId());
         }
-
         AnonymousUser createdUser = createAndSaveAnonymousUser(autoRemoteGroup);
         UUID uuid = createdUser.getId();
-
         validateAndCacheUserToRedis(principal, uuid.toString());
         return createdUser.getId();
     }
@@ -211,5 +185,12 @@ public class AutoRemoteService {
             return false;
         }
         return StringUtils.hasText(remoteCode);
+    }
+
+    public AutoRemoteService(final RedisRemoteCodeService remoteCodeService, final AutoRemoteRedisRepository autoRemoteRedisRepository, final AutoRemoteGroupRepository groupRepository, final AnonymousUserRepository userRepository) {
+        this.remoteCodeService = remoteCodeService;
+        this.autoRemoteRedisRepository = autoRemoteRedisRepository;
+        this.groupRepository = groupRepository;
+        this.userRepository = userRepository;
     }
 }

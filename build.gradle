@@ -67,9 +67,7 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
-    compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    annotationProcessor 'org.projectlombok:lombok'
 
     // Quartz
     implementation 'org.springframework.boot:spring-boot-starter-quartz'
@@ -93,8 +91,6 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'com.redis.testcontainers:testcontainers-redis:1.6.4'
 
-    testCompileOnly 'org.projectlombok:lombok'
-    testAnnotationProcessor 'org.projectlombok:lombok'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 }
 

@@ -3,24 +3,20 @@ package com.footballay.core.domain.football.external.lastlog;
 import com.footballay.core.domain.football.constant.LeagueId;
 import com.footballay.core.domain.football.persistence.apicache.ApiCacheType;
 import com.footballay.core.domain.football.persistence.apicache.LastCacheLog;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
 import java.time.ZonedDateTime;
 import java.util.Map;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @ActiveProfiles("mockapi")
 @SpringBootTest
 class LastCacheLogServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LastCacheLogServiceTest.class);
     @Autowired
     private LastCacheLogService lastCacheLogService;
 
@@ -31,11 +27,9 @@ class LastCacheLogServiceTest {
         ApiCacheType type = ApiCacheType.LEAGUE;
         Map<String, Object> parameters = Map.of("leagueId", (int) LeagueId.EPL);
         ZonedDateTime cachedAt = ZonedDateTime.now();
-
         // when
         LastCacheLog lastCacheLog = lastCacheLogService.saveApiCache(type, parameters, cachedAt);
         log.info("Cache Entity :: {}", lastCacheLog);
-
         // then
         assertThat(lastCacheLog).isNotNull();
         assertThat(lastCacheLog.getApiCacheType()).isEqualTo(type);
@@ -51,16 +45,13 @@ class LastCacheLogServiceTest {
         Map<String, Object> beforeParams = Map.of("leagueId", (int) LeagueId.EPL);
         ZonedDateTime beforeCachedAt = ZonedDateTime.now().minusDays(1).minusHours(3);
         LastCacheLog beforeLastCacheLog = lastCacheLogService.saveApiCache(type1, beforeParams, beforeCachedAt);
-
         // when
         ApiCacheType type2 = ApiCacheType.LEAGUE;
         Map<String, Object> afterParams = Map.of("leagueId", (int) LeagueId.EPL);
         ZonedDateTime afterCachedAt = ZonedDateTime.now();
         LastCacheLog afterLastCacheLog = lastCacheLogService.saveApiCache(type2, afterParams, afterCachedAt);
-
         log.info("before Cache :: {}", beforeLastCacheLog);
         log.info("after Cache :: {}", afterLastCacheLog);
-
         // then
         assertThat(beforeLastCacheLog).isEqualTo(afterLastCacheLog);
         Assertions.assertFalse(afterLastCacheLog.equalsWithTime(beforeLastCacheLog));
@@ -75,17 +66,13 @@ class LastCacheLogServiceTest {
         ApiCacheType type = ApiCacheType.CURRENT_LEAGUES;
         Map<String, Object> emptyParams = Map.of();
         ZonedDateTime cachedAt = ZonedDateTime.now();
-
         // when
         LastCacheLog lastCacheLog = lastCacheLogService.saveApiCache(type, emptyParams, cachedAt);
         log.info("Cache Entity :: {}", lastCacheLog);
-
         // then
         assertThat(lastCacheLog).isNotNull();
         assertThat(lastCacheLog.getApiCacheType()).isEqualTo(type);
         assertThat(lastCacheLog.getParametersJson()).isEqualTo(emptyParams);
         assertThat(lastCacheLog.getLastCachedAt()).isEqualTo(cachedAt);
     }
-
-
 }
