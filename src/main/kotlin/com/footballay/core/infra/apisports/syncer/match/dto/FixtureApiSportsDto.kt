@@ -13,7 +13,16 @@ data class FixtureApiSportsDto(
     val score: ScoreDto? = null,
     val venue: VenueDto? = null,
     val seasonYear: Int? = null,
+    val homeTeam: BaseTeamDto? = null,
+    val awayTeam: BaseTeamDto? = null,
 ) {
+    data class BaseTeamDto(
+        val apiId: Long,
+        val name: String,
+        val logo: String?,
+        val winner: Boolean?
+    )
+
     data class VenueDto(
         var apiId: Long? = null,
         var name: String? = null,

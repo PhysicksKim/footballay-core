@@ -4,10 +4,8 @@ import com.footballay.core.infra.apisports.live.FullMatchSyncDto
 import com.footballay.core.infra.apisports.syncer.match.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.syncer.match.context.MatchPlayerKeyGenerator.generateMatchPlayerKey
 import com.footballay.core.infra.apisports.syncer.match.dto.MatchPlayerDto
-import com.footballay.core.infra.apisports.syncer.match.teamstat.TeamStatSyncer
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import java.time.OffsetDateTime
 import org.junit.jupiter.api.Assertions.*
@@ -30,7 +28,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = emptyList())
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertTrue(result.homePlayerStatList.isEmpty())
@@ -46,7 +44,7 @@ class PlayerStatSyncerTest {
         )
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertTrue(result.homePlayerStatList.isEmpty())
@@ -69,7 +67,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertTrue(result.homePlayerStatList.isEmpty())
@@ -91,7 +89,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertTrue(result.homePlayerStatList.isEmpty())
@@ -113,7 +111,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -140,7 +138,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -163,7 +161,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -186,7 +184,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -225,7 +223,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -256,7 +254,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -286,7 +284,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)
@@ -312,7 +310,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertTrue(result.homePlayerStatList.isEmpty())
@@ -339,7 +337,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(2, result.homePlayerStatList.size)
@@ -373,7 +371,7 @@ class PlayerStatSyncerTest {
         val dto = createFullMatchSyncDto(players = listOf(homePlayerStats, awayPlayerStats))
 
         // when
-        val result = playerStatSyncer.syncPlayerStats(dto, context)
+        val result = playerStatSyncer.extractPlayerStats(dto, context)
 
         // then
         assertEquals(1, result.homePlayerStatList.size)

@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports
 
 import com.footballay.core.infra.apisports.dto.PlayerApiSportsCreateDto
 import com.footballay.core.infra.apisports.syncer.PlayerApiSportsSyncer
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository

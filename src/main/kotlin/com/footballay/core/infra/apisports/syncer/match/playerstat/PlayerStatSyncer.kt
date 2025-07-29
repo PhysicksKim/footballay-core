@@ -4,7 +4,6 @@ import com.footballay.core.infra.apisports.live.FullMatchSyncDto
 import com.footballay.core.infra.apisports.syncer.match.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.syncer.match.dto.MatchPlayerDto
 import com.footballay.core.infra.apisports.syncer.match.dto.PlayerStatSyncDto
-import com.footballay.core.infra.apisports.syncer.match.teamstat.TeamStatSyncer
 import com.footballay.core.infra.apisports.syncer.match.context.MatchPlayerKeyGenerator.generateMatchPlayerKey as generateMpKey
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Component
  * - 통계 전용 선수 생성 (드물지만 가능)
  */
 @Component
-class PlayerStatSyncer : MatchPlayerStatSync {
+class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
 
     companion object {
         private const val DEFAULT_SUBSTITUTE_VALUE = true
@@ -26,7 +25,7 @@ class PlayerStatSyncer : MatchPlayerStatSync {
 
     private val log = logger()
 
-    override fun syncPlayerStats(dto: FullMatchSyncDto, context: MatchPlayerContext): PlayerStatSyncDto {
+    override fun extractPlayerStats(dto: FullMatchSyncDto, context: MatchPlayerContext): PlayerStatSyncDto {
         if(dto.players.isEmpty()) {
             log.info("Not exist player statistics for match: ${dto.fixture.id}")
             return PlayerStatSyncDto.empty()

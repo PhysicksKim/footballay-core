@@ -31,7 +31,7 @@ class EventSyncerTest {
         val dto = createDtoWithEmptyEvents()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertTrue(result.events.isEmpty())
@@ -44,7 +44,7 @@ class EventSyncerTest {
         val dto = createDtoWithNullTeamIds()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertTrue(result.events.isEmpty())
@@ -57,7 +57,7 @@ class EventSyncerTest {
         val dto = createDtoWithEmptyLineups()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertTrue(result.events.isEmpty())
@@ -70,7 +70,7 @@ class EventSyncerTest {
         val dto = createDtoWithNormalSubstEvent()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -89,7 +89,7 @@ class EventSyncerTest {
         val dto = createDtoWithReversedSubstEvent()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -108,7 +108,7 @@ class EventSyncerTest {
         val dto = createDtoWithGoalEvent()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -126,7 +126,7 @@ class EventSyncerTest {
         val dto = createDtoWithEventOnlyPlayer()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -150,7 +150,7 @@ class EventSyncerTest {
         val dto = createDtoWithMultipleEvents()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(3, result.events.size)
@@ -175,7 +175,7 @@ class EventSyncerTest {
         val dto = createDtoWithConsecutiveSubstitutions()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(2, result.events.size)
@@ -200,7 +200,7 @@ class EventSyncerTest {
         val dto = createDtoWithAbnormalSubstEvent()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -219,7 +219,7 @@ class EventSyncerTest {
         val dto = createDtoWithNullPlayerAssist()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -237,7 +237,7 @@ class EventSyncerTest {
         val dto = createDtoWithNullPlayerAssistNames()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(1, result.events.size)
@@ -256,7 +256,7 @@ class EventSyncerTest {
         val dto = createDtoWithMultiTeamSubstitutions()
 
         // when
-        val result = eventSyncer.syncEvents(dto, context)
+        val result = eventSyncer.extractEvents(dto, context)
 
         // then
         assertEquals(2, result.events.size)

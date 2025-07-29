@@ -1,4 +1,4 @@
-package com.footballay.core.infra.core.util
+package com.footballay.core.infra.util
 
 interface UidGenerator {
     fun generateUid(): String

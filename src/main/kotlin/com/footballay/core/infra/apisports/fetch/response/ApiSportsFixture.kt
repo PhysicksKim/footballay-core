@@ -2,6 +2,9 @@ package com.footballay.core.infra.apisports.fetch.response
 
 import java.time.OffsetDateTime
 
+/**
+ * ApiSportsFixture 응답 모델입니다. /fixture 엔드포인트에서 반환되는 형식에 대한 맵핑 객체입니다.
+ */
 object ApiSportsFixture {
 
     data class Single(

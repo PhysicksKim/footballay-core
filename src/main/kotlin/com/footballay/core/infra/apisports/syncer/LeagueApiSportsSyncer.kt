@@ -3,7 +3,7 @@ package com.footballay.core.infra.apisports.syncer
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsCoverageCreateDto
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsCreateDto
 import com.footballay.core.infra.apisports.dto.LeagueApiSportsSeasonCreateDto
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsCoverage
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason

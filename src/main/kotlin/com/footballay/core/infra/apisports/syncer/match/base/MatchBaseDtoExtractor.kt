@@ -6,7 +6,7 @@ import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason
 
-interface MatchBaseSync {
+interface MatchBaseDtoExtractor {
 
     /**
      * fixture 기본 정보
@@ -16,6 +16,6 @@ interface MatchBaseSync {
      * - [VenueApiSports]
      * - [LeagueApiSportsSeason]
      */
-    fun syncBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto
+    fun extractBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto
 
 }

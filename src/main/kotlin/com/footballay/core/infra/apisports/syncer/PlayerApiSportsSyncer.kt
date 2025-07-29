@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.syncer
 
 import com.footballay.core.infra.apisports.dto.PlayerApiSportsCreateDto
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.PlayerCore

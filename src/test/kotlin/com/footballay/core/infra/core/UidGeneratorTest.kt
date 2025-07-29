@@ -1,6 +1,6 @@
 package com.footballay.core.infra.core
 
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest

@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component
  * - 새로운 선수는 자동으로 Context에 추가
  */
 @Component
-class LineupSyncer : MatchLineupSync {
+class LineupSyncer : MatchLineupDtoExtractor {
 
     private val log = logger()
 
-    override fun syncLineup(dto: FullMatchSyncDto, context: MatchPlayerContext): LineupSyncDto {
+    override fun extractLineup(dto: FullMatchSyncDto, context: MatchPlayerContext): LineupSyncDto {
         val homeId = dto.teams.home.id
         val awayId = dto.teams.away.id
 

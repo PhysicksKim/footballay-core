@@ -30,7 +30,7 @@ class LineupSyncerTest {
         val dto = createNormalLineupDto()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -62,7 +62,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullTeamIds()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -76,7 +76,7 @@ class LineupSyncerTest {
         val dto = createDtoWithEmptyLineups()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -90,7 +90,7 @@ class LineupSyncerTest {
         val dto = createDtoWithMismatchedTeams()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -104,7 +104,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerNames()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -120,7 +120,7 @@ class LineupSyncerTest {
         val dto = createDtoWithEmptyPlayerNames()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -136,7 +136,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerIds()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -161,7 +161,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerPositions()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -180,7 +180,7 @@ class LineupSyncerTest {
         val dto = createDtoWithAbnormalPlayerCounts()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -196,7 +196,7 @@ class LineupSyncerTest {
         val dto = createDtoWithAllMissingPlayerInfo()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertTrue(result.home!!.startMpKeys.isEmpty())
@@ -213,7 +213,7 @@ class LineupSyncerTest {
         val dto = createDtoWithDuplicatePlayerNames()
 
         // when
-        val result = lineupSyncer.syncLineup(dto, context)
+        val result = lineupSyncer.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())

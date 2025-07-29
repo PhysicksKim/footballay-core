@@ -23,7 +23,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithNormalStatistics()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -91,7 +91,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithEmptyStatistics()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -105,7 +105,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithHomeTeamStatisticsOnly()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -119,7 +119,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithHomeTeamStatisticsOnly()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -133,7 +133,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithAwayTeamStatisticsOnly()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -147,7 +147,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithNullTeamId()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -161,7 +161,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithNullElapsedTime()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -175,7 +175,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithNullXG()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -189,7 +189,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithAllNullStatistics()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -213,7 +213,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithMismatchedTeamIds()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -227,7 +227,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithInvalidXGFormat()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)
@@ -243,7 +243,7 @@ class TeamStatSyncerTest {
         val dto = createDtoWithEmptyXG()
 
         // when
-        val result = teamStatSyncer.syncTeamStats(dto)
+        val result = teamStatSyncer.extractTeamStats(dto)
 
         // then
         assertNotNull(result)

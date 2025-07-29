@@ -10,17 +10,16 @@ import org.springframework.transaction.annotation.Transactional
 
 @Component
 class MatchDataLoaderImpl (
-    val dataQueryService: MatchDataQueryService,
-    val dtoMapper: MatchDtoMapper
+    val entityQueryService: MatchEntityQueryService
 ) : MatchDataLoader {
 
     val log = logger()
 
     @Transactional(readOnly = true)
     override fun loadContext(fixtureApiId: Long, context: MatchPlayerContext, entityBundle: MatchEntityBundle) {
-        val homeTeam = dataQueryService.loadHomeTeamWithPlayersAndStats(fixtureApiId)
-        val awayTeam = dataQueryService.loadAwayTeamWithPlayersAndStats(fixtureApiId)
-        val fixtureWithEvent = dataQueryService.loadFixtureWithEvents(fixtureApiId)
+        val homeTeam = entityQueryService.loadHomeTeamWithPlayersAndStats(fixtureApiId)
+        val awayTeam = entityQueryService.loadAwayTeamWithPlayersAndStats(fixtureApiId)
+        val fixtureWithEvent = entityQueryService.loadFixtureWithEvents(fixtureApiId)
 
         log.info("Loading match data for fixtureApiId: $fixtureApiId, homeTeam: ${homeTeam?.teamApiSports?.name}, awayTeam: ${awayTeam?.teamApiSports?.name}, events: ${fixtureWithEvent?.events?.size ?: 0}")
 

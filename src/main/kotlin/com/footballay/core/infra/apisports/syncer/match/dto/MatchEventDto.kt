@@ -1,5 +1,8 @@
 package com.footballay.core.infra.apisports.syncer.match.dto
 
+/**
+ * eventType 이 subst 인 경우 player 가 sub-in 이고 assist 가 sub-out 입니다.
+ */
 data class MatchEventDto(
     val sequence: Int,
     val elapsedTime: Int,

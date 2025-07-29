@@ -1,15 +1,15 @@
 package com.footballay.core.infra.core
 
-import com.footballay.core.infra.core.util.CoreUidGenerator
+import com.footballay.core.infra.util.SimpleUidGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import kotlin.test.Test
 
-internal class CoreUidGeneratorTest {
+internal class SimpleUidGeneratorTest {
 
     private val UidLength = 16
-    private val generator = CoreUidGenerator()
-    private val allowedChars = CoreUidGenerator.ALLOWED_CHARS.toSet()
+    private val generator = SimpleUidGenerator()
+    private val allowedChars = SimpleUidGenerator.ALLOWED_CHARS.toSet()
 
     @DisplayName("UID 가 허용문자조합에 따라서 생성되었는지 검사합니다")
     @Test
@@ -21,7 +21,7 @@ internal class CoreUidGeneratorTest {
         uid.all {
             it in allowedChars
         }.also { isValid ->
-            assertThat(isValid).isTrue.withFailMessage("UID must only contain characters: ${CoreUidGenerator.ALLOWED_CHARS}")
+            assertThat(isValid).isTrue.withFailMessage("UID must only contain characters: ${SimpleUidGenerator.ALLOWED_CHARS}")
         }
     }
 
@@ -30,7 +30,7 @@ internal class CoreUidGeneratorTest {
     fun `유효하지 않은 UID는 false를 반환한다`() {
         assertThat(generator.isValidUid("a")).isFalse()
             .withFailMessage("Too short UID should be invalid")
-        assertThat(generator.isValidUid("x".repeat(CoreUidGenerator.UID_LENGTH + 1))).isFalse()
+        assertThat(generator.isValidUid("x".repeat(SimpleUidGenerator.UID_LENGTH + 1))).isFalse()
             .withFailMessage("Too long UID should be invalid")
         assertThat(generator.isValidUid("")).isFalse()
             .withFailMessage("Empty string should be invalid")

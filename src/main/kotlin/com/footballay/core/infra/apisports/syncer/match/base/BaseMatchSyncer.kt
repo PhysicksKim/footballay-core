@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component
  * - ApiSportsMatchTeam (home/away) 초기화
  */
 @Component
-class BaseMatchSyncer : MatchBaseSync {
+class BaseMatchSyncer : MatchBaseDtoExtractor {
 
     private val log = logger()
 
-    override fun syncBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto {
+    override fun extractBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto {
         log.info("기본 매치 정보 dto: fixtureId=${dto.fixture.id}")
         
         return FixtureApiSportsDto(
@@ -31,6 +31,8 @@ class BaseMatchSyncer : MatchBaseSync {
             venue = mapVenue(dto.fixture.venue),
             status = mapStatus(dto.fixture.status),
             score = mapScore(dto.score, dto.goals.home ?: 0, dto.goals.away ?: 0),
+            homeTeam = mapBaseTeam(dto.teams.home),
+            awayTeam = mapBaseTeam(dto.teams.away),
         )
     }
     
@@ -69,4 +71,13 @@ class BaseMatchSyncer : MatchBaseSync {
             penaltyAway = score.penalty?.away,
         )
     }
+
+     private fun mapBaseTeam(team: FullMatchSyncDto.TeamsDto.TeamDto): FixtureApiSportsDto.BaseTeamDto? {
+         return if(team.id != null) FixtureApiSportsDto.BaseTeamDto(
+             apiId = team.id,
+             name = team.name,
+             logo = team.logo,
+             winner = team.winner
+         ) else { null }
+     }
 } 

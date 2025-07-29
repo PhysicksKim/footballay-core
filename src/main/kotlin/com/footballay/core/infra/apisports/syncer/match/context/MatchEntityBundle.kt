@@ -15,7 +15,7 @@ data class MatchEntityBundle(
     var fixture: FixtureApiSports?,
     var homeTeam: ApiSportsMatchTeam?,
     var awayTeam: ApiSportsMatchTeam?,
-    var allMatchPlayers: List<ApiSportsMatchPlayer>,
+    var allMatchPlayers: Map<String, ApiSportsMatchPlayer>, // key: MatchPlayerKey, value: ApiSportsMatchPlayer
     var allEvents: List<ApiSportsMatchEvent>
 ) {
     companion object {
@@ -24,7 +24,7 @@ data class MatchEntityBundle(
                 fixture = null,
                 homeTeam = null,
                 awayTeam = null,
-                allMatchPlayers = emptyList(),
+                allMatchPlayers = emptyMap(),
                 allEvents = emptyList()
             )
         }

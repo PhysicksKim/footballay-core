@@ -1,10 +1,10 @@
-package com.footballay.core.infra.core.util
+package com.footballay.core.infra.util
 
 import org.springframework.stereotype.Component
 import java.security.SecureRandom
 
 @Component
-class CoreUidGenerator : UidGenerator {
+class SimpleUidGenerator : UidGenerator {
 
     companion object {
         private val random = SecureRandom()

@@ -12,11 +12,30 @@ import com.footballay.core.infra.apisports.syncer.MatchDataSyncer
 import org.springframework.stereotype.Component
 
 /**
- * ApiSports 라이브 매치 데이터 동기화 구현체
- *
- * - PlayerSyncService 대신 ApiSportsPlayerSyncService에 의존
- * - LiveMatchSyncer 대신 ApiSportsLiveMatchSyncService에 의존
- * - 구현체가 아닌 인터페이스에만 의존하여 Provider별 구분과 버전 관리 용이
+ * ApiSports Provider의 라이브 매치 데이터 동기화 구현체
+ * 
+ * ApiSports API를 통해 라이브 매치 데이터를 동기화하는 [MatchDataSyncer] 구현체입니다.
+ * 
+ * **핵심 책임:**
+ * - ApiSports API에서 라이브 데이터 조회
+ * - 선수 사전 저장 (PlayerCore, PlayerApiSports)
+ * - 전체 매치 데이터 동기화
+ * 
+ * **동기화 과정:**
+ * 1. `ApiSportsV3Fetcher`를 통해 라이브 데이터 조회
+ * 2. `FixturePlayerExtractor`로 선수 정보 추출
+ * 3. `PlayerSyncExecutor`로 선수 사전 저장
+ * 4. `MatchApiSportsSyncer`로 매치 엔티티 동기화
+ * 
+ * **특징:**
+ * - 선수 사전 저장으로 Event, PlayerStats에서의 복잡한 선수 처리 로직 단순화
+ * - 인터페이스 기반 의존성으로 Provider별 구분과 버전 관리 용이
+ * - 트랜잭션 분리로 안정성 보장
+ * 
+ * @see MatchDataSyncer
+ * @see MatchApiSportsSyncer
+ * 
+ * AI가 작성한 주석
  */
 @Component
 class ApiSportsMatchSyncFacade(

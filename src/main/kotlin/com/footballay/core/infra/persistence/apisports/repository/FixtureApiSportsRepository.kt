@@ -36,27 +36,27 @@ interface FixtureApiSportsRepository : JpaRepository<FixtureApiSports, Long> {
     fun findEventsByFixtureApiId(fixtureApiId: Long): FixtureApiSports?
 
     @Query("""
-    SELECT f FROM FixtureApiSports f 
-    LEFT JOIN FETCH f.homeTeam ht
-    LEFT JOIN FETCH ht.teamStatistics 
-    LEFT JOIN FETCH ht.players hp 
-    LEFT JOIN FETCH hp.playerApiSports hpas 
-    LEFT JOIN FETCH ht.teamApiSports tas 
-    LEFT JOIN FETCH hp.statistics hps 
-    WHERE f.apiId = :fixtureApiId
-""")
+        SELECT f FROM FixtureApiSports f 
+        LEFT JOIN FETCH f.homeTeam ht
+        LEFT JOIN FETCH ht.teamStatistics 
+        LEFT JOIN FETCH ht.players hp 
+        LEFT JOIN FETCH hp.playerApiSports hpas 
+        LEFT JOIN FETCH ht.teamApiSports tas 
+        LEFT JOIN FETCH hp.statistics hps 
+        WHERE f.apiId = :fixtureApiId
+    """)
     fun findFixtureHomeTeamLineupAndStats(fixtureApiId: Long): FixtureApiSports?
 
     @Query("""
-    SELECT f FROM FixtureApiSports f 
-    LEFT JOIN FETCH f.awayTeam at
-    LEFT JOIN FETCH at.teamStatistics 
-    LEFT JOIN FETCH at.players ap 
-    LEFT JOIN FETCH ap.playerApiSports apas 
-    LEFT JOIN FETCH at.teamApiSports tas 
-    LEFT JOIN FETCH ap.statistics aps 
-    WHERE f.apiId = :fixtureApiId
-""")
+        SELECT f FROM FixtureApiSports f 
+        LEFT JOIN FETCH f.awayTeam at
+        LEFT JOIN FETCH at.teamStatistics 
+        LEFT JOIN FETCH at.players ap 
+        LEFT JOIN FETCH ap.playerApiSports apas 
+        LEFT JOIN FETCH at.teamApiSports tas 
+        LEFT JOIN FETCH ap.statistics aps 
+        WHERE f.apiId = :fixtureApiId
+    """)
     fun findFixtureAwayTeamLineupAndStats(fixtureApiId: Long): FixtureApiSports?
 
 }

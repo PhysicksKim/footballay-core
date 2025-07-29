@@ -9,7 +9,7 @@ import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

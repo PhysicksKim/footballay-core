@@ -5,7 +5,6 @@ import com.footballay.core.infra.apisports.syncer.match.dto.TeamStatSyncDto
 import com.footballay.core.infra.apisports.syncer.match.dto.MatchTeamStatisticsDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
 
 /**
  * 팀 통계 데이터를 동기화합니다.
@@ -16,11 +15,11 @@ import java.math.BigDecimal
  * - 현재 시점의 xG 값만 포함 (시계열 처리는 엔티티 저장 시 처리)
  */
 @Component
-class TeamStatSyncer : MatchTeamStatSync {
+class TeamStatSyncer : MatchTeamStatDtoExtractor {
 
     private val log = logger()
 
-    override fun syncTeamStats(dto: FullMatchSyncDto): TeamStatSyncDto {
+    override fun extractTeamStats(dto: FullMatchSyncDto): TeamStatSyncDto {
         log.info("Starting team stats sync for fixture: ${dto.fixture.id}")
         if(dto.statistics.size < 2) {
             return TeamStatSyncDto.empty()

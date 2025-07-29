@@ -1,7 +1,7 @@
 package com.footballay.core.infra.core
 
 import com.footballay.core.infra.core.dto.LeagueCreateDto
-import com.footballay.core.infra.core.util.UidGenerator
+import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import jakarta.transaction.Transactional

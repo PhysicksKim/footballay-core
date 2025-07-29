@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component
  *
  */
 @Component
-class EventSyncer : MatchEventSync {
+class EventSyncer : MatchEventDtoExtractor {
 
     private val log = logger()
 
@@ -38,7 +38,7 @@ class EventSyncer : MatchEventSync {
      * 또한 같은 경기에서도 subst event 의 player/assist - sub in/out 정보가 이벤트별로 다르고 동일 이벤트도 경기 중에 달라질 수 있기 때문에
      * 이전에 저장된 이벤트 정보를 통해서 유추하면 안됩니다. 매 시행마다 새롭게 시뮬레이션 해야합니다.
      */
-    override fun syncEvents(dto: FullMatchSyncDto, context: MatchPlayerContext): MatchEventSyncDto {
+    override fun extractEvents(dto: FullMatchSyncDto, context: MatchPlayerContext): MatchEventSyncDto {
         if (dto.events.isEmpty()) {
             log.info("이벤트 데이터가 비어 있습니다.")
             return MatchEventSyncDto()
