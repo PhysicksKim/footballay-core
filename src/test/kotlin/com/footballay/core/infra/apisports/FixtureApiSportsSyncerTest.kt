@@ -1,8 +1,8 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.dto.FixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.dto.TeamOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.syncer.FixtureApiSportsSyncer
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.FixtureApiSportsSyncer
 import com.footballay.core.infra.persistence.apisports.entity.*
 import com.footballay.core.infra.persistence.apisports.repository.*
 import com.footballay.core.infra.persistence.core.entity.LeagueCore

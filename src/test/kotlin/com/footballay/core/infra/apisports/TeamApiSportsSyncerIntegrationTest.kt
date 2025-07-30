@@ -1,8 +1,8 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.dto.TeamApiSportsCreateDto
-import com.footballay.core.infra.apisports.dto.VenueApiSportsCreateDto
-import com.footballay.core.infra.apisports.syncer.TeamApiSportsSyncer
+import com.footballay.core.infra.apisports.shared.dto.TeamApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.VenueApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.TeamApiSportsSyncer
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports

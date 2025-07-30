@@ -1,8 +1,8 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.dto.FixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.dto.TeamOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.dto.VenueOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.*
 import com.footballay.core.infra.persistence.apisports.repository.*
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
@@ -18,9 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import com.footballay.core.infra.apisports.dto.StatusOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.dto.ScoreOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.syncer.FixtureApiSportsSyncer
+import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.FixtureApiSportsSyncer
 import org.assertj.core.api.Assertions.assertThat
 
 /**

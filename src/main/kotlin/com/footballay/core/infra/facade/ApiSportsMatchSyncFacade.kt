@@ -1,14 +1,14 @@
 package com.footballay.core.infra.facade
 
 import com.footballay.core.infra.apisports.FixtureApiSportsQueryService
-import com.footballay.core.infra.apisports.fetch.ApiSportsV3Fetcher
-import com.footballay.core.infra.apisports.live.ActionAfterMatchSync
-import com.footballay.core.infra.apisports.live.ApiSportsFixtureSingle
-import com.footballay.core.infra.apisports.live.FixturePlayerExtractor
-import com.footballay.core.infra.apisports.live.FullMatchSyncDto
-import com.footballay.core.infra.apisports.live.PlayerSyncExecutor
-import com.footballay.core.infra.apisports.syncer.match.MatchApiSportsSyncer
-import com.footballay.core.infra.apisports.syncer.MatchDataSyncer
+import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
+import com.footballay.core.infra.apisports.match.live.ActionAfterMatchSync
+import com.footballay.core.infra.apisports.match.live.deprecated.ApiSportsFixtureSingle
+import com.footballay.core.infra.apisports.match.live.FixturePlayerExtractor
+import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.apisports.match.live.PlayerSyncExecutor
+import com.footballay.core.infra.apisports.match.sync.MatchApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.MatchDataSyncer
 import org.springframework.stereotype.Component
 
 /**

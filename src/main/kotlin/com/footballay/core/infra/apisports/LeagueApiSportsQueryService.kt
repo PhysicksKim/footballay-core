@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.model.LeagueApiSportsInfo
+import com.footballay.core.infra.apisports.shared.model.LeagueApiSportsInfo
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.logger

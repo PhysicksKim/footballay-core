@@ -1,16 +1,16 @@
 package com.footballay.core.infra.facade
 
-import com.footballay.core.infra.apisports.syncer.LeagueApiSportsSyncer
-import com.footballay.core.infra.apisports.syncer.TeamApiSportsSyncer
-import com.footballay.core.infra.apisports.syncer.PlayerApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.LeagueApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.TeamApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
-import com.footballay.core.infra.apisports.dto.*
-import com.footballay.core.infra.apisports.fetch.ApiSportsV3Fetcher
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsFixture
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsLeague
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsPlayer
-import com.footballay.core.infra.apisports.fetch.response.ApiSportsTeam
-import com.footballay.core.infra.apisports.syncer.FixtureApiSportsSyncer
+import com.footballay.core.infra.apisports.shared.dto.*
+import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsLeague
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsPlayer
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsTeam
+import com.footballay.core.infra.apisports.backbone.sync.FixtureApiSportsSyncer
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 

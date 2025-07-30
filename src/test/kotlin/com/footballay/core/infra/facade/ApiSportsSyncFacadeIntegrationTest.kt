@@ -1,7 +1,7 @@
 package com.footballay.core.infra.facade
 
 import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
-import com.footballay.core.infra.apisports.fetch.impl.ApiSportsV3MockFetcher
+import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository

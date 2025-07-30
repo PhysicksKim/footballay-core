@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.syncer.PlayerSyncRequest
-import com.footballay.core.infra.apisports.syncer.PlayerApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.PlayerSyncRequest
+import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsSyncer
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired

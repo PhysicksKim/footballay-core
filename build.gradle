@@ -78,6 +78,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.module:jackson-module-blackbird'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.dto.VenueOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.VenueApiSportsRepository
 import com.footballay.core.logger

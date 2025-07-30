@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-@Profile("mockapi")
+@Profile("mockapi & !api")
 @Service
 public class MockApiCallServiceImpl implements ApiCallService {
     private final ObjectMapper objectMapper;
