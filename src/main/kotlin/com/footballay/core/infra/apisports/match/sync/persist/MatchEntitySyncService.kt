@@ -78,5 +78,3 @@ interface MatchEntitySyncService {
         playerContext: MatchPlayerContext
     ): MatchEntitySyncResult
 }
-
-// 동기화 결과 클래스들은 MatchEntitySyncResult.kt 파일로 분리됨 

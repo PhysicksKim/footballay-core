@@ -18,6 +18,8 @@ import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSpor
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamRepository
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerRepository
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchEventRepository
+import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamStatisticsRepository
+import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerStatisticsRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.boot.test.context.TestComponent
@@ -49,6 +51,8 @@ class MatchEntityGenerator(
     private val apiSportsMatchTeamRepository: ApiSportsMatchTeamRepository,
     private val apiSportsMatchPlayerRepository: ApiSportsMatchPlayerRepository,
     private val apiSportsMatchEventRepository: ApiSportsMatchEventRepository,
+    private val apiSportsMatchTeamStatisticsRepository: ApiSportsMatchTeamStatisticsRepository,
+    private val apiSportsMatchPlayerStatisticsRepository: ApiSportsMatchPlayerStatisticsRepository,
     
     // Utilities
     private val uidGenerator: UidGenerator
@@ -83,6 +87,9 @@ class MatchEntityGenerator(
         val fixtureApiSports = createFixtureApiSports(fixtureCore, season, homeMatchTeam, awayMatchTeam, config)
         val matchPlayers = createMatchPlayers(playersApiSports, homeMatchTeam, awayMatchTeam, config)
         val matchEvents = createMatchEvents(fixtureApiSports, homeMatchTeam, matchPlayers, config)
+        val homeTeamStatistics = createTeamStatistics(homeMatchTeam, config.homeTeamStats)
+        val awayTeamStatistics = createTeamStatistics(awayMatchTeam, config.awayTeamStats)
+        val playerStatistics = createPlayerStatistics(matchPlayers, config)
         
         val result = MatchEntities(
             // Core
@@ -104,7 +111,10 @@ class MatchEntityGenerator(
             awayMatchTeam = awayMatchTeam,
             fixtureApiSports = fixtureApiSports,
             matchPlayers = matchPlayers,
-            matchEvents = matchEvents
+            matchEvents = matchEvents,
+            homeTeamStatistics = homeTeamStatistics,
+            awayTeamStatistics = awayTeamStatistics,
+            playerStatistics = playerStatistics
         )
         
         log.info("완전한 매치 엔티티 생태계 생성 완료")
@@ -318,7 +328,7 @@ class MatchEntityGenerator(
         awayMatchTeam: ApiSportsMatchTeam,
         config: MatchConfig
     ): List<ApiSportsMatchPlayer> {
-        if (!config.createLiveData) return emptyList()
+        if (!config.createLineup) return emptyList()
         
         val matchPlayers = playersApiSports.mapIndexed { index, playerApiSports ->
             val matchTeam = if (index < playersApiSports.size / 2) homeMatchTeam else awayMatchTeam
@@ -352,13 +362,21 @@ class MatchEntityGenerator(
         matchPlayers: List<ApiSportsMatchPlayer>,
         config: MatchConfig
     ): List<ApiSportsMatchEvent> {
-        if (!config.createLiveData || matchPlayers.isEmpty()) return emptyList()
+        if (!config.createLiveData) return emptyList()
+        
+        // 라인업이 없어도 이벤트를 생성할 수 있도록 수정
+        val eventPlayer = if (matchPlayers.isNotEmpty()) {
+            matchPlayers.first()
+        } else {
+            // 라인업이 없을 때는 더미 선수 정보로 이벤트 생성
+            null
+        }
         
         val event = apiSportsMatchEventRepository.save(
             ApiSportsMatchEvent(
                 fixtureApi = fixtureApiSports,
                 matchTeam = homeMatchTeam,
-                player = matchPlayers.first(),
+                player = eventPlayer,
                 assist = null,
                 sequence = 1,
                 elapsedTime = 25,
@@ -374,6 +392,100 @@ class MatchEntityGenerator(
         fixtureApiSportsRepository.save(fixtureApiSports)
         
         return listOf(event)
+    }
+    
+    private fun createTeamStatistics(
+        matchTeam: ApiSportsMatchTeam,
+        statsConfig: TeamStatisticsConfig
+    ): ApiSportsMatchTeamStatistics? {
+        if (!statsConfig.createStatistics) return null
+        
+        val teamStats = apiSportsMatchTeamStatisticsRepository.save(
+            ApiSportsMatchTeamStatistics(
+                matchTeam = matchTeam,
+                shotsOnGoal = statsConfig.shotsOnGoal,
+                shotsOffGoal = statsConfig.shotsOffGoal,
+                totalShots = statsConfig.totalShots,
+                blockedShots = statsConfig.blockedShots,
+                shotsInsideBox = statsConfig.shotsInsideBox,
+                shotsOutsideBox = statsConfig.shotsOutsideBox,
+                fouls = statsConfig.fouls,
+                cornerKicks = statsConfig.cornerKicks,
+                offsides = statsConfig.offsides,
+                ballPossession = statsConfig.ballPossession,
+                yellowCards = statsConfig.yellowCards,
+                redCards = statsConfig.redCards,
+                goalkeeperSaves = statsConfig.goalkeeperSaves,
+                totalPasses = statsConfig.totalPasses,
+                passesAccurate = statsConfig.passesAccurate,
+                passesPercentage = statsConfig.passesPercentage,
+                goalsPrevented = statsConfig.goalsPrevented
+            )
+        )
+        
+        // 양방향 연관관계 설정
+        matchTeam.teamStatistics = teamStats
+        apiSportsMatchTeamRepository.save(matchTeam)
+        
+        return teamStats
+    }
+    
+    private fun createPlayerStatistics(
+        matchPlayers: List<ApiSportsMatchPlayer>,
+        config: MatchConfig
+    ): List<ApiSportsMatchPlayerStatistics> {
+        if (!config.createPlayerStats || matchPlayers.isEmpty()) return emptyList()
+        
+        return matchPlayers.mapIndexed { index, matchPlayer ->
+            val playerStats = apiSportsMatchPlayerStatisticsRepository.save(
+                ApiSportsMatchPlayerStatistics(
+                    matchPlayer = matchPlayer,
+                    minutesPlayed = 90,
+                    shirtNumber = matchPlayer.number,
+                    position = matchPlayer.position,
+                    rating = 7.5,
+                    isCaptain = index == 0,
+                    isSubstitute = false,
+                    offsides = 1,
+                    shotsTotal = 3,
+                    shotsOnTarget = 2,
+                    goalsTotal = 1,
+                    goalsConceded = 0,
+                    assists = 1,
+                    saves = 0,
+                    passesTotal = 45,
+                    keyPasses = 2,
+                    passesAccuracy = 85,
+                    tacklesTotal = 2,
+                    blocks = 1,
+                    interceptions = 1,
+                    duelsTotal = 8,
+                    duelsWon = 5,
+                    dribblesAttempts = 3,
+                    dribblesSuccess = 2,
+                    dribblesPast = 1,
+                    foulsDrawn = 2,
+                    foulsCommitted = 1,
+                    yellowCards = 0,
+                    redCards = 0,
+                    penaltyWon = 0,
+                    penaltyCommitted = 0,
+                    penaltyScored = 0,
+                    penaltyMissed = 0,
+                    penaltySaved = 0
+                )
+            )
+            
+            // 양방향 연관관계 설정
+            matchPlayer.statistics = playerStats
+            
+            playerStats
+        }.also {
+            // 모든 MatchPlayer 저장 (연관관계 업데이트)
+            matchPlayers.forEach { player ->
+                apiSportsMatchPlayerRepository.save(player)
+            }
+        }
     }
 }
 
@@ -405,8 +517,14 @@ data class MatchConfig(
     // Player configurations
     val playerConfigs: List<PlayerConfig> = defaultPlayerConfigs(),
     
+    // Team statistics configurations
+    val homeTeamStats: TeamStatisticsConfig = TeamStatisticsConfig(),
+    val awayTeamStats: TeamStatisticsConfig = TeamStatisticsConfig(),
+    
     // Control flags
-    val createLiveData: Boolean = true
+    val createLiveData: Boolean = true,
+    val createLineup: Boolean = true,
+    val createPlayerStats: Boolean = true
 ) {
     companion object {
         fun defaultPlayerConfigs(): List<PlayerConfig> = listOf(
@@ -426,6 +544,30 @@ data class PlayerConfig(
     val lastname: String,
     val nationality: String,
     val position: String
+)
+
+/**
+ * 팀 통계 생성을 위한 설정 클래스
+ */
+data class TeamStatisticsConfig(
+    val createStatistics: Boolean = true,
+    val shotsOnGoal: Int = 5,
+    val shotsOffGoal: Int = 3,
+    val totalShots: Int = 8,
+    val blockedShots: Int = 2,
+    val shotsInsideBox: Int = 6,
+    val shotsOutsideBox: Int = 2,
+    val fouls: Int = 12,
+    val cornerKicks: Int = 6,
+    val offsides: Int = 3,
+    val ballPossession: String = "55%",
+    val yellowCards: Int = 2,
+    val redCards: Int = 0,
+    val goalkeeperSaves: Int = 3,
+    val totalPasses: Int = 450,
+    val passesAccurate: Int = 380,
+    val passesPercentage: String = "84%",
+    val goalsPrevented: Int = 1
 )
 
 /**
@@ -451,5 +593,8 @@ data class MatchEntities(
     val awayMatchTeam: ApiSportsMatchTeam,
     val fixtureApiSports: FixtureApiSports,
     val matchPlayers: List<ApiSportsMatchPlayer>,
-    val matchEvents: List<ApiSportsMatchEvent>
+    val matchEvents: List<ApiSportsMatchEvent>,
+    val homeTeamStatistics: ApiSportsMatchTeamStatistics?,
+    val awayTeamStatistics: ApiSportsMatchTeamStatistics?,
+    val playerStatistics: List<ApiSportsMatchPlayerStatistics>
 )

@@ -19,9 +19,9 @@ class ApiSportsSyncFacade(
     private val leagueSyncer: LeagueApiSportsSyncer,
     private val teamSyncer: TeamApiSportsSyncer,
     private val playerSyncer: PlayerApiSportsSyncer,
+    private val fixtureSyncer: FixtureApiSportsSyncer,
     private val fetcher: ApiSportsV3Fetcher,
     private val leagueQueryService: LeagueApiSportsQueryService,
-    private val fixtureSyncer: FixtureApiSportsSyncer
 ) {
 
     val log = logger()

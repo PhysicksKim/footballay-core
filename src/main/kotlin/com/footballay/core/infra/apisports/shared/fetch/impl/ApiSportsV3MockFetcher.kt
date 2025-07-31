@@ -56,7 +56,227 @@ class ApiSportsV3MockFetcher(
         )
     }
 
-    // Kotlin 모듈 등록은 제거 (기본 ObjectMapper 사용)
+    /**
+     * Mock Fetcher에서 지원하는 데이터 번들들을 정의합니다.
+     * 
+     * 각 번들은 논리적으로 연결된 데이터들을 포함하며,
+     * 테스트에서 특정 시나리오를 위한 완전한 데이터 세트를 제공합니다.
+     */
+    object MockDataBundles {
+        
+        /**
+         * Premier League 2024 시즌 데이터 번들
+         * 
+         * **포함 데이터:**
+         * - League: Premier League (ID: 39)
+         * - Season: 2024
+         * - Teams: 20개 팀 (JSON 파일 기반)
+         * - Fixtures: 5개 경기 (JSON 파일 기반)
+         * 
+         * **사용 시나리오:**
+         * - Backbone 데이터 완전 구성 테스트
+         * - Match 데이터 동기화 테스트
+         * - 전체 워크플로우 통합 테스트
+         */
+        val PREMIER_LEAGUE_2024 = MockDataBundle(
+            name = "Premier League 2024",
+            description = "Premier League 2024 시즌 완전 데이터 세트",
+            leagueId = 39L,
+            season = 2024,
+            supportedFixtureIds = listOf(1208021L, 1208022L),
+            hasJsonFileSupport = true,
+            jsonFilePaths = mapOf(
+                "teams" to "/devdata/mockapiv2/teamsOfLeague_leagueId39_season2024.json",
+                "fixture_1208021" to "/devdata/mockapiv2/fixture_1208021.json",
+                "fixture_1208022" to "/devdata/mockapiv2/fixture_1208022.json"
+            )
+        )
+
+        /**
+         * Manchester City 팀 데이터 번들
+         * 
+         * **포함 데이터:**
+         * - Team: Manchester City (ID: 50)
+         * - Players: 5명 선수 (하드코딩)
+         * 
+         * **사용 시나리오:**
+         * - 팀별 선수 데이터 테스트
+         * - 선수 정보 동기화 테스트
+         */
+        val MANCHESTER_CITY_SQUAD = MockDataBundle(
+            name = "Manchester City Squad",
+            description = "Manchester City 팀 선수 명단",
+            teamId = 50L,
+            supportedPlayerIds = listOf(1L, 2L, 3L, 4L, 5L),
+            hasJsonFileSupport = false
+        )
+
+        /**
+         * 모든 지원 데이터 번들 목록
+         */
+        val ALL_BUNDLES = listOf(PREMIER_LEAGUE_2024, MANCHESTER_CITY_SQUAD)
+    }
+
+    /**
+     * Mock Fetcher에서 지원하는 데이터 번들을 정의하는 데이터 클래스
+     * 
+     * @param name 번들 이름
+     * @param description 번들 설명
+     * @param leagueId 지원하는 리그 ID (선택적)
+     * @param season 지원하는 시즌 (선택적)
+     * @param teamId 지원하는 팀 ID (선택적)
+     * @param supportedFixtureIds 지원하는 경기 ID 목록
+     * @param supportedPlayerIds 지원하는 선수 ID 목록
+     * @param hasJsonFileSupport JSON 파일 지원 여부
+     * @param jsonFilePaths JSON 파일 경로 매핑
+     */
+    data class MockDataBundle(
+        val name: String,
+        val description: String,
+        val leagueId: Long? = null,
+        val season: Int? = null,
+        val teamId: Long? = null,
+        val supportedFixtureIds: List<Long> = emptyList(),
+        val supportedPlayerIds: List<Long> = emptyList(),
+        val hasJsonFileSupport: Boolean = false,
+        val jsonFilePaths: Map<String, String> = emptyMap()
+    ) {
+        /**
+         * 이 번들이 특정 리그/시즌을 지원하는지 확인
+         */
+        fun supportsLeague(leagueId: Long, season: Int): Boolean {
+            return this.leagueId == leagueId && this.season == season
+        }
+
+        /**
+         * 이 번들이 특정 팀을 지원하는지 확인
+         */
+        fun supportsTeam(teamId: Long): Boolean {
+            return this.teamId == teamId
+        }
+
+        /**
+         * 이 번들이 특정 경기를 지원하는지 확인
+         */
+        fun supportsFixture(fixtureId: Long): Boolean {
+            return supportedFixtureIds.contains(fixtureId)
+        }
+
+        /**
+         * 이 번들이 특정 선수를 지원하는지 확인
+         */
+        fun supportsPlayer(playerId: Long): Boolean {
+            return supportedPlayerIds.contains(playerId)
+        }
+
+        /**
+         * 이 번들이 JSON 파일 기반 데이터를 지원하는지 확인
+         */
+        fun hasJsonSupport(): Boolean {
+            return hasJsonFileSupport && jsonFilePaths.isNotEmpty()
+        }
+
+        /**
+         * 특정 키에 대한 JSON 파일 경로를 반환
+         */
+        fun getJsonFilePath(key: String): String? {
+            return jsonFilePaths[key]
+        }
+    }
+
+    /**
+     * 지원하는 모든 데이터 번들을 반환합니다.
+     */
+    fun getSupportedBundles(): List<MockDataBundle> {
+        return MockDataBundles.ALL_BUNDLES
+    }
+
+    /**
+     * 특정 리그/시즌을 지원하는 번들을 찾습니다.
+     */
+    fun findBundleForLeague(leagueId: Long, season: Int): MockDataBundle? {
+        return MockDataBundles.ALL_BUNDLES.find { it.supportsLeague(leagueId, season) }
+    }
+
+    /**
+     * 특정 팀을 지원하는 번들을 찾습니다.
+     */
+    fun findBundleForTeam(teamId: Long): MockDataBundle? {
+        return MockDataBundles.ALL_BUNDLES.find { it.supportsTeam(teamId) }
+    }
+
+    /**
+     * 특정 경기를 지원하는 번들을 찾습니다.
+     */
+    fun findBundleForFixture(fixtureId: Long): MockDataBundle? {
+        return MockDataBundles.ALL_BUNDLES.find { it.supportsFixture(fixtureId) }
+    }
+
+    /**
+     * JSON 파일 기반 데이터를 지원하는 번들들을 반환합니다.
+     */
+    fun getJsonSupportedBundles(): List<MockDataBundle> {
+        return MockDataBundles.ALL_BUNDLES.filter { it.hasJsonSupport() }
+    }
+
+    /**
+     * 테스트에서 사용할 수 있는 헬퍼 메서드들
+     */
+    object TestHelpers {
+        
+        /**
+         * Premier League 2024 번들의 모든 지원 데이터를 반환합니다.
+         */
+        fun getPremierLeague2024Bundle(): MockDataBundle {
+            return MockDataBundles.PREMIER_LEAGUE_2024
+        }
+
+        /**
+         * Manchester City Squad 번들의 모든 지원 데이터를 반환합니다.
+         */
+        fun getManchesterCitySquadBundle(): MockDataBundle {
+            return MockDataBundles.MANCHESTER_CITY_SQUAD
+        }
+
+        /**
+         * 특정 번들의 모든 지원 fixture ID들을 반환합니다.
+         */
+        fun getSupportedFixtureIds(bundle: MockDataBundle): List<Long> {
+            return bundle.supportedFixtureIds
+        }
+
+        /**
+         * 특정 번들의 모든 지원 player ID들을 반환합니다.
+         */
+        fun getSupportedPlayerIds(bundle: MockDataBundle): List<Long> {
+            return bundle.supportedPlayerIds
+        }
+
+        /**
+         * 특정 번들이 지원하는 JSON 파일 경로들을 반환합니다.
+         */
+        fun getJsonFilePaths(bundle: MockDataBundle): Map<String, String> {
+            return bundle.jsonFilePaths
+        }
+
+        /**
+         * 번들 정보를 로그로 출력합니다.
+         */
+        fun logBundleInfo(bundle: MockDataBundle) {
+            val log = logger()
+            log.info("=== Mock Data Bundle Info ===")
+            log.info("Name: ${bundle.name}")
+            log.info("Description: ${bundle.description}")
+            log.info("League ID: ${bundle.leagueId}")
+            log.info("Season: ${bundle.season}")
+            log.info("Team ID: ${bundle.teamId}")
+            log.info("Supported Fixture IDs: ${bundle.supportedFixtureIds}")
+            log.info("Supported Player IDs: ${bundle.supportedPlayerIds}")
+            log.info("Has JSON Support: ${bundle.hasJsonSupport()}")
+            log.info("JSON File Paths: ${bundle.jsonFilePaths}")
+            log.info("===============================")
+        }
+    }
 
     override fun fetchStatus(): ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus> {
         log.info("Mock fetching API status")
@@ -150,9 +370,11 @@ class ApiSportsV3MockFetcher(
     override fun fetchTeamsOfLeague(leagueApiId: Long, season: Int): ApiSportsV3Envelope<ApiSportsTeam.OfLeague> {
         log.info("Mock fetching teams for league: $leagueApiId, season: $season")
 
-        if (leagueApiId != SUPPORTED_LEAGUE_ID || season != SUPPORTED_SEASON) {
-            log.warn("Mock data only available for league $SUPPORTED_LEAGUE_ID (Premier League) season $SUPPORTED_SEASON. " +
-                    "Requested: league $leagueApiId, season $season")
+        // 번들 기반 지원 확인
+        val bundle = findBundleForLeague(leagueApiId, season)
+        if (bundle == null) {
+            log.warn("No mock data bundle found for league $leagueApiId season $season. " +
+                    "Available bundles: ${getSupportedBundles().map { "${it.name} (${it.leagueId}/${it.season})" }}")
             return ApiSportsV3Envelope(
                 get = "teams",
                 parameters = mapOf("league" to leagueApiId.toString(), "season" to season.toString()),
@@ -163,16 +385,43 @@ class ApiSportsV3MockFetcher(
             )
         }
 
-        // JSON 파일에서 팀 데이터를 읽어서 반환
-        return fetchTeamsOfLeagueFromJsonFile(leagueApiId, season)
+        log.info("Using mock data bundle: ${bundle.name}")
+
+        // JSON 파일 지원 확인
+        if (bundle.hasJsonSupport()) {
+            return fetchTeamsOfLeagueFromJsonFile(leagueApiId, season)
+        }
+
+        // 하드코딩된 데이터 반환 (기존 로직)
+        if (leagueApiId == SUPPORTED_LEAGUE_ID && season == SUPPORTED_SEASON) {
+            return ApiSportsV3Envelope(
+                get = "teams",
+                parameters = mapOf("league" to leagueApiId.toString(), "season" to season.toString()),
+                errors = emptyList(),
+                results = 11,
+                paging = Paging(current = 1, total = 1),
+                response = createMockPremierLeagueTeams()
+            )
+        }
+
+        return ApiSportsV3Envelope(
+            get = "teams",
+            parameters = mapOf("league" to leagueApiId.toString(), "season" to season.toString()),
+            errors = emptyList(),
+            results = 0,
+            paging = Paging(current = 1, total = 1),
+            response = emptyList()
+        )
     }
 
     override fun fetchSquadOfTeam(teamApiId: Long): ApiSportsV3Envelope<ApiSportsPlayer.OfTeam> {
         log.info("Mock fetching squad for team: $teamApiId")
 
-        if (teamApiId != SUPPORTED_TEAM_ID) {
-            log.warn("Mock data only available for team $SUPPORTED_TEAM_ID (Manchester City). " +
-                    "Requested: team $teamApiId")
+        // 번들 기반 지원 확인
+        val bundle = findBundleForTeam(teamApiId)
+        if (bundle == null) {
+            log.warn("No mock data bundle found for team $teamApiId. " +
+                    "Available bundles: ${getSupportedBundles().map { "${it.name} (team: ${it.teamId})" }}")
             return ApiSportsV3Envelope(
                 get = "players/squads",
                 parameters = mapOf("team" to teamApiId.toString()),
@@ -182,6 +431,8 @@ class ApiSportsV3MockFetcher(
                 response = emptyList()
             )
         }
+
+        log.info("Using mock data bundle: ${bundle.name}")
         
         val players = createMockManchesterCityPlayers()
         
@@ -226,14 +477,11 @@ class ApiSportsV3MockFetcher(
     override fun fetchFixtureSingle(fixtureApiId: Long): ApiSportsV3Envelope<Single> {
         log.info("Mock fetching single fixture: $fixtureApiId")
 
-        // JSON 파일 기반 fixture인지 확인
-        if (fixtureApiId in JSON_FILE_SUPPORTED_FIXTURE_IDS) {
-            return fetchFixtureSingleFromJsonFile(fixtureApiId)
-        }
-
-        if (fixtureApiId !in SUPPORTED_FIXTURE_IDS) {
-            log.warn("Mock data only available for supported fixture IDs: $SUPPORTED_FIXTURE_IDS. " +
-                    "Requested: fixture $fixtureApiId")
+        // 번들 기반 지원 확인
+        val bundle = findBundleForFixture(fixtureApiId)
+        if (bundle == null) {
+            log.warn("No mock data bundle found for fixture $fixtureApiId. " +
+                    "Available bundles: ${getSupportedBundles().map { "${it.name} (fixtures: ${it.supportedFixtureIds})" }}")
             return ApiSportsV3Envelope(
                 get = "fixtures",
                 parameters = mapOf("id" to fixtureApiId.toString()),
@@ -243,16 +491,35 @@ class ApiSportsV3MockFetcher(
                 response = emptyList()
             )
         }
-        
-        val fixture = createMockSingleFixture(fixtureApiId)
-        
+
+        log.info("Using mock data bundle: ${bundle.name}")
+
+        // JSON 파일 지원 확인
+        if (bundle.hasJsonSupport() && bundle.supportsFixture(fixtureApiId)) {
+            return fetchFixtureSingleFromJsonFile(fixtureApiId)
+        }
+
+        // 하드코딩된 데이터 반환 (기존 로직)
+        if (fixtureApiId in SUPPORTED_FIXTURE_IDS) {
+            val fixture = createMockSingleFixture(fixtureApiId)
+            
+            return ApiSportsV3Envelope(
+                get = "fixtures",
+                parameters = mapOf("id" to fixtureApiId.toString()),
+                errors = emptyList(),
+                results = 1,
+                paging = Paging(current = 1, total = 1),
+                response = listOf(fixture)
+            )
+        }
+
         return ApiSportsV3Envelope(
             get = "fixtures",
             parameters = mapOf("id" to fixtureApiId.toString()),
             errors = emptyList(),
-            results = 1,
+            results = 0,
             paging = Paging(current = 1, total = 1),
-            response = listOf(fixture)
+            response = emptyList()
         )
     }
 

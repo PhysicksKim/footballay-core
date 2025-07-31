@@ -88,10 +88,12 @@ class MatchPlayerManager(
             
             // 4단계: MatchTeam formation/color 업데이트
             updateMatchTeamsWithLineup(lineupDto, entityBundle)
-            
+
+            log.info("Before 5 단계 - Enhanced players: ${lineupEnhancedPlayers.size}, Collected DTOs: ${collectedDtos.size}")
             // 5단계: PlayerApiSports 연결 및 영속 상태 저장
             val savedPlayers = persistChangesWithPlayerApiSports(lineupEnhancedPlayers, collectedDtos, entityBundle)
-            
+            log.info("After 5 단계 - Saved players: ${savedPlayers.size}, Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}")
+
             // 6단계: EntityBundle 업데이트 (Map으로 변환)
             log.info("savedPlayers name : ${savedPlayers.joinToString(separator = ", ") { "${it.name}_${it.id}_(${it.matchPlayerUid})" }}")
             val savedPlayersMap = savedPlayers.associate { player ->
@@ -256,41 +258,53 @@ class MatchPlayerManager(
     }
 
     /**
-     * MatchPlayer에 PlayerApiSports를 연결합니다.
+     * MatchPlayer에 PlayerApiSports를 연결합니다. (N+1 문제 해결)
      */
     private fun connectPlayerApiSports(
         players: List<ApiSportsMatchPlayer>,
         collectedDtos: Map<String, MatchPlayerDto>
     ): List<ApiSportsMatchPlayer> {
+        // 1. 필요한 apiId들을 수집
+        val apiIds = collectedDtos.values
+            .filter { dto -> dto.apiId != null }
+            .map { it.apiId!! }
+            .distinct()
+        
+        // 2. 일괄 조회로 PlayerApiSports 가져오기
+        val playerApiSportsMap = if (apiIds.isNotEmpty()) {
+            try {
+                playerApiSportsRepository.findPlayerApiSportsByApiIdsWithPlayerCore(apiIds)
+                    .associateBy { it.apiId ?: -1L }
+            } catch (e: Exception) {
+                log.warn("Failed to batch find PlayerApiSports for apiIds: $apiIds", e)
+                emptyMap()
+            }
+        } else {
+            emptyMap()
+        }
+        
+        // 3. 각 플레이어에 PlayerApiSports 연결
         return players.map { player ->
             // DTO에서 apiId 찾기 (이름과 팀 ID로 매칭)
             val dto = collectedDtos.values.find { dto -> 
                 dto.name == player.name && dto.teamApiId != null 
             }
             
-            if (dto != null && player.playerApiSports == null) {
-                val playerApiSports = findPlayerApiSports(dto.apiId) // teamApiId가 아닌 apiId 사용
+            if (dto != null && player.playerApiSports == null && dto.apiId != null) {
+                val playerApiSports = playerApiSportsMap[dto.apiId]
                 player.playerApiSports = playerApiSports
-                log.debug("Connected PlayerApiSports for player: ${player.name} (apiId: ${dto.apiId})")
+                if (playerApiSports != null) {
+                    log.debug("Connected PlayerApiSports for player: ${player.name} (apiId: ${dto.apiId})")
+                } else {
+                    log.debug("No PlayerApiSports found for player: ${player.name} (apiId: ${dto.apiId})")
+                }
             }
             
             player
         }
     }
 
-    /**
-     * PlayerApiSports 연결 로직
-     */
-    private fun findPlayerApiSports(apiId: Long?): PlayerApiSports? {
-        return apiId?.let { 
-            try {
-                playerApiSportsRepository.findPlayerApiSportsByApiIdWithPlayerCore(it)
-            } catch (e: Exception) {
-                log.warn("Failed to find PlayerApiSports for apiId: $apiId", e)
-                null
-            }
-        }
-    }
+
 }
 
 /**

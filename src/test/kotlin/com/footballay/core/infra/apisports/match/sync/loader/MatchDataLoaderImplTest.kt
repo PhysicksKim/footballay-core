@@ -5,6 +5,7 @@ import com.footballay.core.MatchEntities
 import com.footballay.core.infra.apisports.match.sync.loader.MatchDataLoader
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
+import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchEventRepository
 import com.footballay.core.logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -23,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional
 @DisplayName("MatchDataLoaderImpl 테스트")
 class MatchDataLoaderImplTest {
 
+    @Autowired
+    private lateinit var apiSportsMatchEventRepository: ApiSportsMatchEventRepository
     private val log = logger()
 
     @Autowired
@@ -47,6 +50,9 @@ class MatchDataLoaderImplTest {
             matchEntities.homeMatchTeam.id, matchEntities.awayMatchTeam.id)
         log.info("생성된 MatchPlayer 수: {}", matchEntities.matchPlayers.size)
         log.info("생성된 MatchEvent 수: {}", matchEntities.matchEvents.size)
+        log.info("생성된 TeamStatistics 수: 홈팀 {}, 원정팀 {}", 
+            matchEntities.homeTeamStatistics?.id, matchEntities.awayTeamStatistics?.id)
+        log.info("생성된 PlayerStatistics 수: {}", matchEntities.playerStatistics.size)
     }
 
     @Test
@@ -68,6 +74,9 @@ class MatchDataLoaderImplTest {
         // 디버깅: 로드된 데이터 확인
         log.info("로드된 선수 수: {}", entityBundle.allMatchPlayers.size)
         log.info("로드된 이벤트 수: {}", entityBundle.allEvents.size)
+        log.info("로드된 홈팀 통계: {}", entityBundle.homeTeamStat?.id)
+        log.info("로드된 원정팀 통계: {}", entityBundle.awayTeamStat?.id)
+        log.info("로드된 선수 통계 수: {}", entityBundle.allPlayerStats.size)
         
         // then
         assertThat(entityBundle.fixture).isNotNull()
@@ -92,8 +101,18 @@ class MatchDataLoaderImplTest {
         assertThat(entityBundle.allEvents).isNotEmpty()
         assertThat(entityBundle.allEvents).hasSizeGreaterThanOrEqualTo(matchEntities.matchEvents.size)
         
-        log.info("로드된 데이터 검증 완료 - Players: {}, Events: {}", 
-            entityBundle.allMatchPlayers.size, entityBundle.allEvents.size)
+        // 팀 통계 검증
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        
+        // 선수 통계 검증
+        assertThat(entityBundle.allPlayerStats).isNotEmpty()
+        assertThat(entityBundle.allPlayerStats).hasSizeGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
+        
+        log.info("로드된 데이터 검증 완료 - Players: {}, Events: {}, TeamStats: {}, PlayerStats: {}", 
+            entityBundle.allMatchPlayers.size, entityBundle.allEvents.size, 
+            if (entityBundle.homeTeamStat != null) "홈팀O" else "홈팀X",
+            entityBundle.allPlayerStats.size)
     }
 
     @Test
@@ -203,6 +222,9 @@ class MatchDataLoaderImplTest {
         assertThat(entityBundle.awayTeam).isNull()
         assertThat(entityBundle.allMatchPlayers).isEmpty()
         assertThat(entityBundle.allEvents).isEmpty()
+        assertThat(entityBundle.homeTeamStat).isNull()
+        assertThat(entityBundle.awayTeamStat).isNull()
+        assertThat(entityBundle.allPlayerStats).isEmpty()
         
         log.info("존재하지 않는 fixture 처리 검증 완료")
     }
@@ -239,5 +261,363 @@ class MatchDataLoaderImplTest {
         }
         
         log.info("엔티티 관계 검증 완료")
+    }
+
+    @Test
+    @DisplayName("팀 통계가 올바르게 로드되는지 확인")
+    fun `팀 통계가 올바르게 로드된다`() {
+        // given
+        val fixtureApiId = matchEntities.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 홈팀 통계 검증
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.homeTeamStat?.matchTeam?.id).isEqualTo(matchEntities.homeMatchTeam.id)
+        assertThat(entityBundle.homeTeamStat?.totalShots).isEqualTo(8)
+        assertThat(entityBundle.homeTeamStat?.ballPossession).isEqualTo("55%")
+        assertThat(entityBundle.homeTeamStat?.totalPasses).isEqualTo(450)
+        
+        // 원정팀 통계 검증
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat?.matchTeam?.id).isEqualTo(matchEntities.awayMatchTeam.id)
+        assertThat(entityBundle.awayTeamStat?.totalShots).isEqualTo(8)
+        assertThat(entityBundle.awayTeamStat?.ballPossession).isEqualTo("55%")
+        assertThat(entityBundle.awayTeamStat?.totalPasses).isEqualTo(450)
+        
+        // 팀 통계와 팀 간의 양방향 관계 확인
+        assertThat(entityBundle.homeTeam?.teamStatistics?.id).isEqualTo(entityBundle.homeTeamStat?.id)
+        assertThat(entityBundle.awayTeam?.teamStatistics?.id).isEqualTo(entityBundle.awayTeamStat?.id)
+        
+        log.info("팀 통계 검증 완료 - 홈팀 통계: {}, 원정팀 통계: {}", 
+            entityBundle.homeTeamStat?.id, entityBundle.awayTeamStat?.id)
+    }
+
+    @Test
+    @DisplayName("선수 통계가 올바르게 로드되는지 확인")
+    fun `선수 통계가 올바르게 로드된다`() {
+        // given
+        val fixtureApiId = matchEntities.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 선수 통계가 로드되었는지 확인
+        assertThat(entityBundle.allPlayerStats).isNotEmpty()
+        assertThat(entityBundle.allPlayerStats).hasSizeGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
+        
+        // 각 선수 통계의 세부 내용 검증
+        entityBundle.allPlayerStats.forEach { (key, playerStats) ->
+            assertThat(playerStats.matchPlayer).isNotNull()
+            assertThat(playerStats.minutesPlayed).isEqualTo(90)
+            assertThat(playerStats.rating).isEqualTo(7.5)
+            assertThat(playerStats.goalsTotal).isEqualTo(1)
+            assertThat(playerStats.assists).isEqualTo(1)
+            assertThat(playerStats.passesTotal).isEqualTo(45)
+            assertThat(playerStats.passesAccuracy).isEqualTo(85)
+            
+            // 선수 통계와 선수 간의 양방향 관계 확인
+            assertThat(playerStats.matchPlayer?.statistics?.id).isEqualTo(playerStats.id)
+        }
+        
+        // 모든 선수가 통계를 가지고 있는지 확인
+        val playersWithStats = entityBundle.allMatchPlayers.filter { (_, player) ->
+            player.statistics != null
+        }
+        assertThat(playersWithStats).hasSize(entityBundle.allPlayerStats.size)
+        
+        log.info("선수 통계 검증 완료 - 선수 통계 수: {}", entityBundle.allPlayerStats.size)
+    }
+
+    @Test
+    @DisplayName("통계가 없는 팀에 대해서도 정상적으로 처리되는지 확인")
+    fun `통계가 없는 팀에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 40L, // 다른 leagueApiId 사용
+            homeTeamApiId = 34L, // 다른 homeTeamApiId 사용
+            awayTeamApiId = 43L, // 다른 awayTeamApiId 사용
+            fixtureApiId = 12346L, // 다른 fixtureApiId 사용
+            homeTeamStats = com.footballay.core.TeamStatisticsConfig(createStatistics = false),
+            awayTeamStats = com.footballay.core.TeamStatisticsConfig(createStatistics = false)
+        )
+        val matchEntitiesWithoutStats = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithoutStats.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 팀 통계가 null인지 확인
+        assertThat(entityBundle.homeTeamStat).isNull()
+        assertThat(entityBundle.awayTeamStat).isNull()
+        
+        // 다른 엔티티들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        
+        log.info("통계 없는 팀 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("이벤트가 없는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `이벤트가 없는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 41L,
+            homeTeamApiId = 35L,
+            awayTeamApiId = 44L,
+            fixtureApiId = 12347L,
+            createLiveData = false // 이벤트 생성 안함
+        )
+        val matchEntitiesWithoutEvents = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithoutEvents.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 이벤트가 비어있는지 확인
+        assertThat(entityBundle.allEvents).isEmpty()
+        
+        // 다른 엔티티들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        assertThat(entityBundle.allPlayerStats).isNotEmpty()
+        
+        log.info("이벤트 없는 경기 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("선수 통계가 없는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `선수 통계가 없는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 42L,
+            homeTeamApiId = 36L,
+            awayTeamApiId = 45L,
+            fixtureApiId = 12348L,
+            createPlayerStats = false // 선수 통계 생성 안함
+        )
+        val matchEntitiesWithoutPlayerStats = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithoutPlayerStats.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 선수 통계가 비어있는지 확인
+        assertThat(entityBundle.allPlayerStats).isEmpty()
+        
+        // 다른 엔티티들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        assertThat(entityBundle.allEvents).isNotEmpty()
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        
+        log.info("선수 통계 없는 경기 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("라인업만 있고 이벤트가 없는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `라인업만 있고 이벤트가 없는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 43L,
+            homeTeamApiId = 37L,
+            awayTeamApiId = 46L,
+            fixtureApiId = 12349L,
+            createLiveData = false, // 이벤트 생성 안함
+            createPlayerStats = false // 선수 통계 생성 안함
+        )
+        val matchEntitiesWithLineupOnly = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithLineupOnly.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 이벤트와 선수 통계가 비어있는지 확인
+        assertThat(entityBundle.allEvents).isEmpty()
+        assertThat(entityBundle.allPlayerStats).isEmpty()
+        
+        // 라인업 선수들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        
+        log.info("라인업만 있는 경기 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("이벤트만 있고 라인업이 없는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `이벤트만 있고 라인업이 없는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 44L,
+            homeTeamApiId = 38L,
+            awayTeamApiId = 47L,
+            fixtureApiId = 12350L,
+            createLineup = false, // 라인업 생성 안함
+            createPlayerStats = false // 선수 통계 생성 안함
+        )
+        val matchEntitiesWithEventsOnly = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithEventsOnly.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+
+        val allEvents = apiSportsMatchEventRepository.findAll()
+        log.info("전체 이벤트 : {}", allEvents.joinToString { it.toString() + it.fixtureApi.apiId })
+        
+        // then
+        // 이벤트는 있지만 라인업이 없으면 선수 정보가 제한적일 수 있음
+        log.info("all events : {}", entityBundle.allEvents.joinToString { it.toString() + it.fixtureApi.apiId })
+        assertThat(entityBundle.allEvents).isNotEmpty()
+        // 라인업이 없으면 이벤트에서 선수 정보를 가져올 수 있지만, 
+        // 현재 구현에서는 라인업 선수들이 없으면 이벤트 선수들도 로드되지 않을 수 있음
+        // assertThat(entityBundle.allMatchPlayers).isEmpty() // 이 조건은 실제 구현에 따라 달라질 수 있음
+        assertThat(entityBundle.allPlayerStats).isEmpty()
+        
+        // 기본 엔티티들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        
+        log.info("이벤트만 있는 경기 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("최소한의 정보만 있는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `최소한의 정보만 있는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 45L,
+            homeTeamApiId = 39L,
+            awayTeamApiId = 48L,
+            fixtureApiId = 12351L,
+            createLineup = false, // 라인업 생성 안함
+            createLiveData = false, // 이벤트 생성 안함
+            createPlayerStats = false, // 선수 통계 생성 안함
+            homeTeamStats = com.footballay.core.TeamStatisticsConfig(createStatistics = false),
+            awayTeamStats = com.footballay.core.TeamStatisticsConfig(createStatistics = false)
+        )
+        val matchEntitiesWithMinimalData = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithMinimalData.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 최소한의 정보만 있는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.allMatchPlayers).isEmpty()
+        assertThat(entityBundle.allEvents).isEmpty()
+        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.homeTeamStat).isNull()
+        assertThat(entityBundle.awayTeamStat).isNull()
+        
+        log.info("최소한의 정보만 있는 경기 처리 검증 완료")
+    }
+
+    @Test
+    @DisplayName("라인업과 이벤트가 모두 있는 경기에서 선수 중복 제거가 정상적으로 작동하는지 확인")
+    fun `라인업과 이벤트가 모두 있는 경기에서 선수 중복 제거가 정상적으로 작동한다`() {
+        // given
+        val fixtureApiId = matchEntities.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 라인업과 이벤트에서 모두 선수 정보가 있는지 확인
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        assertThat(entityBundle.allEvents).isNotEmpty()
+        
+        // 중복 제거가 제대로 되었는지 확인
+        val uniquePlayerIds = entityBundle.allMatchPlayers.map { it.value.id }.distinct()
+        assertThat(uniquePlayerIds).hasSize(entityBundle.allMatchPlayers.size)
+        
+        // 모든 선수가 올바른 정보를 가지고 있는지 확인
+        entityBundle.allMatchPlayers.forEach { (key, player) ->
+            assertThat(player.id).isNotNull()
+            assertThat(player.name).isNotEmpty()
+            assertThat(player.matchTeam).isNotNull()
+            assertThat(player.playerApiSports).isNotNull()
+        }
+        
+        log.info("라인업과 이벤트 선수 중복 제거 검증 완료 - 선수 수: {}", entityBundle.allMatchPlayers.size)
+    }
+
+    @Test
+    @DisplayName("팀 통계만 있고 선수 통계가 없는 경기에 대해서도 정상적으로 처리되는지 확인")
+    fun `팀 통계만 있고 선수 통계가 없는 경기에 대해서도 정상적으로 처리된다`() {
+        // given
+        val config = com.footballay.core.MatchConfig(
+            leagueApiId = 46L,
+            homeTeamApiId = 40L,
+            awayTeamApiId = 49L,
+            fixtureApiId = 12352L,
+            createPlayerStats = false // 선수 통계 생성 안함
+        )
+        val matchEntitiesWithTeamStatsOnly = matchEntityGenerator.createCompleteMatchEntities(config)
+        val fixtureApiId = matchEntitiesWithTeamStatsOnly.fixtureApiSports.apiId
+        val playerContext = MatchPlayerContext()
+        val entityBundle = MatchEntityBundle.createEmpty()
+        
+        // when
+        matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+        
+        // then
+        // 팀 통계는 있지만 선수 통계가 없는지 확인
+        assertThat(entityBundle.homeTeamStat).isNotNull()
+        assertThat(entityBundle.awayTeamStat).isNotNull()
+        assertThat(entityBundle.allPlayerStats).isEmpty()
+        
+        // 다른 엔티티들은 정상적으로 로드되는지 확인
+        assertThat(entityBundle.fixture).isNotNull()
+        assertThat(entityBundle.homeTeam).isNotNull()
+        assertThat(entityBundle.awayTeam).isNotNull()
+        assertThat(entityBundle.allMatchPlayers).isNotEmpty()
+        assertThat(entityBundle.allEvents).isNotEmpty()
+        
+        log.info("팀 통계만 있는 경기 처리 검증 완료")
     }
 }

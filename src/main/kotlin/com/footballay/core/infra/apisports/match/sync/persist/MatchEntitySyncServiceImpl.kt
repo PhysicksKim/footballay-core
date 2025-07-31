@@ -12,7 +12,6 @@ import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEnti
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerManager
 import com.footballay.core.infra.apisports.syncer.match.persist.result.*
-import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
