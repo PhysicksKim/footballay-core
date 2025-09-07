@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
-import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.sql.DataSource;
@@ -35,7 +34,7 @@ public class UserDetailsServiceBeanProvider {
 
     @Bean
     public PersistentTokenRepository persistentTokenRepository(DataSource dataSource) {
-        JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
+        FootballayCoreSchemeTokenRepository tokenRepository = new FootballayCoreSchemeTokenRepository();
         tokenRepository.setDataSource(dataSource);
         return tokenRepository;
     }
