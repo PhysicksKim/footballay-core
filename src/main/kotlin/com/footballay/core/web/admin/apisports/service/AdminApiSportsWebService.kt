@@ -1,6 +1,6 @@
 package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.infra.facade.ApiSportsSyncFacade
+import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class AdminApiSportsWebService(
-    private val apiSportsSyncFacade: ApiSportsSyncFacade
+    private val apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade
 ) {
     
     val log = logger()
@@ -24,7 +24,7 @@ class AdminApiSportsWebService(
         return try {
             log.info("Starting current leagues sync request")
             
-            val syncedCount = apiSportsSyncFacade.syncCurrentLeagues()
+            val syncedCount = apiSportsBackboneSyncFacade.syncCurrentLeagues()
             
             log.info("Successfully synced $syncedCount leagues")
             val result = LeaguesSyncResultDto(
@@ -71,10 +71,10 @@ class AdminApiSportsWebService(
         return try {
             val syncedCount = if (season != null) {
                 // 특정 시즌 지정
-                apiSportsSyncFacade.syncTeamsOfLeague(leagueApiId, season)
+                apiSportsBackboneSyncFacade.syncTeamsOfLeague(leagueApiId, season)
             } else {
                 // 현재 시즌 사용
-                apiSportsSyncFacade.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
+                apiSportsBackboneSyncFacade.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
             }
             
             log.info("Successfully synced $syncedCount teams for league $leagueApiId")
@@ -112,7 +112,7 @@ class AdminApiSportsWebService(
         }
         
         return try {
-            val syncedCount = apiSportsSyncFacade.syncPlayersOfTeam(teamApiId)
+            val syncedCount = apiSportsBackboneSyncFacade.syncPlayersOfTeam(teamApiId)
             
             log.info("Successfully synced $syncedCount players for team $teamApiId")
             val result = PlayersSyncResultDto(

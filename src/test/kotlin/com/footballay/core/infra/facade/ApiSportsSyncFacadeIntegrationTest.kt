@@ -1,6 +1,5 @@
 package com.footballay.core.infra.facade
 
-import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
@@ -23,7 +22,7 @@ class ApiSportsSyncFacadeIntegrationTest {
     val log = logger()
 
     @Autowired
-    lateinit var apiSportsSyncFacade: ApiSportsSyncFacade
+    lateinit var apiSportsBackboneSyncFacadeImpl: ApiSportsBackboneSyncFacadeImpl
 
     @Autowired
     lateinit var leagueApiSportsRepository: LeagueApiSportsRepository
@@ -49,7 +48,7 @@ class ApiSportsSyncFacadeIntegrationTest {
     @Test
     fun `syncCurrentLeagues는 목 페처에서 리그들을 동기화해야 한다`() {
         // when
-        val syncedCount = apiSportsSyncFacade.syncCurrentLeagues()
+        val syncedCount = apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
 
         // then
         assertThat(syncedCount).isEqualTo(2) // Premier League + La Liga
@@ -71,7 +70,7 @@ class ApiSportsSyncFacadeIntegrationTest {
         val unsupportedTeamApiId = 999L
 
         // when
-        val syncedCount = apiSportsSyncFacade.syncPlayersOfTeam(unsupportedTeamApiId)
+        val syncedCount = apiSportsBackboneSyncFacadeImpl.syncPlayersOfTeam(unsupportedTeamApiId)
 
         // then
         assertThat(syncedCount).isEqualTo(0)
@@ -81,15 +80,15 @@ class ApiSportsSyncFacadeIntegrationTest {
     fun `완전한 통합 테스트 - 전체 동기화 워크플로우`() {
         // when & then - 순차적으로 동기화
         // 1. 리그 동기화
-        val leagueCount = apiSportsSyncFacade.syncCurrentLeagues()
+        val leagueCount = apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
         assertThat(leagueCount).isEqualTo(2)
 
         // 2. 팀 동기화
-        val teamCount = apiSportsSyncFacade.syncTeamsOfLeagueWithCurrentSeason(SUPPORTED_LEAGUE_API_ID)
+        val teamCount = apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeagueWithCurrentSeason(SUPPORTED_LEAGUE_API_ID)
         assertThat(teamCount).isGreaterThan(0)
 
         // 3. 선수 동기화
-        val playerCount = apiSportsSyncFacade.syncPlayersOfTeam(SUPPORTED_TEAM_API_ID)
+        val playerCount = apiSportsBackboneSyncFacadeImpl.syncPlayersOfTeam(SUPPORTED_TEAM_API_ID)
         assertThat(playerCount).isGreaterThan(0)
 
         // 최종 검증
@@ -123,11 +122,11 @@ class ApiSportsSyncFacadeIntegrationTest {
         // given
         val leagueApiId = SUPPORTED_LEAGUE_API_ID
         val season = SUPPORTED_SEASON
-        apiSportsSyncFacade.syncCurrentLeagues()
-        apiSportsSyncFacade.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
+        apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
+        apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
 
         // when
-        val syncedCount = apiSportsSyncFacade.syncFixturesOfLeagueWithSeason(leagueApiId, season)
+        val syncedCount = apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, season)
         em.flush()
         em.clear()
 
@@ -168,12 +167,12 @@ class ApiSportsSyncFacadeIntegrationTest {
         val leagueApiId = SUPPORTED_LEAGUE_API_ID
         val supportSeason = SUPPORTED_SEASON
         val unsupportedSeason = 1234
-        apiSportsSyncFacade.syncCurrentLeagues()
-        apiSportsSyncFacade.syncTeamsOfLeague(leagueApiId, supportSeason)
+        apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
+        apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeague(leagueApiId, supportSeason)
 
         // when
         val exception = assertThrows<IllegalArgumentException> {
-            apiSportsSyncFacade.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
+            apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
         }
 
         // DB에 저장된 fixture가 없어야 함
@@ -185,15 +184,15 @@ class ApiSportsSyncFacadeIntegrationTest {
     fun `완전한 fixture 동기화 워크플로우 - 리그, 팀, 경기 순차 동기화`() {
         // when & then - 순차적으로 동기화
         // 1. 리그 동기화
-        val leagueCount = apiSportsSyncFacade.syncCurrentLeagues()
+        val leagueCount = apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
         assertThat(leagueCount).isEqualTo(2)
 
         // 2. 팀 동기화
-        val teamCount = apiSportsSyncFacade.syncTeamsOfLeagueWithCurrentSeason(SUPPORTED_LEAGUE_API_ID)
+        val teamCount = apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeagueWithCurrentSeason(SUPPORTED_LEAGUE_API_ID)
         assertThat(teamCount).isGreaterThan(0)
 
         // 3. 경기 동기화
-        val fixtureCount = apiSportsSyncFacade.syncFixturesOfLeagueWithSeason(SUPPORTED_LEAGUE_API_ID, SUPPORTED_SEASON)
+        val fixtureCount = apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(SUPPORTED_LEAGUE_API_ID, SUPPORTED_SEASON)
         assertThat(fixtureCount).isEqualTo(5)
 
         em.flush()
@@ -221,8 +220,8 @@ class ApiSportsSyncFacadeIntegrationTest {
         assertThat(manchesterUnitedFixture!!.apiId).isEqualTo(1208021L)
         assertThat(manchesterUnitedFixture.core?.homeTeam?.teamApiSports?.name).isEqualTo("Manchester United")
         assertThat(manchesterUnitedFixture.core?.awayTeam?.teamApiSports?.name).isEqualTo("Fulham")
-        assertThat(manchesterUnitedFixture.season.leagueApiSports?.apiId).isEqualTo(SUPPORTED_LEAGUE_API_ID)
-        assertThat(manchesterUnitedFixture.season.seasonYear).isEqualTo(SUPPORTED_SEASON)
+        assertThat(manchesterUnitedFixture.season?.leagueApiSports?.apiId).isEqualTo(SUPPORTED_LEAGUE_API_ID)
+        assertThat(manchesterUnitedFixture.season?.seasonYear).isEqualTo(SUPPORTED_SEASON)
     }
 
     @Test
@@ -230,11 +229,11 @@ class ApiSportsSyncFacadeIntegrationTest {
         // given
         val leagueApiId = SUPPORTED_LEAGUE_API_ID
         val season = SUPPORTED_SEASON
-        apiSportsSyncFacade.syncCurrentLeagues()
-        apiSportsSyncFacade.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
+        apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
+        apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
 
         // when
-        val syncedCount = apiSportsSyncFacade.syncFixturesOfLeagueWithSeason(leagueApiId, season)
+        val syncedCount = apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, season)
         em.flush()
         em.clear()
 
@@ -257,8 +256,8 @@ class ApiSportsSyncFacadeIntegrationTest {
             assertThat(fixture.core).isNotNull()
             assertThat(fixture.core?.homeTeam).isNotNull()
             assertThat(fixture.core?.awayTeam).isNotNull()
-            assertThat(fixture.season.leagueApiSports?.apiId).isEqualTo(leagueApiId)
-            assertThat(fixture.season.seasonYear).isEqualTo(season)
+            assertThat(fixture.season?.leagueApiSports?.apiId).isEqualTo(leagueApiId)
+            assertThat(fixture.season?.seasonYear).isEqualTo(season)
         }
 
         // 특정 경기들의 상세 검증

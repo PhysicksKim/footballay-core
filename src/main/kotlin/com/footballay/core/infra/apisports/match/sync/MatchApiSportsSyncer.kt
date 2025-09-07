@@ -1,9 +1,9 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.apisports.match.live.ActionAfterMatchSync
+import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
-import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 
 typealias ApiSportsFixtureSingle = ApiSportsV3Envelope<ApiSportsFixture.Single>
 

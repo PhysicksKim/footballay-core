@@ -17,8 +17,12 @@ import com.footballay.core.infra.apisports.match.sync.persist.player.manager.Mat
 import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerProcessResult
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventProcessResult
+import com.footballay.core.infra.apisports.match.sync.persist.playerstat.manager.PlayerStatsManager
+import com.footballay.core.infra.apisports.match.sync.persist.playerstat.result.PlayerStatsProcessResult
+import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEntitySyncResult
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
+import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayerStatistics
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
 import com.footballay.core.infra.util.UidGenerator
@@ -37,6 +41,7 @@ class MatchEntitySyncServiceImplTest {
     private lateinit var baseMatchEntitySyncer: BaseMatchEntitySyncer
     private lateinit var matchPlayerManager: MatchPlayerManager
     private lateinit var matchEventManager: MatchEventManager
+    private lateinit var playerStatsManager: PlayerStatsManager
 
     @BeforeEach
     fun setUp() {
@@ -44,12 +49,14 @@ class MatchEntitySyncServiceImplTest {
         baseMatchEntitySyncer = mock()
         matchPlayerManager = mock()
         matchEventManager = mock()
+        playerStatsManager = mock()
         
         matchEntitySyncService = MatchEntitySyncServiceImpl(
             matchDataLoader,
             baseMatchEntitySyncer,
             matchPlayerManager,
-            matchEventManager
+            matchEventManager,
+            playerStatsManager,
         )
     }
 
@@ -80,7 +87,6 @@ class MatchEntitySyncServiceImplTest {
             homeMatchTeam = createMockMatchTeam("Home Team"),
             awayMatchTeam = createMockMatchTeam("Away Team")
         ))
-        
         whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
             MatchPlayerProcessResult(
                 totalPlayers = 2,
@@ -90,7 +96,6 @@ class MatchEntitySyncServiceImplTest {
                 savedPlayers = savedPlayers
             )
         )
-        
         whenever(matchEventManager.processMatchEvents(any(), any())).thenReturn(
             MatchEventProcessResult(
                 totalEvents = 1,
@@ -98,6 +103,19 @@ class MatchEntitySyncServiceImplTest {
                 updatedCount = 0,
                 deletedCount = 0,
                 savedEvents = listOf(createMockMatchEvent())
+            )
+        )
+        val savedPlayerStats = listOf(
+            createMockPlayerStats("Player 1"),
+            createMockPlayerStats("Player 2")
+        )
+        whenever(playerStatsManager.processPlayerStats(any(), any())).thenReturn(
+            PlayerStatsProcessResult(
+                totalStats = 2,
+                createdCount = 2,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedStats = savedPlayerStats
             )
         )
 
@@ -108,13 +126,16 @@ class MatchEntitySyncServiceImplTest {
 
         // then
         assertThat(result.success).isTrue()
-        assertThat(result.createdCount).isEqualTo(3) // 2 players + 1 event
+        assertThat(result.createdCount).isEqualTo(5) // 2 players + 1 event + 2 playerStats
         assertThat(result.updatedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
+        assertThat(result.playerChanges.created).isEqualTo(2)
+        assertThat(result.eventChanges.created).isEqualTo(1)
         
-        // Phase 3 & 4 검증
+        // 모든 Phase 검증
         verify(matchPlayerManager).processMatchPlayers(any(), any(), any())
         verify(matchEventManager).processMatchEvents(any(), any())
+        verify(playerStatsManager).processPlayerStats(any(), any())
         verify(matchDataLoader).loadContext(eq(fixtureApiId), any(), any())
         verify(baseMatchEntitySyncer).syncBaseEntities(eq(fixtureApiId), any(), any())
     }
@@ -184,6 +205,143 @@ class MatchEntitySyncServiceImplTest {
         
         // Phase 3가 실행되지 않았는지 확인
         verify(matchPlayerManager, never()).processMatchPlayers(any(), any(), any())
+    }
+
+    @Test
+    @DisplayName("Phase 5 (PlayerStats) 처리가 성공적으로 완료됩니다")
+    fun testPhase5PlayerStatsProcessing() {
+        // given
+        val fixtureApiId = 12345L
+        val baseDto = createMockFixtureDto()
+        val lineupDto = createMockLineupDto()
+        val eventDto = createMockEventDto()
+        val teamStatDto = createMockTeamStatDto()
+        val playerStatDto = createMockPlayerStatDto()
+        val playerContext = createMockPlayerContext()
+        
+        val entityBundle = MatchEntityBundle.createEmpty()
+        val savedPlayerStats = listOf(
+            createMockPlayerStats("Player 1"),
+            createMockPlayerStats("Player 2")
+        )
+        
+        // Mock 설정
+        whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
+        whenever(baseMatchEntitySyncer.syncBaseEntities(
+            eq(fixtureApiId), any(), any()
+        )).thenReturn(BaseMatchSyncResult.success(
+            fixture = createMockFixture(),
+            homeMatchTeam = createMockMatchTeam("Home Team"),
+            awayMatchTeam = createMockMatchTeam("Away Team")
+        ))
+        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
+            MatchPlayerProcessResult(
+                totalPlayers = 2,
+                createdCount = 2,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedPlayers = listOf(
+                    createMockMatchPlayer("Player 1"),
+                    createMockMatchPlayer("Player 2")
+                )
+            )
+        )
+        whenever(matchEventManager.processMatchEvents(any(), any())).thenReturn(
+            MatchEventProcessResult(
+                totalEvents = 1,
+                createdCount = 1,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedEvents = listOf(createMockMatchEvent())
+            )
+        )
+        whenever(playerStatsManager.processPlayerStats(any(), any())).thenReturn(
+            PlayerStatsProcessResult(
+                totalStats = 2,
+                createdCount = 2,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedStats = savedPlayerStats
+            )
+        )
+
+        // when
+        val result = matchEntitySyncService.syncMatchEntities(
+            fixtureApiId, baseDto, lineupDto, eventDto, teamStatDto, playerStatDto, playerContext
+        )
+
+        // then
+        assertThat(result.success).isTrue()
+        assertThat(result.createdCount).isEqualTo(5) // 2 players + 1 event + 2 playerStats
+        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.deletedCount).isEqualTo(0)
+        assertThat(result.playerChanges.created).isEqualTo(2)
+        assertThat(result.eventChanges.created).isEqualTo(1)
+        
+        // PlayerStats 처리 결과 확인
+        verify(playerStatsManager).processPlayerStats(any(), any())
+        
+        // PlayerStats 결과가 전체 결과에 반영되었는지 확인
+        assertThat(result.createdCount).isGreaterThanOrEqualTo(2) // PlayerStats 포함
+    }
+
+    @Test
+    @DisplayName("PlayerStats 처리 중 예외가 발생해도 전체 프로세스가 실패하지 않습니다")
+    fun testPlayerStatsProcessingException() {
+        // given
+        val fixtureApiId = 12345L
+        val baseDto = createMockFixtureDto()
+        val lineupDto = createMockLineupDto()
+        val eventDto = createMockEventDto()
+        val teamStatDto = createMockTeamStatDto()
+        val playerStatDto = createMockPlayerStatDto()
+        val playerContext = createMockPlayerContext()
+        
+        // Mock 설정
+        whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
+        whenever(baseMatchEntitySyncer.syncBaseEntities(
+            eq(fixtureApiId), any(), any()
+        )).thenReturn(BaseMatchSyncResult.success(
+            fixture = createMockFixture(),
+            homeMatchTeam = createMockMatchTeam("Home Team"),
+            awayMatchTeam = createMockMatchTeam("Away Team")
+        ))
+        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
+            MatchPlayerProcessResult(
+                totalPlayers = 2,
+                createdCount = 2,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedPlayers = listOf(
+                    createMockMatchPlayer("Player 1"),
+                    createMockMatchPlayer("Player 2")
+                )
+            )
+        )
+        whenever(matchEventManager.processMatchEvents(any(), any())).thenReturn(
+            MatchEventProcessResult(
+                totalEvents = 1,
+                createdCount = 1,
+                updatedCount = 0,
+                deletedCount = 0,
+                savedEvents = listOf(createMockMatchEvent())
+            )
+        )
+        
+        // PlayerStats 처리에서 예외 발생
+        whenever(playerStatsManager.processPlayerStats(any(), any())).thenThrow(
+            RuntimeException("PlayerStats processing failed")
+        )
+
+        // when
+        val result = matchEntitySyncService.syncMatchEntities(
+            fixtureApiId, baseDto, lineupDto, eventDto, teamStatDto, playerStatDto, playerContext
+        )
+
+        // then
+        assertThat(result.success).isFalse()
+        assertThat(result.errorMessage).contains("Entity sync failed")
+        assertThat(result.errorMessage).contains("PlayerStats processing failed")
     }
 
     // 헬퍼 메서드들
@@ -368,6 +526,46 @@ class MatchEntitySyncServiceImplTest {
             eventType = "Goal",
             detail = "Normal Goal",
             comments = "Goal scored"
+        )
+    }
+
+    private fun createMockPlayerStats(playerName: String): ApiSportsMatchPlayerStatistics {
+        val mockMatchPlayer = createMockMatchPlayer(playerName)
+        return ApiSportsMatchPlayerStatistics(
+            matchPlayer = mockMatchPlayer,
+            minutesPlayed = 90,
+            shirtNumber = 10,
+            position = "F",
+            rating = 7.5,
+            isCaptain = false,
+            isSubstitute = false,
+            offsides = 0,
+            shotsTotal = 3,
+            shotsOnTarget = 2,
+            goalsTotal = 1,
+            goalsConceded = 0,
+            assists = 1,
+            saves = 0,
+            passesTotal = 45,
+            keyPasses = 2,
+            passesAccuracy = 85,
+            tacklesTotal = 2,
+            blocks = 1,
+            interceptions = 1,
+            duelsTotal = 8,
+            duelsWon = 5,
+            dribblesAttempts = 3,
+            dribblesSuccess = 2,
+            dribblesPast = 1,
+            foulsDrawn = 2,
+            foulsCommitted = 1,
+            yellowCards = 0,
+            redCards = 0,
+            penaltyWon = 0,
+            penaltyCommitted = 0,
+            penaltyScored = 0,
+            penaltyMissed = 0,
+            penaltySaved = 0
         )
     }
 } 

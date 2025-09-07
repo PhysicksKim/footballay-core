@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.apisports.match.live.ActionAfterMatchSync
-import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.base.MatchBaseDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.event.MatchEventDtoExtractor

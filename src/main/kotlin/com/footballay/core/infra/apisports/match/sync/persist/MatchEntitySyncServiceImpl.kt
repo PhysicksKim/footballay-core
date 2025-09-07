@@ -11,6 +11,7 @@ import com.footballay.core.infra.apisports.match.sync.loader.MatchDataLoader
 import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntitySyncer
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerManager
+import com.footballay.core.infra.apisports.match.sync.persist.playerstat.manager.PlayerStatsManager
 import com.footballay.core.infra.apisports.syncer.match.persist.result.*
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
@@ -24,16 +25,16 @@ import org.springframework.transaction.annotation.Transactional
  * 2. Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
  * 3. MatchPlayer 처리 (MatchPlayerManager로 통합) + Lineup 정보 적용
  * 4. Event 처리 (생성/업데이트/삭제)
- * 5. PlayerStats 처리
- * 6. TeamStats 처리
- * 7. 데이터베이스 안전 반영
+ * 5. PlayerStats 처리 ✅ 완료 (PlayerStatsManager로 통합)
+ * 6. TeamStats 처리 ❌ TODO
+ * 7. 데이터베이스 안전 반영 ❌ TODO
  * 
  * **현재 구현 상태:**
  * - Phase 1: 기존 엔티티 로드 ✅ 완료
  * - Phase 2: Base DTO 처리 ✅ 완료
  * - Phase 3: MatchPlayer 처리 + Lineup 정보 적용 ✅ 완료 (MatchPlayerManager로 통합)
  * - Phase 4: Event 처리 ✅ 완료 (MatchEventManager로 통합)
- * - Phase 5: PlayerStats 처리 ❌ TODO
+ * - Phase 5: PlayerStats 처리 ✅ 완료 (PlayerStatsManager로 통합)
  * - Phase 6: TeamStats 처리 ❌ TODO
  * - Phase 7: 실제 저장 ❌ TODO
  */
@@ -42,7 +43,8 @@ class MatchEntitySyncServiceImpl(
     private val matchDataLoader: MatchDataLoader,
     private val baseMatchEntitySyncer: BaseMatchEntitySyncer,
     private val matchPlayerManager: MatchPlayerManager,
-    private val matchEventManager: MatchEventManager
+    private val matchEventManager: MatchEventManager,
+    private val playerStatsManager: PlayerStatsManager
 ) : MatchEntitySyncService {
 
     private val log = logger()
@@ -82,12 +84,13 @@ class MatchEntitySyncServiceImpl(
             val matchEventResult = matchEventManager.processMatchEvents(eventDto, entityBundle)
             log.info("MatchEvent processing completed - Total events: ${matchEventResult.totalEvents}, Created: ${matchEventResult.createdCount}, Updated: ${matchEventResult.updatedCount}, Deleted: ${matchEventResult.deletedCount}")
 
-            // Phase 5: PlayerStats 처리
-            // TODO: PlayerStats 엔티티 생성/업데이트 로직 구현 필요
-            
+            // Phase 5: PlayerStats 처리 (PlayerStatsManager로 통합)
+            val playerStatsResult = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
+            log.info("PlayerStats processing completed - Total stats: ${playerStatsResult.totalStats}, Created: ${playerStatsResult.createdCount}, Updated: ${playerStatsResult.updatedCount}, Deleted: ${playerStatsResult.deletedCount}")
+
             // Phase 6: TeamStats 처리
             // TODO: TeamStats 엔티티 생성/업데이트 로직 구현 필요
-
+            
             // Phase 7: 실제 저장 (TODO: MatchEntityPersister 구현 필요)
             // val persister = MatchEntityPersister(/* repositories */)
             // val persistResult = persister.persistChanges(playerChangeSet, eventChanges)
@@ -96,9 +99,9 @@ class MatchEntitySyncServiceImpl(
             log.info("Entity sync completed successfully for fixture: $fixtureApiId")
 
             return MatchEntitySyncResult.success(
-                createdCount = matchPlayerResult.createdCount + matchEventResult.createdCount,
-                updatedCount = matchPlayerResult.updatedCount + matchEventResult.updatedCount,
-                deletedCount = matchPlayerResult.deletedCount + matchEventResult.deletedCount,
+                createdCount = matchPlayerResult.createdCount + matchEventResult.createdCount + playerStatsResult.createdCount,
+                updatedCount = matchPlayerResult.updatedCount + matchEventResult.updatedCount + playerStatsResult.updatedCount,
+                deletedCount = matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
                 playerChanges = MatchPlayerSyncResult(
                     created = matchPlayerResult.createdCount,
                     updated = matchPlayerResult.updatedCount,

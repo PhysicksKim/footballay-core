@@ -21,6 +21,26 @@ interface FixtureApiSportsRepository : JpaRepository<FixtureApiSports, Long> {
     fun findAllByApiIdIn(apiIds: List<Long>): List<FixtureApiSports>
     
     fun findByApiId(apiId: Long): FixtureApiSports?
+    
+    /**
+     * Fixture 데이터 조회 (League+Season OR ApiId 기반)
+     */
+    @Query("""
+        SELECT fas FROM FixtureApiSports fas
+        JOIN FETCH fas.core fc
+        JOIN FETCH fas.season lass
+        JOIN FETCH lass.leagueApiSports las
+        LEFT JOIN FETCH fas.venue vas
+        WHERE (las.apiId = :leagueApiId AND lass.seasonYear = :seasonYear) 
+           OR fas.apiId IN :fixtureApiIds
+    """)
+    fun findFixturesByLeagueSeasonOrApiIds(
+        @Param("leagueApiId") leagueApiId: Long,
+        @Param("seasonYear") seasonYear: String,
+        @Param("fixtureApiIds") fixtureApiIds: List<Long>
+    ): List<FixtureApiSports>
+
+
 
     @Query("""
         SELECT f FROM FixtureApiSports f 

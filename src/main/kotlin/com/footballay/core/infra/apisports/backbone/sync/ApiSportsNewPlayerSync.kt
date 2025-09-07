@@ -2,17 +2,17 @@ package com.footballay.core.infra.apisports.backbone.sync
 
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 
-interface ApiSportsNewPlayerSync : NewPlayerSync<PlayerSyncRequest> {
+interface ApiSportsNewPlayerSync : NewPlayerSync<PlayerApiSportsCreateDto> {
 
     /**
      * 선수 정보를 Core-Api 구조에 저장합니다.
      *
      * @param players 추출된 선수 정보 목록
      * @param teamApiId (Optional) 선수 연관관계를 맺을 팀의 API ID. null 일 경우 [com.footballay.core.infra.persistence.core.entity.TeamCore] 연관관계 맺지 않음
-     * @return 제공된 [PlayerSyncRequest] 에 따라서 새롭게 저장 또는 기존에 존재했던 [PlayerCore] 목록
+     * @return 제공된 [PlayerApiSportsCreateDto] 에 따라서 새롭게 저장 또는 기존에 존재했던 [PlayerCore] 목록
      */
     override fun syncPlayers(
-        players: List<PlayerSyncRequest>,
+        players: List<PlayerApiSportsCreateDto>,
         teamApiId: Long?
     ): List<PlayerCore>
 
@@ -22,6 +22,6 @@ interface ApiSportsNewPlayerSync : NewPlayerSync<PlayerSyncRequest> {
      * @param players 추출된 선수 정보 목록
      * @return 새롭게 저장 또는 기존에 존재했던 [PlayerCore] 목록
      */
-    override fun syncPlayerWithoutTeam(players: List<PlayerSyncRequest>): List<PlayerCore>
+    override fun syncPlayerWithoutTeam(players: List<PlayerApiSportsCreateDto>): List<PlayerCore>
 
 }

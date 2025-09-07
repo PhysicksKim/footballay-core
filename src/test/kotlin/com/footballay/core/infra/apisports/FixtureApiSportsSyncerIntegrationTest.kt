@@ -20,7 +20,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.backbone.sync.FixtureApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.fixture.FixtureApiSportsWithCoreSyncer
 import org.assertj.core.api.Assertions.assertThat
 
 /**
@@ -47,7 +47,7 @@ class FixtureApiSportsSyncerIntegrationTest {
     val log = logger()
 
     @Autowired
-    private lateinit var fixtureApiSportsSyncer: FixtureApiSportsSyncer
+    private lateinit var fixtureApiSportsSyncer: FixtureApiSportsWithCoreSyncer
 
     // ApiSports Repositories
     @Autowired
@@ -101,7 +101,7 @@ class FixtureApiSportsSyncerIntegrationTest {
 
         // when: 경기 저장 실행
         assertDoesNotThrow {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(
+            fixtureApiSportsSyncer.saveFixturesOfLeague(
                 TEST_LEAGUE_API_ID, 
                 listOf(fixtureDto)
             )
@@ -126,7 +126,7 @@ class FixtureApiSportsSyncerIntegrationTest {
         )
 
         // when: 경기 저장 실행
-        fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(
+        fixtureApiSportsSyncer.saveFixturesOfLeague(
             TEST_LEAGUE_API_ID, 
             listOf(fixtureDto)
         )
@@ -142,7 +142,7 @@ class FixtureApiSportsSyncerIntegrationTest {
     fun `중복 경기 저장 - 업데이트 로직 검증`() {
         // given: 기존 경기 데이터
         val originalFixture = createBasicFixtureDto(fixtureApiId = 1003L)
-        fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(
+        fixtureApiSportsSyncer.saveFixturesOfLeague(
             TEST_LEAGUE_API_ID, 
             listOf(originalFixture)
         )
@@ -159,7 +159,7 @@ class FixtureApiSportsSyncerIntegrationTest {
             )
         )
         
-        fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(
+        fixtureApiSportsSyncer.saveFixturesOfLeague(
             TEST_LEAGUE_API_ID, 
             listOf(updatedFixture)
         )
@@ -187,7 +187,7 @@ class FixtureApiSportsSyncerIntegrationTest {
         )
 
         // when: 배치 저장 실행
-        fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(
+        fixtureApiSportsSyncer.saveFixturesOfLeague(
             TEST_LEAGUE_API_ID, 
             fixtures
         )

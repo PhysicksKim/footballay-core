@@ -19,8 +19,8 @@ data class FixtureApiSportsDto(
     data class BaseTeamDto(
         val apiId: Long,
         val name: String,
-        val logo: String?,
-        val winner: Boolean?
+        val logo: String = "",
+        val winner: Boolean? = null
     )
 
     data class VenueDto(

@@ -76,7 +76,7 @@ class MatchDataLoaderImplTest {
         log.info("로드된 이벤트 수: {}", entityBundle.allEvents.size)
         log.info("로드된 홈팀 통계: {}", entityBundle.homeTeamStat?.id)
         log.info("로드된 원정팀 통계: {}", entityBundle.awayTeamStat?.id)
-        log.info("로드된 선수 통계 수: {}", entityBundle.allPlayerStats.size)
+        log.info("로드된 선수 통계 수: {}", entityBundle.getAllPlayerStats().size)
         
         // then
         assertThat(entityBundle.fixture).isNotNull()
@@ -95,24 +95,24 @@ class MatchDataLoaderImplTest {
         
         // 선수들 검증
         assertThat(entityBundle.allMatchPlayers).isNotEmpty()
-        assertThat(entityBundle.allMatchPlayers).hasSizeGreaterThanOrEqualTo(matchEntities.matchPlayers.size)
+        assertThat(entityBundle.allMatchPlayers.size).isGreaterThanOrEqualTo(matchEntities.matchPlayers.size)
         
         // 이벤트 검증
         assertThat(entityBundle.allEvents).isNotEmpty()
-        assertThat(entityBundle.allEvents).hasSizeGreaterThanOrEqualTo(matchEntities.matchEvents.size)
+        assertThat(entityBundle.allEvents.size).isGreaterThanOrEqualTo(matchEntities.matchEvents.size)
         
         // 팀 통계 검증
         assertThat(entityBundle.homeTeamStat).isNotNull()
         assertThat(entityBundle.awayTeamStat).isNotNull()
         
         // 선수 통계 검증
-        assertThat(entityBundle.allPlayerStats).isNotEmpty()
-        assertThat(entityBundle.allPlayerStats).hasSizeGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
+        assertThat(entityBundle.getAllPlayerStats()).isNotEmpty()
+        assertThat(entityBundle.getAllPlayerStats().size).isGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
         
         log.info("로드된 데이터 검증 완료 - Players: {}, Events: {}, TeamStats: {}, PlayerStats: {}", 
             entityBundle.allMatchPlayers.size, entityBundle.allEvents.size, 
             if (entityBundle.homeTeamStat != null) "홈팀O" else "홈팀X",
-            entityBundle.allPlayerStats.size)
+            entityBundle.getAllPlayerStats().size)
     }
 
     @Test
@@ -224,7 +224,7 @@ class MatchDataLoaderImplTest {
         assertThat(entityBundle.allEvents).isEmpty()
         assertThat(entityBundle.homeTeamStat).isNull()
         assertThat(entityBundle.awayTeamStat).isNull()
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         
         log.info("존재하지 않는 fixture 처리 검증 완료")
     }
@@ -310,11 +310,11 @@ class MatchDataLoaderImplTest {
         
         // then
         // 선수 통계가 로드되었는지 확인
-        assertThat(entityBundle.allPlayerStats).isNotEmpty()
-        assertThat(entityBundle.allPlayerStats).hasSizeGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
+        assertThat(entityBundle.getAllPlayerStats()).isNotEmpty()
+        assertThat(entityBundle.getAllPlayerStats().size).isGreaterThanOrEqualTo(matchEntities.playerStatistics.size)
         
         // 각 선수 통계의 세부 내용 검증
-        entityBundle.allPlayerStats.forEach { (key, playerStats) ->
+        entityBundle.getAllPlayerStats().forEach { (key, playerStats) ->
             assertThat(playerStats.matchPlayer).isNotNull()
             assertThat(playerStats.minutesPlayed).isEqualTo(90)
             assertThat(playerStats.rating).isEqualTo(7.5)
@@ -331,9 +331,9 @@ class MatchDataLoaderImplTest {
         val playersWithStats = entityBundle.allMatchPlayers.filter { (_, player) ->
             player.statistics != null
         }
-        assertThat(playersWithStats).hasSize(entityBundle.allPlayerStats.size)
+        assertThat(playersWithStats).hasSize(entityBundle.getAllPlayerStats().size)
         
-        log.info("선수 통계 검증 완료 - 선수 통계 수: {}", entityBundle.allPlayerStats.size)
+        log.info("선수 통계 검증 완료 - 선수 통계 수: {}", entityBundle.getAllPlayerStats().size)
     }
 
     @Test
@@ -400,7 +400,7 @@ class MatchDataLoaderImplTest {
         assertThat(entityBundle.allMatchPlayers).isNotEmpty()
         assertThat(entityBundle.homeTeamStat).isNotNull()
         assertThat(entityBundle.awayTeamStat).isNotNull()
-        assertThat(entityBundle.allPlayerStats).isNotEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isNotEmpty()
         
         log.info("이벤트 없는 경기 처리 검증 완료")
     }
@@ -426,7 +426,7 @@ class MatchDataLoaderImplTest {
         
         // then
         // 선수 통계가 비어있는지 확인
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         
         // 다른 엔티티들은 정상적으로 로드되는지 확인
         assertThat(entityBundle.fixture).isNotNull()
@@ -463,7 +463,7 @@ class MatchDataLoaderImplTest {
         // then
         // 이벤트와 선수 통계가 비어있는지 확인
         assertThat(entityBundle.allEvents).isEmpty()
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         
         // 라인업 선수들은 정상적으로 로드되는지 확인
         assertThat(entityBundle.allMatchPlayers).isNotEmpty()
@@ -506,7 +506,7 @@ class MatchDataLoaderImplTest {
         // 라인업이 없으면 이벤트에서 선수 정보를 가져올 수 있지만, 
         // 현재 구현에서는 라인업 선수들이 없으면 이벤트 선수들도 로드되지 않을 수 있음
         // assertThat(entityBundle.allMatchPlayers).isEmpty() // 이 조건은 실제 구현에 따라 달라질 수 있음
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         
         // 기본 엔티티들은 정상적으로 로드되는지 확인
         assertThat(entityBundle.fixture).isNotNull()
@@ -548,7 +548,7 @@ class MatchDataLoaderImplTest {
         assertThat(entityBundle.awayTeam).isNotNull()
         assertThat(entityBundle.allMatchPlayers).isEmpty()
         assertThat(entityBundle.allEvents).isEmpty()
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         assertThat(entityBundle.homeTeamStat).isNull()
         assertThat(entityBundle.awayTeamStat).isNull()
         
@@ -609,7 +609,7 @@ class MatchDataLoaderImplTest {
         // 팀 통계는 있지만 선수 통계가 없는지 확인
         assertThat(entityBundle.homeTeamStat).isNotNull()
         assertThat(entityBundle.awayTeamStat).isNotNull()
-        assertThat(entityBundle.allPlayerStats).isEmpty()
+        assertThat(entityBundle.getAllPlayerStats()).isEmpty()
         
         // 다른 엔티티들은 정상적으로 로드되는지 확인
         assertThat(entityBundle.fixture).isNotNull()

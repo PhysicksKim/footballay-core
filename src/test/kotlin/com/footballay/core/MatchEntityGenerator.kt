@@ -3,6 +3,7 @@ package com.footballay.core
 import com.footballay.core.infra.persistence.apisports.entity.*
 import com.footballay.core.infra.persistence.apisports.entity.live.*
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
@@ -182,7 +183,7 @@ class MatchEntityGenerator(
                 kickoff = kickoffTime,
                 timestamp = kickoffTime.toEpochSecond(),
                 status = "Not Started",
-                statusShort = "NS",
+                statusShort = FixtureStatusShort.NS,
                 elapsedMin = null,
                 league = league,
                 homeTeam = homeTeam,

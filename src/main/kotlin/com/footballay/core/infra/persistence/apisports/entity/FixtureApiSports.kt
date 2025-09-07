@@ -36,6 +36,14 @@ data class FixtureApiSports(
     var timestamp: Long? = null,
     var round: String? = null,
 
+    /**
+     * ApiSports 측에서 제공하는 fixture 업데이트를 방지하기 위한 플래그입니다.
+     *
+     * 이 플래그가 true로 설정된 경우, ApiSports 데이터를 받아와 저장하는 과정을 무시하고
+     * 기존에 저장된 fixture 정보를 그대로 유지합니다.
+     */
+    var preventUpdate: Boolean = false,
+
     @Embedded
     var status: ApiSportsStatus? = null,
 
@@ -46,9 +54,12 @@ data class FixtureApiSports(
     @JoinColumn(name = "venue_id")
     var venue: VenueApiSports? = null,
 
+    /**
+     * 경우에 따라 간혹 ApiSports 측에서 orphan fixture 가 발생할 수 있으므로 이때 season 을 null 로 설정하여 리그 경기일정 조회에서 제외시키도록 합니다.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "season_id")
-    var season: LeagueApiSportsSeason,
+    var season: LeagueApiSportsSeason?,
 
     @OneToOne(cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     @JoinColumn(name = "home_team_id")

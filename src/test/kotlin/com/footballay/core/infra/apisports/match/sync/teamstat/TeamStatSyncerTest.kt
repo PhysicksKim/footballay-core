@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync.teamstat
 
-import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.teamstat.TeamStatSyncer
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

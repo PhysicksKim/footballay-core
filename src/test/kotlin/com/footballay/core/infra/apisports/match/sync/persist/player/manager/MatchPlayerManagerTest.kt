@@ -330,7 +330,6 @@ class MatchPlayerManagerTest {
             }
             players
         }
-        whenever(playerApiSportsRepository.findPlayerApiSportsByApiIdWithPlayerCore(33L)).thenReturn(playerApiSports)
         whenever(uidGenerator.generateUid()).thenReturn("mp_33")
 
         // when
@@ -338,8 +337,7 @@ class MatchPlayerManagerTest {
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
-        verify(playerApiSportsRepository).findPlayerApiSportsByApiIdWithPlayerCore(33L)
-        
+
         // 엔티티 번들에서 실제 연결된 플레이어 검증
         assertThat(entityBundle.allMatchPlayers).hasSize(1)
         val connectedPlayer = entityBundle.allMatchPlayers.values.first()

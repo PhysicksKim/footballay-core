@@ -2,19 +2,25 @@ package com.footballay.core.infra.apisports
 
 import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
-import com.footballay.core.infra.apisports.backbone.sync.FixtureApiSportsSyncer
+import com.footballay.core.infra.apisports.backbone.sync.fixture.FixtureApiSportsWithCoreSyncer
+import com.footballay.core.infra.apisports.backbone.sync.fixture.factory.FixtureApiSportsFactory
+import com.footballay.core.infra.apisports.backbone.sync.fixture.factory.VenueApiSportsFactory
+import com.footballay.core.infra.apisports.mapper.FixtureDataMapper
 import com.footballay.core.infra.persistence.apisports.entity.*
+import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
 import com.footballay.core.infra.persistence.apisports.repository.*
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
-import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
+import com.footballay.core.infra.core.FixtureCoreSyncService
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import io.mockk.*
+import java.time.OffsetDateTime
 
 class FixtureApiSportsSyncerTest {
 
@@ -25,29 +31,34 @@ class FixtureApiSportsSyncerTest {
     private val leagueApiSportsRepository: LeagueApiSportsRepository = mockk()
     private val leagueApiSportsSeasonRepository: LeagueApiSportsSeasonRepository = mockk()
     private val teamApiSportsRepository: TeamApiSportsRepository = mockk()
-    private val fixtureCoreRepository: FixtureCoreRepository = mockk()
-    private val leagueCoreRepository: LeagueCoreRepository = mockk()
+    private val venueApiSportsRepository: VenueApiSportsRepository = mockk()
     
     // Mock services
+    private val fixtureCoreSyncService: FixtureCoreSyncService = mockk()
     private val venueApiSportsService: VenueApiSportsService = mockk()
+    private val fixtureDataMapper: FixtureDataMapper = mockk()
     
     // Mock utilities
     private val uidGenerator: UidGenerator = mockk()
 
     // System under test
-    private lateinit var fixtureApiSportsSyncer: FixtureApiSportsSyncer
+    private lateinit var fixtureApiSportsSyncer: FixtureApiSportsWithCoreSyncer
+
+    private var fixtureApiSportsFactory: FixtureApiSportsFactory = mockk()
+
+    private var venueApiSportsFactory: VenueApiSportsFactory = mockk()
 
     @BeforeEach
     fun setUp() {
-        fixtureApiSportsSyncer = FixtureApiSportsSyncer(
+        fixtureApiSportsSyncer = FixtureApiSportsWithCoreSyncer(
             fixtureApiSportsRepository = fixtureApiSportsRepository,
             leagueApiSportsRepository = leagueApiSportsRepository,
-            leagueApiSportsSeasonRepository = leagueApiSportsSeasonRepository,
             teamApiSportsRepository = teamApiSportsRepository,
-            fixtureCoreRepository = fixtureCoreRepository,
-            leagueCoreRepository = leagueCoreRepository,
-            venueApiSportsService = venueApiSportsService,
-            uidGenerator = uidGenerator
+            venueApiSportsRepository = venueApiSportsRepository,
+            fixtureCoreSyncService = fixtureCoreSyncService,
+            fixtureDataMapper = fixtureDataMapper,
+            fixtureApiSportsFactory = fixtureApiSportsFactory,
+            venueApiSportsFactory = venueApiSportsFactory,
         )
     }
 
@@ -59,7 +70,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, emptyDtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, emptyDtos)
         }
         assertEquals("Fixtures list cannot be empty", exception.message)
     }
@@ -80,7 +91,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalStateException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(nonExistentLeagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(nonExistentLeagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("League with API ID $nonExistentLeagueApiId must be synced first"))
     }
@@ -108,7 +119,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalStateException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("League core not found for API ID"))
     }
@@ -138,7 +149,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalStateException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("Season 2024 not found for league"))
     }
@@ -174,7 +185,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("inconsistent league API ID"))
     }
@@ -210,7 +221,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("inconsistent season year"))
     }
@@ -238,7 +249,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalStateException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("Teams with API IDs [102] must be synced first"))
     }
@@ -267,7 +278,7 @@ class FixtureApiSportsSyncerTest {
 
         // when & then
         val exception = assertThrows(IllegalStateException::class.java) {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         assertTrue(exception.message!!.contains("TeamCore missing for teams with API IDs"))
     }
@@ -292,19 +303,45 @@ class FixtureApiSportsSyncerTest {
         // venue 처리
         every { venueApiSportsService.processVenuesWithNewTransaction(any()) } returns emptyMap()
         
+        // FixtureDataMapper mock 설정
+        every { fixtureDataMapper.mapStatusToCore(any()) } returns FixtureStatusShort.NS
+        every { fixtureDataMapper.mapScoreToCore(any()) } returns null
+        every { fixtureDataMapper.mapStatusToApi(any()) } returns ApiSportsStatus(shortStatus = "NS", longStatus = "Not Started", elapsed = null)
+        every { fixtureDataMapper.mapScoreToApi(any()) } returns null
+        
         // UID 생성
         every { uidGenerator.generateUid() } returns "test-uid"
         
-        // FixtureCore 저장
-        val mockFixtureCore = mockk<com.footballay.core.infra.persistence.core.entity.FixtureCore>()
-        every { fixtureCoreRepository.save(any()) } returns mockFixtureCore
+        // FixtureCore 저장 - 실제 엔티티 객체 사용
+        val leagueCore = mockk<LeagueCore>()
+        val homeTeamCore = mockk<TeamCore>()
+        val awayTeamCore = mockk<TeamCore>()
+        
+        val fixtureCore = FixtureCore(
+            uid = "test-uid",
+            kickoff = OffsetDateTime.now(),
+            timestamp = 0L,
+            status = "Not Started",
+            statusShort = FixtureStatusShort.NS,
+            elapsedMin = null,
+            goalsHome = null,
+            goalsAway = null,
+            finished = false,
+            available = true,
+            autoGenerated = false,
+            league = leagueCore,
+            homeTeam = homeTeamCore,
+            awayTeam = awayTeamCore
+        )
+        every { fixtureCoreSyncService.createFixtureCores(any()) } returns mapOf("test-uid" to fixtureCore)
+        every { fixtureCoreSyncService.updateFixtureCores(any()) } returns mapOf("test-uid" to fixtureCore)
         
         // FixtureApiSports 저장
         every { fixtureApiSportsRepository.saveAll(any<List<FixtureApiSports>>()) } returns emptyList()
 
         // when & then (예외 발생하지 않아야 함)
         assertDoesNotThrow {
-            fixtureApiSportsSyncer.saveFixturesOfLeagueWithCurrentSeason(leagueApiId, dtos)
+            fixtureApiSportsSyncer.saveFixturesOfLeague(leagueApiId, dtos)
         }
         
         // 저장 메서드가 호출되었는지 확인

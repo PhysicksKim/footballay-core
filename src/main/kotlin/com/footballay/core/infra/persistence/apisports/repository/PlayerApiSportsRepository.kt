@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface PlayerApiSportsRepository : JpaRepository<PlayerApiSports, Long> {
+
+    fun findByApiId(apiId: Long): PlayerApiSports?
+
     fun findAllByApiIdIn(apiIds: List<Long>): List<PlayerApiSports>
     
     @Query("SELECT p FROM PlayerApiSports p LEFT JOIN FETCH p.playerCore WHERE p.apiId = :apiId")
@@ -19,4 +22,9 @@ interface PlayerApiSportsRepository : JpaRepository<PlayerApiSports, Long> {
      */
     @Query("SELECT p FROM PlayerApiSports p LEFT JOIN FETCH p.playerCore WHERE p.apiId IN :apiIds")
     fun findPlayerApiSportsByApiIdsWithPlayerCore(@Param("apiIds") apiIds: List<Long>): List<PlayerApiSports>
+    
+    /**
+     * PlayerCore ID로 PlayerApiSports를 찾는 메서드
+     */
+    fun findByPlayerCoreId(playerCoreId: Long): PlayerApiSports?
 }

@@ -1,7 +1,8 @@
 package com.footballay.core.infra.apisports.match.live.deprecated
 
 import com.footballay.core.infra.apisports.backbone.sync.ApiSportsNewPlayerSync
-import com.footballay.core.infra.apisports.backbone.sync.PlayerSyncRequest
+import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
 import com.footballay.core.logger
@@ -18,7 +19,8 @@ typealias ApiSportsFixtureSingle = ApiSportsV3Envelope<ApiSportsFixture.Single>
 @Deprecated("[FixturePlayerExtractor] 로 대체되었습니다")
 @Component
 class LiveFixturePlayerExtractorApiSports(
-    private val playerSyncService: ApiSportsNewPlayerSync
+//    private val playerSyncService: ApiSportsNewPlayerSync
+    private val playerApiSportsSyncer: PlayerApiSportsSyncer
 ) {
 
     val log = logger()
@@ -60,7 +62,7 @@ class LiveFixturePlayerExtractorApiSports(
         val allPlayers = lineupPlayers + statisticsPlayers
         if (allPlayers.isNotEmpty()) {
             log.info("라인업에서 추출한 신규 선수를 저장합니다. \n팀 API ID: $teamApiId, 신규 선수 수: ${allPlayers.size}")
-            playerSyncService.syncPlayers(allPlayers, teamApiId)
+            playerApiSportsSyncer.syncPlayersOfTeam(teamApiId, allPlayers)
         } else {
             log.info("라인업에 신규 선수가 없습니다. 팀 API ID: $teamApiId")
         }
@@ -69,14 +71,14 @@ class LiveFixturePlayerExtractorApiSports(
     private fun extractPlayersFromLineup(
         response: ApiSportsFixtureSingle,
         teamApiId: Long
-    ): List<PlayerSyncRequest> {
+    ): List<PlayerApiSportsCreateDto> {
         val lineups = response.response[0].lineups
         val startXI = lineups.find { it.team.id == teamApiId }?.startXI ?: emptyList()
         val substitutes = lineups.find { it.team.id == teamApiId }?.substitutes ?: emptyList()
         val lineupPlayers = startXI + substitutes
 
         return lineupPlayers.map {
-            PlayerSyncRequest(
+            PlayerApiSportsCreateDto(
                 apiId = it.player.id,  // id가 null일 수 있음 - 상위에서 필터링됨
                 name = it.player.name,
                 position = it.player.pos
@@ -88,7 +90,7 @@ class LiveFixturePlayerExtractorApiSports(
         response: ApiSportsFixtureSingle,
         teamApiId: Long,
         lineupPlayerApiIds: Set<Long>
-    ): List<PlayerSyncRequest> {
+    ): List<PlayerApiSportsCreateDto> {
         val playerStatistics = response.response[0].players
 
         return playerStatistics
@@ -100,7 +102,7 @@ class LiveFixturePlayerExtractorApiSports(
                         it.player.id == null || it.player.id !in lineupPlayerApiIds 
                     }
                     .map { player ->
-                        PlayerSyncRequest(
+                        PlayerApiSportsCreateDto(
                             apiId = player.player.id,  // id가 null일 수 있음 - 상위에서 필터링됨
                             name = player.player.name,
                         )

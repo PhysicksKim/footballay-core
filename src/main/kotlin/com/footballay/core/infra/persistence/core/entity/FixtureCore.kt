@@ -23,14 +23,14 @@ data class FixtureCore(
     var uid: String,
 
     /**
-     * 경기 시작 시간. UTC 로 저장합니다.
+     * 경기 시작 시간. UTC 로 저장합니다. 일정이 미정인 경우 null로 처리합니다
      */
-    var kickoff: OffsetDateTime,
+    var kickoff: OffsetDateTime?,
 
     /**
-     * 경기 시작 시간. UNIX 타임스탬프 형식으로 저장합니다.
+     * 경기 시작 시간. UNIX 타임스탬프 형식으로 저장합니다. 일정이 미정인 경우 null로 처리합니다
      */
-    var timestamp: Long, // UNIX timestamp
+    var timestamp: Long?, // UNIX timestamp
 
     /**
      * 경기 상태 (예: Not Started, Full Time, First Half, Half Time, Second Half 등)
@@ -40,7 +40,8 @@ data class FixtureCore(
     /**
      * 경기 상태 약어 (예: NS, FT, 1H, HT, 2H 등)
      */
-    var statusShort: String,
+    @Enumerated(EnumType.STRING)
+    var statusShort: FixtureStatusShort,
 
     /**
      * 경기 시간 (분 단위)

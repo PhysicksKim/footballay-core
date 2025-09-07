@@ -3,7 +3,7 @@ package com.footballay.core.infra.apisports.backbone.sync
 /**
  * 선수 동기화 요청 데이터
  */
-data class PlayerSyncRequest(
+data class PlayerApiSportsCreateDto(
     val apiId: Long?,
     val name: String?,
     val firstname: String? = null,

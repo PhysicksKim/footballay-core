@@ -1,7 +1,8 @@
 package com.footballay.core.infra.apisports.match.sync
 
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
-import com.footballay.core.infra.facade.ApiSportsSyncFacade
+import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.persistence.apisports.repository.*
 import com.footballay.core.infra.persistence.core.repository.*
 import com.footballay.core.infra.persistence.apisports.repository.live.*
@@ -26,7 +27,7 @@ class MatchApiSportsSyncerIntegrationTest {
     private lateinit var mockFetcher: ApiSportsV3MockFetcher
 
     @Autowired
-    private lateinit var apiSportsSyncFacade: ApiSportsSyncFacade
+    private lateinit var apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade
 
     @Autowired
     private lateinit var matchApiSportsSyncer: MatchApiSportsSyncerImpl
@@ -87,7 +88,7 @@ class MatchApiSportsSyncerIntegrationTest {
         for (fixtureId in supportedFixtureIds) {
             log.info("경기 ID $fixtureId 동기화 시작")
             val syncResult = matchApiSportsSyncer.syncFixtureMatchEntities(
-                com.footballay.core.infra.apisports.match.live.FullMatchSyncDto.of(
+                FullMatchSyncDto.of(
                     mockFetcher.fetchFixtureSingle(fixtureId)
                 )
             )
@@ -102,12 +103,12 @@ class MatchApiSportsSyncerIntegrationTest {
     private fun setupBackboneData(bundle: ApiSportsV3MockFetcher.MockDataBundle) {
         // 1. Current Leagues 동기화 (Premier League 2024 포함)
         log.info("Current Leagues 동기화 시작")
-        val currentLeaguesResult = apiSportsSyncFacade.syncCurrentLeagues()
+        val currentLeaguesResult = apiSportsBackboneSyncFacade.syncCurrentLeagues()
         log.info("Current Leagues 동기화 완료: $currentLeaguesResult")
 
         // 2. League Teams 동기화 (Premier League 2024의 팀들)
         log.info("League Teams 동기화 시작")
-        val leagueTeamsResult = apiSportsSyncFacade.syncTeamsOfLeague(
+        val leagueTeamsResult = apiSportsBackboneSyncFacade.syncTeamsOfLeague(
             bundle.leagueId!!, 
             bundle.season!!
         )
@@ -115,7 +116,7 @@ class MatchApiSportsSyncerIntegrationTest {
 
         // 3. Fixtures 동기화 (Premier League 2024의 경기들)
         log.info("Fixtures 동기화 시작")
-        val fixturesResult = apiSportsSyncFacade.syncFixturesOfLeagueWithSeason(
+        val fixturesResult = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithSeason(
             bundle.leagueId!!, 
             bundle.season!!
         )

@@ -16,7 +16,12 @@ data class VenueApiSports(
     var city: String? = null, // API 응답의 venue.city
     var capacity: Int? = null, // API 응답의 venue.capacity
     var surface: String? = null, // API 응답의 venue.surface
-    var image: String? = null // API 응답의 venue.image
+    var image: String? = null, // API 응답의 venue.image
+
+    /**
+     * 사용자가 수동으로 데이터를 업데이트 한 경우, 자동 sync 과정에서 사용자 데이터를 덮어씌우지 않도록 이 flag 를 true 로 설정합니다. <br>
+     */
+    var preventUpdate: Boolean = false,
 ) {
 
     @PrePersist

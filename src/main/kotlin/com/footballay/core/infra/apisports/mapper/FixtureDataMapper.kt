@@ -1,0 +1,144 @@
+package com.footballay.core.infra.apisports.mapper
+
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
+import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
+import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
+import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
+import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.TeamCore
+import org.springframework.stereotype.Component
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+
+/**
+ * Fixture 데이터 매핑 담당 인터페이스
+ * 
+ * API Sports 데이터를 Core 시스템으로 매핑하는 로직을 담당합니다.
+ * 향후 확장성을 고려하여 인터페이스로 설계했습니다.
+ * 
+ * @author Footballay Core Team
+ * @since 1.0.0
+ */
+@Component
+interface FixtureDataMapper {
+
+    /**
+     * API Sports Status를 Core Status로 매핑
+     */
+    fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusShort?
+
+    /**
+     * API Sports Score를 Core Score로 매핑
+     */
+    fun mapScoreToCore(apiScore: ScoreOfFixtureApiSportsCreateDto?): Int?
+
+    /**
+     * API Sports Status를 API Sports Status 엔티티로 매핑
+     */
+    fun mapStatusToApi(apiStatus: StatusOfFixtureApiSportsCreateDto?): ApiSportsStatus?
+
+    /**
+     * API Sports Score를 API Sports Score 엔티티로 매핑
+     */
+    fun mapScoreToApi(apiScore: ScoreOfFixtureApiSportsCreateDto?): ApiSportsScore?
+    
+    /**
+     * FixtureApiSportsCreateDto를 FixtureCoreCreateDto로 매핑
+     * 
+     * @param uid FixtureCore의 고유 식별자
+     * @param dto 변환할 API Sports DTO
+     * @param league 연관된 LeagueApiSports (core 정보 포함)
+     * @param homeTeam 홈팀 정보 (core 정보 포함)
+     * @param awayTeam 어웨이팀 정보 (core 정보 포함)
+     */
+    fun toFixtureCoreCreateDto(
+        uid: String,
+        dto: FixtureApiSportsCreateDto,
+        league: LeagueCore,
+        homeTeam: TeamCore?,
+        awayTeam: TeamCore?
+    ): FixtureCoreCreateDto
+}
+
+/**
+ * FixtureDataMapper 기본 구현체
+ * 
+ * @author Footballay Core Team
+ * @since 1.0.0
+ */
+@Component
+class FixtureDataMapperImpl : FixtureDataMapper {
+
+    override fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusShort? {
+        return apiStatus?.shortStatus?.let { FixtureStatusShort.fromString(it) }
+    }
+
+    override fun mapScoreToCore(apiScore: ScoreOfFixtureApiSportsCreateDto?): Int? {
+        return apiScore?.fulltimeHome
+    }
+
+    override fun mapStatusToApi(apiStatus: StatusOfFixtureApiSportsCreateDto?): ApiSportsStatus? {
+        return apiStatus?.let { statusDto ->
+            ApiSportsStatus().apply {
+                longStatus = statusDto.longStatus
+                shortStatus = statusDto.shortStatus
+                elapsed = statusDto.elapsed
+                extra = statusDto.extra
+            }
+        }
+    }
+
+    override fun mapScoreToApi(apiScore: ScoreOfFixtureApiSportsCreateDto?): ApiSportsScore? {
+        return apiScore?.let { scoreDto ->
+            ApiSportsScore().apply {
+                halftimeHome = scoreDto.halftimeHome
+                halftimeAway = scoreDto.halftimeAway
+                fulltimeHome = scoreDto.fulltimeHome
+                fulltimeAway = scoreDto.fulltimeAway
+                extratimeHome = scoreDto.extratimeHome
+                extratimeAway = scoreDto.extratimeAway
+                penaltyHome = scoreDto.penaltyHome
+                penaltyAway = scoreDto.penaltyAway
+            }
+        }
+    }
+    
+    override fun toFixtureCoreCreateDto(
+        uid: String,
+        dto: FixtureApiSportsCreateDto,
+        league: LeagueCore,
+        homeTeam: TeamCore?,
+        awayTeam: TeamCore?
+    ): FixtureCoreCreateDto {
+        // date 문자열을 OffsetDateTime으로 변환
+        val kickoff = dto.date?.let { dateString ->
+            try {
+                OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        
+        return FixtureCoreCreateDto(
+            uid = uid,
+            kickoff = kickoff,
+            timestamp = dto.timestamp,
+            status = dto.status?.longStatus ?: "Unknown",
+            statusShort = mapStatusToCore(dto.status) ?: FixtureStatusShort.NS,
+            elapsedMin = dto.status?.elapsed,
+            goalsHome = dto.score?.fulltimeHome,
+            goalsAway = dto.score?.fulltimeAway,
+            leagueCore = league,
+            homeTeam = homeTeam,
+            awayTeam = awayTeam,
+            finished = false, // 기본값
+            available = true, // 기본값
+            autoGenerated = true // 기본값
+        )
+    }
+} 

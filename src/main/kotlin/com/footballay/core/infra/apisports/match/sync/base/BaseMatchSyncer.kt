@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync.base
 
-import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component

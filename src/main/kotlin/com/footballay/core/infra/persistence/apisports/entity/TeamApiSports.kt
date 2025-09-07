@@ -30,6 +30,10 @@ data class TeamApiSports(
     var national: Boolean? = null, // API 응답의 team.national
     var logo: String? = null, // API 응답의 team.logo
 
+    /**
+     * 사용자가 수동으로 데이터를 업데이트 한 경우, 자동 sync 과정에서 사용자 데이터를 덮어씌우지 않도록 이 flag 를 true 로 설정합니다. <br>
+     */
+    var preventUpdate: Boolean = false,
 ) {
     override fun toString(): String {
         return "TeamApiSports(id=$id, apiId=$apiId, name=$name, code=$code, teamCoreId=${teamCore?.id})"

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync.playerstat
 
-import com.footballay.core.infra.apisports.match.live.FullMatchSyncDto
+import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
@@ -94,23 +94,38 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
 
     /**
      * id=null 선수인 경우 특히 이름이 일관되게 등장하지 않아서 라인업과 통계에서 다른 이름으로 등장하곤 합니다.
+     * 
+     * **중요한 비즈니스 로직:**
+     * - ID null 선수이고 매칭에 실패한 경우, 무조건 substitute=true로 설정
+     * - 이는 선발 선수 중복 문제를 방지하기 위함
+     * - 특히 아시아권/중동권에서 이름 표기 방식 차이로 인한 문제 해결
      */
     private fun createStatOnlyMatchPlayerDto(
         player: FullMatchSyncDto.PlayerStatisticsDto.PlayerDetailDto.PlayerDetailInfoDto,
         name: String,
         statistics: FullMatchSyncDto.PlayerStatisticsDto.PlayerDetailDto.StatDetailDto?,
         teamApiId: Long
-    ): MatchPlayerDto = MatchPlayerDto(
-        apiId = player.id,
-        name = name,
-        number = statistics?.games?.number,
-        position = statistics?.games?.position,
-        grid = null,
-        substitute = statistics?.games?.substitute ?: DEFAULT_SUBSTITUTE_VALUE,
-        nonLineupPlayer = true,
-        teamApiId = teamApiId,
-        playerApiSportsInfo = null
-    )
+    ): MatchPlayerDto {
+        // ID null 선수이고 매칭에 실패한 경우, 무조건 substitute=true로 설정
+        val isSubstitute = if (player.id == null) {
+            log.info("ID null 선수 매칭 실패로 인한 통계 전용 선수 생성: $name (무조건 substitute=true로 설정)")
+            true
+        } else {
+            statistics?.games?.substitute ?: DEFAULT_SUBSTITUTE_VALUE
+        }
+        
+        return MatchPlayerDto(
+            apiId = player.id,
+            name = name,
+            number = statistics?.games?.number,
+            position = statistics?.games?.position,
+            grid = null,
+            substitute = isSubstitute,
+            nonLineupPlayer = true,
+            teamApiId = teamApiId,
+            playerApiSportsInfo = null
+        )
+    }
 
     private fun createPlayerStatDto(
         player: FullMatchSyncDto.PlayerStatisticsDto.PlayerDetailDto.PlayerDetailInfoDto,

@@ -29,5 +29,7 @@ data class PlayerApiSports(
     var weight: String? = null, // API 응답의 player.weight
     var number: Int? = null, // API 응답의 player.number
     var position: String? = null, // API 응답의 player.position
-    var photo: String? = null // API 응답의 player.photo
+    var photo: String? = null, // API 응답의 player.photo
+
+    var preventUpdate: Boolean = false
 )

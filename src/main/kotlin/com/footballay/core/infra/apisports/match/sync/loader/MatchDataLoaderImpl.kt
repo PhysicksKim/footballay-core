@@ -2,10 +2,8 @@ package com.footballay.core.infra.apisports.match.sync.loader
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
-import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator.generateMatchPlayerKey as generateMpKey
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
-import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayerStatistics
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +23,6 @@ class MatchDataLoaderImpl (
         val fixtureWithEvent = entityQueryService.loadFixtureWithEvents(fixtureApiId)
 
         log.info("Loading match data for fixtureApiId: $fixtureApiId, homeTeam: ${homeTeam?.teamApiSports?.name}, awayTeam: ${awayTeam?.teamApiSports?.name}, events: ${fixtureWithEvent?.events?.size ?: 0}")
-        log.info("fixture api sports: ${fixtureWithEvent?.id}")
 
         // 1. 모든 MatchPlayer를 수집하고 Map 으로 변환
         val allMatchPlayers = mutableListOf<ApiSportsMatchPlayer>()
@@ -51,31 +48,20 @@ class MatchDataLoaderImpl (
             }
         }
 
-        // 4. 최종 Map 생성
+        // 4. 최종 Map 생성 (PlayerStats는 MatchPlayer.statistics 필드에 이미 포함됨)
         val allMatchPlayersMap = allMatchPlayers.associateBy { generateMpKey(it.id, it.name) }
 
-        // 5. PlayerStats 수집
-        val allPlayerStats = mutableMapOf<String, ApiSportsMatchPlayerStatistics>()
-        
-        homeTeam?.players?.forEach { player ->
-            player.statistics?.let { stats ->
-                allPlayerStats[generateMpKey(player.id, player.name)] = stats
-            }
-        }
-        awayTeam?.players?.forEach { player ->
-            player.statistics?.let { stats ->
-                allPlayerStats[generateMpKey(player.id, player.name)] = stats
-            }
-        }
-
-        // 6. EntityBundle 할당
+        // 5. EntityBundle 할당
         entityBundle.fixture = fixtureWithEvent
         entityBundle.homeTeam = homeTeam
         entityBundle.awayTeam = awayTeam
         entityBundle.allMatchPlayers = allMatchPlayersMap
         entityBundle.allEvents = fixtureWithEvent?.events ?: emptyList()
-        entityBundle.allPlayerStats = allPlayerStats
         entityBundle.homeTeamStat = homeTeam?.teamStatistics
         entityBundle.awayTeamStat = awayTeam?.teamStatistics
+        
+        // 6. PlayerStats 로깅 (디버깅용)
+        val playerStatsCount = entityBundle.getAllPlayerStats().size
+        log.info("Loaded ${allMatchPlayersMap.size} MatchPlayers with ${playerStatsCount} PlayerStats")
     }
 }
