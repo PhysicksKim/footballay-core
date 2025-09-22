@@ -17,6 +17,8 @@ import com.footballay.core.domain.football.service.FootballDataService;
 import jakarta.annotation.Nullable;
 import org.quartz.SchedulerException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -385,6 +387,7 @@ public class FootballRoot {
      * @see Team
      * @see League
      */
+    @Transactional
     public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
             log.info("try fixture lineup loading id={}", fixtureId);
@@ -402,9 +405,11 @@ public class FootballRoot {
             awayLineup.ifPresent(lineups::add);
             findFixture.setLineups(lineups);
             log.info("fixture eager loaded :: {}", findFixture.getFixtureId());
+            log.info("findFIxture lineups :: {}", findFixture.getLineups());
             return Optional.of(FootballDomainDtoMapper.fixtureWithLineupDtoFromEntity(findFixture));
         } catch (Exception e) {
             log.warn("error while getting Fixture with Lineup by Id :: {}", e.getMessage());
+            log.warn(e.fillInStackTrace().toString());
             return Optional.empty();
         }
     }
