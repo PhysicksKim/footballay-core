@@ -363,6 +363,7 @@ public class FootballRoot {
         return true;
     }
 
+    @Transactional(readOnly = true)
     public Optional<LiveStatusDto> getFixtureLiveStatus(long fixtureId) {
         try {
             LiveStatus liveStatus = footballDataService.getFixtureLiveStatus(fixtureId);
@@ -387,7 +388,7 @@ public class FootballRoot {
      * @see Team
      * @see League
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public Optional<FixtureWithLineupDto> getFixtureWithLineup(long fixtureId) {
         try {
             log.info("try fixture lineup loading id={}", fixtureId);
@@ -414,6 +415,7 @@ public class FootballRoot {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<FixtureEventWithPlayerDto> getFixtureEvents(long fixtureId) {
         try {
             Fixture fixture = footballDataService.getFixtureById(fixtureId);
@@ -425,6 +427,7 @@ public class FootballRoot {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<TeamDto> getTeamsOfPlayer(long playerId) {
         try {
             List<Team> teamPlayer = footballDataService.getTeamsOfPlayer(playerId);
@@ -442,7 +445,7 @@ public class FootballRoot {
      * @param fixtureId 조회할 fixtureId
      * @return 통계정보를 포함한 Dto. Error 발생 시 null 을 반환합니다.
      */
-    @Nullable
+    @Transactional(readOnly = true)
     public MatchStatisticsDto getMatchStatistics(long fixtureId) {
         log.info("getMatchStatistics :: fixtureId={}", fixtureId);
         try {

@@ -15,6 +15,7 @@ import com.footballay.core.web.football.response.fixture.FixtureLineupResponse;
 import com.footballay.core.web.football.response.fixture.FixtureLiveStatusResponse;
 import jakarta.annotation.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import java.time.ZonedDateTime;
