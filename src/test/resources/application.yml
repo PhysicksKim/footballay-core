@@ -102,3 +102,7 @@ app:
     domain: 'gyechunhoe.com'
     static:
       domain: 'static.gyechunhoe.com'
+  gyechune:
+    domain: 'gyechune.com'
+    static:
+      domain: 'static.gyechune.com'
