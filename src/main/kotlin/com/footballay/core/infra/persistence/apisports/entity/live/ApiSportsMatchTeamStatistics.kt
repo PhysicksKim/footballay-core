@@ -13,7 +13,7 @@ class ApiSportsMatchTeamStatistics(
     @OneToOne(fetch = FetchType.LAZY, mappedBy = "teamStatistics", optional = true)
     var matchTeam: ApiSportsMatchTeam?,
 
-    @OneToMany(mappedBy = "matchTeamStatistics", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "matchTeamStatistics", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var xgList: MutableList<ApiSportsMatchTeamXG> = mutableListOf(),
 
     // 슈팅 관련 통계

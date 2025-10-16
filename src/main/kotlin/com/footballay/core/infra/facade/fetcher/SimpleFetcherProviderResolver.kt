@@ -1,7 +1,7 @@
 package com.footballay.core.infra.facade.fetcher
 
 import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
-import com.footballay.core.infra.apisports.match.MatchDataSyncer
+import com.footballay.core.infra.MatchDataSyncer
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime

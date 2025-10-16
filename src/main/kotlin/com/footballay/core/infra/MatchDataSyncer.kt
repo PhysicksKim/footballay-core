@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.match
+package com.footballay.core.infra
 
 import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
 
@@ -24,7 +24,7 @@ import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
  * 4. `ActionAfterMatchSync` 반환
  *
  * @see FetcherProviderResolver
- * @see ActionAfterMatchSync
+ * @see com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
  *
  * AI가 작성한 주석
  */

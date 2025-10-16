@@ -101,7 +101,7 @@ class TeamStatSyncerTest {
     }
 
     @Test
-    fun `통계 데이터가 1개인 경우 빈 DTO를 반환한다`() {
+    fun `통계 데이터가 1개인 경우 WARN 로그와 함께 빈 DTO를 반환한다`() {
         // given
         val dto = createDtoWithHomeTeamStatisticsOnly()
 
@@ -111,6 +111,20 @@ class TeamStatSyncerTest {
         // then
         assertNotNull(result)
         assertNull(result.homeStats)
+        assertNull(result.awayStats)
+    }
+
+    @Test
+    fun `통계 데이터가 3개 이상인 경우 WARN 로그와 함께 빈 DTO를 반환한다`() {
+        // given
+        val dto = createDtoWithThreeTeamStatistics()
+
+        // when
+        val result = teamStatSyncer.extractTeamStats(dto)
+
+        // then
+        assertNotNull(result)
+        assertNull(result.homeStats, "3개 이상의 통계는 데이터 오류로 간주하여 빈 DTO 반환")
         assertNull(result.awayStats)
     }
 
@@ -140,6 +154,36 @@ class TeamStatSyncerTest {
         assertNotNull(result)
         assertNull(result.homeStats)
         assertNull(result.awayStats)
+    }
+
+    @Test
+    fun `음수 xG 값인 경우 필터링되고 빈 리스트를 반환한다`() {
+        // given
+        val dto = createDtoWithNegativeXG()
+
+        // when
+        val result = teamStatSyncer.extractTeamStats(dto)
+
+        // then
+        assertNotNull(result)
+        assertNotNull(result.homeStats)
+        assertTrue(result.homeStats!!.xgList.isEmpty(), "음수 xG는 필터링되어 빈 리스트 반환")
+    }
+
+    @Test
+    fun `매우 큰 xG 값도 정상 처리된다`() {
+        // given
+        val dto = createDtoWithLargeXG()
+
+        // when
+        val result = teamStatSyncer.extractTeamStats(dto)
+
+        // then
+        assertNotNull(result)
+        assertNotNull(result.homeStats)
+        assertEquals(1, result.homeStats!!.xgList.size)
+        assertEquals(9999.99, result.homeStats!!.xgList[0].xg)
+        assertEquals(67, result.homeStats!!.xgList[0].elapsed)
     }
 
     @Test
@@ -223,7 +267,7 @@ class TeamStatSyncerTest {
     }
 
     @Test
-    fun `xG 값이 잘못된 형식인 경우 0으로 처리된다`() {
+    fun `xG 값이 잘못된 형식인 경우 xG 리스트가 비어있다 (기존 데이터 유지)`() {
         // given
         val dto = createDtoWithInvalidXGFormat()
 
@@ -233,13 +277,11 @@ class TeamStatSyncerTest {
         // then
         assertNotNull(result)
         assertNotNull(result.homeStats)
-        assertEquals(1, result.homeStats!!.xgList.size)
-        assertEquals(0.0, result.homeStats!!.xgList[0].xg)
-        assertEquals(67, result.homeStats!!.xgList[0].elapsed)
+        assertTrue(result.homeStats!!.xgList.isEmpty(), "잘못된 형식의 xG는 무시하고 기존 데이터 유지")
     }
 
     @Test
-    fun `빈 문자열 xG 값인 경우 0으로 처리된다`() {
+    fun `빈 문자열 xG 값인 경우 xG 리스트가 비어있다 (기존 데이터 유지)`() {
         // given
         val dto = createDtoWithEmptyXG()
 
@@ -249,9 +291,7 @@ class TeamStatSyncerTest {
         // then
         assertNotNull(result)
         assertNotNull(result.homeStats)
-        assertEquals(1, result.homeStats!!.xgList.size)
-        assertEquals(0.0, result.homeStats!!.xgList[0].xg)
-        assertEquals(67, result.homeStats!!.xgList[0].elapsed)
+        assertTrue(result.homeStats!!.xgList.isEmpty(), "빈 문자열 xG는 무시하고 기존 데이터 유지")
     }
 
     // ========== 테스트 데이터 생성 메서드들 ==========
@@ -448,6 +488,67 @@ class TeamStatSyncerTest {
                 FullMatchSyncDto.TeamStatisticsDto(
                     team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
                     statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "")
+                ),
+                createAwayTeamStatistics()
+            ),
+            players = emptyList()
+        )
+    }
+
+    private fun createDtoWithThreeTeamStatistics(): FullMatchSyncDto {
+        return FullMatchSyncDto(
+            fixture = createFixtureWithElapsed(67),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
+            score = createNormalScore(),
+            events = emptyList(),
+            lineups = emptyList(),
+            statistics = listOf(
+                createHomeTeamStatistics(),
+                createAwayTeamStatistics(),
+                FullMatchSyncDto.TeamStatisticsDto(
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 300L, name = "Unknown Team", logo = "unknown.png"),
+                    statistics = createHomeTeamStatisticsDetail()
+                )
+            ),
+            players = emptyList()
+        )
+    }
+
+    private fun createDtoWithNegativeXG(): FullMatchSyncDto {
+        return FullMatchSyncDto(
+            fixture = createFixtureWithElapsed(67),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
+            score = createNormalScore(),
+            events = emptyList(),
+            lineups = emptyList(),
+            statistics = listOf(
+                FullMatchSyncDto.TeamStatisticsDto(
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "-1.5")
+                ),
+                createAwayTeamStatistics()
+            ),
+            players = emptyList()
+        )
+    }
+
+    private fun createDtoWithLargeXG(): FullMatchSyncDto {
+        return FullMatchSyncDto(
+            fixture = createFixtureWithElapsed(67),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
+            score = createNormalScore(),
+            events = emptyList(),
+            lineups = emptyList(),
+            statistics = listOf(
+                FullMatchSyncDto.TeamStatisticsDto(
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "9999.99")
                 ),
                 createAwayTeamStatistics()
             ),

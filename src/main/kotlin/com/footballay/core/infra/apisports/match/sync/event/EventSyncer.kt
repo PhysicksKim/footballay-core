@@ -71,7 +71,7 @@ class EventSyncer : MatchEventDtoExtractor {
 
     private fun createMatchEventDtos(normalizedEvents: List<FullMatchSyncDto.EventDto>): List<MatchEventDto> =
         normalizedEvents.mapIndexed { index, event ->
-            toMatchEventDto(event, index + 1)
+            toMatchEventDto(event, index)  // sequence는 0부터 시작
         }
 
     private fun createNormalizedEvents(

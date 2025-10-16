@@ -1,5 +1,6 @@
 package com.footballay.core.infra.apisports.match
 
+import com.footballay.core.infra.MatchDataSyncer
 import com.footballay.core.infra.apisports.FixtureApiSportsQueryService
 import com.footballay.core.infra.apisports.backbone.extractor.FixturePlayerExtractor
 import com.footballay.core.infra.apisports.backbone.extractor.PlayerSyncExecutor
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component
 /**
  * ApiSports Provider의 라이브 매치 데이터 동기화 구현체
  *
- * ApiSports API를 통해 라이브 매치 데이터를 동기화하는 [MatchDataSyncer] 구현체입니다.
+ * ApiSports API를 통해 라이브 매치 데이터를 동기화하는 [com.footballay.core.infra.MatchDataSyncer] 구현체입니다.
  *
  * **핵심 책임:**
  * - ApiSports API에서 라이브 데이터 조회
@@ -31,7 +32,7 @@ import org.springframework.stereotype.Component
  * - 인터페이스 기반 의존성으로 Provider별 구분과 버전 관리 용이
  * - 트랜잭션 분리로 안정성 보장
  *
- * @see MatchDataSyncer
+ * @see com.footballay.core.infra.MatchDataSyncer
  * @see com.footballay.core.infra.apisports.match.sync.MatchApiSportsSyncer
  *
  * AI가 작성한 주석

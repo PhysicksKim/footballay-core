@@ -19,6 +19,8 @@ import com.footballay.core.infra.apisports.match.sync.persist.event.manager.Matc
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventProcessResult
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.manager.PlayerStatsManager
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.result.PlayerStatsProcessResult
+import com.footballay.core.infra.apisports.match.sync.persist.teamstat.manager.TeamStatsManager
+import com.footballay.core.infra.apisports.match.sync.persist.teamstat.result.TeamStatsProcessResult
 import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEntitySyncResult
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
@@ -42,6 +44,7 @@ class MatchEntitySyncServiceImplTest {
     private lateinit var matchPlayerManager: MatchPlayerManager
     private lateinit var matchEventManager: MatchEventManager
     private lateinit var playerStatsManager: PlayerStatsManager
+    private lateinit var teamStatsManager: TeamStatsManager
 
     @BeforeEach
     fun setUp() {
@@ -50,13 +53,15 @@ class MatchEntitySyncServiceImplTest {
         matchPlayerManager = mock()
         matchEventManager = mock()
         playerStatsManager = mock()
-        
+        teamStatsManager = mock()
+
         matchEntitySyncService = MatchEntitySyncServiceImpl(
             matchDataLoader,
             baseMatchEntitySyncer,
             matchPlayerManager,
             matchEventManager,
             playerStatsManager,
+            teamStatsManager
         )
     }
 
@@ -118,6 +123,16 @@ class MatchEntitySyncServiceImplTest {
                 savedStats = savedPlayerStats
             )
         )
+        whenever(teamStatsManager.processTeamStats(any(), any())).thenReturn(
+            TeamStatsProcessResult(
+                hasHome = true,
+                hasAway = true,
+                createdCount = 2,
+                updatedCount = 0,
+                homeTeamStat = null,
+                awayTeamStat = null
+            )
+        )
 
         // when
         val result = matchEntitySyncService.syncMatchEntities(
@@ -126,16 +141,17 @@ class MatchEntitySyncServiceImplTest {
 
         // then
         assertThat(result.success).isTrue()
-        assertThat(result.createdCount).isEqualTo(5) // 2 players + 1 event + 2 playerStats
+        assertThat(result.createdCount).isEqualTo(7) // 2 players + 1 event + 2 playerStats + 2 teamStats
         assertThat(result.updatedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.playerChanges.created).isEqualTo(2)
         assertThat(result.eventChanges.created).isEqualTo(1)
-        
+
         // 모든 Phase 검증
         verify(matchPlayerManager).processMatchPlayers(any(), any(), any())
         verify(matchEventManager).processMatchEvents(any(), any())
         verify(playerStatsManager).processPlayerStats(any(), any())
+        verify(teamStatsManager).processTeamStats(any(), any())
         verify(matchDataLoader).loadContext(eq(fixtureApiId), any(), any())
         verify(baseMatchEntitySyncer).syncBaseEntities(eq(fixtureApiId), any(), any())
     }
@@ -264,6 +280,16 @@ class MatchEntitySyncServiceImplTest {
                 savedStats = savedPlayerStats
             )
         )
+        whenever(teamStatsManager.processTeamStats(any(), any())).thenReturn(
+            TeamStatsProcessResult(
+                hasHome = true,
+                hasAway = true,
+                createdCount = 2,
+                updatedCount = 0,
+                homeTeamStat = null,
+                awayTeamStat = null
+            )
+        )
 
         // when
         val result = matchEntitySyncService.syncMatchEntities(
@@ -272,15 +298,16 @@ class MatchEntitySyncServiceImplTest {
 
         // then
         assertThat(result.success).isTrue()
-        assertThat(result.createdCount).isEqualTo(5) // 2 players + 1 event + 2 playerStats
+        assertThat(result.createdCount).isEqualTo(7) // 2 players + 1 event + 2 playerStats + 2 teamStats
         assertThat(result.updatedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.playerChanges.created).isEqualTo(2)
         assertThat(result.eventChanges.created).isEqualTo(1)
-        
+
         // PlayerStats 처리 결과 확인
         verify(playerStatsManager).processPlayerStats(any(), any())
-        
+        verify(teamStatsManager).processTeamStats(any(), any())
+
         // PlayerStats 결과가 전체 결과에 반영되었는지 확인
         assertThat(result.createdCount).isGreaterThanOrEqualTo(2) // PlayerStats 포함
     }

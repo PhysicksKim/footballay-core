@@ -83,12 +83,13 @@ class ApiSportsV3MockFetcher(
             description = "Premier League 2024 시즌 완전 데이터 세트",
             leagueId = 39L,
             season = 2024,
-            supportedFixtureIds = listOf(1208021L, 1208022L),
+            supportedFixtureIds = listOf(1208021L, 1208022L, 1208397L),
             hasJsonFileSupport = true,
             jsonFilePaths = mapOf(
                 "teams" to "/devdata/mockapiv2/teamsOfLeague_leagueId39_season2024.json",
                 "fixture_1208021" to "/devdata/mockapiv2/fixture_1208021.json",
-                "fixture_1208022" to "/devdata/mockapiv2/fixture_1208022.json"
+                "fixture_1208022" to "/devdata/mockapiv2/fixture_1208022.json",
+                "fixture_1208397" to "/devdata/mockapiv2/fixture_1208397.json"
             )
         )
 
