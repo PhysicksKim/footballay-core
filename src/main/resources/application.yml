@@ -19,6 +19,8 @@ spring:
       mocks:
         - mockpath
         - mockapi
+      mockserver:
+        - mockserver
   data:
     redis:
       repositories:

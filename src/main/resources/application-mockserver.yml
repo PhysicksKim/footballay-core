@@ -1,0 +1,4 @@
+spring:
+  config:
+    import:
+      - classpath:config/mockserver/application-mockserver-base.yml

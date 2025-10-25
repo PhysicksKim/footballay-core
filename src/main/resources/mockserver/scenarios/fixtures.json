@@ -1,0 +1,58 @@
+{
+  "response": [
+    {
+      "fixtureId": 1145526,
+      "matchSchedule": {
+        "kickoff": "2024-06-23T01:00:00+09:00",
+        "round": "Group F - 2"
+      },
+      "teamALogo": {
+        "name": "Türkiye",
+        "logo": "https://media.api-sports.io/football/teams/777.png",
+        "koreanName": "튀르키예"
+      },
+      "teamBLogo": {
+        "name": "Portugal",
+        "logo": "https://media.api-sports.io/football/teams/27.png",
+        "koreanName": "포르투갈"
+      },
+      "status": {
+        "longStatus": "Match Finished",
+        "shortStatus": "FT",
+        "elapsed": 90,
+        "score": {
+          "home": 0,
+          "away": 3
+        }
+      },
+      "available": true
+    },
+    {
+      "fixtureId": 1145527,
+      "matchSchedule": {
+        "kickoff": "2024-06-24T01:00:00+09:00",
+        "round": "Group A - 3"
+      },
+      "teamALogo": {
+        "name": "England",
+        "logo": "https://media.api-sports.io/football/teams/10.png",
+        "koreanName": "잉글랜드"
+      },
+      "teamBLogo": {
+        "name": "Slovenia",
+        "logo": "https://media.api-sports.io/football/teams/1091.png",
+        "koreanName": "슬로베니아"
+      },
+      "status": {
+        "longStatus": "Not Started",
+        "shortStatus": "NS",
+        "elapsed": null,
+        "score": {
+          "home": null,
+          "away": null
+        }
+      },
+      "available": true
+    }
+  ]
+}

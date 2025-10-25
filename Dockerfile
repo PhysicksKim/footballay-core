@@ -1,0 +1,39 @@
+# Dev Server Dockerfile
+# Admin Page 개발용 Dev Server (Full CRUD)
+
+FROM gradle:8.5-jdk21 AS builder
+
+WORKDIR /app
+
+# Gradle 캐싱을 위한 파일 복사
+COPY build.gradle settings.gradle ./
+COPY gradle ./gradle
+
+# 의존성 다운로드 (캐시 활용)
+RUN gradle dependencies --no-daemon || true
+
+# 소스 코드 복사
+COPY src ./src
+
+# 빌드 (테스트 스킵)
+RUN gradle bootJar --no-daemon -x test
+
+# Runtime 이미지
+FROM eclipse-temurin:21-jre-jammy
+
+WORKDIR /app
+
+# JAR 파일 복사
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+# Dev Server 프로파일로 실행
+ENV SPRING_PROFILES_ACTIVE=dev
+ENV SERVER_PORT=8080
+
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: footballay-mock-server
+
+  # H2 In-Memory Database (선택사항, Mock은 DB 없이 동작 가능)
+  datasource:
+    url: jdbc:h2:mem:mockdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  # Redis 비활성화 (Mock Server는 Redis 불필요)
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.footballay.core.mockserver: DEBUG
+    org.springframework: INFO
+    org.hibernate: WARN
+
+# Mock Server 전용 설정
+mockserver:
+  enabled: true
+  scenarios:
+    path: classpath:mockserver/scenarios/
+
+# API 키는 더미값 (실제 API 호출 안함)
+rapidapi:
+  football:
+    key: mock-dummy-key

@@ -1,0 +1,108 @@
+version: '3.8'
+
+services:
+  # Desktop App용 Mock Server (Read-only, 시간 흐름 시뮬레이션)
+  mock-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: footballay-mock-server
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=mockserver
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL_COM_FOOTBALLAY_CORE_MOCKSERVER=DEBUG
+    volumes:
+      # 시나리오 파일 마운트 (수정 시 재시작 필요)
+      - ./src/main/resources/mockserver/scenarios:/app/mockserver/scenarios:ro
+    networks:
+      - footballay-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Admin Page용 Dev Server (Full CRUD, 실제 비즈니스 로직)
+  dev-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: footballay-dev-server
+    ports:
+      - "8081:8080"  # Dev Server는 8081 포트로 노출
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/footballay_dev
+      - SPRING_DATASOURCE_USERNAME=footballay
+      - SPRING_DATASOURCE_PASSWORD=footballay_dev_pass
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - footballay-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # PostgreSQL Database (Dev Server용)
+  postgres:
+    image: postgres:16-alpine
+    container_name: footballay-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=footballay_dev
+      - POSTGRES_USER=footballay
+      - POSTGRES_PASSWORD=footballay_dev_pass
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - footballay-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U footballay -d footballay_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis (Dev Server용)
+  redis:
+    image: redis:7-alpine
+    container_name: footballay-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - footballay-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  footballay-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local

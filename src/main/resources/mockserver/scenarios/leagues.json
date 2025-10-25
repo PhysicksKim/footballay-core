@@ -1,0 +1,18 @@
+{
+  "response": [
+    {
+      "leagueId": 4,
+      "name": "Euro Championship",
+      "koreanName": "유로 챔피언십",
+      "logo": "https://media.api-sports.io/football/leagues/4.png",
+      "currentSeason": 2024
+    },
+    {
+      "leagueId": 39,
+      "name": "Premier League",
+      "koreanName": "프리미어 리그",
+      "logo": "https://media.api-sports.io/football/leagues/39.png",
+      "currentSeason": 2024
+    }
+  ]
+}

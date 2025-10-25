@@ -1,0 +1,25 @@
+version: '3.8'
+
+# Mock Server만 실행 (Desktop App 개발용)
+services:
+  mock-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    container_name: footballay-mock-server
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=mockserver
+      - SERVER_PORT=8080
+      - LOGGING_LEVEL_COM_FOOTBALLAY_CORE_MOCKSERVER=DEBUG
+    volumes:
+      # 시나리오 파일 마운트 (수정 시 재시작 필요)
+      - ./src/main/resources/mockserver/scenarios:/app/mockserver/scenarios:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
