@@ -1,18 +1,16 @@
 package com.footballay.core.infra.apisports.backbone.extractor
 
-import com.footballay.core.infra.apisports.backbone.sync.ApiSportsNewPlayerSync
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
-import com.footballay.core.infra.apisports.match.dto.LineupPlayerSyncRequest
+import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
 import org.springframework.stereotype.Component
 
 @Component
 class PlayerSyncExecutor(
-//    private val apiSportsNewPlayerSync: ApiSportsNewPlayerSync
     private val playerApiSportsSyncer: PlayerApiSportsSyncer
-) {
+){
 
-    fun syncPlayers(dtos: List<LineupPlayerSyncRequest>) {
-        dtos.forEach { playerApiSportsSyncer.syncPlayersOfTeam(it.teamId, it.dtos) }
+    fun syncPlayersByTeam(playersByTeam: Map<Long, List<PlayerApiSportsCreateDto>>) {
+        playersByTeam.forEach { (teamId, dtos) -> playerApiSportsSyncer.syncPlayersOfTeam(teamId, dtos) }
     }
 
 }

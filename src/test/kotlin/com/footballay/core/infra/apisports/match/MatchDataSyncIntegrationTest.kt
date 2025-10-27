@@ -1,14 +1,9 @@
 package com.footballay.core.infra.apisports.match
 
 import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
-import com.footballay.core.infra.facade.fetcher.FetcherProviderResolver
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchEventRepository
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerRepository
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerStatisticsRepository
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamRepository
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamStatisticsRepository
 import com.footballay.core.logger
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
@@ -62,7 +57,7 @@ class MatchDataSyncIntegrationTest {
     private lateinit var apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade
 
     @Autowired
-    private lateinit var fetcherProviderResolver: FetcherProviderResolver
+    private lateinit var matchDataSyncDispatcher: MatchDataSyncDispatcher
 
     @Autowired
     private lateinit var fixtureApiSportsRepository: FixtureApiSportsRepository
@@ -140,7 +135,7 @@ class MatchDataSyncIntegrationTest {
 
         // when - FetcherProviderResolver를 통한 전체 흐름 실행
         log.info("Match 데이터 동기화 시작: UID = $testFixtureUid")
-        val action = fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        val action = matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
         log.info("Match 데이터 동기화 완료: action = $action")
 
         em.flush()
@@ -181,7 +176,7 @@ class MatchDataSyncIntegrationTest {
         log.info("=== 테스트 시작: Phase별 성능 로그 출력 검증 ===")
 
         // when
-        val action = fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        val action = matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
 
         // then - 로그는 INFO 레벨로 출력되므로 콘솔에서 확인
         // Performance Report가 출력되었는지는 수동으로 확인
@@ -196,7 +191,7 @@ class MatchDataSyncIntegrationTest {
 
         // when - 첫 번째 동기화
         log.info("첫 번째 동기화 실행...")
-        fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
         em.flush()
         em.clear()
 
@@ -207,7 +202,7 @@ class MatchDataSyncIntegrationTest {
 
         // when - 두 번째 동기화 (업데이트)
         log.info("두 번째 동기화 실행...")
-        fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
         em.flush()
         em.clear()
 
@@ -387,7 +382,7 @@ class MatchDataSyncIntegrationTest {
         log.info("=== 테스트 시작: 엔티티 연관관계 검증 ===")
 
         // given - Match 데이터 동기화
-        fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
         em.flush()
         em.clear()
 
@@ -435,7 +430,7 @@ class MatchDataSyncIntegrationTest {
         log.info("=== 테스트 시작: ID=null 선수 처리 검증 ===")
 
         // when
-        fetcherProviderResolver.fetchMatchData(testFixtureUid)
+        matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
         em.flush()
         em.clear()
 

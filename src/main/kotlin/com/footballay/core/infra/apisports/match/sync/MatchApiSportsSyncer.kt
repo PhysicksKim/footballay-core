@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
@@ -27,5 +27,5 @@ interface MatchApiSportsSyncer {
      * @param response ApiSports API 응답 데이터
      * @return 다음 폴링 액션 지시사항
      */
-    fun syncFixtureMatchEntities(dto: FullMatchSyncDto): ActionAfterMatchSync
+    fun syncFixtureMatchEntities(dto: FullMatchSyncDto): MatchDataSyncResult
 } 

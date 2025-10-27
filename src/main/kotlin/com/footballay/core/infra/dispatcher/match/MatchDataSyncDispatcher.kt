@@ -1,6 +1,4 @@
-package com.footballay.core.infra.facade.fetcher
-
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+package com.footballay.core.infra.dispatcher.match
 
 /**
  * 라이브 매치 데이터 동기화를 위한 Provider Resolver 인터페이스
@@ -23,11 +21,11 @@ import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
  * ```
  * 
  * @see MatchDataSyncer
- * @see ActionAfterMatchSync
+ * @see MatchDataSyncResult
  * 
  * AI가 작성한 주석
  */
-interface FetcherProviderResolver {
+interface MatchDataSyncDispatcher {
     
     /**
      * 주어진 fixture UID에 대해 지원 가능한 Provider를 찾아 라이브 경기 데이터를 동기화합니다.
@@ -35,5 +33,5 @@ interface FetcherProviderResolver {
      * @param fixtureUid 경기 고유 식별자
      * @return 다음 폴링 액션 지시사항, 지원하는 Provider가 없으면 null
      */
-    fun fetchMatchData(fixtureUid: String): ActionAfterMatchSync?
+    fun syncByFixtureUid(fixtureUid: String): MatchDataSyncResult
 }

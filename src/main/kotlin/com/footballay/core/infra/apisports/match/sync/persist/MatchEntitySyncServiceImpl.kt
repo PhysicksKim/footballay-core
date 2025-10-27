@@ -92,9 +92,8 @@ class MatchEntitySyncServiceImpl(
         playerContext: MatchPlayerContext
     ): MatchEntitySyncResult {
 
-        val transactionStartTime = System.currentTimeMillis()
         log.info("Starting entity sync for fixture: $fixtureApiId")
-
+        val transactionStartTime = System.currentTimeMillis()
         val phaseTimings = mutableMapOf<String, Long>()
         val phaseErrors = mutableListOf<String>()
 
@@ -121,12 +120,18 @@ class MatchEntitySyncServiceImpl(
             if (!result.success) {
                 log.error("Base entity sync failed: ${result.errorMessage}")
                 phaseErrors.add("Phase2_BaseEntities: ${result.errorMessage}")
+                return MatchEntitySyncResult.failure(
+                    "failed to sync base entities: ${result.errorMessage}"
+                )
             } else {
                 log.info("Base entities synced successfully - Home team: ${result.homeMatchTeam?.teamApiSports?.name}, Away team: ${result.awayMatchTeam?.teamApiSports?.name}")
             }
         } catch (e: Exception) {
             log.error("Phase 2 failed: ${e.message}", e)
             phaseErrors.add("Phase2_BaseEntities: ${e.message}")
+            return MatchEntitySyncResult.failure(
+                "failed to sync base entities: ${e.message}"
+            )
         }
 
         // Phase 3: MatchPlayer 처리 + Lineup 정보 적용 (MatchPlayerManager로 통합)
@@ -141,6 +146,11 @@ class MatchEntitySyncServiceImpl(
             log.error("Phase 3 failed: ${e.message}", e)
             phaseErrors.add("Phase3_MatchPlayers: ${e.message}")
             MatchPlayerProcessResult.empty()
+
+            // 라인업 저장 에러시에는 이후 진행하기 어려우므로 실패 처리.
+            return MatchEntitySyncResult.failure(
+                "failed to process Match Lineup: ${e.message}"
+            )
         }
 
         // Phase 4: Event 처리 (MatchEventManager로 통합)
@@ -187,8 +197,6 @@ class MatchEntitySyncServiceImpl(
 
         // 전체 트랜잭션 시간 측정 및 성능 리포트
         val totalTransactionTime = System.currentTimeMillis() - transactionStartTime
-
-        // 성능 리포트 로깅
         logPerformanceReport(fixtureApiId, phaseTimings, totalTransactionTime)
 
         // 에러가 있었는지 로깅

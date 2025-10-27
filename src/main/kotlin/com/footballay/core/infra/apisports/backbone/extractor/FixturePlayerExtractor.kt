@@ -1,7 +1,6 @@
 package com.footballay.core.infra.apisports.backbone.extractor
 
 import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
-import com.footballay.core.infra.apisports.match.dto.LineupPlayerSyncRequest
 import com.footballay.core.infra.apisports.match.live.deprecated.ApiSportsFixtureSingle
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
@@ -20,14 +19,14 @@ class FixturePlayerExtractor{
      * id=null인 선수는 ApiSportsLiveMatchSyncService에서 Match 구조로 처리됩니다.
      */
     @Transactional
-    fun extractAndSyncPlayers(response: ApiSportsFixtureSingle) : List<LineupPlayerSyncRequest> {
-        try{
-            val homePlayerSyncDtos = cacheTeamPlayersIfNeeded(response, isHome = true)
-            val awayPlayerSyncDtos = cacheTeamPlayersIfNeeded(response, isHome = false)
-            return listOf(homePlayerSyncDtos, awayPlayerSyncDtos)
+    fun extractPlayersByTeam(response: ApiSportsFixtureSingle) : Map<Long, List<PlayerApiSportsCreateDto>> {
+        try {
+            val home = extractTeamPlayers(response, isHome = true)
+            val away = extractTeamPlayers(response, isHome = false)
+            return listOfNotNull(home, away).toMap()
         } catch (e: IllegalArgumentException) {
             log.info("Fixture Response 에서 선수 추출 중 오류 발생: ${e.message}")
-            return listOf()
+            return emptyMap()
         } catch (e: Exception) {
             log.error("예상치 못한 오류 발생: ${e.message}", e)
             throw e
@@ -38,7 +37,7 @@ class FixturePlayerExtractor{
      * 특정 팀의 신규 선수를 캐싱합니다.
      * 라인업과 선수 통계에서 중복 제거하여 처리하며, id가 있는 선수만 Core-Api 구조에 저장합니다.
      */
-    private fun cacheTeamPlayersIfNeeded(response: ApiSportsFixtureSingle, isHome: Boolean) : LineupPlayerSyncRequest {
+    private fun extractTeamPlayers(response: ApiSportsFixtureSingle, isHome: Boolean) : Pair<Long, List<PlayerApiSportsCreateDto>>? {
         val teamApiId = extractTeamApiId(response, isHome)
         if (teamApiId == null) {
             log.warn("Fixture Response 의 팀 API ID가 null 입니다. 응답: ${response.response[0].teams}")
@@ -57,14 +56,11 @@ class FixturePlayerExtractor{
 
         val allPlayers = lineupPlayers + statisticsPlayers
         if (allPlayers.isNotEmpty()) {
-            log.info("라인업에서 추출한 신규 선수를 저장합니다. \n팀 API ID: $teamApiId, 신규 선수 수: ${allPlayers.size}")
+            log.info("라인업에서 추출한 신규 선수 수: ${allPlayers.size} (teamApiId=$teamApiId)")
         } else {
-            log.info("라인업에 신규 선수가 없습니다. 팀 API ID: $teamApiId")
+            log.info("라인업에 신규 선수가 없습니다. teamApiId=$teamApiId")
         }
-        return LineupPlayerSyncRequest(
-            teamId = teamApiId,
-            dtos = allPlayers
-        )
+        return teamApiId to allPlayers
     }
 
     private fun extractPlayersFromLineup(

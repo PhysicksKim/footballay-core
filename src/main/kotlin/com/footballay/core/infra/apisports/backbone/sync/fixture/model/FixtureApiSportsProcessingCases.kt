@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.backbone.sync.fixture.model
 
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 
 /**
@@ -13,7 +13,7 @@ import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
  * @param preventUpdateFixtures preventUpdate가 true인 기존 FixtureApiSports 엔티티 목록 (업데이트하지 않음)
  */
 data class FixtureApiSportsProcessingCases(
-    val newFixtures: List<FixtureApiSportsCreateDto>,
-    val updateFixtures: List<Pair<FixtureApiSports, FixtureApiSportsCreateDto>>,
+    val newFixtures: List<FixtureApiSportsSyncDto>,
+    val updateFixtures: List<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>,
     val preventUpdateFixtures: List<FixtureApiSports>
 )

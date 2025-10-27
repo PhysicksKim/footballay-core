@@ -161,11 +161,11 @@ class EventSyncerTest {
         val event2 = result.events[1]
         val event3 = result.events[2]
         
-        assertEquals(1, event1.sequence)
+        assertEquals(0, event1.sequence)
         assertEquals("goal", event1.eventType)
-        assertEquals(2, event2.sequence)
+        assertEquals(1, event2.sequence)
         assertEquals("subst", event2.eventType)
-        assertEquals(3, event3.sequence)
+        assertEquals(2, event3.sequence)
         assertEquals("card", event3.eventType)
     }
 

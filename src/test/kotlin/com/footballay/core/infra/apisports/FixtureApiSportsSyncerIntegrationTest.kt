@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports
 
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.*
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.backbone.sync.fixture.FixtureApiSportsWithCoreSyncer
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 
 /**
@@ -74,6 +75,9 @@ class FixtureApiSportsSyncerIntegrationTest {
     
     @Autowired
     private lateinit var fixtureCoreRepository: FixtureCoreRepository
+
+    @Autowired
+    private lateinit var em: EntityManager
 
     // Test Data Constants
     private val TEST_LEAGUE_API_ID = 39L
@@ -147,6 +151,9 @@ class FixtureApiSportsSyncerIntegrationTest {
             listOf(originalFixture)
         )
 
+        em.flush()
+        em.clear()
+
         // when: 동일한 API ID로 다시 저장 (업데이트 시나리오)
         val updatedFixture = originalFixture.copy(
             status = StatusOfFixtureApiSportsCreateDto(
@@ -158,9 +165,18 @@ class FixtureApiSportsSyncerIntegrationTest {
                 fulltimeAway = 1
             )
         )
-        
+
+        // TODO : TEST_LEAGUE_API_ID 로 동일한 경기 2번 저장 요청할 때, update 가 일어나야함.
+        // 현재 API_ID NULLS FIRST unique 제약조건 위반 에러 발생함. update 가 아니라 save 로 들어가는듯
+        log.info("--- Try to save fixture with existing API ID to trigger update logic ---")
+        val leagueAll = leagueApiSportsRepository.findAll()
+        val fixtureAll = fixtureApiSportsRepository.findAll()
+        log.info("league season ${leagueAll.first().seasons}")
+        log.info("Existing Leagues: ${leagueAll.size}, Existing Fixtures: ${fixtureAll.size}")
+        log.info("fixture ${fixtureAll.first()} season=${fixtureAll.first().season}")
+
         fixtureApiSportsSyncer.saveFixturesOfLeague(
-            TEST_LEAGUE_API_ID, 
+            TEST_LEAGUE_API_ID,
             listOf(updatedFixture)
         )
 
@@ -210,8 +226,8 @@ class FixtureApiSportsSyncerIntegrationTest {
         fixtureApiId: Long,
         homeTeamApiId: Long = TEST_ARSENAL_API_ID,
         awayTeamApiId: Long = TEST_CHELSEA_API_ID
-    ): FixtureApiSportsCreateDto {
-        return FixtureApiSportsCreateDto(
+    ): FixtureApiSportsSyncDto {
+        return FixtureApiSportsSyncDto(
             apiId = fixtureApiId,
             leagueApiId = TEST_LEAGUE_API_ID,
             seasonYear = TEST_SEASON_YEAR.toString(),
@@ -237,7 +253,7 @@ class FixtureApiSportsSyncerIntegrationTest {
         fixtureApiId: Long,
         venueApiId: Long,
         venueName: String
-    ): FixtureApiSportsCreateDto {
+    ): FixtureApiSportsSyncDto {
         return createBasicFixtureDto(fixtureApiId).copy(
             venue = VenueOfFixtureApiSportsCreateDto(
                 apiId = venueApiId,

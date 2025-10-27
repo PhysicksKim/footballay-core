@@ -1,12 +1,15 @@
 package com.footballay.core.web.common.dto
 
 /**
- * 클라이언트에게 전달되는 최종 API 응답 (Kotlin 새 버전)
+ * Controller - WebService 간의 전달받는 API 응답 포맷
  */
 data class ApiResponseV2<T>(
     val success: Boolean,
     val data: T? = null,
     val error: ErrorDetail? = null,
+    /**
+     * [org.apache.http.HttpStatus] 를 사용하여 int 값을 전달할 수 있습니다.
+     */
     val code: Int? = null
 ) {
     companion object {

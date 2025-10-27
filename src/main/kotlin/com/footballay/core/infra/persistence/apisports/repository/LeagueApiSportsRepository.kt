@@ -45,7 +45,7 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
     """)
     fun findByApiIdAndSeasonWithCoreAndSeasons(
         @Param("apiId") apiId: Long,
-        @Param("seasonYear") seasonYear: String
+        @Param("seasonYear") seasonYear: Int
     ): LeagueApiSports?
     
     /**

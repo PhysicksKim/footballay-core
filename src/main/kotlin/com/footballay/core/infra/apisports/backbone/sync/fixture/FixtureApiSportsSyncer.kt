@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.backbone.sync.fixture
 
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 
 /**
  * FixtureApiSports 동기화를 담당하는 인터페이스
@@ -19,5 +19,5 @@ interface FixtureApiSportsSyncer {
      * @param leagueApiId ApiSports 리그 ID
      * @param dtos 동기화할 경기 데이터 목록 (모든 DTO는 동일한 시즌이어야 함)
      */
-    fun saveFixturesOfLeague(leagueApiId: Long, dtos: List<FixtureApiSportsCreateDto>)
+    fun saveFixturesOfLeague(leagueApiId: Long, dtos: List<FixtureApiSportsSyncDto>)
 }

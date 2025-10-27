@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.backbone.sync.fixture.factory
 
 import com.footballay.core.infra.apisports.backbone.sync.fixture.model.FixtureDataCollection
 import com.footballay.core.infra.apisports.mapper.FixtureDataMapper
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
@@ -33,7 +33,7 @@ class FixtureApiSportsFactory(
      * @return 새로 생성된 FixtureApiSports 엔티티
      */
     fun createFixtureApiSports(
-        dto: FixtureApiSportsCreateDto,
+        dto: FixtureApiSportsSyncDto,
         fixtureData: FixtureDataCollection,
         venueMap: Map<Long, VenueApiSports>,
         coreMap: Map<Long, FixtureCore>
@@ -49,8 +49,8 @@ class FixtureApiSportsFactory(
         // Venue FK 설정 (nullable)
         val venue = dto.venue?.apiId?.let { venueMap[it] }
         
-        // Season 설정
-        val season = fixtureData.league.seasons.find { it.seasonYear.toString() == dto.seasonYear }
+        // Season 설정 (정수 비교로 엄격 매칭)
+        val season = fixtureData.league.seasons.find { it.seasonYear != null && dto.seasonYear != null && it.seasonYear == dto.seasonYear!!.toInt() }
         
         return FixtureApiSports(
             apiId = apiId,
@@ -80,7 +80,7 @@ class FixtureApiSportsFactory(
      */
     fun updateFixtureApiSports(
         existingFixture: FixtureApiSports,
-        dto: FixtureApiSportsCreateDto,
+        dto: FixtureApiSportsSyncDto,
         fixtureData: FixtureDataCollection,
         venueMap: Map<Long, VenueApiSports>,
         coreMap: Map<Long, FixtureCore>
@@ -96,8 +96,8 @@ class FixtureApiSportsFactory(
         // Venue FK 설정 (nullable)
         val venue = dto.venue?.apiId?.let { venueMap[it] }
         
-        // Season 설정
-        val season = fixtureData.league.seasons.find { it.seasonYear.toString() == dto.seasonYear }
+        // Season 설정 (정수 비교로 엄격 매칭)
+        val season = fixtureData.league.seasons.find { it.seasonYear != null && dto.seasonYear != null && it.seasonYear == dto.seasonYear!!.toInt() }
         
         return existingFixture.apply {
             this.core = core
@@ -125,6 +125,7 @@ class FixtureApiSportsFactory(
             try {
                 OffsetDateTime.parse(it)
             } catch (e: Exception) {
+                log.warn("Fail to parse offset date time from string: $dateString")
                 null
             }
         }

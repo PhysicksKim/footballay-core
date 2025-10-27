@@ -1,5 +1,7 @@
 package com.footballay.core.infra.facade
 
+import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.apisports.backbone.sync.league.LeagueApiSportsSyncer
 import com.footballay.core.infra.apisports.backbone.sync.team.TeamApiSportsSyncer
 import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
@@ -32,7 +34,7 @@ class ApiSportsBackboneSyncFacadeImpl(
      * 
      * @return 처리된 리그 수
      */
-    override fun syncCurrentLeagues(): Int {
+    override fun syncCurrentLeagues(): LeaguesSyncResult {
         log.info("Starting sync for current leagues")
         
         val fetchResponse = fetcher.fetchLeaguesCurrent()
@@ -42,7 +44,7 @@ class ApiSportsBackboneSyncFacadeImpl(
         leagueSyncer.saveLeagues(dtos)  
         
         log.info("Successfully synced ${dtos.size} leagues")
-        return dtos.size
+        return DomainResult.Success(dtos.size)
     }
 
     /**
@@ -52,9 +54,28 @@ class ApiSportsBackboneSyncFacadeImpl(
      * @param season 시즌 연도
      * @return 처리된 팀 수
      */
-    override fun syncTeamsOfLeague(leagueApiId: Long, season: Int): Int {
+    override fun syncTeamsOfLeague(leagueApiId: Long, season: Int): TeamsSyncResult {
         log.info("Starting sync for teams of league. leagueApiId=$leagueApiId, season=$season")
         
+        val validationErrors = mutableListOf<DomainFail.Validation.ValidationError>()
+        if (leagueApiId <= 0) {
+            validationErrors.add(DomainFail.Validation.ValidationError(
+                code = "INVALID_LEAGUE_ID",
+                message = "League API ID must be positive",
+                field = "leagueApiId",
+            ))
+        }
+        if (season < 1900 || season > 2100) {
+            validationErrors.add(DomainFail.Validation.ValidationError(
+                code = "SEASON_OUT_OF_RANGE",
+                message = "Season must be between 1900 and 2100",
+                field = "season",
+            ))
+        }
+        if (validationErrors.isNotEmpty()) {
+            return DomainResult.Fail(DomainFail.Validation(validationErrors))
+        }
+
         val fetchResponse = fetcher.fetchTeamsOfLeague(leagueApiId, season)
         log.info("Fetched ${fetchResponse.response.size} teams for league $leagueApiId")
         
@@ -62,7 +83,7 @@ class ApiSportsBackboneSyncFacadeImpl(
         teamSyncer.saveTeamsOfLeague(leagueApiId, dtos)
         
         log.info("Successfully synced ${dtos.size} teams for league $leagueApiId")
-        return dtos.size
+        return DomainResult.Success(dtos.size)
     }
 
     /**
@@ -71,16 +92,24 @@ class ApiSportsBackboneSyncFacadeImpl(
      * @param teamApiId 팀의 ApiSports ID
      * @return 처리된 선수 수
      */
-    override fun syncPlayersOfTeam(teamApiId: Long): Int {
+    override fun syncPlayersOfTeam(teamApiId: Long): PlayersSyncResult {
         log.info("Starting sync for players of team. teamApiId=$teamApiId")
         
+        if (teamApiId <= 0) {
+            return DomainResult.Fail(DomainFail.Validation.single(
+                code = "INVALID_TEAM_ID",
+                message = "Team API ID must be positive",
+                field = "teamApiId",
+            ))
+        }
+
         val fetchResponse = fetcher.fetchSquadOfTeam(teamApiId)
         log.info("Fetched ${fetchResponse.response.size} players for team $teamApiId")
         
         // 빈 응답인 경우 0 반환
         if (fetchResponse.response.isEmpty()) {
             log.info("No players found for team $teamApiId")
-            return 0
+            return DomainResult.Success(0)
         }
         
         // fetchSquadOfTeam은 팀별로 응답이 와서, response는 하나의 team과 그 team의 players를 포함합니다
@@ -90,7 +119,7 @@ class ApiSportsBackboneSyncFacadeImpl(
         playerSyncer.syncPlayersOfTeam(teamApiId, dtos)
         
         log.info("Successfully synced ${dtos.size} players for team $teamApiId")
-        return dtos.size
+        return DomainResult.Success(dtos.size)
     }
 
     /**
@@ -100,36 +129,63 @@ class ApiSportsBackboneSyncFacadeImpl(
      * @param leagueApiId 리그의 ApiSports ID
      * @return 처리된 팀 수
      */
-    override fun syncTeamsOfLeagueWithCurrentSeason(leagueApiId: Long): Int {
+    override fun syncTeamsOfLeagueWithCurrentSeason(leagueApiId: Long): TeamsSyncResult {
         log.info("Starting sync teams of league with current season for leagueApiId: $leagueApiId")
         
         // 리그 정보 조회하여 현재 시즌 확인
-        val leagueInfo = leagueQueryService.findByApiIdOrThrow(leagueApiId)
-        val currentSeason = leagueInfo.getCurrentSeasonOrThrow()
+        val leagueInfo = leagueQueryService.findByApiId(leagueApiId)
+            ?: return DomainResult.Fail(DomainFail.NotFound(resource = "LEAGUE", id = leagueApiId.toString()))
+        val currentSeason = leagueInfo.currentSeason
+            ?: return DomainResult.Fail(DomainFail.Validation.single(
+                code = "CURRENT_SEASON_NOT_SET",
+                message = "Current season is not set for league ${leagueInfo.name} (apiId: $leagueApiId)",
+                field = "season",
+            ))
         
         log.info("Found league '${leagueInfo.name}' with current season: $currentSeason")
         
         // 기존 syncTeamsOfLeague 메서드 호출
-        val syncedCount = syncTeamsOfLeague(leagueApiId, currentSeason)
-        
-        log.info("Successfully synced $syncedCount teams for league '${leagueInfo.name}' (apiId: $leagueApiId) with current season: $currentSeason")
-        return syncedCount
+        val result = syncTeamsOfLeague(leagueApiId, currentSeason)
+        return when (result) {
+            is DomainResult.Success -> {
+                log.info("Successfully synced ${result.value} teams for league '${leagueInfo.name}' (apiId: $leagueApiId) with current season: $currentSeason")
+                result
+            }
+            is DomainResult.Fail -> result
+        }
     }
 
-    override fun syncFixturesOfLeagueWithSeason(leagueApiId: Long, season: Int): Int {
-        log.info("Starting sync fixtures of league with season for leagueApiId: $leagueApiId, season: $season")
+    override fun syncFixturesOfLeagueWithSeason(leagueApiId: Long, season: Int): FixturesSyncResult {
+        return syncFixturesOfLeagueWithIdAndSeason(leagueApiId, season)
+    }
+
+    override fun syncFixturesOfLeagueWithCurrentSeason(leagueApiId: Long): FixturesSyncResult {
+        log.info("sync fixtures of league with current season for leagueApiId: $leagueApiId")
+        val leagueInfo = leagueQueryService.findByApiId(leagueApiId)
+            ?: return DomainResult.Fail(DomainFail.NotFound(resource = "LEAGUE", id = leagueApiId.toString()))
+        val currentSeason = leagueInfo.currentSeason
+            ?: return DomainResult.Fail(DomainFail.Validation.single(
+                code = "CURRENT_SEASON_NOT_SET",
+                message = "Current season is not set for league ${leagueInfo.name} (apiId: $leagueApiId)",
+                field = "season",
+            ))
+        return syncFixturesOfLeagueWithIdAndSeason(leagueApiId, currentSeason)
+    }
+
+    private fun syncFixturesOfLeagueWithIdAndSeason(leagueApiId: Long, season: Int): FixturesSyncResult {
+        log.info("sync fixtures of league with season for leagueApiId: $leagueApiId, season: $season")
 
         val fixturesResp = fetcher.fetchFixturesOfLeague(leagueApiId, season)
         val dtos = fixturesResp.response.map { mapToFixtureCreateDto(it) }
 
         fixtureSyncer.saveFixturesOfLeague(leagueApiId, dtos)
-        return dtos.size
+        return DomainResult.Success(dtos.size)
     }
 
-    private fun mapToFixtureCreateDto(response: ApiSportsFixture.OfLeague): FixtureApiSportsCreateDto {
+    private fun mapToFixtureCreateDto(response: ApiSportsFixture.OfLeague): FixtureApiSportsSyncDto {
         log.debug("Mapping fixture: ${response.fixture.id} for league ${response.league.name}")
 
-        return FixtureApiSportsCreateDto(
+        return FixtureApiSportsSyncDto(
             apiId = response.fixture.id,
             referee = response.fixture.referee,
             timezone = response.fixture.timezone,

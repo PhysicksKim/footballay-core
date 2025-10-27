@@ -1,6 +1,5 @@
-package com.footballay.core.infra.facade.fetcher
+package com.footballay.core.infra.dispatcher.match
 
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
 import com.footballay.core.infra.MatchDataSyncer
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
@@ -24,27 +23,27 @@ import java.time.OffsetDateTime
  * - Fallback 메커니즘으로 안정성 보장
  * 
  * @see MatchDataSyncer
- * @see FetcherProviderResolver
+ * @see MatchDataSyncDispatcher
  * 
  * AI가 작성한 주석
  */
 @Component
-class SimpleFetcherProviderResolver(
+class SimpleMatchDataSyncDispatcher(
     private val fetchers: List<MatchDataSyncer>
-) : FetcherProviderResolver {
+) : MatchDataSyncDispatcher {
 
     val log = logger()
 
-    override fun fetchMatchData(
+    override fun syncByFixtureUid(
         fixtureUid: String,
-    ): ActionAfterMatchSync? {
+    ): MatchDataSyncResult {
         for (fetcher in fetchers) {
             if (fetcher.isSupport(fixtureUid)) {
                 return fetcher.syncMatchData(fixtureUid)
             }
         }
         log.warn("No fetcher found for fixtureUid: $fixtureUid")
-        return ActionAfterMatchSync.Companion
-            .ongoing(kickoffTime = OffsetDateTime.now().plusHours(1))
+        return MatchDataSyncResult.ongoing(
+            kickoffTime = OffsetDateTime.now().plusHours(1))
     }
 } 

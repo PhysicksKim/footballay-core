@@ -1,13 +1,11 @@
 package com.footballay.core.infra.apisports.mapper
 
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
-import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
-import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
@@ -58,7 +56,7 @@ interface FixtureDataMapper {
      */
     fun toFixtureCoreCreateDto(
         uid: String,
-        dto: FixtureApiSportsCreateDto,
+        dto: FixtureApiSportsSyncDto,
         league: LeagueCore,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?
@@ -110,7 +108,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
     
     override fun toFixtureCoreCreateDto(
         uid: String,
-        dto: FixtureApiSportsCreateDto,
+        dto: FixtureApiSportsSyncDto,
         league: LeagueCore,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?

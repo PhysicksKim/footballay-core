@@ -129,7 +129,7 @@ class FixtureApiSportsRepositoryTest {
     fun `findFixturesByLeagueSeasonOrApiIds - League+Season 기반 조회가 정상적으로 동작하는지 확인`() {
         // Given
         val leagueApiId = matchEntities.leagueApiSports.apiId!!
-        val seasonYear = matchEntities.season.seasonYear.toString()
+        val seasonYear = matchEntities.season.seasonYear!!
         val emptyFixtureApiIds = emptyList<Long>()
         
         // When
@@ -144,7 +144,7 @@ class FixtureApiSportsRepositoryTest {
         assertEquals(matchEntities.fixtureApiSports.apiId, fixture.apiId, "API ID가 일치해야 합니다")
         assertTrue(fixture.core?.id == matchEntities.fixtureCore.id, "Core 연관관계가 유지되어야 합니다")
         assertTrue(fixture.season?.leagueApiSports?.id == matchEntities.leagueApiSports.id, "League 연관관계가 유지되어야 합니다")
-        assertTrue(fixture.season?.seasonYear?.toString() == seasonYear, "Season 연관관계가 유지되어야 합니다")
+        assertTrue(fixture.season?.seasonYear == seasonYear, "Season 연관관계가 유지되어야 합니다")
         
         log.info("League+Season 기반 조회 검증 완료 - 조회된 Fixture 수: ${foundFixtures.size}")
     }
@@ -153,7 +153,7 @@ class FixtureApiSportsRepositoryTest {
     fun `findFixturesByLeagueSeasonOrApiIds - ApiId 기반 조회가 정상적으로 동작하는지 확인`() {
         // Given
         val leagueApiId = 999999L // 존재하지 않는 League ID
-        val seasonYear = "9999" // 존재하지 않는 Season
+        val seasonYear = 9999 // 존재하지 않는 Season
         val fixtureApiIds = listOf(matchEntities.fixtureApiSports.apiId!!)
         
         // When
@@ -175,7 +175,7 @@ class FixtureApiSportsRepositoryTest {
     fun `findFixturesByLeagueSeasonOrApiIds - League+Season과 ApiId 모두로 조회했을 때 중복이 제거되는지 확인`() {
         // Given
         val leagueApiId = matchEntities.leagueApiSports.apiId!!
-        val seasonYear = matchEntities.season.seasonYear.toString()
+        val seasonYear = matchEntities.season.seasonYear!!
         val fixtureApiIds = listOf(matchEntities.fixtureApiSports.apiId!!)
         
         // When
@@ -201,7 +201,7 @@ class FixtureApiSportsRepositoryTest {
     fun `findFixturesByLeagueSeasonOrApiIds - 빈 ApiId 리스트로 조회했을 때 League+Season만으로 조회되는지 확인`() {
         // Given
         val leagueApiId = matchEntities.leagueApiSports.apiId!!
-        val seasonYear = matchEntities.season.seasonYear.toString()
+        val seasonYear = matchEntities.season.seasonYear!!
         val emptyFixtureApiIds = emptyList<Long>()
         
         // When
@@ -214,7 +214,7 @@ class FixtureApiSportsRepositoryTest {
         
         foundFixtures.forEach { fixture ->
             assertTrue(fixture.season?.leagueApiSports?.apiId == leagueApiId, "모든 조회된 Fixture가 해당 League에 속해야 합니다")
-            assertTrue(fixture.season?.seasonYear?.toString() == seasonYear, "모든 조회된 Fixture가 해당 Season에 속해야 합니다")
+        assertTrue(fixture.season?.seasonYear == seasonYear, "모든 조회된 Fixture가 해당 Season에 속해야 합니다")
         }
         
         log.info("빈 ApiId 리스트 조회 검증 완료 - 조회된 Fixture 수: ${foundFixtures.size}")
@@ -224,7 +224,7 @@ class FixtureApiSportsRepositoryTest {
     fun `findFixturesByLeagueSeasonOrApiIds - 존재하지 않는 League+Season과 존재하는 ApiId로 조회했을 때 ApiId 기반으로만 조회되는지 확인`() {
         // Given
         val nonExistentLeagueApiId = 999999L
-        val nonExistentSeasonYear = "9999"
+        val nonExistentSeasonYear = 9999
         val fixtureApiIds = listOf(matchEntities.fixtureApiSports.apiId!!)
         
         // When

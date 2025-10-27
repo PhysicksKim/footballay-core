@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.backbone.sync.fixture.model
 
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 
 /**
@@ -13,7 +13,7 @@ import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
  * @param bothNewDtos FixtureApiSports와 FixtureCore가 모두 없는 경우 (새로 생성 대상)
  */
 data class FixtureProcessingCases(
-    val bothExistFixtures: List<FixtureApiSports>,
-    val apiOnlyFixtures: List<Pair<FixtureApiSports, FixtureApiSportsCreateDto>>,
-    val bothNewDtos: List<FixtureApiSportsCreateDto>
+    val bothExistFixtures: List<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>,
+    val apiOnlyFixtures: List<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>,
+    val bothNewDtos: List<FixtureApiSportsSyncDto>
 )

@@ -28,15 +28,17 @@ interface FixtureApiSportsRepository : JpaRepository<FixtureApiSports, Long> {
     @Query("""
         SELECT fas FROM FixtureApiSports fas
         JOIN FETCH fas.core fc
-        JOIN FETCH fas.season lass
-        JOIN FETCH lass.leagueApiSports las
+        LEFT JOIN FETCH fas.season lass
+        LEFT JOIN FETCH lass.leagueApiSports las
         LEFT JOIN FETCH fas.venue vas
-        WHERE (las.apiId = :leagueApiId AND lass.seasonYear = :seasonYear) 
-           OR fas.apiId IN :fixtureApiIds
+        WHERE (
+            (las.apiId = :leagueApiId AND lass.seasonYear = :seasonYear)
+            OR fas.apiId IN :fixtureApiIds
+        )
     """)
     fun findFixturesByLeagueSeasonOrApiIds(
         @Param("leagueApiId") leagueApiId: Long,
-        @Param("seasonYear") seasonYear: String,
+        @Param("seasonYear") seasonYear: Int,
         @Param("fixtureApiIds") fixtureApiIds: List<Long>
     ): List<FixtureApiSports>
 

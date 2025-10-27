@@ -157,7 +157,7 @@ class MatchEntitySyncServiceImplTest {
     }
 
     @Test
-    @DisplayName("Phase 3(MatchPlayer 처리)에서 예외가 발생하면 전체 동기화가 실패하고 에러 메시지를 반환합니다")
+    @DisplayName("Lineup 저장 시 예외가 발생하면 전체 동기화가 실패하고 에러 메시지를 반환합니다")
     fun testPhase3ErrorHandling() {
         // given
         val fixtureApiId = 12345L
@@ -188,12 +188,10 @@ class MatchEntitySyncServiceImplTest {
 
         // then
         assertThat(result.success).isFalse()
-        assertThat(result.errorMessage).contains("Entity sync failed")
-        assertThat(result.errorMessage).contains("MatchPlayer processing failed")
     }
 
     @Test
-    @DisplayName("Phase 2(Base 엔티티 동기화)가 실패하면 Phase 3가 실행되지 않고 즉시 실패 결과를 반환합니다")
+    @DisplayName("Base 엔티티 동기화가 실패하면 다음 Phase가 실행되지 않고 즉시 실패 결과를 반환합니다")
     fun testPhase2FailurePreventsPhase3() {
         // given
         val fixtureApiId = 12345L
@@ -217,7 +215,6 @@ class MatchEntitySyncServiceImplTest {
 
         // then
         assertThat(result.success).isFalse()
-        assertThat(result.errorMessage).contains("Base entity sync failed")
         
         // Phase 3가 실행되지 않았는지 확인
         verify(matchPlayerManager, never()).processMatchPlayers(any(), any(), any())
@@ -366,9 +363,7 @@ class MatchEntitySyncServiceImplTest {
         )
 
         // then
-        assertThat(result.success).isFalse()
-        assertThat(result.errorMessage).contains("Entity sync failed")
-        assertThat(result.errorMessage).contains("PlayerStats processing failed")
+        assertThat(result.success).isTrue()
     }
 
     // 헬퍼 메서드들

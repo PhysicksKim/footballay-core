@@ -1,5 +1,8 @@
 package com.footballay.core.infra.facade
 
+import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
+
 /**
  * ApiSports Backbone 데이터 동기화를 담당하는 인터페이스
  * 
@@ -14,6 +17,11 @@ package com.footballay.core.infra.facade
  * - Players of Team: 특정 팀의 선수들
  * - Fixtures of League: 특정 리그의 경기일정
  */
+typealias LeaguesSyncResult = DomainResult<Int, DomainFail>
+typealias TeamsSyncResult = DomainResult<Int, DomainFail>
+typealias PlayersSyncResult = DomainResult<Int, DomainFail>
+typealias FixturesSyncResult = DomainResult<Int, DomainFail>
+
 interface ApiSportsBackboneSyncFacade {
 
     /**
@@ -21,7 +29,7 @@ interface ApiSportsBackboneSyncFacade {
      * 
      * @return 처리된 리그 수
      */
-    fun syncCurrentLeagues(): Int
+    fun syncCurrentLeagues(): LeaguesSyncResult
 
     /**
      * 특정 리그의 팀들을 Fetch하고 Sync합니다.
@@ -30,7 +38,7 @@ interface ApiSportsBackboneSyncFacade {
      * @param season 시즌 연도
      * @return 처리된 팀 수
      */
-    fun syncTeamsOfLeague(leagueApiId: Long, season: Int): Int
+    fun syncTeamsOfLeague(leagueApiId: Long, season: Int): TeamsSyncResult
 
     /**
      * 특정 팀의 선수들을 Fetch하고 Sync합니다.
@@ -38,7 +46,7 @@ interface ApiSportsBackboneSyncFacade {
      * @param teamApiId 팀의 ApiSports ID
      * @return 처리된 선수 수
      */
-    fun syncPlayersOfTeam(teamApiId: Long): Int
+    fun syncPlayersOfTeam(teamApiId: Long): PlayersSyncResult
 
     /**
      * 특정 리그의 현재 시즌으로 팀들을 Fetch하고 Sync합니다.
@@ -47,14 +55,22 @@ interface ApiSportsBackboneSyncFacade {
      * @param leagueApiId 리그의 ApiSports ID
      * @return 처리된 팀 수
      */
-    fun syncTeamsOfLeagueWithCurrentSeason(leagueApiId: Long): Int
+    fun syncTeamsOfLeagueWithCurrentSeason(leagueApiId: Long): TeamsSyncResult
 
     /**
-     * 특정 리그의 현재 시즌으로 경기일정을 Fetch하고 Sync합니다.
+     * 특정 리그의 제공된 시즌으로 경기일정을 Fetch하고 Sync합니다.
      * 
      * @param leagueApiId 리그의 ApiSports ID
      * @param season 시즌 연도
      * @return 처리된 경기일정 수
      */
-    fun syncFixturesOfLeagueWithSeason(leagueApiId: Long, season: Int): Int
-} 
+    fun syncFixturesOfLeagueWithSeason(leagueApiId: Long, season: Int): FixturesSyncResult
+
+    /**
+     * 특정 리그의 현재 시즌으로 경기일정을 Fetch하고 Sync합니다.
+     *
+     * @param leagueApiId 리그의 ApiSports ID
+     * @return 처리된 경기일정 수
+     */
+    fun syncFixturesOfLeagueWithCurrentSeason(leagueApiId: Long): FixturesSyncResult
+}

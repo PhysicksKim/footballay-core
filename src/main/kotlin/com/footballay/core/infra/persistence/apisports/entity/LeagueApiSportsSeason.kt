@@ -22,5 +22,8 @@ data class LeagueApiSportsSeason(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "league_apisports_id", referencedColumnName = "id")
     var leagueApiSports: LeagueApiSports? = null
-
-)
+) {
+    override fun toString(): String {
+        return "LeagueApiSportsSeason(seasonEnd=$seasonEnd, seasonStart=$seasonStart, seasonYear=$seasonYear, id=$id)"
+    }
+}

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.shared.dto
 
-data class FixtureApiSportsCreateDto (
+data class FixtureApiSportsSyncDto (
     var apiId: Long? = null,
 
     var referee: String? = null,

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.base.MatchBaseDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
@@ -56,7 +56,7 @@ class MatchApiSportsSyncerImpl(
 
     private val log = logger()
 
-    override fun syncFixtureMatchEntities(dto: FullMatchSyncDto): ActionAfterMatchSync {
+    override fun syncFixtureMatchEntities(dto: FullMatchSyncDto): MatchDataSyncResult {
         val fixtureApiId = dto.fixture.id
         log.info("Starting sync match data for fixtureApiId=$fixtureApiId")
 
@@ -85,7 +85,7 @@ class MatchApiSportsSyncerImpl(
 
             log.info("Match sync completed - Created: ${syncResult.createdCount}, Updated: ${syncResult.updatedCount}, Deleted: ${syncResult.deletedCount}")
 
-            return ActionAfterMatchSync.ongoing(
+            return MatchDataSyncResult.ongoing(
                 dto.fixture.date
             )
         } catch (e: Exception) {

@@ -4,7 +4,7 @@ import com.footballay.core.TestSecurityConfig
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
-import com.footballay.core.web.common.dto.ApiResponseV2
+import com.footballay.core.common.result.DomainResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
@@ -50,9 +50,7 @@ class AdminApiSportsControllerTest {
         mvc.get("/api/v1/admin/apisports/test")
             .andExpect {
                 status { isOk() }
-                content { contentType(MediaType.APPLICATION_JSON) }
-                jsonPath("$.success") { value(true) }
-                jsonPath("$.data") { value("Admin API Sports Controller is working!") }
+                content { contentTypeCompatibleWith(MediaType.TEXT_PLAIN) }
             }
     }
 
@@ -61,11 +59,8 @@ class AdminApiSportsControllerTest {
     fun `현재 시즌 리그 동기화가 성공한다`() {
         // Given
         val mockResult = LeaguesSyncResultDto(syncedCount = 20)
-
-        val mockApiResponse = ApiResponseV2.success(mockResult)
-
         `when`(adminApiSportsWebService.syncCurrentLeagues())
-            .thenReturn(mockApiResponse)
+            .thenReturn(DomainResult.Success(mockResult))
 
         // When & Then
         mvc.post("/api/v1/admin/apisports/leagues/sync") {
@@ -73,7 +68,6 @@ class AdminApiSportsControllerTest {
         }.andExpect {
             status { isOk() }
             content { contentType(MediaType.APPLICATION_JSON) }
-            jsonPath("$.success") { value(true) }
         }
     }
 

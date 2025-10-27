@@ -1,6 +1,6 @@
 package com.footballay.core.infra
 
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 
 /**
  * 특정 Provider의 라이브 매치 데이터 동기화를 담당하는 인터페이스
@@ -24,7 +24,7 @@ import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
  * 4. `ActionAfterMatchSync` 반환
  *
  * @see FetcherProviderResolver
- * @see com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+ * @see MatchDataSyncResult
  *
  * AI가 작성한 주석
  */
@@ -60,6 +60,6 @@ interface MatchDataSyncer {
      * @param uid 경기 고유 식별자
      * @return 다음 폴링 액션 지시사항
      */
-    fun syncMatchData(uid: String): ActionAfterMatchSync
+    fun syncMatchData(uid: String): MatchDataSyncResult
 
 }

@@ -4,20 +4,36 @@ import com.footballay.core.infra.MatchDataSyncer
 import com.footballay.core.infra.apisports.FixtureApiSportsQueryService
 import com.footballay.core.infra.apisports.backbone.extractor.FixturePlayerExtractor
 import com.footballay.core.infra.apisports.backbone.extractor.PlayerSyncExecutor
+import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.live.deprecated.ApiSportsFixtureSingle
-import com.footballay.core.infra.facade.fetcher.ActionAfterMatchSync
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.apisports.match.sync.MatchApiSportsSyncer
 import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
+
 import org.springframework.stereotype.Component
 
+// for docs
+import com.footballay.core.infra.persistence.core.entity.*
+import com.footballay.core.infra.persistence.apisports.entity.*
+
 /**
- * ApiSports Provider의 라이브 매치 데이터 동기화 구현체
+ * [FixtureCore.uid] 를 받아서 ApiSports Match data 를 저장하는 facade 입니다.
+ * [FullMatchSyncDto] 로 Fixture 전체 데이터를 받아서 저장합니다.
  *
- * ApiSports API를 통해 라이브 매치 데이터를 동기화하는 [com.footballay.core.infra.MatchDataSyncer] 구현체입니다.
+ * 사전에 미리 아래와 같은 엔티티가 저장되고 연관관계가 맺어져 있음을 가정합니다.
+ * - [FixtureCore]
+ * - [LeagueCore]
+ * - [TeamCore]
+ * - [FixtureApiSports]
+ * - [LeagueApiSports]
+ * - [TeamApiSports]
+ *
+ * [PlayerCore] 와 [PlayerApiSports] 는 [FullMatchSyncDto] 를 바탕으로 자동 생성하여 저장합니다.
+ *
  *
  * **핵심 책임:**
- * - ApiSports API에서 라이브 데이터 조회
+ * - ApiSports API 에서 라이브 데이터 조회
  * - 선수 사전 저장 (PlayerCore, PlayerApiSports)
  * - 전체 매치 데이터 동기화
  *
@@ -38,10 +54,10 @@ import org.springframework.stereotype.Component
  * AI가 작성한 주석
  */
 @Component
-class ApiSportsMatchSyncer(
+class ApiSportsMatchSyncFacade(
     private val fetcher: ApiSportsV3Fetcher,
     private val playerExtractor: FixturePlayerExtractor,
-    private val playerSyncExecutor: PlayerSyncExecutor,
+    private val playerApiSportsSyncer: PlayerApiSportsSyncer,
     private val matchSyncService: MatchApiSportsSyncer,
     private val fixtureQueryService: FixtureApiSportsQueryService,
 ) : MatchDataSyncer {
@@ -58,14 +74,12 @@ class ApiSportsMatchSyncer(
      * 1. 신규 선수 캐싱 (통합 트랜잭션)
      * 2. 전체 라이브 데이터 동기화
      */
-    override fun syncMatchData(uid: String): ActionAfterMatchSync {
+    override fun syncMatchData(uid: String): MatchDataSyncResult {
         val response = fetchLiveResponse(uid)
 
-        // 선수 추출 및 미리 [PlayerCore] [PlayerApiSports] 저장
-        val playerSyncDtoList = playerExtractor.extractAndSyncPlayers(response)
-        playerSyncExecutor.syncPlayers(playerSyncDtoList)
+        syncPlayersBeforeMatchSync(response)
 
-        val fullMatchSyncDto = FullMatchSyncDto.Companion.of(response)
+        val fullMatchSyncDto = FullMatchSyncDto.of(response)
         return matchSyncService.syncFixtureMatchEntities(fullMatchSyncDto)
     }
 
@@ -73,6 +87,13 @@ class ApiSportsMatchSyncer(
         val apiId = extractApiIdFromUid(fixtureUid)
         val fetchFixtureSingle = fetcher.fetchFixtureSingle(apiId)
         return fetchFixtureSingle
+    }
+
+    private fun syncPlayersBeforeMatchSync(response: ApiSportsFixtureSingle) {
+        val playersByTeam = playerExtractor.extractPlayersByTeam(response)
+        playersByTeam.forEach {
+                (teamId, dtos) -> playerApiSportsSyncer.syncPlayersOfTeam(teamId, dtos)
+        }
     }
 
     private fun extractApiIdFromUid(uid: String): Long {

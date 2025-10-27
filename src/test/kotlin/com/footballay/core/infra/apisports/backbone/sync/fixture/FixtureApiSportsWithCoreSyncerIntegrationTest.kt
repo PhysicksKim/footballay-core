@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.backbone.sync.fixture
 
 import com.footballay.core.ApiSportsBackboneEntityGenerator
 import com.footballay.core.BackboneEntities
-import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsCreateDto
+import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
@@ -24,7 +24,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -38,31 +37,8 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
     @Autowired
     private lateinit var fixtureApiSportsRepository: FixtureApiSportsRepository
-
-    @Autowired
-    private lateinit var leagueApiSportsRepository: LeagueApiSportsRepository
-
-    @Autowired
-    private lateinit var leagueApiSportsSeasonRepository: LeagueApiSportsSeasonRepository
-
-    @Autowired
-    private lateinit var teamApiSportsRepository: TeamApiSportsRepository
-
-    @Autowired
-    private lateinit var fixtureCoreSyncService: FixtureCoreSyncService
-
-    @Autowired
-    private lateinit var venueApiSportsService: VenueApiSportsService
-
-    @Autowired
-    private lateinit var fixtureDataMapper: FixtureDataMapper
-
-    @Autowired
-    private lateinit var uidGenerator: UidGenerator
-
     @Autowired
     private lateinit var syncer: FixtureApiSportsWithCoreSyncer
-
     @Autowired
     private lateinit var backboneEntityGenerator: ApiSportsBackboneEntityGenerator
 
@@ -118,7 +94,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     fun `빈 DTO 리스트로 호출 시 IllegalArgumentException 발생`() {
         // given
         val leagueApiId = 39L
-        val emptyDtos = emptyList<FixtureApiSportsCreateDto>()
+        val emptyDtos = emptyList<FixtureApiSportsSyncDto>()
 
         // when & then
         val exception = assertThrows<IllegalArgumentException> {
@@ -465,8 +441,8 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertEquals(null, savedFixture.date) // 잘못된 날짜는 null로 처리
     }
 
-    private fun createValidFixtureDto(): FixtureApiSportsCreateDto {
-        return FixtureApiSportsCreateDto(
+    private fun createValidFixtureDto(): FixtureApiSportsSyncDto {
+        return FixtureApiSportsSyncDto(
             apiId = 1000L,
             leagueApiId = 39L,
             seasonYear = "2024",
