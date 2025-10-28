@@ -10,7 +10,6 @@ import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
 import com.footballay.core.infra.apisports.match.sync.loader.MatchDataLoader
-import com.footballay.core.infra.apisports.match.sync.persist.MatchEntitySyncServiceImpl
 import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntitySyncer
 import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchSyncResult
 import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerManager
@@ -21,13 +20,11 @@ import com.footballay.core.infra.apisports.match.sync.persist.playerstat.manager
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.result.PlayerStatsProcessResult
 import com.footballay.core.infra.apisports.match.sync.persist.teamstat.manager.TeamStatsManager
 import com.footballay.core.infra.apisports.match.sync.persist.teamstat.result.TeamStatsProcessResult
-import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEntitySyncResult
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayerStatistics
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
-import com.footballay.core.infra.util.UidGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -92,7 +89,7 @@ class MatchEntitySyncServiceImplTest {
             homeMatchTeam = createMockMatchTeam("Home Team"),
             awayMatchTeam = createMockMatchTeam("Away Team")
         ))
-        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
+        whenever(matchPlayerManager.processMatchTeamAndPlayers(any(), any(), any())).thenReturn(
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,
@@ -148,7 +145,7 @@ class MatchEntitySyncServiceImplTest {
         assertThat(result.eventChanges.created).isEqualTo(1)
 
         // 모든 Phase 검증
-        verify(matchPlayerManager).processMatchPlayers(any(), any(), any())
+        verify(matchPlayerManager).processMatchTeamAndPlayers(any(), any(), any())
         verify(matchEventManager).processMatchEvents(any(), any())
         verify(playerStatsManager).processPlayerStats(any(), any())
         verify(teamStatsManager).processTeamStats(any(), any())
@@ -177,7 +174,7 @@ class MatchEntitySyncServiceImplTest {
             homeMatchTeam = createMockMatchTeam("Home Team"),
             awayMatchTeam = createMockMatchTeam("Away Team")
         ))
-        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenThrow(
+        whenever(matchPlayerManager.processMatchTeamAndPlayers(any(), any(), any())).thenThrow(
             RuntimeException("MatchPlayer processing failed")
         )
 
@@ -217,7 +214,7 @@ class MatchEntitySyncServiceImplTest {
         assertThat(result.success).isFalse()
         
         // Phase 3가 실행되지 않았는지 확인
-        verify(matchPlayerManager, never()).processMatchPlayers(any(), any(), any())
+        verify(matchPlayerManager, never()).processMatchTeamAndPlayers(any(), any(), any())
     }
 
     @Test
@@ -247,7 +244,7 @@ class MatchEntitySyncServiceImplTest {
             homeMatchTeam = createMockMatchTeam("Home Team"),
             awayMatchTeam = createMockMatchTeam("Away Team")
         ))
-        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
+        whenever(matchPlayerManager.processMatchTeamAndPlayers(any(), any(), any())).thenReturn(
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,
@@ -330,7 +327,7 @@ class MatchEntitySyncServiceImplTest {
             homeMatchTeam = createMockMatchTeam("Home Team"),
             awayMatchTeam = createMockMatchTeam("Away Team")
         ))
-        whenever(matchPlayerManager.processMatchPlayers(any(), any(), any())).thenReturn(
+        whenever(matchPlayerManager.processMatchTeamAndPlayers(any(), any(), any())).thenReturn(
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,

@@ -42,7 +42,21 @@ interface FixtureApiSportsRepository : JpaRepository<FixtureApiSports, Long> {
         @Param("fixtureApiIds") fixtureApiIds: List<Long>
     ): List<FixtureApiSports>
 
-
+    /**
+     * Fixture 데이터 조회 (League+Season 전용)
+     */
+    @Query("""
+        SELECT fas FROM FixtureApiSports fas
+        JOIN FETCH fas.core fc
+        LEFT JOIN FETCH fas.season lass
+        LEFT JOIN FETCH lass.leagueApiSports las
+        LEFT JOIN FETCH fas.venue vas
+        WHERE (las.apiId = :leagueApiId AND lass.seasonYear = :seasonYear)
+    """)
+    fun findFixturesByLeagueAndSeason(
+        @Param("leagueApiId") leagueApiId: Long,
+        @Param("seasonYear") seasonYear: Int,
+    ): List<FixtureApiSports>
 
     @Query("""
         SELECT f FROM FixtureApiSports f 

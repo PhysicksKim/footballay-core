@@ -16,26 +16,20 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * PlayerStats 통합 관리자
- * 
- * PlayerStats의 수집, 계획, 저장을 통합하여 관리합니다.
- * 
- * **처리 과정:**
- * 1. PlayerStatsDtoCollector로 MatchPlayer 기반 수집
- * 2. PlayerStatsChangePlanner로 변경 계획 수립
- * 3. MatchPlayer 연결 및 영속 상태 저장
+ * PlayerStats 동기화 매니저
+ *
+ * PlayerStats의 수집, 계획, 저장을 관리합니다.
+ *
+ * **처리 흐름:**
+ * 1. MatchPlayer 기반 통계 수집
+ * 2. 변경 계획 수립 (생성/수정/삭제)
+ * 3. MatchPlayer 연결 및 저장 (배치)
  * 4. EntityBundle 업데이트
- * 
- * **특징:**
- * - 영속 상태 PlayerStats를 EntityBundle에 반영
- * - MatchPlayer와 1:1 관계 유지
- * - 단일 책임으로 MatchEntitySyncServiceImpl 단순화
- * - 배치 처리로 성능 최적화
- * 
- * **중요한 비즈니스 로직:**
- * - ID null 선수 매칭 실패 시 substitute=true로 설정
- * - MatchPlayer와의 1:1 관계 보장
- * - 통계 데이터 무결성 검증
+ *
+ * **제약사항:**
+ * - MatchPlayer는 Phase 3에서 이미 영속화됨
+ * - EntityBundle에서만 MatchPlayer 조회 (Repository 금지)
+ * - MatchPlayer와 1:1 관계 보장
  */
 @Component
 class PlayerStatsManager(
@@ -45,22 +39,11 @@ class PlayerStatsManager(
     private val log = logger()
 
     /**
-     * PlayerStats를 MatchPlayer와 연결하여 수집, 계획, 저장하여 영속 상태로 만듭니다.
-     * 
-     * **핵심 로직:**
-     * 1. MatchPlayer 기반으로 통계 데이터 수집
-     * 2. 기존 통계와 비교하여 변경 계획 수립
-     * 3. MatchPlayer 연결 및 배치 저장
-     * 4. EntityBundle 업데이트
-     * 
-     * **중요한 제약사항:**
-     * - 모든 MatchPlayer는 Phase 3에서 이미 영속화됨
-     * - EntityBundle에서 MatchPlayer 조회 (Repository 사용 금지)
-     * - 통계 전용 MatchPlayer는 Phase 3에서 이미 생성됨
-     * 
-     * @param playerStatDto PlayerStats 정보 DTO
-     * @param entityBundle 기존 엔티티 번들 (업데이트됨)
-     * @return PlayerStats 처리 결과
+     * PlayerStats를 수집, 계획, 저장합니다.
+     *
+     * @param playerStatDto 선수 통계 DTO
+     * @param entityBundle 엔티티 번들 (업데이트됨)
+     * @return 처리 결과
      */
     @Transactional
     fun processPlayerStats(
@@ -116,28 +99,7 @@ class PlayerStatsManager(
         }
     }
 
-    /**
-     * MatchPlayer 연결과 함께 변경 계획을 실제 데이터베이스에 반영합니다.
-     * 
-     * **핵심 로직:**
-     * 1. 생성할 통계: MatchPlayer 연결 후 저장
-     * 2. 수정할 통계: 기존 통계 업데이트
-     * 3. 삭제할 통계: 데이터베이스에서 제거
-     * 4. 배치 처리로 성능 최적화
-     * 
-     * **중요한 제약사항:**
-     * - 모든 MatchPlayer는 이미 영속화된 상태
-     * - EntityBundle에서 MatchPlayer 조회
-     * - 1:1 관계 보장
-     * 
-     * **JPA 연관관계 설정:**
-     * - PlayerStats를 먼저 영속화한 후 MatchPlayer와 연결
-     * - 양방향 연관관계 보장
-     * 
-     * @param statsChangeSet 변경 계획
-     * @param matchPlayers 영속화된 MatchPlayer 맵
-     * @return 저장된 PlayerStats 목록
-     */
+    /** 변경사항을 데이터베이스에 저장하고 MatchPlayer와 양방향 연결합니다. */
     private fun persistChangesWithMatchPlayerConnection(
         statsChangeSet: PlayerStatsChangeSet,
         matchPlayers: Map<String, ApiSportsMatchPlayer>
@@ -276,17 +238,7 @@ class PlayerStatsManager(
         penaltySaved = statsDto.penaltySaved
     )
 
-    /**
-     * MatchPlayer 키로 MatchPlayer를 찾습니다.
-     * 
-     * **중요한 제약사항:**
-     * - EntityBundle에서만 조회 (Repository 사용 금지)
-     * - 모든 MatchPlayer는 Phase 3에서 이미 영속화됨
-     * 
-     * @param playerKey MatchPlayer 키
-     * @param matchPlayers 영속화된 MatchPlayer 맵
-     * @return 해당하는 MatchPlayer 또는 null
-     */
+    /** MatchPlayer 키로 EntityBundle에서 MatchPlayer를 찾습니다. */
     private fun findMatchPlayerByKey(
         playerKey: String,
         matchPlayers: Map<String, ApiSportsMatchPlayer>

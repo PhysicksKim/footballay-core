@@ -1,49 +1,38 @@
 package com.footballay.core.infra.dispatcher.match
 
-import com.footballay.core.infra.MatchDataSyncer
+import com.footballay.core.infra.MatchSyncOrchestrator
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import java.time.OffsetDateTime
 
 /**
- * 기본 FetcherProviderResolver 구현체
- * 
- * 등록된 [MatchDataSyncer] 구현체들을 순회하며 fixture별로 해당 Provider가 동작해야 하는 경우
- * 동기화를 수행합니다. 각 Provider는 `fixtureUid`를 통해 해당 fixture가 지원되는지 여부를 판단합니다.
- * 
+ * 매치 데이터 동기화 Dispatcher 기본 구현체
+ *
+ * 등록된 MatchSyncOrchestrator 구현체들을 순회하며,
+ * 해당 fixture를 지원하는 Provider를 찾아 동기화를 수행합니다.
+ *
  * **동작 방식:**
- * 1. 등록된 모든 `MatchDataSyncer` 구현체를 순회
- * 2. 각 Provider의 `isSupport(fixtureUid)` 호출하여 지원 여부 확인
- * 3. 지원하는 Provider를 찾으면 `syncMatchData(fixtureUid)` 호출
- * 4. 지원하는 Provider가 없으면 기본 폴링 액션 반환
- * 
- * **특징:**
- * - Spring의 의존성 주입을 통해 모든 `MatchDataSyncer` 구현체를 자동 수집
- * - Provider별로 독립적인 지원 로직 구현 가능
- * - Fallback 메커니즘으로 안정성 보장
- * 
- * @see MatchDataSyncer
+ * 1. 모든 Orchestrator에 대해 `isSupport(fixtureUid)` 호출
+ * 2. 지원하는 Orchestrator를 찾으면 `syncMatchData(fixtureUid)` 호출
+ * 3. 지원하는 Orchestrator가 없으면 fallback 결과 반환
+ *
+ * @see MatchSyncOrchestrator
  * @see MatchDataSyncDispatcher
- * 
- * AI가 작성한 주석
  */
 @Component
 class SimpleMatchDataSyncDispatcher(
-    private val fetchers: List<MatchDataSyncer>
+    private val orchestrators: List<MatchSyncOrchestrator>
 ) : MatchDataSyncDispatcher {
 
-    val log = logger()
+    private val log = logger()
 
-    override fun syncByFixtureUid(
-        fixtureUid: String,
-    ): MatchDataSyncResult {
-        for (fetcher in fetchers) {
-            if (fetcher.isSupport(fixtureUid)) {
-                return fetcher.syncMatchData(fixtureUid)
+    override fun syncByFixtureUid(fixtureUid: String): MatchDataSyncResult {
+        for (orchestrator in orchestrators) {
+            if (orchestrator.isSupport(fixtureUid)) {
+                return orchestrator.syncMatchData(fixtureUid)
             }
         }
-        log.warn("No fetcher found for fixtureUid: $fixtureUid")
-        return MatchDataSyncResult.ongoing(
-            kickoffTime = OffsetDateTime.now().plusHours(1))
+        log.warn("지원하는 Orchestrator를 찾지 못했습니다. fixtureUid=$fixtureUid")
+        return MatchDataSyncResult.ongoing(OffsetDateTime.now().plusHours(1))
     }
 } 

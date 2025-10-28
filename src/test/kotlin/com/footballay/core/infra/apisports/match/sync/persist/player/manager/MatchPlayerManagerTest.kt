@@ -5,7 +5,6 @@ import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator.generateMatchPlayerKey as createMpKey
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
-import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerManager
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.UniformColor
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
-import kotlin.math.log
 
 @ExtendWith(MockitoExtension::class)
 class MatchPlayerManagerTest {
@@ -71,7 +69,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_123")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -125,7 +123,7 @@ class MatchPlayerManagerTest {
         }
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.updatedCount).isEqualTo(1)
@@ -157,7 +155,7 @@ class MatchPlayerManagerTest {
         doNothing().whenever(matchPlayerRepository).deleteAll(any<List<ApiSportsMatchPlayer>>())
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.deletedCount).isEqualTo(1)
@@ -201,7 +199,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_123")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, lineupDto, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, lineupDto, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -251,7 +249,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_123")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, lineupDto, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, lineupDto, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -298,7 +296,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_bulk")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(100)
@@ -333,7 +331,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_33")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -382,7 +380,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_complex")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(3)
@@ -414,7 +412,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_name_only")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -445,7 +443,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_entity_bundle")
 
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -466,7 +464,7 @@ class MatchPlayerManagerTest {
         val entityBundle = MatchEntityBundle.createEmpty()
         
         // when
-        val result = matchPlayerManager.processMatchPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(0)

@@ -2,6 +2,7 @@ package com.footballay.core.infra.persistence.apisports.entity
 
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import jakarta.persistence.*
+import org.hibernate.proxy.HibernateProxy
 
 @Entity
 @Table(
@@ -32,4 +33,26 @@ data class PlayerApiSports(
     var photo: String? = null, // API 응답의 player.photo
 
     var preventUpdate: Boolean = false
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null) return false
+        val oEffectiveClass =
+            if (other is HibernateProxy) other.hibernateLazyInitializer.persistentClass else other.javaClass
+        val thisEffectiveClass =
+            if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass else this.javaClass
+        if (thisEffectiveClass != oEffectiveClass) return false
+        other as PlayerApiSports
+
+        return id != null && id == other.id
+    }
+
+    override fun hashCode(): Int =
+        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+
+    override fun toString(): String {
+        return "PlayerApiSports(id=$id, apiId=$apiId, name=$name, firstname=$firstname, lastname=$lastname, age=$age, birthPlace=$birthPlace, birthDate=$birthDate, birthCountry=$birthCountry, nationality=$nationality, height=$height, weight=$weight, number=$number, position=$position, photo=$photo, preventUpdate=$preventUpdate)"
+    }
+
+
+}

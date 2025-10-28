@@ -5,6 +5,10 @@ import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 
 interface MatchDataLoader {
 
-    fun loadContext(fixtureApiId: Long, context: MatchPlayerContext, entityBundle: MatchEntityBundle)
+    fun loadContext(
+        fixtureApiId: Long,
+        context: MatchPlayerContext,
+        entityBundle: MatchEntityBundle
+    )
 
 }

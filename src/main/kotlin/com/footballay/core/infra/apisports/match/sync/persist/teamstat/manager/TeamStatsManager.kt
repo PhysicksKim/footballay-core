@@ -13,27 +13,14 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * TeamStats 통합 관리자
+ * TeamStats 동기화 매니저.
  *
- * TeamStats의 생성, 업데이트, 저장을 통합하여 관리합니다.
+ * TeamStats의 생성, 업데이트, 저장을 관리합니다.
+ * [ApiSportsMatchTeam] 은 이미 영속 상태임을 가정합니다.
  *
- * **처리 과정:**
- * 1. Home/Away TeamStats 각각 처리
- * 2. XG 리스트 처리 (시간별 기대득점)
- * 3. MatchTeam과 양방향 연관관계 설정
- * 4. 영속 상태 저장
- * 5. EntityBundle 업데이트
- *
- * **특징:**
- * - PlayerStats와 달리 복잡한 Collector/Planner 불필요
- * - Home/Away 2개만 처리하므로 단순한 구조
- * - MatchTeam은 Phase 2에서 이미 생성되어 EntityBundle에 존재
- * - 배치 처리로 성능 최적화
- *
- * **중요한 비즈니스 로직:**
- * - Home/Away 각각 DTO가 null이면 처리 스킵
- * - XG 리스트는 elapsed time 기준으로 업데이트
- * - MatchTeam과 1:1 관계 보장
+ * **특징**
+ * - Home/Away 2개만 처리하므로 Collector/Planner 불필요
+ * - DTO가 null 이면 해당 팀 처리 스킵
  */
 @Component
 class TeamStatsManager(
@@ -43,22 +30,12 @@ class TeamStatsManager(
     private val log = logger()
 
     /**
-     * TeamStats를 MatchTeam과 연결하여 생성/업데이트하고 영속 상태로 만듭니다.
+     * TeamStats를 생성/업데이트합니다.
+     * [MatchEntityBundle] 의 [ApiSportsMatchTeam] 들은 이미 영속 상태여야 합니다.
      *
-     * **핵심 로직:**
-     * 1. Home TeamStats 처리 (DTO 있으면)
-     * 2. Away TeamStats 처리 (DTO 있으면)
-     * 3. 배치 저장
-     * 4. EntityBundle 업데이트
-     *
-     * **중요한 제약사항:**
-     * - MatchTeam은 Phase 2에서 이미 영속화됨
-     * - EntityBundle에서 MatchTeam 조회 (Repository 사용 금지)
-     * - Home/Away DTO가 null이면 해당 TeamStats 처리 안 함
-     *
-     * @param teamStatDto TeamStats 정보 DTO
-     * @param entityBundle 기존 엔티티 번들 (업데이트됨)
-     * @return TeamStats 처리 결과
+     * @param teamStatDto 팀 통계 DTO
+     * @param entityBundle 엔티티 번들 (업데이트됨)
+     * @return 처리 결과
      */
     @Transactional
     fun processTeamStats(
@@ -113,20 +90,7 @@ class TeamStatsManager(
         }
     }
 
-    /**
-     * 개별 TeamStat 처리 (Home 또는 Away)
-     *
-     * **로직:**
-     * 1. 기존 TeamStat 있으면 업데이트, 없으면 생성
-     * 2. DTO의 모든 필드를 엔티티에 반영
-     * 3. XG 리스트 처리
-     * 4. MatchTeam과 양방향 연관관계 설정
-     *
-     * @param dto TeamStats DTO
-     * @param matchTeam 연관된 MatchTeam (Phase 2에서 생성됨)
-     * @param existingStat 기존 TeamStats (있으면)
-     * @return 생성/업데이트된 TeamStats
-     */
+    /** 개별 TeamStat을 생성 또는 업데이트합니다. */
     private fun processTeamStat(
         dto: MatchTeamStatisticsDto,
         matchTeam: ApiSportsMatchTeam?,
@@ -155,11 +119,7 @@ class TeamStatsManager(
         return teamStat
     }
 
-    /**
-     * TeamStats 필드 업데이트
-     *
-     * DTO의 모든 통계 필드를 엔티티에 반영합니다.
-     */
+    /** TeamStats 필드를 DTO로 업데이트합니다. */
     private fun updateTeamStatFields(
         teamStat: ApiSportsMatchTeamStatistics,
         dto: MatchTeamStatisticsDto
@@ -196,22 +156,7 @@ class TeamStatsManager(
         }
     }
 
-    /**
-     * XG 리스트 처리
-     *
-     * **로직:**
-     * - 기존 XG를 elapsed time으로 매핑
-     * - DTO의 XG와 비교하여 생성/업데이트
-     * - UniqueConstraint: (match_team_statistics_id, elapsed_time)
-     *
-     * **중요:**
-     * - XG는 시간별로 변하는 값
-     * - 같은 elapsed time이면 업데이트
-     * - 새로운 elapsed time이면 추가
-     *
-     * @param teamStat 대상 TeamStats 엔티티
-     * @param xgDtoList XG DTO 리스트
-     */
+    /** XG 리스트를 처리합니다. (elapsed time 기준 생성/업데이트) */
     private fun processXGList(
         teamStat: ApiSportsMatchTeamStatistics,
         xgDtoList: List<MatchTeamStatisticsDto.MatchTeamXGDto>

@@ -13,7 +13,12 @@ import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
  * @param bothNewDtos FixtureApiSports와 FixtureCore가 모두 없는 경우 (새로 생성 대상)
  */
 data class FixtureProcessingCases(
-    val bothExistFixtures: List<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>,
-    val apiOnlyFixtures: List<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>,
+    val bothExistFixtures: List<FixtureWithDto>,
+    val apiOnlyFixtures: List<FixtureWithDto>,
     val bothNewDtos: List<FixtureApiSportsSyncDto>
+)
+
+data class FixtureWithDto(
+    val entity: FixtureApiSports,
+    val dto: FixtureApiSportsSyncDto,
 )

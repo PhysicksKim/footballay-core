@@ -24,6 +24,14 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * MatchEntitySyncService 구현체
+ * Match Data 관련 Dto 를 받아 DB Entity 로 저장합니다.
+ * [MatchPlayerContext] 를 통해 Dto 들에 등장하는 MatchPlayer 들의 정보를 받습니다.
+ *
+ * ## id=null 선수 처리 중요성
+ * ApiSports 는 불안정한 데이터 제공으로 인해 선수 아이디가 누락되는 경우가 빈번합니다.
+ * 이 문제는 [MatchPlayerContext] 를 구성하는 쪽에서도 유의하여 동작하는 책임이며,
+ * [MatchPlayerContext] 를 사용하는 측과 더불어 DB entity 로 변환하는 과정에서도 유의해야 합니다.
+ * [com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer] 를 활용해 id=null 선수를 저장합니다.
  * 
  * **처리 단계:**
  * 1. 기존 엔티티 로드 (Fixture, MatchTeam, MatchPlayer, Event)
@@ -34,14 +42,6 @@ import org.springframework.transaction.annotation.Transactional
  * 6. TeamStats 처리 (TeamStatsManager로 통합)
  * 7. 데이터베이스 영속화 (각 Manager에서 완료)
  *
- * **현재 구현 상태:**
- * - Phase 1: 기존 엔티티 로드 ✅ 완료
- * - Phase 2: Base DTO 처리 ✅ 완료
- * - Phase 3: MatchPlayer 처리 + Lineup 정보 적용 ✅ 완료 (MatchPlayerManager로 통합)
- * - Phase 4: Event 처리 ✅ 완료 (MatchEventManager로 통합)
- * - Phase 5: PlayerStats 처리 ✅ 완료 (PlayerStatsManager로 통합)
- * - Phase 6: TeamStats 처리 ✅ 완료 (TeamStatsManager로 통합)
- * - Phase 7: 실제 저장 ✅ 완료 (각 Manager에서 영속화 완료)
  */
 @Service
 class MatchEntitySyncServiceImpl(
@@ -137,7 +137,7 @@ class MatchEntitySyncServiceImpl(
         // Phase 3: MatchPlayer 처리 + Lineup 정보 적용 (MatchPlayerManager로 통합)
         val matchPlayerResult = try {
             val (result, time) = measurePhase("Phase3_MatchPlayers", threshold = PHASE3_THRESHOLD_MS) {
-                matchPlayerManager.processMatchPlayers(playerContext, lineupDto, entityBundle)
+                matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle)
             }
             phaseTimings["Phase3_MatchPlayers"] = time
             log.info("MatchPlayer processing completed - Total players: ${result.totalPlayers}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}")

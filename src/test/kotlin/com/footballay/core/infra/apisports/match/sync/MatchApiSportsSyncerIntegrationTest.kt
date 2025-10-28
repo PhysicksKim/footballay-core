@@ -30,7 +30,7 @@ class MatchApiSportsSyncerIntegrationTest {
     private lateinit var apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade
 
     @Autowired
-    private lateinit var matchApiSportsSyncer: MatchApiSportsSyncerImpl
+    private lateinit var matchApiSportsSyncer: ApiSportsMatchEntitySyncFacadeImpl
 
     // Backbone 데이터 저장소들
     @Autowired

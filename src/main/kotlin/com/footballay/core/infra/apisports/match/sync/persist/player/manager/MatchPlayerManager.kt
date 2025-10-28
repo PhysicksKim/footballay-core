@@ -9,33 +9,19 @@ import com.footballay.core.infra.apisports.match.sync.persist.player.collector.M
 import com.footballay.core.infra.apisports.match.sync.persist.player.planner.MatchPlayerChangePlanner
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.persistence.apisports.entity.live.UniformColor
-import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerRepository
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 
 /**
- * MatchPlayer 통합 관리자
- * 
- * MatchPlayer의 수집, 계획, Lineup 정보 적용, 저장을 통합하여 관리합니다.
- * 
- * **처리 과정:**
- * 1. MatchPlayerDtoCollector로 우선순위 기반 수집
- * 2. MatchPlayerChangePlanner로 변경 계획 수립
- * 3. Lineup 정보로 MatchPlayer 완전 구성
- * 4. MatchTeam formation/color 업데이트
- * 5. PlayerApiSports 연결 및 영속 상태 저장
- * 6. EntityBundle 업데이트
- * 
- * **특징:**
- * - 영속 상태 MatchPlayer를 EntityBundle에 반영
- * - Event에서 참조할 수 있는 안전한 상태 보장
- * - 단일 책임으로 MatchEntitySyncServiceImpl 단순화
- * - PlayerApiSports 연결 로직 포함
- * - Lineup 정보와 함께 완전한 MatchPlayer 처리
+ * PlayerContext 와 Lineup 기반으로 MatchPlayer 를 저장하며, Lineup 의 정보로 MatchTeam 에 정보를 추가합니다
+ *
+ * [MatchPlayerContext] 를 바탕으로 [ApiSportsMatchPlayer] 저장하고 Lineup을 바탕으로 MatchTeam과 연관관계를 설정합니다.
+ * Lineup dto 를 활용해 [ApiSportsMatchTeam] 의 formation, color 도 함께 업데이트 합니다.
  */
 @Component
 class MatchPlayerManager(
@@ -47,15 +33,15 @@ class MatchPlayerManager(
     private val log = logger()
 
     /**
-     * MatchPlayer를 Lineup 정보와 함께 수집, 계획, 저장하여 영속 상태로 만듭니다.
-     * 
-     * @param playerContext MatchPlayer DTO들이 담긴 컨텍스트
-     * @param lineupDto Lineup 정보 DTO
-     * @param entityBundle 기존 엔티티 번들 (업데이트됨)
-     * @return MatchPlayer 처리 결과
+     * MatchPlayer를 수집, 계획, 저장합니다.
+     *
+     * @param playerContext 선수 DTO 컨텍스트
+     * @param lineupDto 라인업 정보
+     * @param entityBundle 엔티티 번들 (업데이트됨)
+     * @return 처리 결과
      */
     @Transactional
-    fun processMatchPlayers(
+    fun processMatchTeamAndPlayers(
         playerContext: MatchPlayerContext,
         lineupDto: LineupSyncDto,
         entityBundle: MatchEntityBundle
@@ -63,11 +49,10 @@ class MatchPlayerManager(
         log.info("Starting MatchPlayer processing with Lineup - Context players: ${playerContext.lineupMpDtoMap.size + playerContext.eventMpDtoMap.size + playerContext.statMpDtoMap.size}")
         
         try {
-            // 1단계: 우선순위 기반 수집
             val collectedDtos = MatchPlayerDtoCollector.collectFrom(playerContext)
             log.info("Collected ${collectedDtos.size} unique players from context")
-            
-            // 2단계: 변경 계획 수립
+
+            // 변경 계획 수립
             val entityKeyMap = MatchPlayerChangePlanner.entitiesToKeyMap(entityBundle.allMatchPlayers.values.toList())
             val playerChangeSet = MatchPlayerChangePlanner.planChanges(
                 collectedDtos, 
@@ -78,24 +63,24 @@ class MatchPlayerManager(
             )
             log.info("Planned changes - Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}")
             
-            // 3단계: Lineup 정보로 MatchPlayer 완전 구성
+            // Lineup 에 등장하는 선수는 lineup 관련 정보 추가
             val lineupEnhancedPlayers = enhancePlayersWithLineup(
                 playerChangeSet.toCreate + playerChangeSet.toUpdate,
                 lineupDto,
                 collectedDtos,
                 entityBundle
             )
-            
-            // 4단계: MatchTeam formation/color 업데이트
+            log.info("Enhanced MatchPlayers: ${lineupEnhancedPlayers.size}, Collected DTOs: ${collectedDtos.size}")
+
+            // lineup 정보로 MatchTeam formation/color 업데이트
             updateMatchTeamsWithLineup(lineupDto, entityBundle)
 
-            log.info("Before 5 단계 - Enhanced players: ${lineupEnhancedPlayers.size}, Collected DTOs: ${collectedDtos.size}")
-            // 5단계: PlayerApiSports 연결 및 영속 상태 저장
+            // PlayerApiSports 연결 및 영속 상태 저장
             val savedPlayers = persistChangesWithPlayerApiSports(lineupEnhancedPlayers, collectedDtos, entityBundle)
-            log.info("After 5 단계 - Saved players: ${savedPlayers.size}, Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}")
+            log.info("Saved MatchPlayers: ${savedPlayers.size}, Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}")
+            log.info("saved MatchPlayers name : ${savedPlayers.joinToString(separator = ", ") { "${it.name}_${it.id}_(${it.matchPlayerUid})" }}")
 
-            // 6단계: EntityBundle 업데이트 (Map으로 변환)
-            log.info("savedPlayers name : ${savedPlayers.joinToString(separator = ", ") { "${it.name}_${it.id}_(${it.matchPlayerUid})" }}")
+            // EntityBundle 에 MatchPlayer 업데이트
             val savedPlayersMap = savedPlayers.associate { player ->
                 val key = MatchPlayerKeyGenerator.generateMatchPlayerKey(player.playerApiSports?.apiId, player.name)
                 key to player
@@ -117,13 +102,7 @@ class MatchPlayerManager(
     }
 
     /**
-     * Lineup 정보로 MatchPlayer를 완전 구성합니다.
-     * 
-     * @param players 생성/업데이트할 MatchPlayer 목록
-     * @param lineupDto Lineup 정보
-     * @param collectedDtos 수집된 DTO 맵
-     * @param entityBundle 엔티티 번들
-     * @return Lineup 정보가 적용된 MatchPlayer 목록
+     * Lineup 정보를 MatchPlayer에 적용합니다.
      */
     private fun enhancePlayersWithLineup(
         players: List<ApiSportsMatchPlayer>,
@@ -175,10 +154,7 @@ class MatchPlayerManager(
     }
 
     /**
-     * MatchTeam의 formation과 color를 Lineup 정보로 업데이트합니다.
-     * 
-     * @param lineupDto Lineup 정보
-     * @param entityBundle 엔티티 번들
+     * MatchTeam의 formation과 color를 업데이트합니다.
      */
     private fun updateMatchTeamsWithLineup(
         lineupDto: LineupSyncDto,
@@ -212,9 +188,7 @@ class MatchPlayerManager(
         }
     }
 
-    /**
-     * LineupSyncDto.Color를 UniformColor로 변환합니다.
-     */
+    /** Color DTO를 엔티티로 변환 */
     private fun convertToUniformColor(color: LineupSyncDto.Color?): UniformColor? {
         return color?.let {
             UniformColor(
@@ -225,9 +199,7 @@ class MatchPlayerManager(
         }
     }
 
-    /**
-     * PlayerApiSports 연결과 함께 변경 계획을 실제 데이터베이스에 반영합니다.
-     */
+    /** 변경사항을 데이터베이스에 저장합니다. */
     private fun persistChangesWithPlayerApiSports(
         players: List<ApiSportsMatchPlayer>,
         collectedDtos: Map<String, MatchPlayerDto>,
@@ -257,9 +229,7 @@ class MatchPlayerManager(
         return allPlayers
     }
 
-    /**
-     * MatchPlayer에 PlayerApiSports를 연결합니다. (N+1 문제 해결)
-     */
+    /** PlayerApiSports를 배치 조회하여 연결합니다. (N+1 방지) */
     private fun connectPlayerApiSports(
         players: List<ApiSportsMatchPlayer>,
         collectedDtos: Map<String, MatchPlayerDto>

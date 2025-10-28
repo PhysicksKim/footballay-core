@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.dto
 
-import com.footballay.core.infra.apisports.match.live.deprecated.ApiSportsFixtureSingle
+import com.footballay.core.infra.apisports.match.sync.ApiSportsFixtureSingle
 import java.time.OffsetDateTime
 
 /**

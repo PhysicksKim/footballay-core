@@ -1,37 +1,20 @@
 package com.footballay.core.infra.dispatcher.match
 
 /**
- * 라이브 매치 데이터 동기화를 위한 Provider Resolver 인터페이스
- * 
- * 등록된 [MatchDataSyncer] 구현체들 중에서 적절한 Provider를 선택하여
- * 라이브 데이터 동기화를 수행합니다.
- * 
- * **동작 방식:**
- * 1. `fixtureUid`를 기반으로 지원 가능한 Provider 탐색
- * 2. 적절한 Provider의 `syncMatchData()` 호출
- * 3. 다음 폴링 액션 지시사항 반환
- * 
- * **사용 예시:**
- * ```kotlin
- * val action = fetcherProviderResolver.fetchLiveData("fixture-123")
- * when (action) {
- *     is ActionAfterMatchSync.Ongoing -> scheduleNextPoll(action.kickoffTime)
- *     is ActionAfterMatchSync.Completed -> stopPolling()
- * }
- * ```
- * 
- * @see MatchDataSyncer
+ * Match data sync를 위한 인터페이스
+ *
+ * [com.footballay.core.infra.persistence.core.entity.FixtureCore] 의 uid 를 기반으로
+ * 해당 경기의 Match data 를 저장합니다.
+ *
  * @see MatchDataSyncResult
- * 
- * AI가 작성한 주석
  */
 interface MatchDataSyncDispatcher {
     
     /**
-     * 주어진 fixture UID에 대해 지원 가능한 Provider를 찾아 라이브 경기 데이터를 동기화합니다.
+     * 주어진 fixture UID에 대해 지원 가능한 Provider를 찾아 라이브 경기 데이터를 sync합니다.
      * 
      * @param fixtureUid 경기 고유 식별자
-     * @return 다음 폴링 액션 지시사항, 지원하는 Provider가 없으면 null
+     * @return 다음 폴링 액션 지시사항
      */
     fun syncByFixtureUid(fixtureUid: String): MatchDataSyncResult
 }

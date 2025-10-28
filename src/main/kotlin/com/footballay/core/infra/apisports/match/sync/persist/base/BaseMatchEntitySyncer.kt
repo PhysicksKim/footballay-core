@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Phase 2: Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
+ * Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
  * 
  * **책임:**
  * - FixtureApiSports 엔티티 업데이트

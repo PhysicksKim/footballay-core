@@ -5,9 +5,15 @@ import jakarta.persistence.*
 import org.hibernate.proxy.HibernateProxy
 
 /**
- * 경기별 선수 정보 엔티티
- * 
- * ApiSports의 불완전한 데이터 특성으로 인해 다양한 소스에서 등장하는 선수들을 통합 관리합니다.
+ * Fixture Match data 에 등장하는 선수를 저장하는 엔티티입니다.
+ * Match data 에서 lineup,event,statistics 에 등장하는 선수에 매칭됩니다.
+ * 특히, event 에서는 선수 외에도 코치 감독이 등장할 수 있으므로 이러한 경우 후술할 id=null case 로 처리합니다.
+ *
+ * ## api id = null case 처리에 유의
+ * ApiSports 는 Fixture 에 등장하는 데이터가 불안정하여 선수의 고유 id 가 null 로 제공되는 경우가 있습니다.
+ * 따라서 [ApiSportsMatchPlayer] 는 이 문제를 해결하기 위해 [matchPlayerUid] 를 key 로 사용합니다.
+ * Client 는 MatchPlayer 를 다룰 때 [matchPlayerUid] 를 이용하여 선수를 식별해야 합니다.
+ * [matchPlayerUid] 는 다시 [PlayerCore] [PlayerApiSports] 로 연결될 수 있어야 합니다.
  */
 @Entity
 @Table(
@@ -24,6 +30,11 @@ class ApiSportsMatchPlayer(
     @Column(name = "match_player_uid", nullable = false, unique = true)
     var matchPlayerUid: String,
 
+    /**
+     * 선수의 ApiSports 데이터
+     * match data 에서 player id 가 존재하는 경우 연관 관계를 맺습니다.
+     * match data 에서 player id 가 null 인 경우 null 입니다.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_apisports_id", nullable = true)
     var playerApiSports : PlayerApiSports? = null,

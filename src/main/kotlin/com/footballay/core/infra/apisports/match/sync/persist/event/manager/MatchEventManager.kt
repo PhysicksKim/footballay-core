@@ -11,31 +11,22 @@ import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
+// for docs
+import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
+import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
+
 /**
- * MatchEvent 통합 관리자
- * 
- * MatchEvent의 계획, 저장을 통합하여 관리합니다.
- * 
- * **처리 과정:**
- * 1. **Sequence 검증**: Event DTO의 sequence 무결성 검사
- * 2. **변경 계획 수립**: MatchEventChangePlanner로 생성/수정/삭제 계획 수립
- * 3. **Event 엔티티 저장**: 데이터베이스에 변경사항 적용
- * 4. **EntityBundle 업데이트**: 영속 상태 이벤트를 sequence 순으로 정렬하여 반영
- * 
- * **특징:**
- * - 영속 상태 MatchEvent를 EntityBundle에 반영
- * - Player/Assist 연결 로직 포함
- * - 개별 이벤트 실패 시 빈 이벤트로 처리하여 다른 이벤트에 영향 없도록 함
- * - Sequence 기반 정렬로 이벤트 순서 보장
- * - 단일 책임으로 MatchEntitySyncServiceImpl 단순화
- * 
+ * MatchEvent 동기화 매니저
+ *
+ * MatchEvent의 계획, 저장을 관리합니다.
+ *
+ * ### 미리 영속상태여야 하는 엔티티
+ * [MatchEntityBundle] 에 담긴 아래의 엔티티 들은 이미 영속 상태여야 합니다.
+ * - [ApiSportsMatchTeam]
+ * - [ApiSportsMatchPlayer]
+ *
  * **에러 처리:**
- * - 개별 이벤트 저장 실패 시 해당 이벤트를 "빈 이벤트"로 대체
- * - 다른 이벤트들의 정상 처리에 영향 없도록 격리
- * 
- * **성능 고려사항:**
- * - saveAll() 배치 처리로 데이터베이스 호출 최소화
- * - Sequence 정렬로 이벤트 순서 보장
+ * 개별 이벤트 실패 시 빈 이벤트(UNKNOWN)로 대체하여 다른 이벤트에 영향 없도록 격리합니다.
  */
 @Component
 class MatchEventManager(
@@ -45,22 +36,11 @@ class MatchEventManager(
     private val log = logger()
 
     /**
-     * MatchEvent를 계획, 저장하여 영속 상태로 만듭니다.
-     * 
-     * **처리 단계:**
-     * 1. **Sequence 검증**: Event DTO의 sequence 무결성 검사 (중복, 누락, 시작점)
-     * 2. **변경 계획 수립**: MatchEventChangePlanner로 생성/수정/삭제 계획 수립
-     * 3. **Event 엔티티 저장**: 데이터베이스에 변경사항 적용 (에러 시 빈 이벤트로 대체)
-     * 4. **EntityBundle 업데이트**: 영속 상태 이벤트를 sequence 순으로 정렬하여 반영
-     * 
-     * **Sequence 검증 항목:**
-     * - 중복된 sequence 검사
-     * - 누락된 sequence 검사 (연속성 확인)
-     * - 시작점이 0인지 검사
-     * 
-     * @param eventDto Event 정보 DTO (이미 정규화됨)
-     * @param entityBundle 기존 엔티티 번들 (업데이트됨)
-     * @return MatchEvent 처리 결과 (sequence 순으로 정렬된 이벤트 목록 포함)
+     * MatchEvent를 계획, 저장합니다.
+     *
+     * @param eventDto 이벤트 DTO (정규화됨)
+     * @param entityBundle 엔티티 번들 (업데이트됨)
+     * @return 처리 결과
      */
     @Transactional
     fun processMatchEvents(
@@ -70,10 +50,10 @@ class MatchEventManager(
         log.info("Starting MatchEvent processing - Events: ${eventDto.events.size}")
         
         try {
-            // 1단계: Sequence 검증 - DTO의 sequence 무결성 검사
+            // event 의 순서를 나타내는 sequence field 검증
             validateEventSequences(eventDto.events)
             
-            // 2단계: 변경 계획 수립 - MatchEventChangePlanner로 생성/수정/삭제 계획
+            // 기존에 저장된 이벤트를 고려해 변경 계획 수립 - MatchEventChangePlanner로 생성/수정/삭제 계획
             val entitySequenceMap = MatchEventChangePlanner.entitiesToSequenceMap(entityBundle.allEvents)
             val eventChangeSet = MatchEventChangePlanner.planChanges(
                 eventDto,
@@ -83,13 +63,12 @@ class MatchEventManager(
                 entityBundle.awayTeam,
                 entityBundle.allMatchPlayers
             )
+            log.info("event change plan - Create: ${eventChangeSet.createCount}, Update: ${eventChangeSet.updateCount}, Delete: ${eventChangeSet.deleteCount}")
             
-            log.info("Planned event changes - Create: ${eventChangeSet.createCount}, Update: ${eventChangeSet.updateCount}, Delete: ${eventChangeSet.deleteCount}")
-            
-            // 3단계: Event 엔티티 저장 - 데이터베이스에 변경사항 적용
+            // Event 엔티티 저장 - 데이터베이스에 변경사항 적용
             val savedEvents = persistEventChanges(eventChangeSet)
             
-            // 4단계: EntityBundle 업데이트 - sequence 순으로 정렬하여 반영
+            // EntityBundle 업데이트 - sequence 순으로 정렬하여 반영
             val sortedEvents = savedEvents.sortedBy { it.sequence }
             entityBundle.allEvents = sortedEvents
             
@@ -107,21 +86,7 @@ class MatchEventManager(
         }
     }
 
-    /**
-     * Event sequence 검증을 수행합니다.
-     * 
-     * **검증 항목:**
-     * - **중복 검사**: 같은 sequence가 여러 번 나타나는지 확인
-     * - **연속성 검사**: sequence가 연속적으로 증가하는지 확인 (누락된 sequence 검사)
-     * - **시작점 검사**: sequence가 0부터 시작하는지 확인
-     * 
-     * **경고 로그:**
-     * - 중복된 sequence 발견 시 경고 로그 출력
-     * - 누락된 sequence 발견 시 경고 로그 출력
-     * - 시작점이 0이 아닌 경우 경고 로그 출력
-     * 
-     * @param events 검증할 Event DTO 목록
-     */
+    /** Event sequence 무결성을 검증합니다. (중복, 누락, 시작점) */
     private fun validateEventSequences(events: List<MatchEventDto>) {
         if (events.isEmpty()) return
         
@@ -146,26 +111,12 @@ class MatchEventManager(
         }
     }
 
-    /**
-     * Event 변경사항을 데이터베이스에 저장합니다.
-     * 
-     * **처리 순서:**
-     * 1. **삭제 처리**: 고아 엔티티들을 먼저 삭제
-     * 2. **생성 및 업데이트 처리**: 새로운 이벤트 생성과 기존 이벤트 수정을 배치로 처리
-     * 
-     * **에러 처리:**
-     * - 개별 이벤트 저장 실패 시 해당 이벤트를 "빈 이벤트"로 대체
-     * - 다른 이벤트들의 정상 처리에 영향 없도록 격리
-     * - 실패한 이벤트는 "UNKNOWN" 타입으로 설정하여 식별 가능
-     * 
-     * @param changeSet 적용할 변경 작업 명세서
-     * @return 저장된 Event 엔티티 목록 (실패한 이벤트는 빈 이벤트로 대체됨)
-     */
+    /** 변경사항을 데이터베이스에 저장합니다. (실패 시 빈 이벤트로 대체) */
     private fun persistEventChanges(changeSet: MatchEventChangeSet): List<ApiSportsMatchEvent> {
         val allEvents = mutableListOf<ApiSportsMatchEvent>()
         
         try {
-            // 1. 삭제 처리 - 고아 엔티티들을 먼저 삭제
+            // 1. 삭제 처리 - orphan 엔티티들을 먼저 삭제
             if (changeSet.toDelete.isNotEmpty()) {
                 matchEventRepository.deleteAll(changeSet.toDelete)
                 log.info("Deleted ${changeSet.toDelete.size} MatchEvents")
@@ -189,23 +140,7 @@ class MatchEventManager(
         return allEvents
     }
 
-    /**
-     * 실패한 이벤트들을 빈 이벤트로 대체합니다.
-     * 
-     * **빈 이벤트 특징:**
-     * - eventType: "UNKNOWN"으로 설정하여 식별 가능
-     * - detail: "Failed to process event"로 설정
-     * - comments: "Event processing failed"로 설정
-     * - player, assist: null로 설정
-     * - elapsedTime: 0으로 설정
-     * 
-     * **목적:**
-     * - 개별 이벤트 실패가 다른 이벤트 처리에 영향을 주지 않도록 격리
-     * - 실패한 이벤트를 식별할 수 있도록 특별한 값으로 설정
-     * 
-     * @param failedEvents 실패한 Event 엔티티 목록
-     * @return 빈 이벤트로 대체된 Event 엔티티 목록
-     */
+    /** 실패한 이벤트를 빈 이벤트(UNKNOWN)로 대체합니다. */
     private fun createEmptyEventsForFailed(failedEvents: List<ApiSportsMatchEvent>): List<ApiSportsMatchEvent> {
         return failedEvents.map { event ->
             ApiSportsMatchEvent(
@@ -224,18 +159,7 @@ class MatchEventManager(
     }
 }
 
-/**
- * MatchEvent 처리 결과
- * 
- * MatchEvent 처리 과정에서 생성된 결과 정보를 담는 데이터 클래스입니다.
- * 
- * **구성 요소:**
- * - **totalEvents**: 처리된 총 이벤트 개수
- * - **createdCount**: 새로 생성된 이벤트 개수
- * - **updatedCount**: 수정된 이벤트 개수
- * - **deletedCount**: 삭제된 이벤트 개수
- * - **savedEvents**: 저장된 Event 엔티티 목록 (sequence 순으로 정렬됨)
- */
+/** MatchEvent 처리 결과 */
 data class MatchEventProcessResult(
     val totalEvents: Int,
     val createdCount: Int,

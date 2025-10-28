@@ -4,13 +4,10 @@ import com.footballay.core.infra.apisports.backbone.sync.ApiSportsNewPlayerSync
 import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
-import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
+import com.footballay.core.infra.apisports.match.sync.ApiSportsFixtureSingle
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import kotlin.collections.get
-
-typealias ApiSportsFixtureSingle = ApiSportsV3Envelope<ApiSportsFixture.Single>
 
 /**
  * Api 응답에서 선수를 추출하고, Core-Api 구조까지 저장하는 컴포넌트입니다. <br>
