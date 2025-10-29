@@ -21,18 +21,18 @@ class MatchDataSyncResultTest {
             MatchDataSyncResult.PreMatch(
                 lineupCached = true,
                 kickoffTime = kickoffTime,
-                readyForLive = false,
+                shouldTerminatePreMatchJob = false,
             )
 
         // Then
         assertThat(result).isInstanceOf(MatchDataSyncResult.PreMatch::class.java)
         assertThat(result.lineupCached).isTrue()
         assertThat(result.kickoffTime).isEqualTo(kickoffTime)
-        assertThat(result.readyForLive).isFalse()
+        assertThat(result.shouldTerminatePreMatchJob).isFalse()
     }
 
     @Test
-    fun `PreMatch Result - readyForLive가 true인 경우`() {
+    fun `PreMatch Result - shouldTerminatePreMatchJob이 true인 경우`() {
         // Given
         val kickoffTime = OffsetDateTime.now().plusMinutes(3)
 
@@ -41,11 +41,11 @@ class MatchDataSyncResultTest {
             MatchDataSyncResult.PreMatch(
                 lineupCached = true,
                 kickoffTime = kickoffTime,
-                readyForLive = true,
+                shouldTerminatePreMatchJob = true,
             )
 
         // Then
-        assertThat(result.readyForLive).isTrue()
+        assertThat(result.shouldTerminatePreMatchJob).isTrue()
         assertThat(result.lineupCached).isTrue()
     }
 

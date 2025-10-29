@@ -23,12 +23,12 @@ sealed class MatchDataSyncResult {
      *
      * @property lineupCached 라인업 데이터가 성공적으로 저장되었는지 여부
      * @property kickoffTime 경기 킥오프 시각
-     * @property readyForLive 라이브 Job으로 전환할 준비가 되었는지 (라인업 저장 완료 + 킥오프 임박)
+     * @property shouldTerminatePreMatchJob PreMatchJob을 종료해야 하는지 여부 (완전한 라인업 저장 OR 킥오프 1분 전)
      */
     data class PreMatch(
         val lineupCached: Boolean,
         val kickoffTime: OffsetDateTime?,
-        val readyForLive: Boolean,
+        val shouldTerminatePreMatchJob: Boolean,
     ) : MatchDataSyncResult()
 
     /**

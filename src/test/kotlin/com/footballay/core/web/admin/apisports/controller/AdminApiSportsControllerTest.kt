@@ -144,4 +144,73 @@ class AdminApiSportsControllerTest {
                 status { isBadRequest() }
             }
     }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `리그를 Available로 설정 성공`() {
+        // Given
+        val leagueId = 39L
+        val leagueUid = "league_uid_123"
+        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, true))
+            .thenReturn(DomainResult.Success(leagueUid))
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/available") {
+                param("available", "true")
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isOk() }
+                content {
+                    string(leagueUid)
+                }
+            }
+    }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `리그를 Unavailable로 설정 성공`() {
+        // Given
+        val leagueId = 39L
+        val leagueUid = "league_uid_123"
+        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, false))
+            .thenReturn(DomainResult.Success(leagueUid))
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/available") {
+                param("available", "false")
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isOk() }
+                content {
+                    string(leagueUid)
+                }
+            }
+    }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `존재하지 않는 리그로 Available 설정 시 404를 반환한다`() {
+        // Given
+        val leagueId = 99999L
+        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, true))
+            .thenReturn(
+                DomainResult.Fail(
+                    DomainFail.NotFound(
+                        resource = "LEAGUE_CORE",
+                        id = leagueId.toString(),
+                    ),
+                ),
+            )
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/available") {
+                param("available", "true")
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isNotFound() }
+            }
+    }
 }

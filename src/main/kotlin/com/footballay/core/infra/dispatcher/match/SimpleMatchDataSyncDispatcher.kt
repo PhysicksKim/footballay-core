@@ -75,13 +75,10 @@ class SimpleMatchDataSyncDispatcher(
     ) {
         when (result) {
             is MatchDataSyncResult.PreMatch -> {
-                if (result.readyForLive) {
-                    log.info("PreMatch → LiveMatch transition - fixtureUid={}", fixtureUid)
+                if (result.shouldTerminatePreMatchJob) {
+                    log.info("PreMatch complete - removing PreMatchJob (LiveMatchJob already scheduled) - fixtureUid={}", fixtureUid)
                     jobSchedulerService.removeJob(jobContext.jobKey)
-                    jobSchedulerService.addLiveMatchJob(
-                        fixtureUid = fixtureUid,
-                        startTime = result.kickoffTime ?: OffsetDateTime.now(),
-                    )
+                    // LiveMatchJob은 이미 등록되어 있음, 추가 등록 안 함
                 }
             }
 

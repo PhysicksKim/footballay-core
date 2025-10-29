@@ -30,7 +30,20 @@ class AvailableFixtureFacade(
     private val log = logger()
 
     /**
-     * Fixture를 Available로 설정하고 PreMatchJob 등록
+     * Fixture를 Available로 설정하고 PreMatchJob, LiveMatchJob 등록
+     *
+     * **요구사항:**
+     * - Fixture의 kickoff 시간이 확정되어야 함 (null 불가)
+     * - 토너먼트 경기 등에서 kickoff가 미정인 경우 available 설정 불가
+     * - 추후 kickoff 시간이 확정되면 다시 available 설정 시도 가능
+     *
+     * **Job 등록 전략:**
+     * - PreMatchJob: kickoff 1시간 전 시작 (최소 킥오프 1분 전 종료)
+     * - LiveMatchJob: kickoff 시간에 시작 (사전 등록)
+     *
+     * **개선 가능성:**
+     * - 추후 kickoff 시간 변경 이벤트 처리
+     * - 미확정 경기에 대한 대기열 시스템 도입
      *
      * @param fixtureId FixtureCore ID
      * @return 성공 시 fixture UID, 실패 시 DomainFail
@@ -55,31 +68,61 @@ class AvailableFixtureFacade(
             return DomainResult.Success(fixtureCore.uid)
         }
 
-        // 3. available 플래그 설정
+        // 3. kickoff 시간이 확정되지 않은 경우 Job 등록 불가
+        val kickoff = fixtureCore.kickoff
+        if (kickoff == null) {
+            log.warn("Cannot make fixture available - kickoff time is not set - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
+            return DomainResult.Fail(
+                DomainFail.Validation.single(
+                    code = "KICKOFF_TIME_NOT_SET",
+                    message = "경기 시작 시간이 미정입니다. 킥오프 시간 확정 후 다시 시도해주세요.",
+                    field = "kickoff",
+                ),
+            )
+        }
+
+        // 4. available 플래그 설정
         fixtureCore.available = true
         fixtureCoreRepository.save(fixtureCore)
 
-        // 4. PreMatchJob 등록
-        val startTime = calculatePreMatchJobStartTime(fixtureCore.kickoff)
-        val jobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, startTime)
+        // 4. PreMatchJob 등록 (킥오프 1시간 전)
+        val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
+        val preJobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, preMatchStartTime)
 
-        if (!jobAdded) {
+        if (!preJobAdded) {
             log.error("Failed to add PreMatchJob - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
-                    code = "JOB_REGISTRATION_FAILED",
+                    code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
                     message = "Failed to register PreMatchJob for fixture ${fixtureCore.uid}",
                     field = "fixtureId",
                 ),
             )
         }
 
+        // 5. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
+        val liveJobAdded = jobSchedulerService.addLiveMatchJob(fixtureCore.uid, kickoff)
+
+        if (!liveJobAdded) {
+            log.error("Failed to add LiveMatchJob - fixtureId={}, uid={}, rolling back PreMatchJob", fixtureId, fixtureCore.uid)
+            // PreMatchJob 롤백
+            jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
+            return DomainResult.Fail(
+                DomainFail.Validation.single(
+                    code = "LIVE_MATCH_JOB_REGISTRATION_FAILED",
+                    message = "Failed to register LiveMatchJob for fixture ${fixtureCore.uid}",
+                    field = "fixtureId",
+                ),
+            )
+        }
+
         log.info(
-            "Available fixture added successfully - fixtureId={}, uid={}, kickoff={}, jobStartTime={}",
+            "Available fixture added successfully - fixtureId={}, uid={}, kickoff={}, preMatchStart={}, liveMatchStart={}",
             fixtureId,
             fixtureCore.uid,
-            fixtureCore.kickoff,
-            startTime,
+            kickoff,
+            preMatchStartTime,
+            kickoff,
         )
 
         return DomainResult.Success(fixtureCore.uid)
@@ -132,13 +175,12 @@ class AvailableFixtureFacade(
      * PreMatchJob 시작 시각 계산
      *
      * - 킥오프 1시간 전부터 시작 (권장)
-     * - 킥오프 시각이 없으면 즉시 시작
+     * - 이미 킥오프 1시간 전이 지났으면 즉시 시작
+     *
+     * @param kickoff 경기 킥오프 시각 (non-null, addAvailableFixture에서 이미 검증됨)
+     * @return PreMatchJob 시작 시각
      */
-    private fun calculatePreMatchJobStartTime(kickoff: OffsetDateTime?): OffsetDateTime {
-        if (kickoff == null) {
-            return OffsetDateTime.now()
-        }
-
+    private fun calculatePreMatchJobStartTime(kickoff: OffsetDateTime): OffsetDateTime {
         val oneHourBeforeKickoff = kickoff.minusHours(1)
         val now = OffsetDateTime.now()
 

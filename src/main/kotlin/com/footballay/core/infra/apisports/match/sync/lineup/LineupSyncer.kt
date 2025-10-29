@@ -29,11 +29,11 @@ class LineupSyncer : MatchLineupDtoExtractor {
 
         if (homeId == null || awayId == null) {
             log.info("홈 또는 어웨이 팀 ID가 비어 있습니다. 홈: {}, 어웨이: {}", homeId, awayId)
-            return LineupSyncDto.Companion.EMPTY
+            return LineupSyncDto.EMPTY
         }
         if (dto.lineups.isEmpty()) {
             log.info("라인업 정보가 비어 있습니다. 홈: {}, 어웨이: {}", homeId, awayId)
-            return LineupSyncDto.Companion.EMPTY
+            return LineupSyncDto.EMPTY
         }
 
         val homeLineupDto = dto.lineups.find { it.team.id == homeId }
