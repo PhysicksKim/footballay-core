@@ -18,7 +18,7 @@ class BaseMatchSyncer : MatchBaseDtoExtractor {
     private val log = logger()
 
     override fun extractBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto {
-        log.info("기본 매치 정보 dto: fixtureId=${dto.fixture.id}")
+        log.info("기본 매치 정보 dto: fixtureId={}", dto.fixture.id)
 
         return FixtureApiSportsDto(
             apiId = dto.fixture.id,

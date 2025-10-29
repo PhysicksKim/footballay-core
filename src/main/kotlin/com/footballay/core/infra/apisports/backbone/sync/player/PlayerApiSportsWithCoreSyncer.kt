@@ -66,21 +66,21 @@ class PlayerApiSportsWithCoreSyncer(
 
         // 모든 DTO의 apiId 목록
         val playerApiIds = dtos.mapNotNull { it.apiId }
-        log.info("Processing players for teamApiId: $teamApiId, playerApiIds: $playerApiIds")
+        log.info("Processing players for teamApiId: {}, playerApiIds: {}", teamApiId, playerApiIds)
 
         // 기존 PlayerApiSports 엔티티 조회
         val existingPlayerApiSportsMap = findAndMapExistingPlayerApiSports(playerApiIds)
-        log.info("Existing PlayerApiSports found: ${existingPlayerApiSportsMap.keys}")
+        log.info("Existing PlayerApiSports found: {}", existingPlayerApiSportsMap.keys)
 
         // PlayerApiSports 엔티티 처리 (기존 업데이트 또는 새로 생성)
         val processedPlayerApiSportsList =
             processPlayerApiSportsEntitiesBatch(dtos, existingPlayerApiSportsMap, teamCore)
-        log.info("Processed PlayerApiSports entities: ${processedPlayerApiSportsList.map { it.apiId }}")
+        log.info("Processed PlayerApiSports entities: {}", processedPlayerApiSportsList.map { it.apiId })
 
         // TeamCore와 PlayerCore 간의 연관관계 업데이트
         val processedPlayerCores = processedPlayerApiSportsList.mapNotNull { it.playerCore }
         teamPlayerCoreSyncService.updateTeamPlayerRelationships(teamCore, processedPlayerCores, playerApiIds)
-        log.info("Updated TeamCore with new PlayerCores for teamApiId: $teamApiId")
+        log.info("Updated TeamCore with new PlayerCores for teamApiId: {}", teamApiId)
 
         return processedPlayerApiSportsList
     }
@@ -95,8 +95,8 @@ class PlayerApiSportsWithCoreSyncer(
         val playerApiIds = dtos.mapNotNull { it.apiId }
         val existingPlayerApiSportsMap = findAndMapExistingPlayerApiSports(playerApiIds)
 
-        log.info("syncPlayerWithoutTeam - Processing players: $playerApiIds")
-        log.info("syncPlayerWithoutTeam - Existing PlayerApiSports found: ${existingPlayerApiSportsMap.keys}")
+        log.info("syncPlayerWithoutTeam - Processing players: {}", playerApiIds)
+        log.info("syncPlayerWithoutTeam - Existing PlayerApiSports found: {}", existingPlayerApiSportsMap.keys)
 
         // PlayerCore 들을 메모리에서 직접 수집 (N+1 방지)
         val collectedPlayerCores = mutableListOf<PlayerCore>()
@@ -109,7 +109,8 @@ class PlayerApiSportsWithCoreSyncer(
             )
 
         log.info(
-            "syncPlayerWithoutTeam - Returning ${collectedPlayerCores.size} PlayerCore entities from memory collection",
+            "syncPlayerWithoutTeam - Returning {} PlayerCore entities from memory collection",
+            collectedPlayerCores.size,
         )
         return collectedPlayerCores
     }
@@ -388,7 +389,9 @@ class PlayerApiSportsWithCoreSyncer(
 
         val savedEntities = playerApiRepository.saveAll(result)
         log.info(
-            "Saved ${savedEntities.size} PlayerApiSports entities, collected ${playerCoreCollector.size} PlayerCore entities",
+            "Saved {} PlayerApiSports entities, collected {} PlayerCore entities",
+            savedEntities.size,
+            playerCoreCollector.size,
         )
 
         return savedEntities

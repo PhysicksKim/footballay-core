@@ -203,8 +203,8 @@ class ApiSportsBackboneSyncFacadeImpl(
         val dtos = fixturesResp.response.map { mapToFixtureCreateDto(it) }
 
         return try {
-            fixtureSyncer.saveFixturesOfLeague(leagueApiId, dtos)
-            DomainResult.Success(dtos.size)
+            val savedFixtures = fixtureSyncer.saveFixturesOfLeague(leagueApiId, dtos)
+            DomainResult.Success(savedFixtures.size)
         } catch (ex: Exception) {
             log.error(
                 "Failed to sync fixtures for leagueApiId={}, season={}. size={}",

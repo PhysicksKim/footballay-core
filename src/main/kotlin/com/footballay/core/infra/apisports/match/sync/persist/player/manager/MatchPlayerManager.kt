@@ -46,12 +46,13 @@ class MatchPlayerManager(
         entityBundle: MatchEntityBundle,
     ): MatchPlayerProcessResult {
         log.info(
-            "Starting MatchPlayer processing with Lineup - Context players: ${playerContext.lineupMpDtoMap.size + playerContext.eventMpDtoMap.size + playerContext.statMpDtoMap.size}",
+            "Starting MatchPlayer processing with Lineup - Context players: {}",
+            playerContext.lineupMpDtoMap.size + playerContext.eventMpDtoMap.size + playerContext.statMpDtoMap.size,
         )
 
         try {
             val collectedDtos = MatchPlayerDtoCollector.collectFrom(playerContext)
-            log.info("Collected ${collectedDtos.size} unique players from context")
+            log.info("Collected {} unique players from context", collectedDtos.size)
 
             // 변경 계획 수립
             val entityKeyMap = MatchPlayerChangePlanner.entitiesToKeyMap(entityBundle.allMatchPlayers.values.toList())
@@ -64,7 +65,10 @@ class MatchPlayerManager(
                     entityBundle.awayTeam,
                 )
             log.info(
-                "Planned changes - Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}",
+                "Planned changes - Create: {}, Update: {}, Delete: {}",
+                playerChangeSet.createCount,
+                playerChangeSet.updateCount,
+                playerChangeSet.deleteCount,
             )
 
             // Lineup 에 등장하는 선수는 lineup 관련 정보 추가
@@ -75,7 +79,7 @@ class MatchPlayerManager(
                     collectedDtos,
                     entityBundle,
                 )
-            log.info("Enhanced MatchPlayers: ${lineupEnhancedPlayers.size}, Collected DTOs: ${collectedDtos.size}")
+            log.info("Enhanced MatchPlayers: {}, Collected DTOs: {}", lineupEnhancedPlayers.size, collectedDtos.size)
 
             // lineup 정보로 MatchTeam formation/color 업데이트
             updateMatchTeamsWithLineup(lineupDto, entityBundle)
@@ -83,12 +87,15 @@ class MatchPlayerManager(
             // PlayerApiSports 연결 및 영속 상태 저장
             val savedPlayers = persistChangesWithPlayerApiSports(lineupEnhancedPlayers, collectedDtos, entityBundle)
             log.info(
-                "Saved MatchPlayers: ${savedPlayers.size}, Create: ${playerChangeSet.createCount}, Update: ${playerChangeSet.updateCount}, Delete: ${playerChangeSet.deleteCount}",
+                "Saved MatchPlayers: {}, Create: {}, Update: {}, Delete: {}",
+                savedPlayers.size,
+                playerChangeSet.createCount,
+                playerChangeSet.updateCount,
+                playerChangeSet.deleteCount,
             )
             log.info(
-                "saved MatchPlayers name : ${savedPlayers.joinToString(
-                    separator = ", ",
-                ) { "${it.name}_${it.id}_(${it.matchPlayerUid})" }}",
+                "saved MatchPlayers name : {}",
+                savedPlayers.joinToString(separator = ", ") { "${it.name}_${it.id}_(${it.matchPlayerUid})" },
             )
 
             // EntityBundle 에 MatchPlayer 업데이트
@@ -99,7 +106,7 @@ class MatchPlayerManager(
                 }
             entityBundle.allMatchPlayers = savedPlayersMap
 
-            log.info("MatchPlayer processing completed - Total saved: ${savedPlayers.size}")
+            log.info("MatchPlayer processing completed - Total saved: {}", savedPlayers.size)
             return MatchPlayerProcessResult(
                 totalPlayers = savedPlayers.size,
                 createdCount = playerChangeSet.createCount,
@@ -127,7 +134,7 @@ class MatchPlayerManager(
             return players
         }
 
-        log.info("Enhancing ${players.size} players with lineup information")
+        log.info("Enhancing {} players with lineup information", players.size)
 
         return players.map { player ->
             // DTO에서 해당 선수 찾기
@@ -189,7 +196,7 @@ class MatchPlayerManager(
                 homeTeam.formation = homeLineup.formation
                 homeTeam.playerColor = convertToUniformColor(homeLineup.playerColor)
                 homeTeam.goalkeeperColor = convertToUniformColor(homeLineup.goalkeeperColor)
-                log.info("Updated home team formation: ${homeLineup.formation}")
+                log.info("Updated home team formation: {}", homeLineup.formation)
             }
         }
 
@@ -199,7 +206,7 @@ class MatchPlayerManager(
                 awayTeam.formation = awayLineup.formation
                 awayTeam.playerColor = convertToUniformColor(awayLineup.playerColor)
                 awayTeam.goalkeeperColor = convertToUniformColor(awayLineup.goalkeeperColor)
-                log.info("Updated away team formation: ${awayLineup.formation}")
+                log.info("Updated away team formation: {}", awayLineup.formation)
             }
         }
     }
@@ -229,7 +236,7 @@ class MatchPlayerManager(
             }
         if (toDelete.isNotEmpty()) {
             matchPlayerRepository.deleteAll(toDelete)
-            log.info("Deleted ${toDelete.size} MatchPlayers")
+            log.info("Deleted {} MatchPlayers", toDelete.size)
         }
 
         // 2. 생성 및 업데이트 처리 (PlayerApiSports 연결 포함)
@@ -239,7 +246,7 @@ class MatchPlayerManager(
 
             val savedPlayers = matchPlayerRepository.saveAll(connectedPlayers)
             allPlayers.addAll(savedPlayers)
-            log.info("Saved ${savedPlayers.size} MatchPlayers")
+            log.info("Saved {} MatchPlayers", savedPlayers.size)
         }
 
         return allPlayers
@@ -265,7 +272,7 @@ class MatchPlayerManager(
                         .findPlayerApiSportsByApiIdsWithPlayerCore(apiIds)
                         .associateBy { it.apiId ?: -1L }
                 } catch (e: Exception) {
-                    log.warn("Failed to batch find PlayerApiSports for apiIds: $apiIds", e)
+                    log.warn("Failed to batch find PlayerApiSports for apiIds: {}", apiIds, e)
                     emptyMap()
                 }
             } else {
@@ -284,9 +291,9 @@ class MatchPlayerManager(
                 val playerApiSports = playerApiSportsMap[dto.apiId]
                 player.playerApiSports = playerApiSports
                 if (playerApiSports != null) {
-                    log.debug("Connected PlayerApiSports for player: ${player.name} (apiId: ${dto.apiId})")
+                    log.debug("Connected PlayerApiSports for player: {} (apiId: {})", player.name, dto.apiId)
                 } else {
-                    log.debug("No PlayerApiSports found for player: ${player.name} (apiId: ${dto.apiId})")
+                    log.debug("No PlayerApiSports found for player: {} (apiId: {})", player.name, dto.apiId)
                 }
             }
 

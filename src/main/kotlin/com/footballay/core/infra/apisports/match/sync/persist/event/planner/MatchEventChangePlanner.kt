@@ -59,7 +59,7 @@ object MatchEventChangePlanner {
             .filter { it.sequence >= 0 } // sequence는 0부터 시작하므로 0 이상
             .associateBy { it.sequence }
             .also { resultMap ->
-                log.info("Converted ${resultMap.size} valid events from ${entities.size} total events")
+                log.info("Converted {} valid events from {} total events", resultMap.size, entities.size)
             }
 
     /**
@@ -170,7 +170,7 @@ object MatchEventChangePlanner {
             val entityMin = entitySequences.first()
 
             if (dtoMin != entityMin) {
-                log.warn("Sequence 시작점 불일치 - DTO 시작: $dtoMin, Entity 시작: $entityMin")
+                log.warn("Sequence 시작점 불일치 - DTO 시작: {}, Entity 시작: {}", dtoMin, entityMin)
             }
         }
     }
@@ -200,19 +200,19 @@ object MatchEventChangePlanner {
         // 중복 검사 - 같은 sequence가 여러 번 나타나는지 확인
         val duplicates = sequences.groupingBy { it }.eachCount().filter { it.value > 1 }
         if (duplicates.isNotEmpty()) {
-            log.warn("$source 에서 중복된 sequence 발견: ${duplicates.keys}")
+            log.warn("{} 에서 중복된 sequence 발견: {}", source, duplicates.keys)
         }
 
         // 연속성 검사 - sequence가 연속적으로 증가하는지 확인
         val expectedSequences = (sequences.first()..sequences.last()).toList()
         val missingSequences = expectedSequences - sequences.toSet()
         if (missingSequences.isNotEmpty()) {
-            log.warn("$source 에서 누락된 sequence 발견: $missingSequences")
+            log.warn("{} 에서 누락된 sequence 발견: {}", source, missingSequences)
         }
 
         // 시작점 검사 - sequence가 0부터 시작하는지 확인
         if (sequences.first() != 0) {
-            log.warn("$source sequence가 0부터 시작하지 않음. 시작점: ${sequences.first()}")
+            log.warn("{} sequence가 0부터 시작하지 않음. 시작점: {}", source, sequences.first())
         }
     }
 
@@ -249,14 +249,14 @@ object MatchEventChangePlanner {
             val deleteCount = entitySequences.size - dtoSequences.size
             val sequencesToDelete = entitySequences.takeLast(deleteCount)
 
-            log.info("Event 개수 감소 감지 - 삭제 대상 sequence: $sequencesToDelete")
+            log.info("Event 개수 감소 감지 - 삭제 대상 sequence: {}", sequencesToDelete)
             return sequencesToDelete.mapNotNull { entityEvents[it] }
         }
 
         // 개수가 같지만 sequence가 다른 경우 (이벤트 순서 변경) - 순서 변경 시나리오
         val orphanSequences = entitySequences.filter { it !in dtoSequences }
         if (orphanSequences.isNotEmpty()) {
-            log.info("Event 순서 변경 감지 - 삭제 대상 sequence: $orphanSequences")
+            log.info("Event 순서 변경 감지 - 삭제 대상 sequence: {}", orphanSequences)
             return orphanSequences.mapNotNull { entityEvents[it] }
         }
 
@@ -303,7 +303,7 @@ object MatchEventChangePlanner {
                 detail = dto.detail,
                 comments = dto.comments,
             ).also {
-                log.debug("Planned event creation: sequence=${dto.sequence}, type=${dto.eventType}")
+                log.debug("Planned event creation: sequence={}, type={}", dto.sequence, dto.eventType)
             }
         }
 
@@ -340,10 +340,10 @@ object MatchEventChangePlanner {
                         player = findMatchPlayer(pair.dto.playerMpKey, allMatchPlayers)
                         assist = findMatchPlayer(pair.dto.assistMpKey, allMatchPlayers)
                     }.also {
-                        log.debug("Planned event update: sequence=${pair.dto.sequence}, type=${pair.dto.eventType}")
+                        log.debug("Planned event update: sequence={}, type={}", pair.dto.sequence, pair.dto.eventType)
                     }
             } else {
-                log.debug("No changes detected: sequence=${pair.dto.sequence}")
+                log.debug("No changes detected: sequence={}", pair.dto.sequence)
                 null
             }
         }

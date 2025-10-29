@@ -461,6 +461,21 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture!!.date).isNull() // 잘못된 날짜는 null로 처리
     }
 
+    /**
+     * 테스트용 유효한 Fixture DTO 생성
+     *
+     * ## 기본값
+     * - apiId: 1000L
+     * - leagueApiId: 39L (Premier League)
+     * - seasonYear: "2024"
+     * - homeTeam: 33L (Manchester United)
+     * - awayTeam: 42L (Arsenal)
+     * - venue: 1L (Old Trafford)
+     * - status: NS (Not Started)
+     * - timestamp: 2024-01-01 15:00:00 UTC
+     *
+     * @return 기본값이 설정된 FixtureApiSportsSyncDto
+     */
     private fun createValidFixtureDto(): FixtureApiSportsSyncDto =
         FixtureApiSportsSyncDto(
             apiId = 1000L,

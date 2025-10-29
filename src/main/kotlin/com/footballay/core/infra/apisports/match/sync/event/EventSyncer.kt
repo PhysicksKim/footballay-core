@@ -64,10 +64,10 @@ class EventSyncer : MatchEventDtoExtractor {
             // 4. Context에 이벤트 전용 선수 추가 (라인업에 없는 선수)
             addEventOnlyPlayers(normalizedEvents, context)
 
-            log.info("이벤트 동기화 완료: ${eventDtos.size}개 이벤트 처리")
+            log.info("이벤트 동기화 완료: {}개 이벤트 처리", eventDtos.size)
             return MatchEventSyncDto(events = eventDtos)
         } catch (e: Exception) {
-            log.error("이벤트 동기화 중 오류 발생: ${e.message}", e)
+            log.error("이벤트 동기화 중 오류 발생: {}", e.message, e)
             return MatchEventSyncDto()
         }
     }
@@ -171,7 +171,7 @@ class EventSyncer : MatchEventDtoExtractor {
     ): FullMatchSyncDto.EventDto {
         val teamId = event.team.id
         if (teamId == null) {
-            log.warn("Subst 이벤트의 팀 ID가 null입니다: $event")
+            log.warn("Subst 이벤트의 팀 ID가 null입니다: {}", event)
             return event
         }
 
@@ -180,7 +180,7 @@ class EventSyncer : MatchEventDtoExtractor {
         val assistId = event.assist?.id
         val assistName = event.assist?.name
         if (playerName == null || assistName == null) {
-            log.warn("Subst 이벤트의 player 또는 assist ID가 null입니다: $event")
+            log.warn("Subst 이벤트의 player 또는 assist ID가 null입니다: {}", event)
             return event
         }
 
@@ -207,7 +207,7 @@ class EventSyncer : MatchEventDtoExtractor {
                 }
                 else -> {
                     // 둘 다 후보이거나 둘 다 선발인 경우 (비정상적인 상황)
-                    log.warn("비정상적인 subst 이벤트: player와 assist가 모두 후보이거나 모두 선발입니다. $event")
+                    log.warn("비정상적인 subst 이벤트: player와 assist가 모두 후보이거나 모두 선발입니다. {}", event)
                     event.player to event.assist
                 }
             }
@@ -220,7 +220,7 @@ class EventSyncer : MatchEventDtoExtractor {
         val outMp = startPlayers[outPlayerMpKey]
         val inMp = subPlayers[inPlayerMpKey]
         if (outMp == null || inMp == null) {
-            log.warn("Subst 이벤트에서 선수 매칭 실패: outMp=$outMp, inMp=$inMp, event=$event")
+            log.warn("Subst 이벤트에서 선수 매칭 실패: outMp={}, inMp={}, event={}", outMp, inMp, event)
             return event
         }
         startPlayers.remove(outPlayerMpKey)

@@ -75,21 +75,21 @@ class TeamApiSportsWithCoreSyncer(
 
         // 모든 DTO의 apiId 목록
         val teamApiIds = teamDtos.map { it.apiId }
-        log.info("Processing teams for leagueApiId: $leagueApiId, teamApiIds: $teamApiIds")
+        log.info("Processing teams for leagueApiId: {}, teamApiIds: {}", leagueApiId, teamApiIds)
 
         // 기존 TeamApiSports 엔티티 조회
         val existingTeamApiSportsMap = findAndMapExistingTeamApiSports(teamApiIds)
-        log.info("Existing TeamApiSports found: ${existingTeamApiSportsMap.keys}")
+        log.info("Existing TeamApiSports found: {}", existingTeamApiSportsMap.keys)
 
         // TeamApiSports 엔티티 처리 (기존 업데이트 또는 새로 생성)
         val processedTeamApiSportsList =
             processTeamApiSportsEntitiesBatch(teamDtos, existingTeamApiSportsMap, leagueCore)
-        log.info("Processed TeamApiSports entities: ${processedTeamApiSportsList.map { it.apiId }}")
+        log.info("Processed TeamApiSports entities: {}", processedTeamApiSportsList.map { it.apiId })
 
         // LeagueCore와 TeamCore 간의 연관관계 업데이트
         val processedTeamCores = processedTeamApiSportsList.mapNotNull { it.teamCore }
         leagueTeamCoreSyncService.updateLeagueTeamRelationships(leagueCore, processedTeamCores, teamApiIds)
-        log.info("Updated LeagueCore with new TeamCores for leagueApiId: $leagueApiId")
+        log.info("Updated LeagueCore with new TeamCores for leagueApiId: {}", leagueApiId)
 
         return processedTeamApiSportsList
     }
@@ -117,12 +117,12 @@ class TeamApiSportsWithCoreSyncer(
 
         // TeamApiSports 엔티티 처리 (기존 업데이트 또는 새로 생성)
         val processedTeamApiSportsList = processTeamApiSportsEntitiesBatch(listOf(teamDto), teamMap, leagueCore)
-        log.info("Processed TeamApiSports entities: ${processedTeamApiSportsList.map { it.apiId }}")
+        log.info("Processed TeamApiSports entities: {}", processedTeamApiSportsList.map { it.apiId })
 
         // LeagueCore와 TeamCore 간의 연관관계 업데이트
         val processedTeamCores = processedTeamApiSportsList.mapNotNull { it.teamCore }
         leagueTeamCoreSyncService.updateLeagueTeamRelationships(leagueCore, processedTeamCores, listOf(teamDto.apiId))
-        log.info("Updated LeagueCore with new TeamCores for leagueApiId: $leagueApiId")
+        log.info("Updated LeagueCore with new TeamCores for leagueApiId: {}", leagueApiId)
 
         return processedTeamApiSportsList.firstOrNull()
             ?: throw IllegalStateException("Failed to process TeamApiSports for apiId: ${teamDto.apiId}")

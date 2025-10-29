@@ -46,12 +46,12 @@ class ApiSportsMatchEntitySyncFacadeImpl(
 
     override fun syncFixtureMatchEntities(dto: FullMatchSyncDto): MatchDataSyncResult {
         val fixtureApiId = dto.fixture.id
-        log.info("Starting match data sync for fixtureApiId=$fixtureApiId")
+        log.info("Starting match data sync for fixtureApiId={}", fixtureApiId)
 
         try {
             val context = MatchPlayerContext()
 
-            // Phase 1: DTO 추출
+            // DTO 추출
             val baseDto = baseDtoExtractor.extractBaseMatch(dto)
             val lineupDto = lineupDtoExtractor.extractLineup(dto, context)
             val eventDto = eventDtoExtractor.extractEvents(dto, context)
@@ -62,7 +62,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 "Extracted DTOs - Lineup: ${context.lineupMpDtoMap.size}, Event: ${context.eventMpDtoMap.size}, Stat: ${context.statMpDtoMap.size}",
             )
 
-            // Phase 2: 엔티티 동기화 (트랜잭션)
+            // 엔티티 동기화 (트랜잭션)
             val syncResult =
                 matchEntitySyncService.syncMatchEntities(
                     fixtureApiId = fixtureApiId,
@@ -80,7 +80,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
 
             return MatchDataSyncResult.ongoing(dto.fixture.date)
         } catch (e: Exception) {
-            log.error("Failed to sync match data for fixture: $fixtureApiId", e)
+            log.error("Failed to sync match data for fixture: {}", fixtureApiId, e)
             throw e
         }
     }

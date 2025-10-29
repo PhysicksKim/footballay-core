@@ -4,7 +4,7 @@ import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 
 /**
- * Phase 4에서 분리된 Fixture 처리 케이스들을 담는 데이터 클래스
+ * Fixture 처리 케이스들을 담는 데이터 클래스
  *
  * FixtureApiSports와 FixtureCore의 존재 여부에 따라 3가지 케이스로 분류됩니다.
  *

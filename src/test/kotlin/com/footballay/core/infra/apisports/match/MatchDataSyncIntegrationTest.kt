@@ -22,9 +22,8 @@ import org.springframework.transaction.annotation.Transactional
  * **테스트 범위:**
  * - Core-Api(Backbone)-Match 전체 구조 검증
  * - Fixture UID → Provider 선택 → Match 저장 전체 워크플로우
- * - Phase 1-6 독립 에러 처리 검증
+ * - 각 단계별 독립 에러 처리 검증
  * - 엔티티 연관관계 무결성 검증
- * - 성능 모니터링 로그 출력 검증
  *
  * **테스트 데이터:**
  * - Fixture: 1208397L (Manchester United vs Aston Villa)
@@ -41,7 +40,6 @@ import org.springframework.transaction.annotation.Transactional
  * - MatchEvent (sequence 순서, player 연결)
  * - PlayerStats (1:1 관계, 통계 값)
  * - TeamStats (XG 리스트, 팀 통계)
- * - Phase별 성능 로그
  *
  * @author AI generated, physickskim
  */
@@ -171,20 +169,6 @@ class MatchDataSyncIntegrationTest {
         verifyTeamStats(fixture)
 
         log.info("=== 모든 엔티티 검증 완료 ===")
-    }
-
-    @Test
-    @DisplayName("Match 동기화 시 Phase별 성능 로그가 INFO 레벨로 출력되어야 한다")
-    fun `Match 동기화 시 Phase별 성능 로그가 INFO 레벨로 출력되어야 한다`() {
-        log.info("=== 테스트 시작: Phase별 성능 로그 출력 검증 ===")
-
-        // when
-        val action = matchDataSyncDispatcher.syncByFixtureUid(testFixtureUid)
-
-        // then - 로그는 INFO 레벨로 출력되므로 콘솔에서 확인
-        // Performance Report가 출력되었는지는 수동으로 확인
-        assertThat(action).isNotNull
-        log.info("=== 성능 로그 출력 완료 - 위 로그에서 Phase1~6 및 Performance Report 확인 ===")
     }
 
     @Test

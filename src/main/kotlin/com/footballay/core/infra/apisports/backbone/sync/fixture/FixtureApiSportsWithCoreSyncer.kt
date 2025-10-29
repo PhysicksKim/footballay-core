@@ -199,7 +199,7 @@ class FixtureApiSportsWithCoreSyncer(
         leagueApiId: Long,
         dtos: List<FixtureApiSportsSyncDto>,
     ) {
-        log.info("Starting Phase 1 validation for leagueApiId: {} with {} fixtures", leagueApiId, dtos.size)
+        log.info("Starting validation for leagueApiId: {} with {} fixtures", leagueApiId, dtos.size)
 
         // 1. LeagueApiId 는 유효한 범위여야 합니다.
         if (leagueApiId <= 0) {
@@ -210,7 +210,7 @@ class FixtureApiSportsWithCoreSyncer(
         // 2. Season 일관성 검증
         validateSeasonConsistency(dtos)
 
-        log.info("Phase 1 validation completed successfully for leagueApiId: {}", leagueApiId)
+        log.info("Validation completed successfully for leagueApiId: {}", leagueApiId)
     }
 
     /**
@@ -316,8 +316,18 @@ class FixtureApiSportsWithCoreSyncer(
     }
 
     /**
-     * dto 에는 있는 apiId 이지만 season 기반 조회에 누락된 경우,
-     * 같은 apiId 가 중복으로 저장되어 Unique 제약조건 위반이 발생할 수 있으므로 missing 검사 및 조회 수행
+     * League+Season 조회에서 누락된 Fixture를 ApiId 기반으로 보강 조회
+     *
+     * DTO에는 있는 apiId이지만 season 기반 조회에 누락된 경우,
+     * 같은 apiId가 중복으로 저장되어 Unique 제약조건 위반이 발생할 수 있으므로 missing 검사 및 조회를 수행합니다.
+     *
+     * **Why needed:**
+     * League-Season 조회 방식과 ApiId 직접 조회 방식 간의 불일치를 감지하고 보정하기 위함입니다.
+     * 과거에 다른 League/Season으로 저장된 Fixture가 현재 요청의 League/Season과 다를 수 있습니다.
+     *
+     * @param dtos 요청된 Fixture DTO 목록
+     * @param fixturesBySeason League+Season 기반으로 조회된 Fixture 목록
+     * @return League+Season 조회에서 누락되었지만 ApiId로는 존재하는 Fixture 목록
      */
     private fun collectMissingFixturesNotInSeasonFixtures(
         dtos: List<FixtureApiSportsSyncDto>,

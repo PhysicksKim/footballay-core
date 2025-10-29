@@ -4,7 +4,7 @@ import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCre
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 
 /**
- * Phase 3에서 분리된 Venue 처리 케이스들을 담는 데이터 클래스
+ * Venue 처리 케이스들을 담는 데이터 클래스
  *
  * preventUpdate 플래그를 고려하여 3가지 케이스로 분류됩니다.
  *

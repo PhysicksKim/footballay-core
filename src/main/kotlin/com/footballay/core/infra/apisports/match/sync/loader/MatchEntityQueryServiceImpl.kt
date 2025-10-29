@@ -29,7 +29,7 @@ class MatchEntityQueryServiceImpl(
      * Home Team + Team Statistics + Players + Player Statistics 조회
      */
     override fun loadHomeTeamWithPlayersAndStats(fixtureApiId: Long): ApiSportsMatchTeam? {
-        log.debug("Loading home team with players and stats for fixtureApiId=$fixtureApiId")
+        log.debug("Loading home team with players and stats for fixtureApiId={}", fixtureApiId)
         return fixtureRepository.findFixtureHomeTeamLineupAndStats(fixtureApiId)?.homeTeam
     }
 
@@ -37,7 +37,7 @@ class MatchEntityQueryServiceImpl(
      * Away Team + Team Statistics + Players + Player Statistics 조회
      */
     override fun loadAwayTeamWithPlayersAndStats(fixtureApiId: Long): ApiSportsMatchTeam? {
-        log.debug("Loading away team with players and stats for fixtureApiId=$fixtureApiId")
+        log.debug("Loading away team with players and stats for fixtureApiId={}", fixtureApiId)
         return fixtureRepository.findFixtureAwayTeamLineupAndStats(fixtureApiId)?.awayTeam
     }
 
@@ -45,7 +45,7 @@ class MatchEntityQueryServiceImpl(
      * Fixture 핵심 데이터 + Events 조회
      */
     override fun loadFixtureWithEvents(fixtureApiId: Long): FixtureApiSports? {
-        log.debug("Loading fixture with events for fixture: $fixtureApiId")
+        log.debug("Loading fixture with events for fixture: {}", fixtureApiId)
         return fixtureRepository.findEventsByFixtureApiId(fixtureApiId)
     }
 }

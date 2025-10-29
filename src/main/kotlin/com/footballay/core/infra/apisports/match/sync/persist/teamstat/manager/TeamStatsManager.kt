@@ -69,7 +69,7 @@ class TeamStatsManager(
             val statsToSave = listOfNotNull(homeTeamStat, awayTeamStat)
             if (statsToSave.isNotEmpty()) {
                 teamStatsRepository.saveAll(statsToSave)
-                log.info("Saved ${statsToSave.size} TeamStats entities")
+                log.info("Saved {} TeamStats entities", statsToSave.size)
             }
 
             // 4. EntityBundle 업데이트
@@ -77,7 +77,11 @@ class TeamStatsManager(
             entityBundle.awayTeamStat = awayTeamStat
 
             log.info(
-                "TeamStats processing completed - Home: ${homeTeamStat != null}, Away: ${awayTeamStat != null}, Created: $createdCount, Updated: $updatedCount",
+                "TeamStats processing completed - Home: {}, Away: {}, Created: {}, Updated: {}",
+                homeTeamStat != null,
+                awayTeamStat != null,
+                createdCount,
+                updatedCount,
             )
 
             return TeamStatsProcessResult(
@@ -101,7 +105,7 @@ class TeamStatsManager(
         existingStat: ApiSportsMatchTeamStatistics?,
     ): ApiSportsMatchTeamStatistics {
         if (matchTeam == null) {
-            throw IllegalStateException("MatchTeam must not be null. It should be created in Phase 2.")
+            throw IllegalStateException("MatchTeam must not be null. It should be created before processing team stats.")
         }
 
         // 기존 있으면 업데이트, 없으면 생성
@@ -180,7 +184,7 @@ class TeamStatsManager(
             if (existing != null) {
                 // 업데이트
                 existing.expectedGoals = dto.xg
-                log.debug("Updated XG at elapsed ${dto.elapsed}: ${dto.xg}")
+                log.debug("Updated XG at elapsed {}: {}", dto.elapsed, dto.xg)
             } else {
                 // 생성
                 val newXg =
@@ -190,10 +194,10 @@ class TeamStatsManager(
                         expectedGoals = dto.xg,
                     )
                 teamStat.xgList.add(newXg)
-                log.debug("Created new XG at elapsed ${dto.elapsed}: ${dto.xg}")
+                log.debug("Created new XG at elapsed {}: {}", dto.elapsed, dto.xg)
             }
         }
 
-        log.info("Processed ${xgDtoList.size} XG entries for TeamStats")
+        log.info("Processed {} XG entries for TeamStats", xgDtoList.size)
     }
 }

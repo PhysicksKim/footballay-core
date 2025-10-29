@@ -19,12 +19,12 @@ class TeamStatSyncer : MatchTeamStatDtoExtractor {
     private val log = logger()
 
     override fun extractTeamStats(dto: FullMatchSyncDto): TeamStatSyncDto {
-        log.info("Starting team stats sync for fixture: ${dto.fixture.id}")
+        log.info("Starting team stats sync for fixture: {}", dto.fixture.id)
 
         // 통계 데이터 개수 검증 - 0개(정상: 아직 집계 안됨) 또는 2개(정상: 양팀 통계)만 허용
         when (dto.statistics.size) {
             0 -> {
-                log.debug("No statistics available yet for fixture: ${dto.fixture.id}")
+                log.debug("No statistics available yet for fixture: {}", dto.fixture.id)
                 return TeamStatSyncDto.Companion.empty()
             }
             2 -> {
@@ -124,13 +124,13 @@ class TeamStatSyncer : MatchTeamStatDtoExtractor {
     ): List<MatchTeamStatisticsDto.MatchTeamXGDto> {
         // elapsed time 없으면 xG 기록 불가
         if (currentElapsed == null) {
-            log.debug("No elapsed time available, skipping XG extraction for team: $teamApiId")
+            log.debug("No elapsed time available, skipping XG extraction for team: {}", teamApiId)
             return emptyList()
         }
 
         // xG 값이 없으면 빈 리스트 (기존 데이터 유지)
         if (expectedGoalsStr.isNullOrBlank()) {
-            log.debug("No XG value provided for team: $teamApiId at elapsed: $currentElapsed")
+            log.debug("No XG value provided for team: {} at elapsed: {}", teamApiId, currentElapsed)
             return emptyList()
         }
 

@@ -18,6 +18,9 @@ interface FixtureApiSportsSyncer {
      *
      * @param leagueApiId ApiSports 리그 ID
      * @param dtos 동기화할 경기 데이터 목록 (모든 DTO는 동일한 시즌이어야 함)
+     * @return 저장된 FixtureApiSports 맵 (ApiId -> FixtureApiSports)
+     * @throws IllegalArgumentException 입력 데이터가 유효하지 않은 경우
+     * @throws IllegalStateException 필수 참조 데이터(League, Team 등)가 존재하지 않는 경우
      */
     fun saveFixturesOfLeague(
         leagueApiId: Long,

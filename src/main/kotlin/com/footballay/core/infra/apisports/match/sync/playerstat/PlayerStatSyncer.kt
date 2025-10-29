@@ -29,7 +29,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
         context: MatchPlayerContext,
     ): PlayerStatSyncDto {
         if (dto.players.isEmpty()) {
-            log.info("Not exist player statistics for match: ${dto.fixture.id}")
+            log.info("Not exist player statistics for match: {}", dto.fixture.id)
             return PlayerStatSyncDto.Companion.empty()
         }
 
@@ -89,7 +89,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
             val statistics = playerDetail.statistics.firstOrNull()
 
             if (player.name.isNullOrBlank()) {
-                log.warn("Player name is null or blank for player ID: ${player.id}")
+                log.warn("Player name is null or blank for player ID: {}", player.id)
                 return@mapNotNull null
             }
 
@@ -128,7 +128,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
         // ID null 선수이고 매칭에 실패한 경우, 무조건 substitute=true로 설정
         val isSubstitute =
             if (player.id == null) {
-                log.info("ID null 선수 매칭 실패로 인한 통계 전용 선수 생성: $name (무조건 substitute=true로 설정)")
+                log.info("ID null 선수 매칭 실패로 인한 통계 전용 선수 생성: {} (무조건 substitute=true로 설정)", name)
                 true
             } else {
                 statistics?.games?.substitute ?: DEFAULT_SUBSTITUTE_VALUE

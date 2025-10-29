@@ -36,14 +36,14 @@ object MatchPlayerDtoCollector {
         // 1단계: Lineup 선수들 추가 (최고 우선순위)
         context.lineupMpDtoMap.forEach { (key, player) ->
             allPlayers[key] = player
-            log.debug("Added lineup player: $key")
+            log.debug("Added lineup player: {}", key)
         }
 
         // 2단계: Event 선수들 추가 (lineup에 없는 경우만)
         context.eventMpDtoMap.forEach { (key, player) ->
             if (!allPlayers.containsKey(key)) {
                 allPlayers[key] = player.copy(nonLineupPlayer = true)
-                log.debug("Added event-only player: $key")
+                log.debug("Added event-only player: {}", key)
             } else {
                 log.debug("Skipped event player (already in lineup): $key")
             }
@@ -53,7 +53,7 @@ object MatchPlayerDtoCollector {
         context.statMpDtoMap.forEach { (key, player) ->
             if (!allPlayers.containsKey(key)) {
                 allPlayers[key] = player.copy(nonLineupPlayer = true)
-                log.debug("Added stat-only player: $key")
+                log.debug("Added stat-only player: {}", key)
             } else {
                 log.debug("Skipped stat player (already exists): $key")
             }

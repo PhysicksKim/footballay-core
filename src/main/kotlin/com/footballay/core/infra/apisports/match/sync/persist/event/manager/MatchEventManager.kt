@@ -46,7 +46,7 @@ class MatchEventManager(
         eventDto: MatchEventSyncDto,
         entityBundle: MatchEntityBundle,
     ): MatchEventProcessResult {
-        log.info("Starting MatchEvent processing - Events: ${eventDto.events.size}")
+        log.info("Starting MatchEvent processing - Events: {}", eventDto.events.size)
 
         try {
             // event 의 순서를 나타내는 sequence field 검증
@@ -64,7 +64,10 @@ class MatchEventManager(
                     entityBundle.allMatchPlayers,
                 )
             log.info(
-                "event change plan - Create: ${eventChangeSet.createCount}, Update: ${eventChangeSet.updateCount}, Delete: ${eventChangeSet.deleteCount}",
+                "event change plan - Create: {}, Update: {}, Delete: {}",
+                eventChangeSet.createCount,
+                eventChangeSet.updateCount,
+                eventChangeSet.deleteCount,
             )
 
             // Event 엔티티 저장 - 데이터베이스에 변경사항 적용
@@ -74,7 +77,7 @@ class MatchEventManager(
             val sortedEvents = savedEvents.sortedBy { it.sequence }
             entityBundle.allEvents = sortedEvents
 
-            log.info("MatchEvent processing completed - Total saved: ${sortedEvents.size}")
+            log.info("MatchEvent processing completed - Total saved: {}", sortedEvents.size)
             return MatchEventProcessResult(
                 totalEvents = sortedEvents.size,
                 createdCount = eventChangeSet.createCount,
@@ -97,19 +100,19 @@ class MatchEventManager(
         // 중복 검사 - 같은 sequence가 여러 번 나타나는지 확인
         val duplicates = sequences.groupingBy { it }.eachCount().filter { it.value > 1 }
         if (duplicates.isNotEmpty()) {
-            log.warn("Event DTO에서 중복된 sequence 발견: ${duplicates.keys}")
+            log.warn("Event DTO에서 중복된 sequence 발견: {}", duplicates.keys)
         }
 
         // 연속성 검사 - sequence가 연속적으로 증가하는지 확인
         val expectedSequences = (sequences.first()..sequences.last()).toList()
         val missingSequences = expectedSequences - sequences.toSet()
         if (missingSequences.isNotEmpty()) {
-            log.warn("Event DTO에서 누락된 sequence 발견: $missingSequences")
+            log.warn("Event DTO에서 누락된 sequence 발견: {}", missingSequences)
         }
 
         // 시작점 검사 - sequence가 0부터 시작하는지 확인
         if (sequences.first() != 0) {
-            log.warn("Event DTO sequence가 0부터 시작하지 않음. 시작점: ${sequences.first()}")
+            log.warn("Event DTO sequence가 0부터 시작하지 않음. 시작점: {}", sequences.first())
         }
     }
 
@@ -121,7 +124,7 @@ class MatchEventManager(
             // 1. 삭제 처리 - orphan 엔티티들을 먼저 삭제
             if (changeSet.toDelete.isNotEmpty()) {
                 matchEventRepository.deleteAll(changeSet.toDelete)
-                log.info("Deleted ${changeSet.toDelete.size} MatchEvents")
+                log.info("Deleted {} MatchEvents", changeSet.toDelete.size)
             }
 
             // 2. 생성 및 업데이트 처리 - 새로운 이벤트 생성과 기존 이벤트 수정을 배치로 처리
@@ -129,7 +132,7 @@ class MatchEventManager(
                 val eventsToSave = changeSet.toCreate + changeSet.toUpdate
                 val savedEvents = matchEventRepository.saveAll(eventsToSave)
                 allEvents.addAll(savedEvents)
-                log.info("Saved ${savedEvents.size} MatchEvents")
+                log.info("Saved {} MatchEvents", savedEvents.size)
             }
         } catch (e: Exception) {
             log.error("Error during event persistence, creating empty events for failed ones", e)

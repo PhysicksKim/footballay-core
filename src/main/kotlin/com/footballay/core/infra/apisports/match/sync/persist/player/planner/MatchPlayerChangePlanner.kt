@@ -42,7 +42,7 @@ object MatchPlayerChangePlanner {
             .associateBy { entity ->
                 createMpKey(entity.playerApiSports?.apiId, entity.name!!)
             }.also { resultMap ->
-                log.info("Converted ${resultMap.size} valid entities from ${entities.size} total entities")
+                log.info("Converted {} valid entities from {} total entities", resultMap.size, entities.size)
             }
     }
 
@@ -90,7 +90,10 @@ object MatchPlayerChangePlanner {
             )
 
         log.info(
-            "Change planning completed - Create: ${changeSet.createCount}, Update: ${changeSet.updateCount}, Delete: ${changeSet.deleteCount}",
+            "Change planning completed - Create: {}, Update: {}, Delete: {}",
+            changeSet.createCount,
+            changeSet.updateCount,
+            changeSet.deleteCount,
         )
 
         return changeSet
@@ -126,7 +129,7 @@ object MatchPlayerChangePlanner {
                 substitute = dto.substitute,
                 matchTeam = matchTeam,
             ).also {
-                log.debug("Planned creation: ${dto.name}")
+                log.debug("Planned creation: {}", dto.name)
             }
         }
 
@@ -145,10 +148,10 @@ object MatchPlayerChangePlanner {
                         grid = pair.dto.grid
                         substitute = pair.dto.substitute
                     }.also {
-                        log.debug("Planned update: ${pair.dto.name}")
+                        log.debug("Planned update: {}", pair.dto.name)
                     }
             } else {
-                log.debug("No changes detected: ${pair.dto.name}")
+                log.debug("No changes detected: {}", pair.dto.name)
                 null
             }
         }

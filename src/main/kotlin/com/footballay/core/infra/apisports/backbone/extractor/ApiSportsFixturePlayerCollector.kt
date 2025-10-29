@@ -26,10 +26,10 @@ class ApiSportsFixturePlayerCollector {
             val away = extractTeamPlayers(response, isHome = false)
             listOfNotNull(home, away).toMap()
         } catch (e: IllegalArgumentException) {
-            log.info("선수 추출 실패: ${e.message}")
+            log.info("선수 추출 실패: {}", e.message)
             emptyMap()
         } catch (e: Exception) {
-            log.error("선수 추출 중 예상치 못한 오류: ${e.message}", e)
+            log.error("선수 추출 중 예상치 못한 오류: {}", e.message, e)
             throw e
         }
 
@@ -52,14 +52,16 @@ class ApiSportsFixturePlayerCollector {
             }
         if (statsPlayers.isNotEmpty()) {
             log.warn(
-                "라인업과 통계에서 선수 불일치 발견 - lineup: ${lineupPlayers.size}, stats: ${statsPlayers.size}\n" +
-                    "라인업: ${lineupPlayers.joinToString { it.name ?: "NO-NAME" }}\n" +
-                    "통계: ${statsPlayers.joinToString { it.name ?: "NO-NAME" }}",
+                "라인업과 통계에서 선수 불일치 발견 - lineup: {}, stats: {}\n라인업: {}\n통계: {}",
+                lineupPlayers.size,
+                statsPlayers.size,
+                lineupPlayers.joinToString { it.name ?: "NO-NAME" },
+                statsPlayers.joinToString { it.name ?: "NO-NAME" },
             )
         }
 
         val allPlayers = lineupPlayers + statsPlayers
-        log.info("선수 추출 완료 - ${allPlayers.size}명 (teamApiId=$teamApiId)")
+        log.info("선수 추출 완료 - {}명 (teamApiId={})", allPlayers.size, teamApiId)
         return teamApiId to allPlayers
     }
 

@@ -106,7 +106,7 @@ object PlayerStatsDtoCollector {
             // MatchPlayer 존재 여부 확인
             val matchPlayer = matchPlayers[playerKey]
             if (matchPlayer == null) {
-                log.warn("MatchPlayer not found for statistics: $playerKey (${playerStat.name}) in $teamName")
+                log.warn("MatchPlayer not found for statistics: {} ({}) in {}", playerKey, playerStat.name, teamName)
                 return@mapNotNull null
             }
 
@@ -149,7 +149,7 @@ object PlayerStatsDtoCollector {
                     penaltySaved = playerStat.penaltySaved,
                 )
 
-            log.debug("Collected statistics for: ${matchPlayer.name} ($playerKey) in $teamName")
+            log.debug("Collected statistics for: {} ({}) in {}", matchPlayer.name, playerKey, teamName)
             statsDto
         }
     }

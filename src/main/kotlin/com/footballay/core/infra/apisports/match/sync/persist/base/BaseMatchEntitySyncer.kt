@@ -49,13 +49,13 @@ class BaseMatchEntitySyncer(
         baseDto: FixtureApiSportsDto,
         entityBundle: MatchEntityBundle,
     ): BaseMatchSyncResult {
-        log.info("Starting base entity sync for fixture: $fixtureApiId")
+        log.info("Starting base entity sync for fixture: {}", fixtureApiId)
 
         try {
             // 1. EntityBundle에서 기존 FixtureApiSports 사용 (이미 fetch join으로 로드됨)
             val existingFixture = entityBundle.fixture
             if (existingFixture == null) {
-                log.warn("Fixture not found in entityBundle for apiId: $fixtureApiId")
+                log.warn("Fixture not found in entityBundle for apiId: {}", fixtureApiId)
                 return BaseMatchSyncResult.failure("Fixture not found in entityBundle for apiId: $fixtureApiId")
             }
 
@@ -75,7 +75,7 @@ class BaseMatchEntitySyncer(
             entityBundle.awayTeam = awayMatchTeam
 
             // 6. 변경사항 저장 (이미 영속 상태이므로 변경 감지로 자동 저장됨)
-            log.info("Base entity sync completed successfully for fixture: $fixtureApiId")
+            log.info("Base entity sync completed successfully for fixture: {}", fixtureApiId)
 
             return BaseMatchSyncResult.success(
                 fixture = existingFixture,
@@ -83,7 +83,7 @@ class BaseMatchEntitySyncer(
                 awayMatchTeam = awayMatchTeam,
             )
         } catch (e: Exception) {
-            log.error("Failed to sync base entities for fixture: $fixtureApiId", e)
+            log.error("Failed to sync base entities for fixture: {}", fixtureApiId, e)
             return BaseMatchSyncResult.failure("Base entity sync failed: ${e.message}")
         }
     }
@@ -145,7 +145,7 @@ class BaseMatchEntitySyncer(
         isHome: Boolean,
     ): ApiSportsMatchTeam? {
         if (teamDto == null) {
-            log.warn("Team DTO is null for ${if (isHome) "home" else "away"} team")
+            log.warn("Team DTO is null for {} team", if (isHome) "home" else "away")
             return null
         }
 
@@ -154,12 +154,12 @@ class BaseMatchEntitySyncer(
 
         return if (existingMatchTeam != null) {
             // 기존 MatchTeam 업데이트
-            log.info("Updating existing MatchTeam for ${if (isHome) "home" else "away"} team: ${teamDto.apiId}")
+            log.info("Updating existing MatchTeam for {} team: {}", if (isHome) "home" else "away", teamDto.apiId)
             updateMatchTeam(existingMatchTeam, teamDto)
             matchTeamRepository.save(existingMatchTeam)
         } else {
             // 새로운 MatchTeam 생성
-            log.info("Creating new MatchTeam for ${if (isHome) "home" else "away"} team: ${teamDto.apiId}")
+            log.info("Creating new MatchTeam for {} team: {}", if (isHome) "home" else "away", teamDto.apiId)
             createMatchTeam(teamDto)
         }
     }
@@ -177,7 +177,7 @@ class BaseMatchEntitySyncer(
             )
             val teamApiSports = teamApiSportsRepository.findByApiId(teamDto.apiId)
             if (teamApiSports == null) {
-                log.error("TeamApiSports not found for MatchTeam of apiId: ${teamDto.apiId}")
+                log.error("TeamApiSports not found for MatchTeam of apiId: {}", teamDto.apiId)
                 return
             }
         }

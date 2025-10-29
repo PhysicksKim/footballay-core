@@ -25,7 +25,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * FixtureApiSportsSyncer 통합 테스트
+ * FixtureApiSportsWithCoreSyncer 통합 테스트
  *
  * 실제 데이터베이스와 Spring Context를 사용하여 전체 플로우를 검증합니다.
  *
@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @ActiveProfiles("dev", "mockapi")
 @Transactional
-class FixtureApiSportsSyncerIntegrationTest {
+class FixtureApiSportsWithCoreSyncerIntegrationTest {
     val log = logger()
 
     @Autowired

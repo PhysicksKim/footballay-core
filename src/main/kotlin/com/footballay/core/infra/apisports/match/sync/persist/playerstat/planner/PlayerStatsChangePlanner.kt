@@ -46,7 +46,7 @@ object PlayerStatsChangePlanner {
                     )
                 key to stats
             }.also {
-                log.debug("Mapped ${existingStats.size} existing player statistics to ${it.size} keys")
+                log.debug("Mapped {} existing player statistics to {} keys", existingStats.size, it.size)
             }
 
     /**
@@ -83,18 +83,18 @@ object PlayerStatsChangePlanner {
             // MatchPlayer 존재 여부 확인
             val matchPlayer = matchPlayers[newStat.playerKey]
             if (matchPlayer == null) {
-                log.warn("MatchPlayer not found for statistics: ${newStat.playerKey}, skipping")
+                log.warn("MatchPlayer not found for statistics: {}, skipping", newStat.playerKey)
                 return@forEach
             }
 
             if (existingStat == null) {
                 // 기존 통계가 없으면 생성
                 toCreate.add(newStat)
-                log.debug("Planned to create statistics for: ${matchPlayer.name} (${newStat.playerKey})")
+                log.debug("Planned to create statistics for: {} ({})", matchPlayer.name, newStat.playerKey)
             } else {
                 // 기존 통계가 있으면 수정
                 toUpdate.add(existingStat to newStat)
-                log.debug("Planned to update statistics for: ${matchPlayer.name} (${newStat.playerKey})")
+                log.debug("Planned to update statistics for: {} ({})", matchPlayer.name, newStat.playerKey)
             }
         }
 
@@ -103,11 +103,11 @@ object PlayerStatsChangePlanner {
         existingStatsMap.forEach { (key, existingStat) ->
             if (!newStatKeys.contains(key)) {
                 toDelete.add(existingStat)
-                log.debug("Planned to delete statistics for: ${existingStat.matchPlayer?.name} ($key)")
+                log.debug("Planned to delete statistics for: {} ({})", existingStat.matchPlayer?.name, key)
             }
         }
 
-        log.info("Planned changes - Create: ${toCreate.size}, Update: ${toUpdate.size}, Delete: ${toDelete.size}")
+        log.info("Planned changes - Create: {}, Update: {}, Delete: {}", toCreate.size, toUpdate.size, toDelete.size)
 
         return PlayerStatsChangeSet(
             toCreate = toCreate,

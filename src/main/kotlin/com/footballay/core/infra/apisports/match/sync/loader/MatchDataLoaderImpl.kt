@@ -20,7 +20,7 @@ class MatchDataLoaderImpl(
         context: MatchPlayerContext,
         entityBundle: MatchEntityBundle,
     ) {
-        log.info("starting to load match data for fixtureApiId: $fixtureApiId")
+        log.info("starting to load match data for fixtureApiId: {}", fixtureApiId)
         val homeTeam = entityQueryService.loadHomeTeamWithPlayersAndStats(fixtureApiId)
         val awayTeam = entityQueryService.loadAwayTeamWithPlayersAndStats(fixtureApiId)
         val fixtureWithEvent = entityQueryService.loadFixtureWithEvents(fixtureApiId)
@@ -67,6 +67,6 @@ class MatchDataLoaderImpl(
 
         // 6. PlayerStats 로깅 (디버깅용)
         val playerStatsCount = entityBundle.getAllPlayerStats().size
-        log.info("Loaded ${allMatchPlayersMap.size} MatchPlayers with $playerStatsCount PlayerStats")
+        log.info("Loaded {} MatchPlayers with {} PlayerStats", allMatchPlayersMap.size, playerStatsCount)
     }
 }

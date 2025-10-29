@@ -29,7 +29,7 @@ object MatchPlayerKeyGenerator {
         apiId: Long?,
         name: String,
     ): String {
-        log.info("apiId: $apiId, name: $name")
+        log.info("apiId: {}, name: {}", apiId, name)
         require(!name.isBlank()) { "선수 이름은 필수입니다. name: $name" }
 
         return if (apiId != null) {

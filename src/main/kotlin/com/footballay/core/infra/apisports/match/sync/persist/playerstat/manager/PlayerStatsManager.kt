@@ -50,13 +50,15 @@ class PlayerStatsManager(
         entityBundle: MatchEntityBundle,
     ): PlayerStatsProcessResult {
         log.info(
-            "Starting PlayerStats processing - Home stats: ${playerStatDto.homePlayerStatList.size}, Away stats: ${playerStatDto.awayPlayerStatList.size}",
+            "Starting PlayerStats processing - Home stats: {}, Away stats: {}",
+            playerStatDto.homePlayerStatList.size,
+            playerStatDto.awayPlayerStatList.size,
         )
 
         try {
             // 1단계: MatchPlayer 기반으로 통계 데이터 수집
             val collectedStatsList = PlayerStatsDtoCollector.collectFrom(playerStatDto, entityBundle.allMatchPlayers)
-            log.info("Collected ${collectedStatsList.size} player statistics from DTO")
+            log.info("Collected {} player statistics from DTO", collectedStatsList.size)
 
             // 2단계: 변경 계획 수립
             val existingStatsMap =
@@ -70,7 +72,10 @@ class PlayerStatsManager(
                     entityBundle.allMatchPlayers,
                 )
             log.info(
-                "Planned changes - Create: ${statsChangeSet.createCount}, Update: ${statsChangeSet.updateCount}, Delete: ${statsChangeSet.deleteCount}",
+                "Planned changes - Create: {}, Update: {}, Delete: {}",
+                statsChangeSet.createCount,
+                statsChangeSet.updateCount,
+                statsChangeSet.deleteCount,
             )
 
             // 3단계: MatchPlayer 연결 및 영속 상태 저장
@@ -90,11 +95,11 @@ class PlayerStatsManager(
                             matchPlayer.name,
                         )
                     entityBundle.setPlayerStats(key, savedStat)
-                    log.debug("Updated EntityBundle with PlayerStats: ${matchPlayer.name} (${savedStat.id})")
+                    log.debug("Updated EntityBundle with PlayerStats: {} ({})", matchPlayer.name, savedStat.id)
                 }
             }
 
-            log.info("PlayerStats processing completed - Total saved: ${savedStats.size}")
+            log.info("PlayerStats processing completed - Total saved: {}", savedStats.size)
             return PlayerStatsProcessResult(
                 totalStats = savedStats.size,
                 createdCount = statsChangeSet.createCount,
@@ -118,7 +123,7 @@ class PlayerStatsManager(
         // 1. 삭제 처리 (기존 로직 유지)
         if (statsChangeSet.toDelete.isNotEmpty()) {
             playerStatsRepository.deleteAll(statsChangeSet.toDelete)
-            log.info("Deleted ${statsChangeSet.toDelete.size} player statistics")
+            log.info("Deleted {} player statistics", statsChangeSet.toDelete.size)
         }
 
         // 2. 생성할 통계: MatchPlayer 연결 후 저장
@@ -127,14 +132,14 @@ class PlayerStatsManager(
                 .map { statsDto ->
                     val matchPlayer = findMatchPlayerByKey(statsDto.playerKey, matchPlayers)
                     if (matchPlayer == null) {
-                        log.warn("MatchPlayer not found for key: ${statsDto.playerKey}, skipping statistics creation")
+                        log.warn("MatchPlayer not found for key: {}, skipping statistics creation", statsDto.playerKey)
                         return@map null
                     }
 
                     // PlayerStats 생성 (비영속 상태)
                     val playerStats = StatsEntityFrom(matchPlayer, statsDto)
 
-                    log.debug("Created player statistics for: ${matchPlayer.name} (${statsDto.playerKey})")
+                    log.debug("Created player statistics for: {} ({})", matchPlayer.name, statsDto.playerKey)
                     playerStats
                 }.filterNotNull()
 
@@ -143,7 +148,7 @@ class PlayerStatsManager(
             statsChangeSet.toUpdate.map { (existingStats, statsDto) ->
                 updateStats(existingStats, statsDto)
 
-                log.debug("Updated player statistics for: ${existingStats.matchPlayer?.name} (${statsDto.playerKey})")
+                log.debug("Updated player statistics for: {} ({})", existingStats.matchPlayer?.name, statsDto.playerKey)
                 existingStats
             }
 
@@ -152,7 +157,10 @@ class PlayerStatsManager(
         if (allStatsToSave.isNotEmpty()) {
             val savedStats = playerStatsRepository.saveAll(allStatsToSave)
             log.info(
-                "Saved ${savedStats.size} player statistics (Create: ${statsToCreate.size}, Update: ${statsToUpdate.size})",
+                "Saved {} player statistics (Create: {}, Update: {})",
+                savedStats.size,
+                statsToCreate.size,
+                statsToUpdate.size,
             )
 
             // 5. 영속화 후 MatchPlayer와 연관관계 설정
@@ -161,7 +169,7 @@ class PlayerStatsManager(
                 if (matchPlayer != null) {
                     // 양방향 연관관계 설정
                     matchPlayer.statistics = savedStat
-                    log.debug("Set bidirectional relationship: ${matchPlayer.name} <-> ${savedStat.id}")
+                    log.debug("Set bidirectional relationship: {} <-> {}", matchPlayer.name, savedStat.id)
                 }
             }
 
@@ -259,9 +267,9 @@ class PlayerStatsManager(
         matchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): ApiSportsMatchPlayer? =
         matchPlayers[playerKey]?.also {
-            log.debug("Found MatchPlayer for key: $playerKey -> ${it.name}")
+            log.debug("Found MatchPlayer for key: {} -> {}", playerKey, it.name)
         } ?: run {
-            log.warn("MatchPlayer not found for key: $playerKey")
+            log.warn("MatchPlayer not found for key: {}", playerKey)
             null
         }
 }

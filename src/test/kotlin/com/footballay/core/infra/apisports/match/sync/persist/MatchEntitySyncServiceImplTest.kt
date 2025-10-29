@@ -63,7 +63,7 @@ class MatchEntitySyncServiceImplTest {
     }
 
     @Test
-    @DisplayName("모든 Phase가 성공적으로 완료되어 MatchPlayer와 MatchTeam 엔티티가 정상적으로 동기화됩니다")
+    @DisplayName("모든 처리 단계가 성공적으로 완료되어 Match 관련 엔티티가 정상적으로 동기화됩니다")
     fun testSuccessfulEntitySync() {
         // given
         val fixtureApiId = 12345L
@@ -159,7 +159,7 @@ class MatchEntitySyncServiceImplTest {
         assertThat(result.playerChanges.created).isEqualTo(2)
         assertThat(result.eventChanges.created).isEqualTo(1)
 
-        // 모든 Phase 검증
+        // 모든 매니저 호출 검증
         verify(matchPlayerManager).processMatchTeamAndPlayers(any(), any(), any())
         verify(matchEventManager).processMatchEvents(any(), any())
         verify(playerStatsManager).processPlayerStats(any(), any())
@@ -170,7 +170,7 @@ class MatchEntitySyncServiceImplTest {
 
     @Test
     @DisplayName("Lineup 저장 시 예외가 발생하면 전체 동기화가 실패하고 에러 메시지를 반환합니다")
-    fun testPhase3ErrorHandling() {
+    fun testLineupErrorHandling() {
         // given
         val fixtureApiId = 12345L
         val baseDto = createMockFixtureDto()
@@ -216,8 +216,8 @@ class MatchEntitySyncServiceImplTest {
     }
 
     @Test
-    @DisplayName("Base 엔티티 동기화가 실패하면 다음 Phase가 실행되지 않고 즉시 실패 결과를 반환합니다")
-    fun testPhase2FailurePreventsPhase3() {
+    @DisplayName("Base 엔티티 동기화가 실패하면 다음 처리가 실행되지 않고 즉시 실패 결과를 반환합니다")
+    fun testBaseEntitySyncFailure() {
         // given
         val fixtureApiId = 12345L
         val baseDto = createMockFixtureDto()
@@ -227,7 +227,7 @@ class MatchEntitySyncServiceImplTest {
         val playerStatDto = createMockPlayerStatDto()
         val playerContext = createMockPlayerContext()
 
-        // Mock 설정 - Phase 2 실패
+        // Mock 설정 - Base 엔티티 동기화 실패
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
             baseMatchEntitySyncer.syncBaseEntities(
@@ -252,13 +252,13 @@ class MatchEntitySyncServiceImplTest {
         // then
         assertThat(result.success).isFalse()
 
-        // Phase 3가 실행되지 않았는지 확인
+        // 다음 단계(MatchPlayer)가 실행되지 않았는지 확인
         verify(matchPlayerManager, never()).processMatchTeamAndPlayers(any(), any(), any())
     }
 
     @Test
-    @DisplayName("Phase 5 (PlayerStats) 처리가 성공적으로 완료됩니다")
-    fun testPhase5PlayerStatsProcessing() {
+    @DisplayName("PlayerStats 처리가 성공적으로 완료됩니다")
+    fun testPlayerStatsProcessing() {
         // given
         val fixtureApiId = 12345L
         val baseDto = createMockFixtureDto()

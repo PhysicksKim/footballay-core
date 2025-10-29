@@ -197,7 +197,7 @@ class ApiSportsSyncFacadeIntegrationTest {
     }
 
     @Test
-    fun `syncFixturesOfLeagueWithSeason은 지원되지 않는 시즌에 예외를 반환해야 한다`() {
+    fun `syncFixturesOfLeagueWithSeason은 ApiSports 에서 지원되지 않는 시즌이더라도 Success 를 반환한다`() {
         // given
         val leagueApiId = SUPPORTED_LEAGUE_API_ID
         val supportSeason = SUPPORTED_SEASON
@@ -206,10 +206,11 @@ class ApiSportsSyncFacadeIntegrationTest {
         apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeague(leagueApiId, supportSeason)
 
         // when
-        val exception =
-            assertThrows<IllegalArgumentException> {
-                apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
-            }
+        val result = apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
+
+        // then
+        assertThat(result is DomainResult.Success).isTrue()
+        assertThat(result.getOrNull()).isEqualTo(0)
 
         // DB에 저장된 fixture가 없어야 함
         val savedFixtures = fixtureApiSportsRepository.findAll()
