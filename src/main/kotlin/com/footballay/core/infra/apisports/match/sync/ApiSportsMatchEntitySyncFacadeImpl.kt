@@ -11,6 +11,8 @@ import com.footballay.core.infra.apisports.match.sync.teamstat.MatchTeamStatDtoE
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
+import java.time.Duration
+import java.time.OffsetDateTime
 
 /**
  * ApiSports Match Data Sync Facade implementation
@@ -78,10 +80,137 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 "Match sync completed - Created: ${syncResult.createdCount}, Updated: ${syncResult.updatedCount}, Deleted: ${syncResult.deletedCount}",
             )
 
-            return MatchDataSyncResult.ongoing(dto.fixture.date)
+            // 경기 상태에 따른 상세 Result 반환
+            return determineMatchDataSyncResult(dto, !lineupDto.isEmpty())
         } catch (e: Exception) {
             log.error("Failed to sync match data for fixture: {}", fixtureApiId, e)
-            throw e
+            return MatchDataSyncResult.Error(
+                message = "Match data sync failed: ${e.message}",
+                kickoffTime = dto.fixture.date,
+            )
         }
+    }
+
+    /**
+     * 경기 상태를 분석하여 적절한 MatchDataSyncResult를 결정합니다.
+     *
+     * **상태 판단 기준:**
+     * - **PreMatch** (NS, TBD, INT): 경기 전 단계
+     * - **Live** (1H, HT, 2H, ET, BT, P, SUSP, LIVE): 경기 진행 중
+     * - **PostMatch** (FT, AET, PEN): 경기 종료 후
+     *
+     * @param dto Match 데이터 DTO
+     * @param hasLineup 라인업 데이터 존재 여부
+     */
+    private fun determineMatchDataSyncResult(
+        dto: FullMatchSyncDto,
+        hasLineup: Boolean,
+    ): MatchDataSyncResult {
+        val statusShort = dto.fixture.status.short
+        val kickoffTime = dto.fixture.date
+        val elapsedMin = dto.fixture.status.elapsed
+
+        return when {
+            // 경기 종료 상태
+            isMatchFinished(statusShort) -> {
+                val minutesSinceFinish = calculateMinutesSinceFinish(kickoffTime, elapsedMin)
+                val shouldStopPolling = minutesSinceFinish > POST_MATCH_POLLING_CUTOFF_MINUTES
+
+                log.info(
+                    "Match finished - status={}, minutesSinceFinish={}, shouldStopPolling={}",
+                    statusShort,
+                    minutesSinceFinish,
+                    shouldStopPolling,
+                )
+
+                MatchDataSyncResult.PostMatch(
+                    kickoffTime = kickoffTime,
+                    shouldStopPolling = shouldStopPolling,
+                    minutesSinceFinish = minutesSinceFinish,
+                )
+            }
+
+            // 경기 진행 중
+            isMatchLive(statusShort) -> {
+                log.info("Match is live - status={}, elapsed={}", statusShort, elapsedMin)
+
+                MatchDataSyncResult.Live(
+                    kickoffTime = kickoffTime,
+                    isMatchFinished = false,
+                    elapsedMin = elapsedMin,
+                    statusShort = statusShort,
+                )
+            }
+
+            // 경기 전 단계
+            else -> {
+                val readyForLive = hasLineup && isKickoffImminent(kickoffTime)
+
+                log.info(
+                    "Pre-match phase - status={}, lineupCached={}, readyForLive={}",
+                    statusShort,
+                    hasLineup,
+                    readyForLive,
+                )
+
+                MatchDataSyncResult.PreMatch(
+                    lineupCached = hasLineup,
+                    kickoffTime = kickoffTime,
+                    readyForLive = readyForLive,
+                )
+            }
+        }
+    }
+
+    /**
+     * 경기 종료 상태인지 확인
+     */
+    private fun isMatchFinished(statusShort: String): Boolean =
+        statusShort in FINISHED_STATUSES
+
+    /**
+     * 경기 진행 중 상태인지 확인
+     */
+    private fun isMatchLive(statusShort: String): Boolean =
+        statusShort in LIVE_STATUSES
+
+    /**
+     * 킥오프가 임박했는지 확인 (킥오프 5분 전부터 라이브 Job으로 전환)
+     */
+    private fun isKickoffImminent(kickoffTime: OffsetDateTime?): Boolean {
+        if (kickoffTime == null) return false
+        val now = OffsetDateTime.now()
+        val minutesUntilKickoff = Duration.between(now, kickoffTime).toMinutes()
+        return minutesUntilKickoff <= KICKOFF_IMMINENT_THRESHOLD_MINUTES
+    }
+
+    /**
+     * 경기 종료 후 경과 시간 계산 (분 단위)
+     */
+    private fun calculateMinutesSinceFinish(
+        kickoffTime: OffsetDateTime?,
+        elapsedMin: Int?,
+    ): Long {
+        if (kickoffTime == null || elapsedMin == null) {
+            return 0L
+        }
+
+        val now = OffsetDateTime.now()
+        val matchEndTime = kickoffTime.plusMinutes(elapsedMin.toLong())
+        return Duration.between(matchEndTime, now).toMinutes().coerceAtLeast(0)
+    }
+
+    companion object {
+        // 경기 종료 상태 코드
+        private val FINISHED_STATUSES = setOf("FT", "AET", "PEN", "AWD", "WO", "CANC", "PST", "ABD")
+
+        // 경기 진행 중 상태 코드
+        private val LIVE_STATUSES = setOf("1H", "HT", "2H", "ET", "BT", "P", "SUSP", "LIVE")
+
+        // 킥오프 임박 기준 (분)
+        private const val KICKOFF_IMMINENT_THRESHOLD_MINUTES = 5L
+
+        // 경기 종료 후 polling 중단 기준 (분)
+        private const val POST_MATCH_POLLING_CUTOFF_MINUTES = 60L
     }
 }

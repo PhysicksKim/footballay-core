@@ -116,6 +116,24 @@ class AdminApiSportsController(
             is DomainResult.Fail -> toErrorResponse(result.error)
         }
 
+    /**
+     * 리그의 Available 상태를 설정합니다.
+     *
+     * POST /api/v1/admin/apisports/leagues/{leagueId}/available?available=true|false
+     *
+     * @param leagueId LeagueCore ID
+     * @param available Available 상태 (true: 활성화, false: 비활성화)
+     */
+    @PostMapping("/leagues/{leagueId}/available")
+    fun setLeagueAvailable(
+        @PathVariable leagueId: Long,
+        @RequestParam available: Boolean,
+    ): ResponseEntity<String> =
+        when (val result = adminApiSportsWebService.setLeagueAvailable(leagueId, available)) {
+            is DomainResult.Success -> ResponseEntity.ok(result.value)
+            is DomainResult.Fail -> toErrorResponse(result.error)
+        }
+
     private fun <T> toErrorResponse(error: DomainFail): ResponseEntity<T> {
         val status =
             when (error) {

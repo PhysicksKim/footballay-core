@@ -1,6 +1,7 @@
 package com.footballay.core.web.admin.apisports.controller
 
 import com.footballay.core.TestSecurityConfig
+import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
@@ -70,6 +71,77 @@ class AdminApiSportsControllerTest {
             }.andExpect {
                 status { isOk() }
                 content { contentType(MediaType.APPLICATION_JSON) }
+            }
+    }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `특정 리그의 Fixture 동기화가 성공한다`() {
+        // Given
+        val leagueId = 39L
+        val syncedCount = 380
+        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
+            .thenReturn(DomainResult.Success(syncedCount))
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isOk() }
+                content {
+                    contentType(MediaType.APPLICATION_JSON)
+                    jsonPath("$") { value(syncedCount) }
+                }
+            }
+    }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `존재하지 않는 리그로 Fixture 동기화 시 404를 반환한다`() {
+        // Given
+        val leagueId = 99999L
+        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
+            .thenReturn(
+                DomainResult.Fail(
+                    DomainFail.NotFound(
+                        resource = "LEAGUE",
+                        id = leagueId.toString(),
+                    ),
+                ),
+            )
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isNotFound() }
+            }
+    }
+
+    @Test
+    @WithMockUser(roles = ["ADMIN"])
+    fun `리그의 현재 시즌이 설정되지 않은 경우 400을 반환한다`() {
+        // Given
+        val leagueId = 39L
+        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
+            .thenReturn(
+                DomainResult.Fail(
+                    DomainFail.Validation.single(
+                        code = "CURRENT_SEASON_NOT_SET",
+                        message = "Current season is not set for league",
+                        field = "season",
+                    ),
+                ),
+            )
+
+        // When & Then
+        mvc
+            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isBadRequest() }
             }
     }
 }

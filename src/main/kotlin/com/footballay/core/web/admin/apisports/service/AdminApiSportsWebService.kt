@@ -3,6 +3,7 @@ package com.footballay.core.web.admin.apisports.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
+import com.footballay.core.infra.facade.AvailableLeagueFacade
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service
 @Service
 class AdminApiSportsWebService(
     private val apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade,
+    private val availableLeagueFacade: AvailableLeagueFacade,
 ) {
     val log = logger()
 
@@ -112,4 +114,19 @@ class AdminApiSportsWebService(
             is DomainResult.Fail -> DomainResult.Fail(result.error)
         }
     }
+
+    /**
+     * 리그의 available 상태를 설정합니다.
+     *
+     * Available 리그는 해당 리그의 경기들이 실시간 동기화 대상이 됩니다.
+     * (Fixture 개별 available 설정과는 별개로 작동)
+     *
+     * @param leagueId LeagueCore ID
+     * @param available Available 상태 (true: 활성화, false: 비활성화)
+     * @return 성공 시 league UID, 실패 시 DomainFail
+     */
+    fun setLeagueAvailable(
+        leagueId: Long,
+        available: Boolean,
+    ): DomainResult<String, DomainFail> = availableLeagueFacade.setLeagueAvailable(leagueId, available)
 }
