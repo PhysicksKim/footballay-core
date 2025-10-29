@@ -175,14 +175,12 @@ class ApiSportsMatchEntitySyncFacadeImpl(
     /**
      * 경기 종료 상태인지 확인
      */
-    private fun isMatchFinished(statusShort: String): Boolean =
-        statusShort in FINISHED_STATUSES
+    private fun isMatchFinished(statusShort: String): Boolean = statusShort in FINISHED_STATUSES
 
     /**
      * 경기 진행 중 상태인지 확인
      */
-    private fun isMatchLive(statusShort: String): Boolean =
-        statusShort in LIVE_STATUSES
+    private fun isMatchLive(statusShort: String): Boolean = statusShort in LIVE_STATUSES
 
     /**
      * 킥오프까지 남은 시간이 지정된 분(minute) 이내인지 확인

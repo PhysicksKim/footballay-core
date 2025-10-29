@@ -31,6 +31,18 @@ spring:
         resources:
             add-mappings: false
 
+# SpringDoc OpenAPI Configuration
+springdoc:
+    api-docs:
+        path: /v3/api-docs
+    swagger-ui:
+        path: /swagger-ui.html
+        operations-sorter: method
+        tags-sorter: alpha
+        display-request-duration: true
+        doc-expansion: none
+    show-actuator: false
+
 logging:
     level:
         root: INFO

@@ -23,4 +23,3 @@ object MatchSyncConstants {
      */
     const val POST_MATCH_POLLING_CUTOFF_MINUTES = 60L
 }
-

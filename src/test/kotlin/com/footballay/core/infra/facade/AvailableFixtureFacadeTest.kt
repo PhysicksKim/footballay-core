@@ -47,12 +47,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusHours(2)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -82,12 +83,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusHours(2)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = true,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = true,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
 
@@ -109,12 +111,13 @@ class AvailableFixtureFacadeTest {
         val fixtureId = 1L
         val fixtureUid = "fixture_uid_123"
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = null,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = null,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
 
@@ -140,12 +143,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusHours(2)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -168,12 +172,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusMinutes(30) // 킥오프 30분 전 (1시간 전은 이미 지남)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -206,12 +211,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusHours(2)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -239,12 +245,13 @@ class AvailableFixtureFacadeTest {
         val fixtureUid = "fixture_uid_123"
         val kickoff = OffsetDateTime.now().plusHours(2)
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = kickoff,
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = kickoff,
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -291,12 +298,13 @@ class AvailableFixtureFacadeTest {
         val fixtureId = 1L
         val fixtureUid = "fixture_uid_123"
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = OffsetDateTime.now().plusHours(2),
-            available = true,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = OffsetDateTime.now().plusHours(2),
+                available = true,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -320,12 +328,13 @@ class AvailableFixtureFacadeTest {
         val fixtureId = 1L
         val fixtureUid = "fixture_uid_123"
 
-        val fixtureCore = createFixtureCore(
-            id = fixtureId,
-            uid = fixtureUid,
-            kickoff = OffsetDateTime.now().plusHours(2),
-            available = false,
-        )
+        val fixtureCore =
+            createFixtureCore(
+                id = fixtureId,
+                uid = fixtureUid,
+                kickoff = OffsetDateTime.now().plusHours(2),
+                available = false,
+            )
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
 
@@ -365,13 +374,14 @@ class AvailableFixtureFacadeTest {
         kickoff: OffsetDateTime?,
         available: Boolean,
     ): FixtureCore {
-        val league = LeagueCore(
-            id = 1L,
-            uid = "league_uid_123",
-            name = "Test League",
-            available = false,
-            autoGenerated = true,
-        )
+        val league =
+            LeagueCore(
+                id = 1L,
+                uid = "league_uid_123",
+                name = "Test League",
+                available = false,
+                autoGenerated = true,
+            )
 
         return FixtureCore(
             id = id,
@@ -392,4 +402,3 @@ class AvailableFixtureFacadeTest {
         )
     }
 }
-

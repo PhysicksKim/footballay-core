@@ -59,4 +59,3 @@ class AvailableLeagueFacade(
         return DomainResult.Success(leagueCore.uid)
     }
 }
-

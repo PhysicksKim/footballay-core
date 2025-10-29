@@ -235,14 +235,13 @@ class JobSchedulerService(
      * @param jobKey 확인할 Job의 Key
      * @return Job이 존재하는지 여부
      */
-    fun jobExists(jobKey: JobKey): Boolean {
-        return try {
+    fun jobExists(jobKey: JobKey): Boolean =
+        try {
             scheduler.checkExists(jobKey)
         } catch (e: Exception) {
             log.error("Failed to check job existence - jobKey={}", jobKey, e)
             false
         }
-    }
 
     /**
      * JobKey 생성 헬퍼
@@ -271,4 +270,3 @@ class JobSchedulerService(
         private const val POST_MATCH_MAX_EXECUTIONS = 60
     }
 }
-

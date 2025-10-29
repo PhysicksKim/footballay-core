@@ -12,4 +12,3 @@ spring:
   jpa:
     properties:
       hibernate.default_schema: footballay_core
-    database-platform: org.hibernate.dialect.PostgreSQLDialect

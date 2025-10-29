@@ -51,4 +51,3 @@ class PreMatchJob(
         const val KEY_FIXTURE_UID = "fixtureUid"
     }
 }
-

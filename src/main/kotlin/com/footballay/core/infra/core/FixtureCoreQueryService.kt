@@ -38,4 +38,3 @@ class FixtureCoreQueryService(
             null
         }
 }
-

@@ -54,4 +54,3 @@ class LiveMatchJob(
         const val KEY_FIXTURE_UID = "fixtureUid"
     }
 }
-

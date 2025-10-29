@@ -41,4 +41,3 @@ data class JobContext(
         fun postMatch(jobKey: JobKey): JobContext = JobContext(JobPhase.POST_MATCH, jobKey)
     }
 }
-

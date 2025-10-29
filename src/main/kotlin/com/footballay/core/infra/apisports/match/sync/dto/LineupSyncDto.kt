@@ -69,4 +69,3 @@ data class LineupSyncDto(
         val EMPTY = LineupSyncDto(null, null)
     }
 }
-
