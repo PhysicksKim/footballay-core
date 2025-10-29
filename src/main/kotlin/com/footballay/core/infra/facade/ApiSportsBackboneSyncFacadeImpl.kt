@@ -178,8 +178,19 @@ class ApiSportsBackboneSyncFacadeImpl(
         val fixturesResp = fetcher.fetchFixturesOfLeague(leagueApiId, season)
         val dtos = fixturesResp.response.map { mapToFixtureCreateDto(it) }
 
-        fixtureSyncer.saveFixturesOfLeague(leagueApiId, dtos)
-        return DomainResult.Success(dtos.size)
+        return try {
+            fixtureSyncer.saveFixturesOfLeague(leagueApiId, dtos)
+            DomainResult.Success(dtos.size)
+        } catch (ex: Exception) {
+            // 의도: 본 퍼사드는 희박한 관계 깨짐/유니크 위반 등 예외를 복구하지 않습니다.
+            // 재시도/업서트를 하지 않고, 오류를 기록하여 후속 조치 대상으로 남깁니다.
+            log.error("Failed to sync fixtures for leagueApiId={}, season={}. size={}", leagueApiId, season, dtos.size, ex)
+            DomainResult.Fail(DomainFail.Validation.single(
+                code = "FIXTURE_SYNC_FAILED",
+                message = "Fixture sync failed. See server logs for details.",
+                field = null,
+            ))
+        }
     }
 
     private fun mapToFixtureCreateDto(response: ApiSportsFixture.OfLeague): FixtureApiSportsSyncDto {

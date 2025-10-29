@@ -35,7 +35,7 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
     fun findByApiId(apiId: Long): LeagueApiSports?
     
     /**
-     * API ID와 시즌으로 리그와 시즌 정보를 함께 조회
+     * 특정 시즌만 포함하여서 리그 조회
      */
     @Query("""
         SELECT las FROM LeagueApiSports las
@@ -47,12 +47,7 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
         @Param("apiId") apiId: Long,
         @Param("seasonYear") seasonYear: Int
     ): LeagueApiSports?
-    
-    /**
-     * 현재 시즌이 설정된 모든 리그 조회
-     */
-    fun findAllByCurrentSeasonIsNotNull(): List<LeagueApiSports>
-    
+
     /**
      * 국가 코드로 리그 조회
      */

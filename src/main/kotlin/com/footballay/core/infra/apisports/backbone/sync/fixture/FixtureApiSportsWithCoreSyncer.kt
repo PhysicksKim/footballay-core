@@ -11,10 +11,6 @@ import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
 import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.mapper.FixtureDataMapper
 import com.footballay.core.infra.core.FixtureCoreSyncService
-import com.footballay.core.infra.persistence.apisports.entity.DataProvider
-import com.footballay.core.infra.persistence.apisports.entity.DiscrepancyReason
-import com.footballay.core.infra.persistence.apisports.entity.DiscrepancyState
-import com.footballay.core.infra.persistence.apisports.entity.FixtureProviderDiscrepancy
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
@@ -28,24 +24,34 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason
-import com.footballay.core.infra.persistence.apisports.repository.FixtureProviderDiscrepancyRepository
-import com.footballay.core.infra.persistence.core.entity.TeamCore
+import com.footballay.core.infra.persistence.core.entity.LeagueCore
 
 /**
- * FixtureApiSports와 FixtureCore를 동기화하는 서비스
+ * FixtureApiSports 와 FixtureCore 를 동기화하는 서비스
  *
- * **사전 조건:**
- * - LeagueApiSports와 LeagueApiSportsSeason이 저장되어 있어야 함 (미존재 시 예외)
- * - TeamApiSports가 저장되어 있어야 함 (미존재 시 예외)
- * - TeamCore는 권장되지만 필수는 아님
+ * ApiSports 의 Fixture 를 저장하며 [FixtureApiSports] 생성과 함께 [FixtureCore] 도 자동으로 생성하여 연결해줍니다.
  *
- * **동기화 대상:**
+ * ## 가정
+ * - 모든 DTO는 동일한 시즌이어야 합니다.
+ * - apiId가 null 또는 0인 경우 저장 대상에서 제외됩니다 (warn 로그)
+ * - home/away team apiId는 null 가능 (미정 팀 허용)
+ * - [LeagueApiSports]와 [LeagueApiSportsSeason]이 저장되어 있어야 합니다 (미존재 시 예외)
+ * - [TeamApiSports]가 저장되어 있어야 합니다 (미존재 시 예외)
+ * - [FixtureCore] 만 존재하는 경우 [FixtureApiSports] 정보로 이를 추적하는 기능은 구현하지 않았습니다. 자동으로 연결되지 않습니다.
+ * - [VenueApiSports] 는 자동으로 생성 또는 업데이트 됩니다
+ *
+ * ## 분기 처리
+ * - 기존에 존재하는 [FixtureApiSports] 가 있다면 업데이트 합니다.
+ * - 만약 [FixtureApiSports] 는 존재하지만 [FixtureCore] 가 없는 경우, [FixtureCore] 를 생성하여 연결해줍니다.
+ * - leagueApiId 와  [FixtureApiSports]
+ *
+ * **Entity 저장 대상**
  * - VenueApiSports (생성/업데이트)
  * - FixtureCore (생성/업데이트)
  * - FixtureApiSports (생성/업데이트)
  * - FixtureProviderDiscrepancy (불일치 추적)
  *
- * **DTO 조건:**
+ * **DTO 조건**
  * - 모든 DTO는 동일한 시즌이어야 함
  * - apiId가 null 또는 0인 경우 저장 대상에서 제외 (warn 로그)
  * - home/away team apiId는 null 가능 (미정 팀 허용)
@@ -56,7 +62,6 @@ class FixtureApiSportsWithCoreSyncer(
     private val leagueApiSportsRepository: LeagueApiSportsRepository,
     private val teamApiSportsRepository: TeamApiSportsRepository,
     private val venueApiSportsRepository: VenueApiSportsRepository,
-    private val discrepancyRepository: FixtureProviderDiscrepancyRepository,
     private val fixtureCoreSyncService: FixtureCoreSyncService,
     private val fixtureApiSportsFactory: FixtureApiSportsFactory,
     private val venueApiSportsFactory: VenueApiSportsFactory,
@@ -66,230 +71,162 @@ class FixtureApiSportsWithCoreSyncer(
     private val log = logger()
 
     /**
-     * 리그의 경기들을 동기화합니다.
+     * 리그의 경기들을 저장합니다.
+     *
+     * - `dtos` 들은 동일 시즌이어야 합니다. (validateInput 에서 검증)
+     * - `leagueApiId + seasonYear`로 DB 에 저장된 경기들을 조회하여 생성/업데이트를 판단합니다.
+     * - 만약 dto 에 주어진 정보와 기존 DB 에 저장된 정보가 상충하는 경우, dto 정보를 우선시하여 업데이트합니다.
+     * - dto 에 등장하는 팀 정보는 [TeamApiSports] 엔티티로 미리 저장되어 있어야 합니다. (미존재 시 예외)
+     * - 경기장 엔티티 [VenueApiSports] 는 `dtos` 에 따라 자동으로 생성/업데이트 됩니다.
+     * - [FixtureApiSports.apiId] 의 제약조건에 따라서 Unique 제약조건 위반이 발생할 수 있습니다.
+     *   추정되는 원인은 해당 [FixtureApiSports] 가 과거에 다른 League 또는 Season 으로 저장되어 있는데,
+     *   전달받은 인자에 따라 얻어진 `leagueApiId + seasonYear` 조합으로는 조회되지 않고 dto 에만 존재하는 경우입니다.
+     *   이 문제가 발생한 경우는 없으나 논리적으로 또는 연관관계 설정 오류로 인해 발생할 가능성이 있습니다.
      *
      * @param leagueApiId 리그 API ID
-     * @param dtos 동기화할 경기 DTO 목록 (동일 시즌)
+     * @param dtos 동기화할 경기 DTO 목록 (동일 시즌이어야 합니다)
      */
     @Transactional
     override fun saveFixturesOfLeague(
         leagueApiId: Long,
         dtos: List<FixtureApiSportsSyncDto>
-    ) {
-        // Phase 1: 기본 검증
+    ) : Map<Long, FixtureApiSports> {
+        if (dtos.isEmpty()) return emptyMap()
+
         validateInput(leagueApiId, dtos)
+        val seasonYear = dtos.first().seasonYear!!.toInt() // validateInput 에서 검증됨
 
         // 유효 apiId(>0)만 대상으로 처리
-        val effectiveDtos = dtos.filter { (it.apiId ?: 0L) > 0L }
-        val ignoredCount = dtos.size - effectiveDtos.size
-        if (ignoredCount > 0) {
-            log.warn("Ignored $ignoredCount DTOs with null/zero apiId from processing")
+        val validDtos = filterValidDtos(dtos)
+        if (validDtos.isEmpty()) {
+            log.warn("No valid DTOs to process after filtering. Skipping fixture sync.")
+            return emptyMap()
         }
-        
-        // Phase 2: 데이터 수집
-        val seasonYear = dtos.first().seasonYear ?: throw IllegalArgumentException("Season year must be provided")
-        val seasonYearInt = seasonYear.toInt()
-        val fixtureData = collectFixtureData(leagueApiId, seasonYear, effectiveDtos)
-        validateMissingTeams(fixtureData, dtos)
-        log.info("Phase 2 data collection completed. Found ${fixtureData.fixtures.size} fixtures, ${fixtureData.teams.size} teams")
 
-        // Phase 3: Venue 생성/업데이트
-        val venueMap = saveVenues(effectiveDtos, fixtureData)
+        // 데이터 수집
+        val fixtureData = collectFixtureData(leagueApiId, seasonYear, validDtos)
+        validateMissingTeams(fixtureData, validDtos)
+        log.info("collecting fixtures of league entities completed. Found {} fixtures, {} teams",
+            fixtureData.fixtures.size, fixtureData.teams.size)
 
-        // Phase 4: Fixture 케이스 분리
-        val fixtureCases = separateFixtureCases(effectiveDtos, fixtureData.fixtures)
+        // Venue 생성/업데이트
+        val venueMap = saveVenues(validDtos, fixtureData)
 
-        // Phase 5: FixtureCore 생성/수집
-        val newCoreMap = saveNewCores(fixtureCases, fixtureData)
+        // Fixture 케이스 분리
+        val fixtureCases = separateFixtureCases(validDtos, fixtureData.fixtures)
+
+        // FixtureCore 생성/수집
+        val newCoreMap = saveNewFixtureCores(fixtureCases, fixtureData)
         val existingCoreMap = collectCores(fixtureCases)
         val coreMap = existingCoreMap + newCoreMap
 
-        // Phase 6: FixtureApiSports 생성/업데이트
-        val fixtureApiSportsMap = saveFixtures(
-            fixtureCases = fixtureCases,
-            fixtureData = fixtureData,
-            venueMap = venueMap,
-            coreMap = coreMap,
-            seasonYear = seasonYearInt,
-            dtos = effectiveDtos
-        )
+        // FixtureApiSports 생성/업데이트
+        val fixtureApiSportsMap = saveFixtures(fixtureCases, fixtureData, venueMap, coreMap, seasonYear)
 
-        // Phase 7: DB 에 기존에 저장되어 있었으나 Dto 에서 사라진 경기 불일치 처리
-        markAndResolveProviderDiscrepancies(
-            leagueApiId = leagueApiId,
-            seasonYear = seasonYear,
-            dtos = effectiveDtos,
-            cases = fixtureCases,
-            savedFixtures = fixtureApiSportsMap
-        )
+        log.info("All phases completed successfully. {}", fixtureApiSportsMap.keys)
+        return fixtureApiSportsMap
+    }
 
-        log.info("All phases completed successfully")
+    /**
+     * 유효한 DTO만 필터링
+     *
+     * 개별 dto의 유효성을 검증하고, invalid한 dto는 제외합니다.
+     * 전체 처리를 중단시키지 않고 유효한 dto만 처리를 계속합니다.
+     */
+    private fun filterValidDtos(dtos: List<FixtureApiSportsSyncDto>): List<FixtureApiSportsSyncDto> {
+        return dtos.filter { validateFixtureDto(it) }
+    }
+
+    /**
+     * 개별 FixtureApiSportsCreateDto 검증
+     *
+     * homeTeam, awayTeam 의 apiId 는 경기 일정은 정해졌으나 팀이 미정일 수 있습니다.
+     * 하지만 0 이하의 값은 유효하지 않습니다.
+     *
+     * @return 유효하지 않으면 false 반환
+     */
+    private fun validateFixtureDto(dto: FixtureApiSportsSyncDto): Boolean {
+        // apiId 검증
+        val apiId = dto.apiId
+        if (apiId == null || apiId <= 0) {
+            log.info("Fixture API id {} is invalid. Skipping fixtures", apiId)
+            return false
+        }
+
+        // homeTeam apiId 검증 (0 이하 값은 invalid)
+        dto.homeTeam?.apiId.let { homeTeamApiId ->
+            if (homeTeamApiId != null && homeTeamApiId <= 0) {
+                log.warn("Fixture apiId={} has invalid home team apiId={}. Skipping fixture.", apiId, homeTeamApiId)
+                return false
+            }
+        }
+
+        // awayTeam apiId 검증 (0 이하 값은 invalid)
+        dto.awayTeam?.apiId.let { awayTeamApiId ->
+            if (awayTeamApiId != null && awayTeamApiId <= 0) {
+                log.warn("Fixture apiId={} has invalid away team apiId={}. Skipping fixture.", apiId, awayTeamApiId)
+                return false
+            }
+        }
+
+        return true
     }
 
     /**
      * @return Map<ApiId, FixtureCore>
      */
-    private fun collectCores(fixtureCases: FixtureProcessingCases) : Map<Long, FixtureCore> {
-        return (fixtureCases.apiOnlyFixtures.mapNotNull { e -> e.entity.core?.let { core -> e.entity.apiId to core }}
-            + fixtureCases.bothExistFixtures.mapNotNull { e -> e.entity.core?.let { core -> e.entity.apiId to core }})
+    private fun collectCores(fixtureCases: FixtureProcessingCases): Map<Long, FixtureCore> {
+        return (fixtureCases.apiOnlyFixtures.mapNotNull { e -> e.entity.core?.let { core -> e.entity.apiId to core } }
+                + fixtureCases.bothExistFixtures.mapNotNull { e -> e.entity.core?.let { core -> e.entity.apiId to core } })
             .toMap()
     }
 
-    private fun markAndResolveProviderDiscrepancies(
-        leagueApiId: Long,
-        seasonYear: String,
-        dtos: List<FixtureApiSportsSyncDto>,
-        cases: FixtureProcessingCases,
-        savedFixtures: Map<Long, FixtureApiSports>
-    ) {
-        val now = java.time.OffsetDateTime.now()
-        val dtoById = dtos.mapNotNull { it.apiId?.let { id -> id to it } }.toMap()
-
-        var opened = 0
-        var resolved = 0
-        var touched = 0
-
-        // bothExistFixtures 중 DTO가 없는 항목을 불일치로 표시
-        cases.bothExistFixtures.forEach { existing ->
-            val apiId = existing.dto.apiId
-            if (apiId != null && !dtoById.containsKey(apiId)) {
-                val existingIssue = discrepancyRepository.findByProviderAndFixtureApiId(DataProvider.API_SPORTS, apiId)
-                if (existingIssue == null) {
-                    discrepancyRepository.save(
-                        FixtureProviderDiscrepancy(
-                            provider = DataProvider.API_SPORTS,
-                            fixtureApiId = apiId,
-                            leagueApiId = leagueApiId,
-                            seasonYear = seasonYear,
-                            state = DiscrepancyState.OPEN,
-                            reason = DiscrepancyReason.MISSING_IN_SNAPSHOT,
-                            firstDetectedAt = now,
-                            lastCheckedAt = now,
-                            lastSeenAt = null,
-                            snapshotIdChecked = null,
-                            snapshotIdLastSeen = null,
-                            linkedFixture = existing.entity,
-                        )
-                    )
-                    opened++
-                } else {
-                    existingIssue.lastCheckedAt = now
-                    discrepancyRepository.save(existingIssue)
-                    touched++
-                }
-            }
-        }
-
-        // DTO가 있는 항목은 불일치 해소(있다면)
-        dtoById.keys.forEach { apiId ->
-            val issue = discrepancyRepository.findByProviderAndFixtureApiId(DataProvider.API_SPORTS, apiId)
-            if (issue != null && issue.state == DiscrepancyState.OPEN) {
-                issue.state = DiscrepancyState.RESOLVED
-                issue.resolvedAt = now
-                issue.lastCheckedAt = now
-                // 갱신된 fixture 연결
-                savedFixtures[apiId]?.let { issue.linkedFixture = it }
-                discrepancyRepository.save(issue)
-                resolved++
-            }
-        }
-
-        log.info("Provider discrepancy stats - opened: $opened, updated: $touched, resolved: $resolved")
-    }
-    
-    // ============================================================================
-    // Phase 1: 입력 데이터 검증
-    // ============================================================================
-    
     /**
-     * Phase 1: 입력 데이터 검증
+     * 입력 데이터 검증
      *
-     * 제공된 파라미터에 대한 기본 검증을 수행합니다. entity 를 실제로 조회하지 않습니다.
+     * 전체 입력에 대한 치명적인 문제만 검증합니다. (leagueApiId, season 일관성 등)
+     * 개별 dto의 유효성 검증은 filterValidDtos() 에서 수행됩니다.
+     * DB entity 를 조회하지 않습니다.
      */
     private fun validateInput(leagueApiId: Long, dtos: List<FixtureApiSportsSyncDto>) {
-        log.info("Starting Phase 1 validation for leagueApiId: $leagueApiId with ${dtos.size} fixtures")
-        
-        // 1. LeagueApiId 검증
+        log.info("Starting Phase 1 validation for leagueApiId: {} with {} fixtures", leagueApiId, dtos.size)
+
+        // 1. LeagueApiId 는 유효한 범위여야 합니다.
         if (leagueApiId <= 0) {
-            log.error("Invalid leagueApiId: $leagueApiId. Must be positive.")
+            log.error("Invalid leagueApiId: {}. Must be positive.", leagueApiId)
             throw IllegalArgumentException("LeagueApiId must be positive, but was: $leagueApiId")
         }
-        
-        // 2. DTO 목록 검증
-        if (dtos.isEmpty()) {
-            log.warn("Empty fixture DTO list provided for leagueApiId: $leagueApiId")
-            throw IllegalArgumentException("Fixture DTO list cannot be empty")
-        }
-        
-        // 3. Season 일관성 검증
+
+        // 2. Season 일관성 검증
         validateSeasonConsistency(dtos)
-        
-        // 4. 각 DTO 검증
-        dtos.forEachIndexed { index, dto ->
-            validateFixtureDto(dto, index)
-        }
-        
-        log.info("Phase 1 validation completed successfully for leagueApiId: $leagueApiId")
+
+        log.info("Phase 1 validation completed successfully for leagueApiId: {}", leagueApiId)
     }
-    
+
     /**
      * Season 일관성 검증
      *
-     * DTO 에 담긴 season 정보가 모두 동일한지 검증합니다.
+     * DTO 에 담긴 season 정보가 모두 동일해야 합니다.
      * 여러 시즌이 섞여 있는 경우는 지원하지 않으므로 예외를 던집니다.
      */
     private fun validateSeasonConsistency(dtos: List<FixtureApiSportsSyncDto>) {
         val seasons = dtos.mapNotNull { it.seasonYear }.distinct()
-        
+
         if (seasons.size > 1) {
-            log.error("Inconsistent seasons found: $seasons. All fixtures must have the same season.")
+            log.error("Inconsistent seasons found: {}. All fixtures must have the same season.", seasons)
             throw IllegalArgumentException("All fixtures must have the same season, but found: $seasons")
         }
-        
+
         if (seasons.isEmpty()) {
             log.error("No season information found in any fixture DTO.")
             throw IllegalArgumentException("At least one fixture must have season information")
         }
-        
-        log.info("Season consistency validated: ${seasons.first()}")
-    }
-    
-    /**
-     * 개별 FixtureApiSportsCreateDto 검증
-     *
-     * homeTeam, awayTeam 의 apiId 는 nullable 입니다. 예를 들어 토너먼트 결승전 같은 경우, 경기 일정은 정해졌으나 팀이 미정일 수 있습니다.
-     */
-    private fun validateFixtureDto(dto: FixtureApiSportsSyncDto, index: Int) {
-        // apiId 검증
-        val apiId = dto.apiId
-        if (apiId == null || apiId <= 0) {
-            log.error("Invalid apiId at index $index: $apiId. Must be positive.")
-            throw IllegalArgumentException("Fixture apiId must be positive, but was: $apiId at index $index")
-        }
-        
-        // homeTeam apiId 검증 (nullable)
-        dto.homeTeam?.apiId?.let { homeTeamApiId ->
-            if (homeTeamApiId <= 0) {
-                log.error("Invalid homeTeam apiId at index $index: $homeTeamApiId. Must be positive.")
-                throw IllegalArgumentException("HomeTeam apiId must be positive, but was: $homeTeamApiId at index $index")
-            }
-        }
-        
-        // awayTeam apiId 검증 (nullable)
-        dto.awayTeam?.apiId?.let { awayTeamApiId ->
-            if (awayTeamApiId <= 0) {
-                log.error("Invalid awayTeam apiId at index $index: $awayTeamApiId. Must be positive.")
-                throw IllegalArgumentException("AwayTeam apiId must be positive, but was: $awayTeamApiId at index $index")
-            }
-        }
+
+        log.info("Season consistency validated: {}", seasons.first())
     }
 
-    // ============================================================================
-    // Phase 2: 기존 엔티티 데이터 수집
-    // ============================================================================
-    
     /**
-     * Phase 2: 기존 엔티티 데이터 수집
+     * 기존 엔티티 데이터 수집
      *
      * API 데이터 동기화 작업에 필요한 기존에 저장된 엔티티들을 미리 수집합니다.
      * 이후 이뤄지는 작업에서 추가 조회를 막기 위해, 이 메서드에서 수집하여 반환한 [FixtureDataCollection] 에 담긴 엔티티를 사용해야 합니다.
@@ -303,49 +240,46 @@ class FixtureApiSportsWithCoreSyncer(
      * @see FixtureDataCollection
      */
     private fun collectFixtureData(
-        leagueApiId: Long, 
-        seasonYear: String, 
+        leagueApiId: Long,
+        seasonYear: Int,
         dtos: List<FixtureApiSportsSyncDto>
     ): FixtureDataCollection {
-        log.info("Starting Phase 2 data collection for leagueApiId: $leagueApiId, seasonYear: $seasonYear")
-        
-        // 조회1: League 관련 데이터
-        val league = leagueApiSportsRepository.findByApiIdAndSeasonWithCoreAndSeasons(leagueApiId, seasonYear.toInt())
+        log.info("Starting collecting data for leagueApiId: {}, seasonYear: {}", leagueApiId, seasonYear)
+
+        // League Entity 수집
+        val league = leagueApiSportsRepository.findByApiIdAndSeasonWithCoreAndSeasons(leagueApiId, seasonYear)
             ?: throw IllegalStateException("League not found with apiId: $leagueApiId and season: $seasonYear")
-        log.info("Found league: ${league.name} with ${league.seasons.size} seasons")
+        log.info("Found league: {} with {} seasons", league.name, league.seasons.size)
 
-        // 조회2: Fixture 데이터 (League+Season 전용)
-        val fixtures = fixtureApiSportsRepository.findFixturesByLeagueAndSeason(
-            leagueApiId, seasonYear.toInt()
-        )
+        // Fixture Entity 수집
+        // 기본은 리그+시즌만 조회하고, 리그+시즌 조회에서 누락된 dto apiId가 있으면 그때만 id기반 보강 조회를 수행합니다.
+        val fixturesBySeason = fixtureApiSportsRepository.findFixturesByLeagueAndSeason(leagueApiId, seasonYear)
 
-        log.info("Found ${fixtures.size} fixtures (league+season based)")
-        
-        // Team ID 추출 (기존 Fixture 에서)
+        val extraByIds = collectMissingFixturesNotInSeasonFixtures(dtos, fixturesBySeason)
+        if (extraByIds.isNotEmpty()) {
+            log.warn("[Safety Merge] {} fixtures missing from league+season lookup; merging by apiId. ids={}",
+                extraByIds.size,extraByIds.map { it.apiId })
+        }
+
+        val fixtures = (fixturesBySeason + extraByIds).distinctBy { it.apiId }
+        log.info("Found {} fixtures (league+season merged; extraByIds={})", fixtures.size, extraByIds.size)
+
+        // Team Entity 수집
+        // 저장된 Fixture 들의 Team 과 Dtos 에 담긴 Team 정보를 모두 수집하여 Team 엔티티 조회
         val fixtureTeamApiSportsIds = fixtures.flatMap { fixture ->
-            listOfNotNull(
-                fixture.homeTeam?.id,
-                fixture.awayTeam?.id
-            )
-        }.distinct()
-        
-        // DTO에서 Team ApiId 추출
+            listOfNotNull(fixture.homeTeam?.id, fixture.awayTeam?.id)}.distinct()
         val dtoTeamApiIds = dtos.flatMap { dto ->
-            listOfNotNull(
-                dto.homeTeam?.apiId,
-                dto.awayTeam?.apiId
-            )
-        }.distinct()
-        
-        log.info("Extracted ${fixtureTeamApiSportsIds.size} team PKs from fixtures, ${dtoTeamApiIds.size} team ApiIds from DTOs")
-        
-        // 조회3: Team 데이터 (PK OR ApiId 기반)
+            listOfNotNull(dto.homeTeam?.apiId, dto.awayTeam?.apiId)}.distinct()
+        log.info("Extracted {} team PKs from fixtures, {} team ApiIds from DTOs",
+            fixtureTeamApiSportsIds.size, dtoTeamApiIds.size)
+
         val teams = if (fixtureTeamApiSportsIds.isNotEmpty() || dtoTeamApiIds.isNotEmpty()) {
             teamApiSportsRepository.findAllWithTeamCoreByPkOrApiIds(fixtureTeamApiSportsIds, dtoTeamApiIds)
         } else {
             emptyList()
         }
-        log.info("Found ${teams.size} teams with core data")
+        log.info("Found {} teams with core data", teams.size)
+
         return FixtureDataCollection(
             league = league,
             fixtures = fixtures,
@@ -353,12 +287,25 @@ class FixtureApiSportsWithCoreSyncer(
         )
     }
 
-    // ============================================================================
-    // Phase 3: Venue 처리
-    // ============================================================================
-    
     /**
-     * Phase 3: Venue 저장/업데이트
+     * dto 에는 있는 apiId 이지만 season 기반 조회에 누락된 경우,
+     * 같은 apiId 가 중복으로 저장되어 Unique 제약조건 위반이 발생할 수 있으므로 missing 검사 및 조회 수행
+     */
+    private fun collectMissingFixturesNotInSeasonFixtures(
+        dtos: List<FixtureApiSportsSyncDto>,
+        fixturesBySeason: List<FixtureApiSports>
+    ): List<FixtureApiSports> {
+        val dtoIds = dtos.mapNotNull { it.apiId }
+        val existingIds = fixturesBySeason.map { it.apiId }.toSet()
+        val missingIds = dtoIds.toSet() - existingIds
+        val extraByIds = if (missingIds.isNotEmpty()) {
+            fixtureApiSportsRepository.findAllByApiIdIn(missingIds.toList())
+        } else emptyList()
+        return extraByIds
+    }
+
+    /**
+     * Venue 저장/업데이트
      *
      * 제공된 Fixture DTO 들을 기반으로 VenueApiSports 엔티티를 생성/업데이트합니다.
      *
@@ -367,26 +314,23 @@ class FixtureApiSportsWithCoreSyncer(
         dtos: List<FixtureApiSportsSyncDto>,
         fixtureData: FixtureDataCollection
     ): Map<Long, VenueApiSports> {
-        log.info("Starting Phase 3 venue processing")
-        
+        log.info("starting venue processing")
+
         // 1) Venue 케이스 분리
         val venueCases = separateVenueCases(dtos, fixtureData)
-        log.info("Venue cases separated: " +
-                "New: ${venueCases.newVenues.size}, " +
-                "Update: ${venueCases.updateVenues.size}, " +
-                "PreventUpdate: ${venueCases.preventUpdateVenues.size}")
-        
+        log.info("Venue cases separated [New: {}, Update: {}, PreventUpdate: {}",
+            venueCases.newVenues.size, venueCases.updateVenues.size, venueCases.preventUpdateVenues.size)
+
         // 2) Venue 배치 저장/업데이트
         val venueMap = saveVenuesBatch(venueCases)
-        
+
         // 3) 상세 로깅
         val allVenueApiIds = venueMap.keys.sorted()
-        log.info("Phase 3 venue processing completed. " +
-                "Total venues: ${venueMap.size}, " +
-                "API IDs: $allVenueApiIds")
+        log.info("venue processing completed. Total venues: {}, API IDs: {}",venueMap.size, allVenueApiIds)
+
         return venueMap
     }
-    
+
     /**
      * Venue 케이스 분리
      */
@@ -397,16 +341,16 @@ class FixtureApiSportsWithCoreSyncer(
         val newVenues = mutableListOf<VenueOfFixtureApiSportsCreateDto>()
         val updateVenues = mutableListOf<Pair<VenueApiSports, VenueOfFixtureApiSportsCreateDto>>()
         val preventUpdateVenues = mutableListOf<VenueApiSports>()
-        
+
         // 기존 Venue를 apiId로 매핑
         val existingVenuesMap = fixtureData.fixtures
             .mapNotNull { it.venue }
             .associateBy { it.apiId }
-        
+
         dtos.forEach { dto ->
             dto.venue?.let { venueDto ->
                 val existingVenue = existingVenuesMap[venueDto.apiId]
-                
+
                 if (existingVenue != null) {
                     if (!existingVenue.preventUpdate) {
                         updateVenues.add(existingVenue to venueDto)
@@ -418,47 +362,47 @@ class FixtureApiSportsWithCoreSyncer(
                 }
             }
         }
-        
+
         return VenueProcessingCases(newVenues, updateVenues, preventUpdateVenues)
     }
-    
+
     /**
      * Venue 배치 저장/업데이트
      */
     private fun saveVenuesBatch(venueCases: VenueProcessingCases): Map<Long, VenueApiSports> {
         val resultMap = mutableMapOf<Long, VenueApiSports>()
-        
+
         // 1. 새 Venue 생성
         val newVenues = venueCases.newVenues.map { dto ->
             createVenueApiSports(dto)
         }
-        
+
         // 2. 기존 Venue 업데이트
         val updatedVenues = venueCases.updateVenues.map { (existingVenue, dto) ->
             updateVenueApiSports(existingVenue, dto)
         }
-        
+
         // 3. Venue 배치 저장
         val savedVenues = if (newVenues.isNotEmpty() || updatedVenues.isNotEmpty()) {
             venueApiSportsRepository.saveAll(newVenues + updatedVenues)
         } else {
             emptyList()
         }
-        
+
         // 4. preventUpdate Venue들 (업데이트하지 않지만 맵에 포함)
         val preventUpdateVenues = venueCases.preventUpdateVenues
-        
+
         // 5. 결과 맵 구성
         (savedVenues + preventUpdateVenues).forEach { venue ->
             venue.apiId?.let { apiId ->
                 resultMap[apiId] = venue
             }
         }
-        
+
         return resultMap
     }
-    
-        /**
+
+    /**
      * 새 VenueApiSports 생성
      */
     private fun createVenueApiSports(dto: VenueOfFixtureApiSportsCreateDto): VenueApiSports {
@@ -475,18 +419,14 @@ class FixtureApiSportsWithCoreSyncer(
         return venueApiSportsFactory.updateVenueApiSports(existingVenue, dto)
     }
 
-    // ============================================================================
-    // Phase 4: Fixture 케이스 분리
-    // ============================================================================
-    
     /**
-     * Phase 4: Fixture 케이스 분리
-     * 
-     * 입력된 Fixture DTO들과 기존 FixtureApiSports 엔티티들을 비교하여 3가지 케이스로 분류합니다:
-     * 1. bothExistFixtures: FixtureApiSports와 FixtureCore가 모두 존재하는 경우 (업데이트 대상)
-     * 2. apiOnlyFixtures: FixtureApiSports는 존재하지만 FixtureCore가 없는 경우 (Core 연결 대상)
-     * 3. bothNewDtos: FixtureApiSports와 FixtureCore가 모두 없는 경우 (새로 생성 대상)
-     * 
+     * Fixture 케이스 분리
+     *
+     * DB 에 기존에 저장된 [FixtureApiSports] 엔티티 중, [FixtureCore] 존재 유무에 따라서 3가지 케이스로 분리합니다.
+     * 1. bothExistFixtures: {Core O, Api O} (업데이트 대상)
+     * 2. apiOnlyFixtures: {Core X, Api O} (Core 연결 대상)
+     * 3. bothNewDtos: {Core X, Api X} (새로 생성 대상)
+     *
      * @param dtos 처리할 Fixture DTO 목록
      * @param existingFixtures 기존 FixtureApiSports 엔티티 목록
      * @return 분류된 케이스들
@@ -498,128 +438,127 @@ class FixtureApiSportsWithCoreSyncer(
         val bothExistFixtures = mutableListOf<FixtureWithDto>()
         val apiOnlyFixtures = mutableListOf<FixtureWithDto>()
         val bothNewDtos = mutableListOf<FixtureApiSportsSyncDto>()
-        val providerMissingFixtures = mutableListOf<FixtureApiSports>()
-        
+        val missingFixtures = mutableListOf<FixtureApiSports>()
+
         // 기존 FixtureApiSports를 apiId로 매핑
         val existingFixturesMap = existingFixtures.associateBy { it.apiId }
         val dtoByApiId = dtos.mapNotNull { it.apiId?.let { id -> id to it } }.toMap()
-        
+
         dtos.forEach { dto ->
             val existingFixture = existingFixturesMap[dto.apiId]
-            
+
             if (existingFixture != null) {
                 if (existingFixture.core != null) {
-                    // FixtureApiSports O, FixtureCore O
+                    // [Core O, Api O]
                     bothExistFixtures.add(FixtureWithDto(existingFixture, dto))
                 } else {
-                    // FixtureApiSports O, FixtureCore X
+                    // [Core X, Api O]
                     apiOnlyFixtures.add(FixtureWithDto(existingFixture, dto))
                 }
             } else {
-                // FixtureApiSports X, FixtureCore X
+                // [Core X, Api X]
                 bothNewDtos.add(dto)
             }
         }
-        
-        // 기존인데 DTO가 없는 경우: 공급자 불일치로 분류
+
+        // DB 조회에 들어온 Fixture 인데 DTO 에는 없는 경우 Missing 처리 대상으로 분류
         existingFixtures.forEach { existing ->
-            if (!dtoByApiId.containsKey(existing.apiId)) {
-                providerMissingFixtures.add(existing)
-            }
+            if (!dtoByApiId.containsKey(existing.apiId)) missingFixtures.add(existing)
         }
-        
-        log.info("Phase 4 case separation completed " +
-                "Both exist: ${bothExistFixtures.size}, " +
-                "Api only: ${apiOnlyFixtures.size}, " +
-                "Both new: ${bothNewDtos.size}, " +
-                "Provider missing: ${providerMissingFixtures.size}")
+
+        log.info("Fixture Case separation completed [Both exist: {}, Api only: {}, New: {}]",
+            bothExistFixtures.size,apiOnlyFixtures.size,bothNewDtos.size)
+
+        if (missingFixtures.isNotEmpty()) {
+            log.warn("missingFixtures detected: size={} Should check these FixtureApiSports apiIds={}",
+                missingFixtures.size, missingFixtures.map { it.apiId })
+        }
+
         return FixtureProcessingCases(bothExistFixtures, apiOnlyFixtures, bothNewDtos)
     }
 
-    // ============================================================================
-    // Phase 5: FixtureCore 저장
-    // ============================================================================
-    
     /**
-     * Phase 5: 새로운 FixtureCore 저장
-     * 
+     * 새로운 FixtureCore 저장
+     *
      * Identity Pairing Pattern을 사용하여 UID를 생성하고 FixtureCore를 생성합니다.
-     * 
+     *
      * @param fixtureCases 분리된 Fixture 케이스들
      * @param fixtureData 수집된 데이터
-     * @return ApiId -> FixtureCore 맵 (영속 상태)
+     * @return `Map<ApiId, FixtureCore>` 영속 상태의 [FixtureCore]
      */
-    private fun saveNewCores(
+    private fun saveNewFixtureCores(
         fixtureCases: FixtureProcessingCases,
         fixtureData: FixtureDataCollection
     ): Map<Long, FixtureCore> {
-        log.info("starting new core save process")
+        log.info("starting fixture new core save process")
 
+        // collect DTOs for core creation
         val coreCreateDtos = mutableListOf<FixtureApiSportsSyncDto>()
-        fixtureCases.apiOnlyFixtures.forEach { (_,dto) -> coreCreateDtos.add(dto) }
+        fixtureCases.apiOnlyFixtures.forEach { (_, dto) -> coreCreateDtos.add(dto) }
         coreCreateDtos.addAll(fixtureCases.bothNewDtos)
-
         if (coreCreateDtos.isEmpty()) {
             log.info("No new FixtureCore DTOs to create. Skipping core creation.")
             return emptyMap()
         }
-        log.info("Collected ${coreCreateDtos.size} DTOs for core creation")
+        log.info("Collected {} DTOs for core creation", coreCreateDtos.size)
 
-        val uidPairs = fixtureCoreSyncService.generateUidPairs(coreCreateDtos)
-        log.info("Generated ${uidPairs.size} UID pairs")
-
-        val uidToApiIdMap = uidPairs.associate { (uid, dto) ->
-            uid to (dto.apiId ?: throw IllegalArgumentException("ApiId is required for core creation"))
-        }
-
-        val teamMap = fixtureData.teams.filter { it.apiId != null }.associateBy { it.apiId!! }
+        // generate UID for core, pairing with DTO
+        val uidFixtureApiSyncDtoPairs = fixtureCoreSyncService.generateUidPairs(coreCreateDtos)
+        log.info("Generated {} UID pairs", uidFixtureApiSyncDtoPairs.size)
 
         val leagueCore = fixtureData.league.leagueCore ?: throw IllegalStateException("LeagueCore must not be null for core creation")
-        val coreCreatePairs = uidPairs.map { (uid, dto) ->
-            val homeTeam = dto.homeTeam?.apiId?.let { teamMap[it] }?.teamCore
-            val awayTeam = dto.awayTeam?.apiId?.let { teamMap[it] }?.teamCore
+        // Map<Team ApiId, TeamApiSports>
+        val teamEntityFromApiId = fixtureData.teams.filter { it.apiId != null }.associateBy { it.apiId!! }
+        val savedUidToCoreMap = saveFixtureCoreAndGetMap(uidFixtureApiSyncDtoPairs, teamEntityFromApiId, leagueCore)
+        log.info("Successfully created {} FixtureCores", savedUidToCoreMap.size)
 
-            val coreDto = fixtureDataMapper.toFixtureCoreCreateDto(
-                uid = uid,
-                dto = dto,
-                league = leagueCore,
-                homeTeam = homeTeam,
-                awayTeam = awayTeam
-            )
+        // Map<ApiId, FixtureCore>
+        val apiIdToCoreMap = createApiIdToCoreMap(savedUidToCoreMap, uidFixtureApiSyncDtoPairs)
+        log.info("Fixture New Core save completed. Total cores: {}", apiIdToCoreMap.size)
+        return apiIdToCoreMap
+    }
+
+    private fun createApiIdToCoreMap(
+        savedUidToCoreMap: Map<String, FixtureCore>,
+        uidPairs: List<Pair<String, FixtureApiSportsSyncDto>>
+    ): Map<Long, FixtureCore> {
+        // Map<Uid, ApiId>
+        val uidToApiIdMap = uidPairs.associate { (uid, dto) ->
+            val apiId = dto.apiId ?: throw IllegalArgumentException("ApiId is required for core creation")
+            uid to apiId
+        }
+        // Map<Uid, Core> -> Map<ApiId, Core>
+        return savedUidToCoreMap.mapKeys { (uid, _) ->
+            uidToApiIdMap[uid] ?: throw IllegalStateException("ApiId not found for UID: $uid")
+        }
+    }
+
+    /**
+     * [FixtureCore] 저장 후 `Map<UID, FixtureCore>` 맵 반환
+     */
+    private fun saveFixtureCoreAndGetMap(
+        uidPairs: List<Pair<String, FixtureApiSportsSyncDto>>,
+        teamEntityFromApiId: Map<Long, TeamApiSports>,
+        leagueCore: LeagueCore
+    ): Map<String, FixtureCore> {
+        val fixtureCoreCreatePairs = uidPairs.map { (uid, dto) ->
+            val homeTeam = dto.homeTeam?.apiId?.let { teamEntityFromApiId[it] }?.teamCore
+            val awayTeam = dto.awayTeam?.apiId?.let { teamEntityFromApiId[it] }?.teamCore
+
+            val coreDto = fixtureDataMapper.toFixtureCoreCreateDto(uid, dto, leagueCore, homeTeam, awayTeam)
             uid to coreDto
         }
 
-        val savedCoreMap = fixtureCoreSyncService.createFixtureCores(coreCreatePairs)
-        log.info("Successfully created ${savedCoreMap.size} FixtureCores")
-
-        val resultMap = mutableMapOf<Long, FixtureCore>()
-
-        savedCoreMap.entries.forEach { (uid, core) ->
-            val apiId = uidToApiIdMap[uid]
-                ?: throw IllegalStateException("UID $uid not found in mapping table")
-            resultMap[apiId] = core
-        }
-
-        fixtureData.fixtures.forEach { fixture ->
-            fixture.core?.let { core ->
-                resultMap[fixture.apiId] = core
-            }
-        }
-
-        log.info("Phase 5 core save completed. Total cores: ${resultMap.size} (New: ${savedCoreMap.size}, Existing: ${fixtureData.fixtures.count { it.core != null }})")
-        return resultMap.toMap() // 불변 Map으로 변환
+        val savedUidToCoreMap = fixtureCoreSyncService.createFixtureCores(fixtureCoreCreatePairs)
+        return savedUidToCoreMap
     }
 
-    // ============================================================================
-    // Phase 6: FixtureApiSports 저장/업데이트
-    // ============================================================================
-    
     /**
-     * Phase 6: FixtureApiSports 저장/업데이트
-     * 
+     * FixtureApiSports 저장/업데이트
+     *
      * Venue와 유사한 패턴으로 FixtureApiSports를 처리하되,
      * FixtureCore FK를 바로 설정하여 성능을 최적화합니다.
-     * 
+     *
      * @param fixtureCases 분리된 Fixture 케이스들
      * @param fixtureData 수집된 데이터
      * @param venueMap VenueApiSports 맵 (Phase 3에서 생성)
@@ -631,18 +570,17 @@ class FixtureApiSportsWithCoreSyncer(
         fixtureData: FixtureDataCollection,
         venueMap: Map<Long, VenueApiSports>,
         coreMap: Map<Long, FixtureCore>,
-        seasonYear: Int,
-        dtos: List<FixtureApiSportsSyncDto>
+        seasonYear: Int
     ): Map<Long, FixtureApiSports> {
-        log.info("Starting Phase 6 FixtureApiSports processing")
-        
+        log.info("Starting FixtureApiSports save & update")
+
         // 1) FixtureApiSports 케이스 분리
         val fixtureApiSportsCases = separateFixtureApiSportsCases(fixtureCases)
-        log.info("FixtureApiSports cases separated: " +
-                "New: ${fixtureApiSportsCases.newFixtures.size}, " +
-                "Update: ${fixtureApiSportsCases.updateFixtures.size}, " +
-                "PreventUpdate: ${fixtureApiSportsCases.preventUpdateFixtures.size}")
-        
+        log.info("FixtureApiSports cases separated: New: {}, Update: {}, PreventUpdate: {}",
+            fixtureApiSportsCases.newFixtures.size,
+            fixtureApiSportsCases.updateFixtures.size,
+            fixtureApiSportsCases.preventUpdateFixtures.size)
+
         // 2) FixtureApiSports 배치 저장/업데이트
         val fixtureApiSportsMap = saveFixtureApiSportsBatch(fixtureApiSportsCases, fixtureData, venueMap, coreMap)
 
@@ -653,22 +591,21 @@ class FixtureApiSportsWithCoreSyncer(
                 if (fas.season == null) fas.season = season
             }
         }
-        
+
         // 3) 상세 로깅
         val allApiIds = fixtureApiSportsMap.keys.sorted()
-        log.info("Phase 6 FixtureApiSports processing completed. " +
-                "Total fixtures: ${fixtureApiSportsMap.size}, " +
-                "API IDs: $allApiIds")
+        log.info("FixtureApiSports save & update completed. Total fixtures: {}, API IDs: {}",
+            fixtureApiSportsMap.size, allApiIds)
 
         return fixtureApiSportsMap
     }
-    
+
     /**
      * FixtureApiSports 케이스 분리
-     * 
+     *
      * FixtureProcessingCases를 기반으로 preventUpdate 플래그를 고려하여
      * 새로 생성, 업데이트, preventUpdate 케이스로 분리합니다.
-     * 
+     *
      * @param fixtureCases 이미 분리된 Fixture 케이스들
      * @return preventUpdate를 고려한 FixtureApiSports 처리 케이스들
      */
@@ -678,7 +615,7 @@ class FixtureApiSportsWithCoreSyncer(
         val newFixtures = mutableListOf<FixtureApiSportsSyncDto>()
         val updateFixtures = mutableListOf<Pair<FixtureApiSports, FixtureApiSportsSyncDto>>()
         val preventUpdateFixtures = mutableListOf<FixtureApiSports>()
-        
+
         // bothExistFixtures: 이미 (Entity, DTO) 쌍이므로 그대로 분류
         fixtureCases.bothExistFixtures.forEach { it ->
             val entity = it.entity
@@ -689,7 +626,7 @@ class FixtureApiSportsWithCoreSyncer(
                 preventUpdateFixtures.add(entity)
             }
         }
-        
+
         // apiOnlyFixtures: Core FK 연결 대상 (업데이트 경로)
         fixtureCases.apiOnlyFixtures.forEach { it ->
             val entity = it.entity
@@ -700,13 +637,13 @@ class FixtureApiSportsWithCoreSyncer(
                 preventUpdateFixtures.add(entity)
             }
         }
-        
+
         // bothNewDtos: 새로 생성 대상
         newFixtures.addAll(fixtureCases.bothNewDtos)
-        
+
         return FixtureApiSportsProcessingCases(newFixtures, updateFixtures, preventUpdateFixtures)
     }
-    
+
     /**
      * FixtureApiSports 배치 저장/업데이트
      */
@@ -717,45 +654,45 @@ class FixtureApiSportsWithCoreSyncer(
         coreMap: Map<Long, FixtureCore>
     ): Map<Long, FixtureApiSports> {
         val resultMap = mutableMapOf<Long, FixtureApiSports>()
-        
+
         // 1. 새 FixtureApiSports 생성
         val newFixtures = fixtureCases.newFixtures.map { dto ->
             createFixtureApiSports(dto, fixtureData, venueMap, coreMap)
         }
 
-        log.info("coreMap keys: ${coreMap.keys.sorted()}")
+        log.info("coreMap keys: {}", coreMap.keys.sorted())
         log.info("existingFixtures [apiId, coreId]: {}", fixtureData.fixtures.map { "${it.apiId}, ${it.core?.id}" })
         // 2. 기존 FixtureApiSports 업데이트
         val updatedFixtures = fixtureCases.updateFixtures.map { (existingFixture, dto) ->
             updateFixtureApiSports(existingFixture, dto, fixtureData, venueMap, coreMap)
         }
-        
+
         // 3. FixtureApiSports 배치 저장
         val savedFixtures = if (newFixtures.isNotEmpty() || updatedFixtures.isNotEmpty()) {
             fixtureApiSportsRepository.saveAll(newFixtures + updatedFixtures)
         } else {
             emptyList()
         }
-        
+
         // 4. preventUpdate FixtureApiSports들 (업데이트하지 않지만 맵에 포함)
         val preventUpdateFixtures = fixtureCases.preventUpdateFixtures
-        
+
         // 5. 결과 맵 구성
         (savedFixtures + preventUpdateFixtures).forEach { fixture ->
             resultMap[fixture.apiId] = fixture
         }
-        
+
         return resultMap
     }
-    
-        /**
+
+    /**
      * 새 FixtureApiSports 생성
      */
     private fun createFixtureApiSports(
-            dto: FixtureApiSportsSyncDto,
-            fixtureData: FixtureDataCollection,
-            venueMap: Map<Long, VenueApiSports>,
-            coreMap: Map<Long, FixtureCore>
+        dto: FixtureApiSportsSyncDto,
+        fixtureData: FixtureDataCollection,
+        venueMap: Map<Long, VenueApiSports>,
+        coreMap: Map<Long, FixtureCore>
     ): FixtureApiSports {
         return fixtureApiSportsFactory.createFixtureApiSports(dto, fixtureData, venueMap, coreMap)
     }
@@ -773,10 +710,6 @@ class FixtureApiSportsWithCoreSyncer(
         return fixtureApiSportsFactory.updateFixtureApiSports(existingFixture, dto, fixtureData, venueMap, coreMap)
     }
 
-    // ============================================================================
-    // 유틸리티 메서드
-    // ============================================================================
-    
     /**
      * 누락된 팀 검증
      *
@@ -790,17 +723,23 @@ class FixtureApiSportsWithCoreSyncer(
         val entityTeamApiIds = mutableSetOf<Long>()
 
         dtos.forEach { fixture ->
-            if(fixture.homeTeam?.apiId != null) { dtoTeamApiIds.add(fixture.homeTeam!!.apiId!!) }
-            if(fixture.awayTeam?.apiId != null) { dtoTeamApiIds.add(fixture.awayTeam!!.apiId!!) }
+            if (fixture.homeTeam?.apiId != null) {
+                dtoTeamApiIds.add(fixture.homeTeam!!.apiId!!)
+            }
+            if (fixture.awayTeam?.apiId != null) {
+                dtoTeamApiIds.add(fixture.awayTeam!!.apiId!!)
+            }
         }
 
         fixtureData.teams.forEach { team ->
-            if(team.apiId != null) { entityTeamApiIds.add(team.apiId!!) }
+            if (team.apiId != null) {
+                entityTeamApiIds.add(team.apiId!!)
+            }
         }
 
         val missingTeams = dtoTeamApiIds - entityTeamApiIds
         if (missingTeams.isNotEmpty()) {
-            log.warn("Missing teams for API IDs: $missingTeams")
+            log.warn("Missing teams for API IDs: {}", missingTeams)
             throw IllegalStateException("Some teams are missing in the database: $missingTeams")
         }
     }

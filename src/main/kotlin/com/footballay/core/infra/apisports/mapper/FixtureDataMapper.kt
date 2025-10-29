@@ -57,7 +57,7 @@ interface FixtureDataMapper {
     fun toFixtureCoreCreateDto(
         uid: String,
         dto: FixtureApiSportsSyncDto,
-        league: LeagueCore,
+        leagueCore: LeagueCore,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?
     ): FixtureCoreCreateDto
@@ -109,7 +109,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
     override fun toFixtureCoreCreateDto(
         uid: String,
         dto: FixtureApiSportsSyncDto,
-        league: LeagueCore,
+        leagueCore: LeagueCore,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?
     ): FixtureCoreCreateDto {
@@ -131,7 +131,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
             elapsedMin = dto.status?.elapsed,
             goalsHome = dto.score?.fulltimeHome,
             goalsAway = dto.score?.fulltimeAway,
-            leagueCore = league,
+            leagueCore = leagueCore,
             homeTeam = homeTeam,
             awayTeam = awayTeam,
             finished = false, // 기본값

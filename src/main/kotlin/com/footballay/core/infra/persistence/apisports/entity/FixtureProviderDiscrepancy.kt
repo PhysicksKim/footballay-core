@@ -43,7 +43,7 @@ data class FixtureProviderDiscrepancy(
     var leagueApiId: Long,
 
     @Column(name = "season_year", nullable = false)
-    var seasonYear: String,
+    var seasonYear: Int,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

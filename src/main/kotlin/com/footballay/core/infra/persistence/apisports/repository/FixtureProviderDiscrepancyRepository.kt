@@ -7,12 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface FixtureProviderDiscrepancyRepository : JpaRepository<FixtureProviderDiscrepancy, Long> {
     fun findByProviderAndFixtureApiId(provider: DataProvider, fixtureApiId: Long): FixtureProviderDiscrepancy?
-    fun findAllByProviderAndLeagueApiIdAndSeasonYearAndState(
-        provider: DataProvider,
-        leagueApiId: Long,
-        seasonYear: String,
-        state: DiscrepancyState,
-    ): List<FixtureProviderDiscrepancy>
 }
 
 

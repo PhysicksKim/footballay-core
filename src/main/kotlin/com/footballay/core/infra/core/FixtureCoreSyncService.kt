@@ -64,7 +64,7 @@ interface FixtureCoreSyncService {
      * FixtureCore들을 배치로 생성합니다.
      * 
      * @param createPairs UID와 FixtureCore 생성 DTO의 쌍 목록
-     * @return UID -> FixtureCore 맵 (영속 상태)
+     * @return `Map<UID, FixtureCore>` 영속 상태의 FixtureCore 맵
      */
     fun createFixtureCores(createPairs: List<Pair<String, FixtureCoreCreateDto>>): Map<String, FixtureCore>
     
@@ -72,7 +72,7 @@ interface FixtureCoreSyncService {
      * FixtureCore들을 배치로 업데이트합니다.
      * 
      * @param updatePairs FixtureCore 엔티티와 업데이트 DTO의 쌍 목록
-     * @return UID -> FixtureCore 맵 (영속 상태)
+     * @return `Map<UID, FixtureCore>` 영속 상태의 FixtureCore 맵
      */
     fun updateFixtureCores(updatePairs: List<Pair<FixtureCore, FixtureCoreUpdateDto>>): Map<String, FixtureCore>
 } 

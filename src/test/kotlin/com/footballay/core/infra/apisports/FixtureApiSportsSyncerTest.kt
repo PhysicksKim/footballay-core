@@ -64,7 +64,6 @@ class FixtureApiSportsSyncerTest {
             fixtureDataMapper = fixtureDataMapper,
             fixtureApiSportsFactory = fixtureApiSportsFactory,
             venueApiSportsFactory = venueApiSportsFactory,
-            discrepancyRepository = discrepancyRepository,
         )
     }
 
