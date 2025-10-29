@@ -15,6 +15,8 @@ import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSport
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsSeasonRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.util.UidGenerator
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -24,9 +26,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -72,7 +71,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalArgumentException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(validDto))
         }
-        assertEquals("LeagueApiId must be positive, but was: -1", exception.message)
+        assertThat(exception.message).isEqualTo("LeagueApiId must be positive, but was: -1")
     }
 
     @Test
@@ -86,95 +85,107 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalArgumentException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(validDto))
         }
-        assertEquals("LeagueApiId must be positive, but was: 0", exception.message)
+        assertThat(exception.message).isEqualTo("LeagueApiId must be positive, but was: 0")
     }
 
     @Test
-    @DisplayName("빈 DTO 리스트로 호출 시 IllegalArgumentException 발생")
-    fun `빈 DTO 리스트로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("빈 DTO 리스트로 호출 시 빈 맵 반환")
+    fun `빈 DTO 리스트로 호출 시 빈 맵 반환`() {
         // given
         val leagueApiId = 39L
         val emptyDtos = emptyList<FixtureApiSportsSyncDto>()
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, emptyDtos)
-        }
-        assertEquals("Fixture DTO list cannot be empty", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, emptyDtos)
+
+        // then
+        assertThat(result).isEmpty()
     }
 
     @Test
-    @DisplayName("null apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생")
-    fun `null apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("null apiId가 포함된 DTO는 필터링되어 제외됨")
+    fun `null apiId가 포함된 DTO는 필터링되어 제외됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNullApiId = createValidFixtureDto().copy(apiId = null)
+        val validDto = createValidFixtureDto().copy(apiId = 1001L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNullApiId))
-        }
-        assertEquals("Fixture apiId must be positive, but was: null at index 0", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNullApiId, validDto))
+
+        // then
+        assertThat(result).hasSize(1) // 유효한 DTO 1개만 저장됨
+        assertThat(result[1001L]).isNotNull
     }
 
     @Test
-    @DisplayName("음수 apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생")
-    fun `음수 apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("음수 apiId가 포함된 DTO는 필터링되어 제외됨")
+    fun `음수 apiId가 포함된 DTO는 필터링되어 제외됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNegativeApiId = createValidFixtureDto().copy(apiId = -1L)
+        val validDto = createValidFixtureDto().copy(apiId = 1001L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeApiId))
-        }
-        assertEquals("Fixture apiId must be positive, but was: -1 at index 0", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeApiId, validDto))
+
+        // then
+        assertThat(result).hasSize(1)
+        assertThat(result[1001L]).isNotNull
     }
 
     @Test
-    @DisplayName("0 apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생")
-    fun `0 apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("0 apiId가 포함된 DTO는 필터링되어 제외됨")
+    fun `0 apiId가 포함된 DTO는 필터링되어 제외됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithZeroApiId = createValidFixtureDto().copy(apiId = 0L)
+        val validDto = createValidFixtureDto().copy(apiId = 1001L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithZeroApiId))
-        }
-        assertEquals("Fixture apiId must be positive, but was: 0 at index 0", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithZeroApiId, validDto))
+
+        // then
+        assertThat(result).hasSize(1)
+        assertThat(result[1001L]).isNotNull
     }
 
     @Test
-    @DisplayName("음수 homeTeam apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생")
-    fun `음수 homeTeam apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("음수 homeTeam apiId가 포함된 DTO는 필터링되어 제외됨")
+    fun `음수 homeTeam apiId가 포함된 DTO는 필터링되어 제외됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNegativeHomeTeamApiId = createValidFixtureDto().copy(
+            apiId = 1001L,
             homeTeam = TeamOfFixtureApiSportsCreateDto(apiId = -1L, name = "Home Team")
         )
+        val validDto = createValidFixtureDto().copy(apiId = 1002L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeHomeTeamApiId))
-        }
-        assertEquals("HomeTeam apiId must be positive, but was: -1 at index 0", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeHomeTeamApiId, validDto))
+
+        // then
+        assertThat(result).hasSize(1)
+        assertThat(result[1002L]).isNotNull
     }
 
     @Test
-    @DisplayName("음수 awayTeam apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생")
-    fun `음수 awayTeam apiId가 포함된 DTO로 호출 시 IllegalArgumentException 발생`() {
+    @DisplayName("음수 awayTeam apiId가 포함된 DTO는 필터링되어 제외됨")
+    fun `음수 awayTeam apiId가 포함된 DTO는 필터링되어 제외됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNegativeAwayTeamApiId = createValidFixtureDto().copy(
+            apiId = 1001L,
             awayTeam = TeamOfFixtureApiSportsCreateDto(apiId = -1L, name = "Away Team")
         )
+        val validDto = createValidFixtureDto().copy(apiId = 1002L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeAwayTeamApiId))
-        }
-        assertEquals("AwayTeam apiId must be positive, but was: -1 at index 0", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNegativeAwayTeamApiId, validDto))
+
+        // then
+        assertThat(result).hasSize(1)
+        assertThat(result[1002L]).isNotNull
     }
 
     @Test
@@ -200,19 +211,22 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     }
 
     @Test
-    @DisplayName("여러 DTO 중 하나에 문제가 있을 때 올바른 인덱스 표시")
-    fun `여러 DTO 중 하나에 문제가 있을 때 올바른 인덱스 표시`() {
+    @DisplayName("여러 DTO 중 일부가 invalid하면 유효한 것만 저장됨")
+    fun `여러 DTO 중 일부가 invalid하면 유효한 것만 저장됨`() {
         // given
-        val leagueApiId = 39L
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
         val validDto1 = createValidFixtureDto().copy(apiId = 1001L)
         val invalidDto = createValidFixtureDto().copy(apiId = -1L)
         val validDto2 = createValidFixtureDto().copy(apiId = 1003L)
 
-        // when & then
-        val exception = assertThrows<IllegalArgumentException> {
-            syncer.saveFixturesOfLeague(leagueApiId, listOf(validDto1, invalidDto, validDto2))
-        }
-        assertEquals("Fixture apiId must be positive, but was: -1 at index 1", exception.message)
+        // when
+        val result = syncer.saveFixturesOfLeague(leagueApiId, listOf(validDto1, invalidDto, validDto2))
+
+        // then
+        assertThat(result).hasSize(2) // 유효한 2개만 저장됨
+        assertThat(result[1001L]).isNotNull
+        assertThat(result[1003L]).isNotNull
+        assertThat(result[-1L]).isNull() // invalid는 저장 안됨
     }
 
     @Test
@@ -227,7 +241,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalArgumentException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(dto1, dto2))
         }
-        assertEquals("All fixtures must have the same season, but found: [2024, 2023]", exception.message)
+        assertThat(exception.message).isEqualTo("All fixtures must have the same season, but found: [2024, 2023]")
     }
 
     @Test
@@ -241,7 +255,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalArgumentException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithoutSeason))
         }
-        assertEquals("At least one fixture must have season information", exception.message)
+        assertThat(exception.message).isEqualTo("At least one fixture must have season information")
     }
 
     @Test
@@ -267,7 +281,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalStateException> {
             syncer.saveFixturesOfLeague(nonExistentLeagueApiId, listOf(validDto))
         }
-        assertTrue(exception.message!!.contains("League not found"))
+        assertThat(exception.message).contains("League not found")
     }
 
     @Test
@@ -281,7 +295,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalStateException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentSeason))
         }
-        assertTrue(exception.message!!.contains("League not found"))
+        assertThat(exception.message).contains("League not found")
     }
 
     @Test
@@ -296,9 +310,9 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(9999L)
-        assertNotNull(savedFixture)
-        assertEquals(9999L, savedFixture.apiId)
-        assertNotNull(savedFixture.core) // FixtureCore가 생성되었는지 확인
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.apiId).isEqualTo(9999L)
+        assertThat(savedFixture.core).isNotNull() // FixtureCore가 생성되었는지 확인
     }
 
     @Test
@@ -317,10 +331,10 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixtures = fixtureApiSportsRepository.findAllByApiIdIn(listOf(1001L, 1002L, 1003L))
-        assertEquals(3, savedFixtures.size)
+        assertThat(savedFixtures).hasSize(3)
         
         savedFixtures.forEach { fixture ->
-            assertNotNull(fixture.core) // 모든 Fixture에 Core가 생성되었는지 확인
+            assertThat(fixture.core).isNotNull() // 모든 Fixture에 Core가 생성되었는지 확인
         }
     }
 
@@ -339,9 +353,9 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(6666L)
-        assertNotNull(savedFixture)
-        assertEquals(null, savedFixture.venue) // Venue가 null인지 확인
-        assertNotNull(savedFixture.core) // Core는 정상 생성되었는지 확인
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.venue).isNull() // Venue가 null인지 확인
+        assertThat(savedFixture.core).isNotNull() // Core는 정상 생성되었는지 확인
     }
 
     @Test
@@ -360,10 +374,10 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(5555L)
-        assertNotNull(savedFixture)
-        assertEquals(null, savedFixture.homeTeam)
-        assertEquals(null, savedFixture.awayTeam)
-        assertNotNull(savedFixture.core) // Core는 정상 생성되었는지 확인
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.homeTeam).isNull()
+        assertThat(savedFixture.awayTeam).isNull()
+        assertThat(savedFixture.core).isNotNull() // Core는 정상 생성되었는지 확인
     }
 
     @Test
@@ -378,10 +392,9 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(4444L)
-        assertNotNull(savedFixture)
-        assertNotNull(savedFixture.core)
-        assertNotNull(savedFixture.core!!.uid) // UID가 생성되었는지 확인
-        assertTrue(savedFixture.core!!.uid.isNotBlank()) // UID가 비어있지 않은지 확인
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.core).isNotNull()
+        assertThat(savedFixture.core!!.uid).isNotBlank() // UID가 생성되고 비어있지 않은지 확인
     }
 
     @Test
@@ -396,13 +409,13 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(3333L)
-        assertNotNull(savedFixture)
-        assertNotNull(savedFixture.core) // Core FK가 바로 설정되었는지 확인
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.core).isNotNull() // Core FK가 바로 설정되었는지 확인
         
         // Core 엔티티가 정상적으로 저장되었는지 확인
         val core = savedFixture.core!!
-        assertNotNull(core.uid)
-        assertNotNull(core.league) // League가 설정되었는지 확인
+        assertThat(core.uid).isNotNull()
+        assertThat(core.league).isNotNull() // League가 설정되었는지 확인
     }
 
     @Test
@@ -419,7 +432,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val exception = assertThrows<IllegalStateException> {
             syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentTeam))
         }
-        assertTrue(exception.message!!.contains("Some teams are missing in the database"))
+        assertThat(exception.message).contains("Some teams are missing in the database")
     }
 
     @Test
@@ -437,8 +450,8 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // then
         val savedFixture = fixtureApiSportsRepository.findByApiId(1111L)
-        assertNotNull(savedFixture)
-        assertEquals(null, savedFixture.date) // 잘못된 날짜는 null로 처리
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.date).isNull() // 잘못된 날짜는 null로 처리
     }
 
     private fun createValidFixtureDto(): FixtureApiSportsSyncDto {

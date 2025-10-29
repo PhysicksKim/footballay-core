@@ -49,7 +49,6 @@ import com.footballay.core.infra.persistence.core.entity.LeagueCore
  * - VenueApiSports (생성/업데이트)
  * - FixtureCore (생성/업데이트)
  * - FixtureApiSports (생성/업데이트)
- * - FixtureProviderDiscrepancy (불일치 추적)
  *
  * **DTO 조건**
  * - 모든 DTO는 동일한 시즌이어야 함
@@ -85,6 +84,11 @@ class FixtureApiSportsWithCoreSyncer(
      *
      * @param leagueApiId 리그 API ID
      * @param dtos 동기화할 경기 DTO 목록 (동일 시즌이어야 합니다)
+     * @return 저장된 FixtureApiSports 맵 (ApiId -> FixtureApiSports)
+     * @throws IllegalArgumentException leagueApiId가 0 이하인 경우
+     * @throws IllegalArgumentException dtos의 시즌 정보가 일관되지 않거나 누락된 경우
+     * @throws IllegalStateException 해당 leagueApiId와 seasonYear로 League를 찾을 수 없는 경우
+     * @throws IllegalStateException dto에 명시된 팀이 데이터베이스에 존재하지 않는 경우
      */
     @Transactional
     override fun saveFixturesOfLeague(
@@ -187,6 +191,9 @@ class FixtureApiSportsWithCoreSyncer(
      * 전체 입력에 대한 치명적인 문제만 검증합니다. (leagueApiId, season 일관성 등)
      * 개별 dto의 유효성 검증은 filterValidDtos() 에서 수행됩니다.
      * DB entity 를 조회하지 않습니다.
+     *
+     * @throws IllegalArgumentException leagueApiId가 0 이하인 경우
+     * @throws IllegalArgumentException dtos의 시즌 정보가 일관되지 않거나 누락된 경우
      */
     private fun validateInput(leagueApiId: Long, dtos: List<FixtureApiSportsSyncDto>) {
         log.info("Starting Phase 1 validation for leagueApiId: {} with {} fixtures", leagueApiId, dtos.size)
@@ -208,6 +215,9 @@ class FixtureApiSportsWithCoreSyncer(
      *
      * DTO 에 담긴 season 정보가 모두 동일해야 합니다.
      * 여러 시즌이 섞여 있는 경우는 지원하지 않으므로 예외를 던집니다.
+     *
+     * @throws IllegalArgumentException dtos에 서로 다른 시즌이 포함된 경우
+     * @throws IllegalArgumentException 모든 dtos에 시즌 정보가 없는 경우
      */
     private fun validateSeasonConsistency(dtos: List<FixtureApiSportsSyncDto>) {
         val seasons = dtos.mapNotNull { it.seasonYear }.distinct()
@@ -237,6 +247,7 @@ class FixtureApiSportsWithCoreSyncer(
      *
      * 사전에 [LeagueApiSports] 와 [LeagueApiSportsSeason] 이 저장되어 있지 않은 경우 예외를 던집니다.
      *
+     * @throws IllegalStateException 해당 leagueApiId와 seasonYear로 League를 찾을 수 없는 경우
      * @see FixtureDataCollection
      */
     private fun collectFixtureData(
@@ -485,6 +496,9 @@ class FixtureApiSportsWithCoreSyncer(
      * @param fixtureCases 분리된 Fixture 케이스들
      * @param fixtureData 수집된 데이터
      * @return `Map<ApiId, FixtureCore>` 영속 상태의 [FixtureCore]
+     * @throws IllegalStateException fixtureData.league.leagueCore가 null인 경우
+     * @throws IllegalArgumentException core 생성을 위한 DTO의 apiId가 null인 경우
+     * @throws IllegalStateException UID에 대응하는 ApiId를 찾을 수 없는 경우
      */
     private fun saveNewFixtureCores(
         fixtureCases: FixtureProcessingCases,
@@ -518,6 +532,12 @@ class FixtureApiSportsWithCoreSyncer(
         return apiIdToCoreMap
     }
 
+    /**
+     * UID-Core 맵을 ApiId-Core 맵으로 변환
+     *
+     * @throws IllegalArgumentException DTO의 apiId가 null인 경우
+     * @throws IllegalStateException UID에 대응하는 ApiId를 찾을 수 없는 경우
+     */
     private fun createApiIdToCoreMap(
         savedUidToCoreMap: Map<String, FixtureCore>,
         uidPairs: List<Pair<String, FixtureApiSportsSyncDto>>
@@ -660,8 +680,6 @@ class FixtureApiSportsWithCoreSyncer(
             createFixtureApiSports(dto, fixtureData, venueMap, coreMap)
         }
 
-        log.info("coreMap keys: {}", coreMap.keys.sorted())
-        log.info("existingFixtures [apiId, coreId]: {}", fixtureData.fixtures.map { "${it.apiId}, ${it.core?.id}" })
         // 2. 기존 FixtureApiSports 업데이트
         val updatedFixtures = fixtureCases.updateFixtures.map { (existingFixture, dto) ->
             updateFixtureApiSports(existingFixture, dto, fixtureData, venueMap, coreMap)
@@ -714,6 +732,8 @@ class FixtureApiSportsWithCoreSyncer(
      * 누락된 팀 검증
      *
      * DTO 에 존재하는 팀이지만 데이터베이스에 없는 경우 예외를 던집니다.
+     *
+     * @throws IllegalStateException dto에 명시된 팀이 데이터베이스에 존재하지 않는 경우
      */
     fun validateMissingTeams(
         fixtureData: FixtureDataCollection,
