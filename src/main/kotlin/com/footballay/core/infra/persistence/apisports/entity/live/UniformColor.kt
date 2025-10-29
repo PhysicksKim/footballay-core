@@ -24,5 +24,5 @@ import jakarta.persistence.Embeddable
 data class UniformColor(
     val primary: String? = null,
     val number: String? = null,
-    val border: String? = null
+    val border: String? = null,
 )

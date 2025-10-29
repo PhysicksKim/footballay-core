@@ -6,18 +6,23 @@ package com.footballay.core.common.result
  * F: 실패 타입(초기에는 DomainFail.Validation, DomainFail.NotFound만 사용)
  */
 sealed class DomainResult<out S : Any, out F : DomainFail> {
-    data class Success<out S : Any>(val value: S) : DomainResult<S, Nothing>()
-    data class Fail<out F : DomainFail>(val error: F) : DomainResult<Nothing, F>()
+    data class Success<out S : Any>(
+        val value: S,
+    ) : DomainResult<S, Nothing>()
 
-    fun getOrNull(): S? = when (this) {
-        is Success -> this.value
-        is Fail -> null
-    }
+    data class Fail<out F : DomainFail>(
+        val error: F,
+    ) : DomainResult<Nothing, F>()
 
-    fun errorOrNull(): F? = when (this) {
-        is Success -> null
-        is Fail -> this.error
-    }
+    fun getOrNull(): S? =
+        when (this) {
+            is Success -> this.value
+            is Fail -> null
+        }
+
+    fun errorOrNull(): F? =
+        when (this) {
+            is Success -> null
+            is Fail -> this.error
+        }
 }
-
-

@@ -9,43 +9,46 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
-
     // findAllByApiIdIn
     fun findAllByApiIdIn(apiIds: List<Long>): List<LeagueApiSports>
 
     @Query(
         "SELECT l FROM LeagueApiSports l " +
-        "LEFT JOIN FETCH l.leagueCore c " +
-        "LEFT JOIN FETCH l.seasons s " +
-        "WHERE l.apiId = :apiId"
+            "LEFT JOIN FETCH l.leagueCore c " +
+            "LEFT JOIN FETCH l.seasons s " +
+            "WHERE l.apiId = :apiId",
     )
-    fun findByApiIdIncludeCoreAndSeasons (apiId: Long): LeagueApiSports?
+    fun findByApiIdIncludeCoreAndSeasons(apiId: Long): LeagueApiSports?
 
-    @Query("SELECT l FROM LeagueApiSports l " +
+    @Query(
+        "SELECT l FROM LeagueApiSports l " +
             "LEFT JOIN FETCH l.leagueCore " +
-            "WHERE l.apiId IN :apiIds")
+            "WHERE l.apiId IN :apiIds",
+    )
     fun findLeagueApiSportsInApiId(apiIds: List<Long>): List<LeagueApiSports>
 
     fun findLeagueApiSportsByApiId(apiId: Long): LeagueApiSports?
-    
+
     /**
      * API ID로 리그 조회
      */
     @EntityGraph(attributePaths = ["leagueCore"])
     fun findByApiId(apiId: Long): LeagueApiSports?
-    
+
     /**
      * 특정 시즌만 포함하여서 리그 조회
      */
-    @Query("""
+    @Query(
+        """
         SELECT las FROM LeagueApiSports las
         LEFT JOIN FETCH las.leagueCore lc
         LEFT JOIN FETCH las.seasons lass
         WHERE las.apiId = :apiId AND lass.seasonYear = :seasonYear
-    """)
+    """,
+    )
     fun findByApiIdAndSeasonWithCoreAndSeasons(
         @Param("apiId") apiId: Long,
-        @Param("seasonYear") seasonYear: Int
+        @Param("seasonYear") seasonYear: Int,
     ): LeagueApiSports?
 
     /**

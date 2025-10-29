@@ -6,7 +6,7 @@ package com.footballay.core.web.admin.apisports.dto
 data class SyncResultDto(
     val syncedCount: Int,
     val operation: String,
-    val target: String? = null
+    val target: String? = null,
 )
 
 /**
@@ -14,17 +14,17 @@ data class SyncResultDto(
  */
 data class LeaguesSyncResultDto(
     val syncedCount: Int,
-    val message: String = "현재 리그 동기화가 완료되었습니다"
+    val message: String = "현재 리그 동기화가 완료되었습니다",
 )
 
 /**
- * 팀 동기화 결과 DTO  
+ * 팀 동기화 결과 DTO
  */
 data class TeamsSyncResultDto(
     val syncedCount: Int,
     val leagueApiId: Long,
     val season: Int? = null,
-    val message: String = "팀 동기화가 완료되었습니다"
+    val message: String = "팀 동기화가 완료되었습니다",
 )
 
 /**
@@ -33,5 +33,5 @@ data class TeamsSyncResultDto(
 data class PlayersSyncResultDto(
     val syncedCount: Int,
     val teamApiId: Long,
-    val message: String = "선수 동기화가 완료되었습니다"
-) 
+    val message: String = "선수 동기화가 완료되었습니다",
+)

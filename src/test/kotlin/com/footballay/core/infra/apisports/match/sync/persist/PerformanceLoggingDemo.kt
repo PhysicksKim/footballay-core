@@ -1,10 +1,11 @@
 package com.footballay.core.infra.apisports.match.sync.persist
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 
 // TODO : 이전에 AI 가 작성하다가 token 초과해서 session 이 끊긴 코드입니다. 향후 확인 필요
+
 /**
  * 성능 로깅 데모
  *
@@ -25,14 +26,14 @@ import org.junit.jupiter.api.Disabled
  */
 @Disabled("개발 중 확인용 - CI/CD에서 실행 안 함")
 class PerformanceLoggingDemo {
-
     @Test
     @DisplayName("성능 로그 출력 확인 - 정상 케이스")
     fun `데모 - 정상 성능 로그`() {
         // 실제 MatchEntitySyncServiceImpl을 호출하면
         // 아래와 같은 로그가 출력됩니다:
 
-        println("""
+        println(
+            """
             ========================================
             예상 로그 출력:
             ========================================
@@ -60,13 +61,15 @@ class PerformanceLoggingDemo {
             ----------------------------------------
             Slowest Phase: Phase5_PlayerStats (1500ms, 33%)
             ========================================
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 
     @Test
     @DisplayName("성능 로그 출력 확인 - 경고 케이스")
     fun `데모 - 느린 Phase 경고 로그`() {
-        println("""
+        println(
+            """
             ========================================
             예상 로그 출력 (느린 Phase):
             ========================================
@@ -90,13 +93,15 @@ class PerformanceLoggingDemo {
             ----------------------------------------
             Slowest Phase: Phase3_MatchPlayers (3500ms, 48%)
             ========================================
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 
     @Test
     @DisplayName("성능 로그 출력 확인 - 병목 탐지")
     fun `데모 - 병목 탐지 로그`() {
-        println("""
+        println(
+            """
             ========================================
             예상 로그 출력 (병목 탐지):
             ========================================
@@ -121,13 +126,15 @@ class PerformanceLoggingDemo {
             ========================================
 
             2025-01-15 20:30:22.123 WARN  MatchEntitySyncServiceImpl - BOTTLENECK DETECTED: Phase3_MatchPlayers takes 85% of total time (6000ms / 7000ms)
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 
     @Test
     @DisplayName("성능 로그 출력 확인 - 심각 케이스")
     fun `데모 - 10초 초과 WARN 로그`() {
-        println("""
+        println(
+            """
             ========================================
             예상 로그 출력 (10초 초과):
             ========================================
@@ -153,6 +160,7 @@ class PerformanceLoggingDemo {
             ========================================
 
             💡 이 경우 Slack 알림이나 APM 알림을 보내는 것을 고려하세요!
-        """.trimIndent())
+            """.trimIndent(),
+        )
     }
 }

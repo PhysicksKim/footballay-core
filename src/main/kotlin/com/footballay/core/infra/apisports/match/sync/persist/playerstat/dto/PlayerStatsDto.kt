@@ -2,10 +2,10 @@ package com.footballay.core.infra.apisports.match.sync.persist.playerstat.dto
 
 /**
  * PlayerStats 처리용 내부 DTO
- * 
+ *
  * PlayerStats 처리 과정에서 사용되는 내부 데이터 구조입니다.
  * PlayerStatSyncDto에서 추출된 데이터를 MatchPlayer와 연결하기 위한 중간 형태입니다.
- * 
+ *
  * @param playerKey MatchPlayer 키 (MatchPlayerKeyGenerator로 생성)
  * @param minutesPlayed 출전 시간
  * @param shirtNumber 등번호
@@ -75,5 +75,5 @@ data class PlayerStatsDto(
     val penaltyCommitted: Int?,
     val penaltyScored: Int,
     val penaltyMissed: Int,
-    val penaltySaved: Int
-) 
+    val penaltySaved: Int,
+)

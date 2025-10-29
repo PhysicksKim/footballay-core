@@ -9,14 +9,14 @@ data class LeagueApiSportsCreateDto(
     val countryCode: String?,
     val countryFlag: String?,
     val currentSeason: Int?,
-    val seasons: List<LeagueApiSportsSeasonCreateDto>
+    val seasons: List<LeagueApiSportsSeasonCreateDto>,
 )
 
 data class LeagueApiSportsSeasonCreateDto(
     val seasonYear: Int?,
     val seasonStart: String?,
     val seasonEnd: String?,
-    val coverage: LeagueApiSportsCoverageCreateDto?
+    val coverage: LeagueApiSportsCoverageCreateDto?,
 )
 
 data class LeagueApiSportsCoverageCreateDto(
@@ -31,5 +31,5 @@ data class LeagueApiSportsCoverageCreateDto(
     val topCards: Boolean?,
     val injuries: Boolean?,
     val predictions: Boolean?,
-    val odds: Boolean?
+    val odds: Boolean?,
 )

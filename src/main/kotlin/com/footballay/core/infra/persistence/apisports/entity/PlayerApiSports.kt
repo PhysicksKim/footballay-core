@@ -6,17 +6,15 @@ import org.hibernate.proxy.HibernateProxy
 
 @Entity
 @Table(
-    name = "refac_player_apisports"
+    name = "refac_player_apisports",
 )
 data class PlayerApiSports(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_core_id", referencedColumnName = "id")
     var playerCore: PlayerCore? = null, // PlayerCore와 연관 관계 설정
-
     var apiId: Long? = null, // API 응답의 player.id 불완전한 경우 null 존재 가능
     var name: String? = null, // API 응답의 player.name
     var firstname: String? = null, // API 응답의 player.firstname
@@ -31,8 +29,7 @@ data class PlayerApiSports(
     var number: Int? = null, // API 응답의 player.number
     var position: String? = null, // API 응답의 player.position
     var photo: String? = null, // API 응답의 player.photo
-
-    var preventUpdate: Boolean = false
+    var preventUpdate: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -47,12 +44,7 @@ data class PlayerApiSports(
         return id != null && id == other.id
     }
 
-    override fun hashCode(): Int =
-        if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
+    override fun hashCode(): Int = if (this is HibernateProxy) this.hibernateLazyInitializer.persistentClass.hashCode() else javaClass.hashCode()
 
-    override fun toString(): String {
-        return "PlayerApiSports(id=$id, apiId=$apiId, name=$name, firstname=$firstname, lastname=$lastname, age=$age, birthPlace=$birthPlace, birthDate=$birthDate, birthCountry=$birthCountry, nationality=$nationality, height=$height, weight=$weight, number=$number, position=$position, photo=$photo, preventUpdate=$preventUpdate)"
-    }
-
-
+    override fun toString(): String = "PlayerApiSports(id=$id, apiId=$apiId, name=$name, firstname=$firstname, lastname=$lastname, age=$age, birthPlace=$birthPlace, birthDate=$birthDate, birthCountry=$birthCountry, nationality=$nationality, height=$height, weight=$weight, number=$number, position=$position, photo=$photo, preventUpdate=$preventUpdate)"
 }

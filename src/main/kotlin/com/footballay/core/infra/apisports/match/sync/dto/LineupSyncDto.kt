@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.dto
 
 data class LineupSyncDto(
     val home: Lineup?,
-    val away: Lineup?
+    val away: Lineup?,
 ) {
     data class Lineup(
         val teamApiId: Long?,
@@ -22,12 +22,10 @@ data class LineupSyncDto(
     data class Color(
         val primary: String?,
         val number: String?,
-        val border: String?
+        val border: String?,
     )
 
-    fun isEmpty(): Boolean {
-        return home == null || away == null
-    }
+    fun isEmpty(): Boolean = home == null || away == null
 
     companion object {
         val EMPTY = LineupSyncDto(null, null)

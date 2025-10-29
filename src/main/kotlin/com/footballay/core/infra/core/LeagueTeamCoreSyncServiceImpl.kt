@@ -12,22 +12,26 @@ import org.springframework.stereotype.Service
 @Service
 class LeagueTeamCoreSyncServiceImpl(
     private val leagueTeamCoreRepository: LeagueTeamCoreRepository,
-    private val teamApiSportsRepository: TeamApiSportsRepository
+    private val teamApiSportsRepository: TeamApiSportsRepository,
 ) : LeagueTeamCoreSyncService {
-
     private val log = logger()
 
     @Transactional
-    override fun createLeagueTeamRelationship(leagueCore: LeagueCore, teamCore: TeamCore) {
-        val leagueId = leagueCore.id ?: throw IllegalStateException("LeagueCore must be saved before creating relationship")
+    override fun createLeagueTeamRelationship(
+        leagueCore: LeagueCore,
+        teamCore: TeamCore,
+    ) {
+        val leagueId =
+            leagueCore.id ?: throw IllegalStateException("LeagueCore must be saved before creating relationship")
         val teamId = teamCore.id ?: throw IllegalStateException("TeamCore must be saved before creating relationship")
 
         // 이미 존재하는 관계인지 확인
         if (!leagueTeamCoreRepository.existsByLeagueIdAndTeamId(leagueId, teamId)) {
-            val leagueTeamCore = LeagueTeamCore(
-                league = leagueCore,
-                team = teamCore
-            )
+            val leagueTeamCore =
+                LeagueTeamCore(
+                    league = leagueCore,
+                    team = teamCore,
+                )
             leagueTeamCoreRepository.save(leagueTeamCore)
             log.info("Created league-team relationship: leagueId=$leagueId, teamId=$teamId")
         } else {
@@ -39,7 +43,7 @@ class LeagueTeamCoreSyncServiceImpl(
     override fun updateLeagueTeamRelationships(
         leagueCore: LeagueCore,
         teamCores: List<TeamCore>,
-        teamApiIds: List<Long>
+        teamApiIds: List<Long>,
     ) {
         val leagueId = leagueCore.id ?: throw IllegalStateException("LeagueCore must have an ID")
 
@@ -57,10 +61,11 @@ class LeagueTeamCoreSyncServiceImpl(
             if (!existingTeamIds.contains(teamId)) {
                 val teamCore = teamCores.find { it.id == teamId }
                 if (teamCore != null) {
-                    val leagueTeamCore = LeagueTeamCore(
-                        league = leagueCore,
-                        team = teamCore
-                    )
+                    val leagueTeamCore =
+                        LeagueTeamCore(
+                            league = leagueCore,
+                            team = teamCore,
+                        )
                     newRelationships.add(leagueTeamCore)
                 }
             }
@@ -69,7 +74,12 @@ class LeagueTeamCoreSyncServiceImpl(
         // 배치로 새 연관관계 저장
         if (newRelationships.isNotEmpty()) {
             leagueTeamCoreRepository.saveAll(newRelationships)
-            log.info("Added ${newRelationships.size} teams to league: leagueId=$leagueId, teamIds=${newRelationships.map { it.team?.id }}")
+            log.info(
+                "Added ${newRelationships.size} teams to league: leagueId=$leagueId, teamIds=${newRelationships.map {
+                    it.team
+                        ?.id
+                }}",
+            )
         }
 
         // 3. 제거되어야 할 연관관계를 배치로 삭제
@@ -93,12 +103,20 @@ class LeagueTeamCoreSyncServiceImpl(
         // 배치로 연관관계 삭제
         if (relationshipsToRemove.isNotEmpty()) {
             leagueTeamCoreRepository.deleteAll(relationshipsToRemove)
-            log.info("Removed ${relationshipsToRemove.size} teams from league: leagueId=$leagueId, teamIds=${relationshipsToRemove.map { it.team?.id }}")
+            log.info(
+                "Removed ${relationshipsToRemove.size} teams from league: leagueId=$leagueId, teamIds=${relationshipsToRemove.map {
+                    it.team
+                        ?.id
+                }}",
+            )
         }
     }
 
     @Transactional
-    override fun removeTeamFromLeague(leagueId: Long, teamId: Long) {
+    override fun removeTeamFromLeague(
+        leagueId: Long,
+        teamId: Long,
+    ) {
         leagueTeamCoreRepository.deleteByLeagueIdAndTeamId(leagueId, teamId)
         log.info("Removed team from league: leagueId=$leagueId, teamId=$teamId")
     }
@@ -107,7 +125,10 @@ class LeagueTeamCoreSyncServiceImpl(
      * 여러 TeamCore와 LeagueCore 간의 연관관계를 배치로 생성
      */
     @Transactional
-    override fun createLeagueTeamRelationshipsBatch(leagueCore: LeagueCore, teamCores: Collection<TeamCore>) {
+    override fun createLeagueTeamRelationshipsBatch(
+        leagueCore: LeagueCore,
+        teamCores: Collection<TeamCore>,
+    ) {
         val leagueId = leagueCore.id ?: throw IllegalStateException("LeagueCore must have an ID")
         val teamIds = teamCores.mapNotNull { it.id }
 
@@ -126,10 +147,11 @@ class LeagueTeamCoreSyncServiceImpl(
             if (!existingTeamIds.contains(teamId)) {
                 val teamCore = teamCores.find { it.id == teamId }
                 if (teamCore != null) {
-                    val leagueTeamCore = LeagueTeamCore(
-                        league = leagueCore,
-                        team = teamCore
-                    )
+                    val leagueTeamCore =
+                        LeagueTeamCore(
+                            league = leagueCore,
+                            team = teamCore,
+                        )
                     newRelationships.add(leagueTeamCore)
                 }
             }
@@ -138,9 +160,14 @@ class LeagueTeamCoreSyncServiceImpl(
         // 배치로 새 연관관계 저장
         if (newRelationships.isNotEmpty()) {
             leagueTeamCoreRepository.saveAll(newRelationships)
-            log.info("Batch created ${newRelationships.size} league-team relationships: leagueId=$leagueId, teamIds=${newRelationships.map { it.team?.id }}")
+            log.info(
+                "Batch created ${newRelationships.size} league-team relationships: leagueId=$leagueId, teamIds=${newRelationships.map {
+                    it.team
+                        ?.id
+                }}",
+            )
         } else {
             log.info("All league-team relationships already exist: leagueId=$leagueId")
         }
     }
-} 
+}

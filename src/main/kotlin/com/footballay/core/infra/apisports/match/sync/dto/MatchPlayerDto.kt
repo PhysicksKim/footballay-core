@@ -10,5 +10,5 @@ data class MatchPlayerDto(
     val substitute: Boolean,
     val nonLineupPlayer: Boolean = false, // lineup 에 등장하지 않았으나 다른 맥락(ex.event) 에 등장한 사람
     val teamApiId: Long?, // nullable: 팀 불명확한 경우
-    val playerApiSportsInfo: PlayerApiSportsDto? // nullable: apiId가 null인 경우
+    val playerApiSportsInfo: PlayerApiSportsDto?, // nullable: apiId가 null인 경우
 )

@@ -5,9 +5,9 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
 
 /**
  * PlayerStats 변경 계획
- * 
+ *
  * PlayerStatsChangePlanner에서 생성된 변경 계획을 담는 데이터 클래스입니다.
- * 
+ *
  * @param toCreate 새로 생성할 PlayerStatsDto 목록
  * @param toUpdate 수정할 (기존 통계, 새 통계) 쌍 목록
  * @param toDelete 삭제할 기존 통계 목록
@@ -21,5 +21,5 @@ data class PlayerStatsChangeSet(
     val toDelete: List<ApiSportsMatchPlayerStatistics>,
     val createCount: Int = toCreate.size,
     val updateCount: Int = toUpdate.size,
-    val deleteCount: Int = toDelete.size
-) 
+    val deleteCount: Int = toDelete.size,
+)

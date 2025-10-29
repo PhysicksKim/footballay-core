@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional
  * 이 문제는 [MatchPlayerContext] 를 구성하는 쪽에서도 유의하여 동작하는 책임이며,
  * [MatchPlayerContext] 를 사용하는 측과 더불어 DB entity 로 변환하는 과정에서도 유의해야 합니다.
  * [com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer] 를 활용해 id=null 선수를 저장합니다.
- * 
+ *
  * **처리 단계:**
  * 1. 기존 엔티티 로드 (Fixture, MatchTeam, MatchPlayer, Event)
  * 2. Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
@@ -50,9 +50,8 @@ class MatchEntitySyncServiceImpl(
     private val matchPlayerManager: MatchPlayerManager,
     private val matchEventManager: MatchEventManager,
     private val playerStatsManager: PlayerStatsManager,
-    private val teamStatsManager: TeamStatsManager
+    private val teamStatsManager: TeamStatsManager,
 ) : MatchEntitySyncService {
-
     private val log = logger()
 
     companion object {
@@ -60,25 +59,25 @@ class MatchEntitySyncServiceImpl(
          * Phase별 성능 임계값 (밀리초)
          * 각 Phase의 실행 시간이 이 값을 초과하면 WARN 로그를 출력합니다.
          */
-        private const val PHASE1_THRESHOLD_MS = 1000L  // Phase1: LoadContext - 기존 엔티티 로드
-        private const val PHASE2_THRESHOLD_MS = 1000L  // Phase2: BaseEntities - Fixture + MatchTeam 처리
-        private const val PHASE3_THRESHOLD_MS = 3000L  // Phase3: MatchPlayers - 선수 정보 + Lineup 통합
-        private const val PHASE4_THRESHOLD_MS = 3000L  // Phase4: MatchEvents - 이벤트 처리
-        private const val PHASE5_THRESHOLD_MS = 3000L  // Phase5: PlayerStats - 선수 통계 처리
-        private const val PHASE6_THRESHOLD_MS = 1000L  // Phase6: TeamStats - 팀 통계 처리
+        private const val PHASE1_THRESHOLD_MS = 1000L // Phase1: LoadContext - 기존 엔티티 로드
+        private const val PHASE2_THRESHOLD_MS = 1000L // Phase2: BaseEntities - Fixture + MatchTeam 처리
+        private const val PHASE3_THRESHOLD_MS = 3000L // Phase3: MatchPlayers - 선수 정보 + Lineup 통합
+        private const val PHASE4_THRESHOLD_MS = 3000L // Phase4: MatchEvents - 이벤트 처리
+        private const val PHASE5_THRESHOLD_MS = 3000L // Phase5: PlayerStats - 선수 통계 처리
+        private const val PHASE6_THRESHOLD_MS = 1000L // Phase6: TeamStats - 팀 통계 처리
 
         /**
          * 전체 트랜잭션 임계값 (밀리초)
          * 전체 트랜잭션 시간에 따라 로그 레벨을 결정합니다.
          */
-        private const val TRANSACTION_WARN_THRESHOLD_MS = 10_000L  // 10초 이상: WARN
-        private const val TRANSACTION_INFO_THRESHOLD_MS = 5_000L   // 5-10초: INFO, 5초 이하: DEBUG
+        private const val TRANSACTION_WARN_THRESHOLD_MS = 10_000L // 10초 이상: WARN
+        private const val TRANSACTION_INFO_THRESHOLD_MS = 5_000L // 5-10초: INFO, 5초 이하: DEBUG
 
         /**
          * 성능 리포트 관련 설정
          */
-        private const val BOTTLENECK_PERCENTAGE_THRESHOLD = 50  // Phase가 전체의 50% 이상 차지하면 병목으로 간주
-        private const val PERFORMANCE_BAR_UNIT = 5  // 성능 리포트 바 차트: 5% = 1개의 바(█)
+        private const val BOTTLENECK_PERCENTAGE_THRESHOLD = 50 // Phase가 전체의 50% 이상 차지하면 병목으로 간주
+        private const val PERFORMANCE_BAR_UNIT = 5 // 성능 리포트 바 차트: 5% = 1개의 바(█)
     }
 
     @Transactional
@@ -89,9 +88,8 @@ class MatchEntitySyncServiceImpl(
         eventDto: MatchEventSyncDto,
         teamStatDto: TeamStatSyncDto,
         playerStatDto: PlayerStatSyncDto,
-        playerContext: MatchPlayerContext
+        playerContext: MatchPlayerContext,
     ): MatchEntitySyncResult {
-
         log.info("Starting entity sync for fixture: $fixtureApiId")
         val transactionStartTime = System.currentTimeMillis()
         val phaseTimings = mutableMapOf<String, Long>()
@@ -100,11 +98,14 @@ class MatchEntitySyncServiceImpl(
         // Phase 1: 기존 저장된 엔티티들 로드
         val entityBundle = MatchEntityBundle.Companion.createEmpty()
         try {
-            val (_, time) = measurePhase("Phase1_LoadContext", threshold = PHASE1_THRESHOLD_MS) {
-                matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
-            }
+            val (_, time) =
+                measurePhase("Phase1_LoadContext", threshold = PHASE1_THRESHOLD_MS) {
+                    matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
+                }
             phaseTimings["Phase1_LoadContext"] = time
-            log.info("Loaded existing entities - Players: ${entityBundle.allMatchPlayers.size}, Events: ${entityBundle.allEvents.size}")
+            log.info(
+                "Loaded existing entities - Players: ${entityBundle.allMatchPlayers.size}, Events: ${entityBundle.allEvents.size}",
+            )
         } catch (e: Exception) {
             log.error("Phase 1 failed: ${e.message}", e)
             phaseErrors.add("Phase1_LoadContext: ${e.message}")
@@ -112,88 +113,107 @@ class MatchEntitySyncServiceImpl(
 
         // Phase 2: Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
         try {
-            val (result, time) = measurePhase("Phase2_BaseEntities", threshold = PHASE2_THRESHOLD_MS) {
-                baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
-            }
+            val (result, time) =
+                measurePhase("Phase2_BaseEntities", threshold = PHASE2_THRESHOLD_MS) {
+                    baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+                }
             phaseTimings["Phase2_BaseEntities"] = time
 
             if (!result.success) {
                 log.error("Base entity sync failed: ${result.errorMessage}")
                 phaseErrors.add("Phase2_BaseEntities: ${result.errorMessage}")
                 return MatchEntitySyncResult.failure(
-                    "failed to sync base entities: ${result.errorMessage}"
+                    "failed to sync base entities: ${result.errorMessage}",
                 )
             } else {
-                log.info("Base entities synced successfully - Home team: ${result.homeMatchTeam?.teamApiSports?.name}, Away team: ${result.awayMatchTeam?.teamApiSports?.name}")
+                log.info(
+                    "Base entities synced successfully - Home team: ${result.homeMatchTeam?.teamApiSports?.name}, Away team: ${result.awayMatchTeam?.teamApiSports?.name}",
+                )
             }
         } catch (e: Exception) {
             log.error("Phase 2 failed: ${e.message}", e)
             phaseErrors.add("Phase2_BaseEntities: ${e.message}")
             return MatchEntitySyncResult.failure(
-                "failed to sync base entities: ${e.message}"
+                "failed to sync base entities: ${e.message}",
             )
         }
 
         // Phase 3: MatchPlayer 처리 + Lineup 정보 적용 (MatchPlayerManager로 통합)
-        val matchPlayerResult = try {
-            val (result, time) = measurePhase("Phase3_MatchPlayers", threshold = PHASE3_THRESHOLD_MS) {
-                matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle)
-            }
-            phaseTimings["Phase3_MatchPlayers"] = time
-            log.info("MatchPlayer processing completed - Total players: ${result.totalPlayers}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}")
-            result
-        } catch (e: Exception) {
-            log.error("Phase 3 failed: ${e.message}", e)
-            phaseErrors.add("Phase3_MatchPlayers: ${e.message}")
-            MatchPlayerProcessResult.empty()
+        val matchPlayerResult =
+            try {
+                val (result, time) =
+                    measurePhase("Phase3_MatchPlayers", threshold = PHASE3_THRESHOLD_MS) {
+                        matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle)
+                    }
+                phaseTimings["Phase3_MatchPlayers"] = time
+                log.info(
+                    "MatchPlayer processing completed - Total players: ${result.totalPlayers}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                )
+                result
+            } catch (e: Exception) {
+                log.error("Phase 3 failed: ${e.message}", e)
+                phaseErrors.add("Phase3_MatchPlayers: ${e.message}")
+                MatchPlayerProcessResult.empty()
 
-            // 라인업 저장 에러시에는 이후 진행하기 어려우므로 실패 처리.
-            return MatchEntitySyncResult.failure(
-                "failed to process Match Lineup: ${e.message}"
-            )
-        }
+                // 라인업 저장 에러시에는 이후 진행하기 어려우므로 실패 처리.
+                return MatchEntitySyncResult.failure(
+                    "failed to process Match Lineup: ${e.message}",
+                )
+            }
 
         // Phase 4: Event 처리 (MatchEventManager로 통합)
-        val matchEventResult = try {
-            val (result, time) = measurePhase("Phase4_MatchEvents", threshold = PHASE4_THRESHOLD_MS) {
-                matchEventManager.processMatchEvents(eventDto, entityBundle)
+        val matchEventResult =
+            try {
+                val (result, time) =
+                    measurePhase("Phase4_MatchEvents", threshold = PHASE4_THRESHOLD_MS) {
+                        matchEventManager.processMatchEvents(eventDto, entityBundle)
+                    }
+                phaseTimings["Phase4_MatchEvents"] = time
+                log.info(
+                    "MatchEvent processing completed - Total events: ${result.totalEvents}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                )
+                result
+            } catch (e: Exception) {
+                log.error("Phase 4 failed: ${e.message}", e)
+                phaseErrors.add("Phase4_MatchEvents: ${e.message}")
+                MatchEventProcessResult(0, 0, 0, 0, emptyList())
             }
-            phaseTimings["Phase4_MatchEvents"] = time
-            log.info("MatchEvent processing completed - Total events: ${result.totalEvents}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}")
-            result
-        } catch (e: Exception) {
-            log.error("Phase 4 failed: ${e.message}", e)
-            phaseErrors.add("Phase4_MatchEvents: ${e.message}")
-            MatchEventProcessResult(0, 0, 0, 0, emptyList())
-        }
 
         // Phase 5: PlayerStats 처리 (PlayerStatsManager로 통합)
-        val playerStatsResult = try {
-            val (result, time) = measurePhase("Phase5_PlayerStats", threshold = PHASE5_THRESHOLD_MS) {
-                playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
+        val playerStatsResult =
+            try {
+                val (result, time) =
+                    measurePhase("Phase5_PlayerStats", threshold = PHASE5_THRESHOLD_MS) {
+                        playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
+                    }
+                phaseTimings["Phase5_PlayerStats"] = time
+                log.info(
+                    "PlayerStats processing completed - Total stats: ${result.totalStats}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                )
+                result
+            } catch (e: Exception) {
+                log.error("Phase 5 failed: ${e.message}", e)
+                phaseErrors.add("Phase5_PlayerStats: ${e.message}")
+                PlayerStatsProcessResult(0, 0, 0, 0, emptyList())
             }
-            phaseTimings["Phase5_PlayerStats"] = time
-            log.info("PlayerStats processing completed - Total stats: ${result.totalStats}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}")
-            result
-        } catch (e: Exception) {
-            log.error("Phase 5 failed: ${e.message}", e)
-            phaseErrors.add("Phase5_PlayerStats: ${e.message}")
-            PlayerStatsProcessResult(0, 0, 0, 0, emptyList())
-        }
 
         // Phase 6: TeamStats 처리 (TeamStatsManager로 통합)
-        val teamStatsResult = try {
-            val (result, time) = measurePhase("Phase6_TeamStats", threshold = PHASE6_THRESHOLD_MS) {
-                teamStatsManager.processTeamStats(teamStatDto, entityBundle)
+        val teamStatsResult =
+            try {
+                val (result, time) =
+                    measurePhase("Phase6_TeamStats", threshold = PHASE6_THRESHOLD_MS) {
+                        teamStatsManager.processTeamStats(teamStatDto, entityBundle)
+                    }
+                phaseTimings["Phase6_TeamStats"] = time
+                log.info(
+                    "TeamStats processing completed - Home: ${result.hasHome}, Away: ${result.hasAway}, Created: ${result.createdCount}, Updated: ${result.updatedCount}",
+                )
+                result
+            } catch (e: Exception) {
+                log.error("Phase 6 failed: ${e.message}", e)
+                phaseErrors.add("Phase6_TeamStats: ${e.message}")
+                TeamStatsProcessResult(false, false, 0, 0, null, null)
             }
-            phaseTimings["Phase6_TeamStats"] = time
-            log.info("TeamStats processing completed - Home: ${result.hasHome}, Away: ${result.hasAway}, Created: ${result.createdCount}, Updated: ${result.updatedCount}")
-            result
-        } catch (e: Exception) {
-            log.error("Phase 6 failed: ${e.message}", e)
-            phaseErrors.add("Phase6_TeamStats: ${e.message}")
-            TeamStatsProcessResult(false, false, 0, 0, null, null)
-        }
 
         // 전체 트랜잭션 시간 측정 및 성능 리포트
         val totalTransactionTime = System.currentTimeMillis() - transactionStartTime
@@ -201,25 +221,36 @@ class MatchEntitySyncServiceImpl(
 
         // 에러가 있었는지 로깅
         if (phaseErrors.isNotEmpty()) {
-            log.warn("Entity sync completed with ${phaseErrors.size} phase error(s) for fixture: $fixtureApiId - Errors: ${phaseErrors.joinToString("; ")}")
+            log.warn(
+                "Entity sync completed with ${phaseErrors.size} phase error(s) for fixture: $fixtureApiId - Errors: ${phaseErrors.joinToString(
+                    "; ",
+                )}",
+            )
         } else {
             log.info("All entities persisted successfully for fixture: $fixtureApiId")
         }
 
         return MatchEntitySyncResult.success(
-            createdCount = matchPlayerResult.createdCount + matchEventResult.createdCount + playerStatsResult.createdCount + teamStatsResult.createdCount,
-            updatedCount = matchPlayerResult.updatedCount + matchEventResult.updatedCount + playerStatsResult.updatedCount + teamStatsResult.updatedCount,
-            deletedCount = matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
-            playerChanges = MatchPlayerSyncResult(
-                created = matchPlayerResult.createdCount,
-                updated = matchPlayerResult.updatedCount,
-                deleted = matchPlayerResult.deletedCount
-            ),
-            eventChanges = MatchEventSyncResult(
-                created = matchEventResult.createdCount,
-                updated = matchEventResult.updatedCount,
-                deleted = matchEventResult.deletedCount
-            )
+            createdCount =
+                matchPlayerResult.createdCount + matchEventResult.createdCount + playerStatsResult.createdCount +
+                    teamStatsResult.createdCount,
+            updatedCount =
+                matchPlayerResult.updatedCount + matchEventResult.updatedCount + playerStatsResult.updatedCount +
+                    teamStatsResult.updatedCount,
+            deletedCount =
+                matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
+            playerChanges =
+                MatchPlayerSyncResult(
+                    created = matchPlayerResult.createdCount,
+                    updated = matchPlayerResult.updatedCount,
+                    deleted = matchPlayerResult.deletedCount,
+                ),
+            eventChanges =
+                MatchEventSyncResult(
+                    created = matchEventResult.createdCount,
+                    updated = matchEventResult.updatedCount,
+                    deleted = matchEventResult.deletedCount,
+                ),
         )
     }
 
@@ -241,15 +272,20 @@ class MatchEntitySyncServiceImpl(
      * @param block 측정할 코드 블록
      * @return 실행 결과와 경과 시간의 Pair
      */
-    private fun <T> measurePhase(phaseName: String, threshold: Long, block: () -> T): Pair<T, Long> {
+    private fun <T> measurePhase(
+        phaseName: String,
+        threshold: Long,
+        block: () -> T,
+    ): Pair<T, Long> {
         val startTime = System.currentTimeMillis()
-        val result = try {
-            block()
-        } catch (e: Exception) {
-            val elapsed = System.currentTimeMillis() - startTime
-            log.error("[$phaseName] failed after ${elapsed}ms", e)
-            throw e
-        }
+        val result =
+            try {
+                block()
+            } catch (e: Exception) {
+                val elapsed = System.currentTimeMillis() - startTime
+                log.error("[$phaseName] failed after ${elapsed}ms", e)
+                throw e
+            }
 
         val elapsed = System.currentTimeMillis() - startTime
 
@@ -282,31 +318,32 @@ class MatchEntitySyncServiceImpl(
     private fun logPerformanceReport(
         fixtureApiId: Long,
         phaseTimings: Map<String, Long>,
-        totalTime: Long
+        totalTime: Long,
     ) {
         val sortedPhases = phaseTimings.entries.sortedByDescending { it.value }
         val slowestPhase = sortedPhases.firstOrNull()
 
-        val report = buildString {
-            appendLine("========================================")
-            appendLine("Performance Report - Fixture: $fixtureApiId")
-            appendLine("========================================")
-            appendLine("Total Transaction Time: ${totalTime}ms")
-            appendLine("----------------------------------------")
+        val report =
+            buildString {
+                appendLine("========================================")
+                appendLine("Performance Report - Fixture: $fixtureApiId")
+                appendLine("========================================")
+                appendLine("Total Transaction Time: ${totalTime}ms")
+                appendLine("----------------------------------------")
 
-            sortedPhases.forEach { (phase, time) ->
-                val percentage = (time.toDouble() / totalTime * 100).toInt()
-                val bar = "█".repeat(percentage / PERFORMANCE_BAR_UNIT)
-                appendLine(String.format("%-20s: %5dms (%3d%%) %s", phase, time, percentage, bar))
-            }
+                sortedPhases.forEach { (phase, time) ->
+                    val percentage = (time.toDouble() / totalTime * 100).toInt()
+                    val bar = "█".repeat(percentage / PERFORMANCE_BAR_UNIT)
+                    appendLine(String.format("%-20s: %5dms (%3d%%) %s", phase, time, percentage, bar))
+                }
 
-            appendLine("----------------------------------------")
-            slowestPhase?.let { (phase, time) ->
-                val percentage = (time.toDouble() / totalTime * 100).toInt()
-                appendLine("Slowest Phase: $phase (${time}ms, ${percentage}%)")
+                appendLine("----------------------------------------")
+                slowestPhase?.let { (phase, time) ->
+                    val percentage = (time.toDouble() / totalTime * 100).toInt()
+                    appendLine("Slowest Phase: $phase (${time}ms, $percentage%)")
+                }
+                appendLine("========================================")
             }
-            appendLine("========================================")
-        }
 
         // 성능 리포트는 항상 INFO 레벨로 출력 (테스트/운영 모두 중요한 정보)
         // 단, 임계값 초과 시에는 WARN으로 강조
@@ -324,4 +361,4 @@ class MatchEntitySyncServiceImpl(
             }
         }
     }
-} 
+}

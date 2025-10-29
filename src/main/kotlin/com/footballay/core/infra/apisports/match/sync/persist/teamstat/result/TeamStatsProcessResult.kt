@@ -18,21 +18,20 @@ data class TeamStatsProcessResult(
     val createdCount: Int,
     val updatedCount: Int,
     val homeTeamStat: ApiSportsMatchTeamStatistics?,
-    val awayTeamStat: ApiSportsMatchTeamStatistics?
+    val awayTeamStat: ApiSportsMatchTeamStatistics?,
 ) {
     companion object {
         /**
          * 빈 결과 생성 (DTO가 없는 경우)
          */
-        fun empty(): TeamStatsProcessResult {
-            return TeamStatsProcessResult(
+        fun empty(): TeamStatsProcessResult =
+            TeamStatsProcessResult(
                 hasHome = false,
                 hasAway = false,
                 createdCount = 0,
                 updatedCount = 0,
                 homeTeamStat = null,
-                awayTeamStat = null
+                awayTeamStat = null,
             )
-        }
     }
 }

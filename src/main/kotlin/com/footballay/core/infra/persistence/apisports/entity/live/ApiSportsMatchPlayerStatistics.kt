@@ -1,30 +1,22 @@
 package com.footballay.core.infra.persistence.apisports.entity.live
 
 import jakarta.persistence.*
-import java.math.BigDecimal
-import org.hibernate.proxy.HibernateProxy
 
 @Entity
 @Table(name = "refac_apisports_match_player_stats")
 class ApiSportsMatchPlayerStatistics(
-
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "match_player_id", nullable = true)
     var matchPlayer: ApiSportsMatchPlayer? = null,
-
     // Games statistics
     @Column(name = "minutes_played")
     var minutesPlayed: Int? = null,
-    
     @Column(name = "shirt_number")
     var shirtNumber: Int? = null,
-    
     @Column(name = "position")
     var position: String? = null,
-
     /**
      * 선수의 경기 중 평점
      * ex) 6.3, 최대 10.0
@@ -37,104 +29,74 @@ class ApiSportsMatchPlayerStatistics(
      */
     @Column(name = "rating")
     var rating: Double? = null,
-    
     @Column(name = "is_captain")
     var isCaptain: Boolean = false,
-    
     @Column(name = "is_substitute")
     var isSubstitute: Boolean = false,
-    
     // Offsides
     @Column(name = "offsides")
     var offsides: Int? = null,
-    
     // Shots
     @Column(name = "shots_total")
     var shotsTotal: Int? = null,
-    
     @Column(name = "shots_on_target")
     var shotsOnTarget: Int? = null,
-    
     // Goals
     @Column(name = "goals_total")
     var goalsTotal: Int? = null,
-    
     @Column(name = "goals_conceded")
     var goalsConceded: Int? = null,
-    
     @Column(name = "assists")
     var assists: Int? = null,
-    
     @Column(name = "saves")
     var saves: Int? = null,
-    
     // Passes
     @Column(name = "passes_total")
     var passesTotal: Int? = null,
-    
     @Column(name = "key_passes")
     var keyPasses: Int? = null,
-    
     @Column(name = "passes_accuracy")
     var passesAccuracy: Int? = null,
-    
     // Tackles
     @Column(name = "tackles_total")
     var tacklesTotal: Int? = null,
-    
     @Column(name = "blocks")
     var blocks: Int? = null,
-    
     @Column(name = "interceptions")
     var interceptions: Int? = null,
-    
     // Duels
     @Column(name = "duels_total")
     var duelsTotal: Int? = null,
-    
     @Column(name = "duels_won")
     var duelsWon: Int? = null,
-    
     // Dribbles
     @Column(name = "dribbles_attempts")
     var dribblesAttempts: Int? = null,
-    
     @Column(name = "dribbles_success")
     var dribblesSuccess: Int? = null,
-    
     @Column(name = "dribbles_past")
     var dribblesPast: Int? = null,
-    
     // Fouls
     @Column(name = "fouls_drawn")
     var foulsDrawn: Int? = null,
-    
     @Column(name = "fouls_committed")
     var foulsCommitted: Int? = null,
-    
     // Cards
     @Column(name = "yellow_cards")
     var yellowCards: Int = 0,
-    
     @Column(name = "red_cards")
     var redCards: Int = 0,
-    
     // Penalty
     @Column(name = "penalty_won")
     var penaltyWon: Int? = null, // uncertain - JSON에서 null로 제공됨
-    
     @Column(name = "penalty_committed")
     var penaltyCommitted: Int? = null, // uncertain - JSON에서 null로 제공됨
-    
     @Column(name = "penalty_scored")
     var penaltyScored: Int = 0,
-    
     @Column(name = "penalty_missed")
     var penaltyMissed: Int = 0,
-    
     @Column(name = "penalty_saved")
-    var penaltySaved: Int = 0
-
+    var penaltySaved: Int = 0,
 ) {
     /**
      * JPA 엔티티 동등성: ID 기반 비교
@@ -145,10 +107,10 @@ class ApiSportsMatchPlayerStatistics(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false
-        
+
         // 간단한 타입 체크
         if (other !is ApiSportsMatchPlayerStatistics) return false
-        
+
         // ID 기반 비교 (영속 상태에서만)
         return id != null && id == other.id
     }
@@ -158,9 +120,7 @@ class ApiSportsMatchPlayerStatistics(
      * - ID 변경에 영향받지 않음
      * - 영속 상태 전환 시에도 일관성 유지
      */
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
+    override fun hashCode(): Int = javaClass.hashCode()
 
     /**
      * 안전한 toString: 연관관계 제외
@@ -168,13 +128,12 @@ class ApiSportsMatchPlayerStatistics(
      * - 무한 재귀 방지
      * - 디버깅에 필요한 정보만 포함
      */
-    override fun toString(): String {
-        return "ApiSportsMatchPlayerStatistics(" +
-               "id=$id, " +
-               "position='$position', " +
-               "rating=$rating, " +
-               "goalsTotal=$goalsTotal, " +
-               "assists=$assists" +
-               ")"
-    }
+    override fun toString(): String =
+        "ApiSportsMatchPlayerStatistics(" +
+            "id=$id, " +
+            "position='$position', " +
+            "rating=$rating, " +
+            "goalsTotal=$goalsTotal, " +
+            "assists=$assists" +
+            ")"
 }

@@ -1,9 +1,9 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
-import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
-import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsFixture
+import com.footballay.core.infra.apisports.shared.fetch.response.ApiSportsV3Envelope
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 
 typealias ApiSportsFixtureSingle = ApiSportsV3Envelope<ApiSportsFixture.Single>
 
@@ -17,7 +17,6 @@ typealias ApiSportsFixtureSingle = ApiSportsV3Envelope<ApiSportsFixture.Single>
  * @see com.footballay.core.infra.apisports.match
  */
 interface ApiSportsMatchEntitySyncFacade {
-
     /**
      * 라이브 매치 데이터를 전체 동기화합니다.
      *
@@ -27,4 +26,4 @@ interface ApiSportsMatchEntitySyncFacade {
      * @return 동기화 결과
      */
     fun syncFixtureMatchEntities(dto: FullMatchSyncDto): MatchDataSyncResult
-} 
+}

@@ -1,12 +1,10 @@
 package com.footballay.core.infra.persistence.apisports.entity.live
 
 import jakarta.persistence.*
-import java.math.BigDecimal
-import org.hibernate.proxy.HibernateProxy
 
 /**
  * 팀별 xG 기록 엔티티
- * 
+ *
  * 경기 중 xG 값이 변경될 때마다 새로운 레코드가 생성됩니다.
  * 기록시점의 elapsed time과 xG 값을 저장하여 시간별 xG 변화를 추적할 수 있습니다.
  */
@@ -14,25 +12,21 @@ import org.hibernate.proxy.HibernateProxy
 @Table(
     name = "refac_apisports_match_team_xg",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["match_team_statistics_id", "elapsed_time"])
-    ]
+        UniqueConstraint(columnNames = ["match_team_statistics_id", "elapsed_time"]),
+    ],
 )
 class ApiSportsMatchTeamXG(
-
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_team_statistics_id", nullable = false)
     var matchTeamStatistics: ApiSportsMatchTeamStatistics,
-
     /**
      * xG 기록 시점의 경기 시간 (분)
      * 예: 45, 67, 90 등
      */
     @Column(name = "elapsed_time", nullable = false)
     var elapsedTime: Int,
-
     /**
      * 해당 시점의 xG 값
      * ex) 2.95, 1.23 등
@@ -45,7 +39,6 @@ class ApiSportsMatchTeamXG(
      */
     @Column(name = "expected_goals", nullable = false)
     var expectedGoals: Double,
-
 ) {
     /**
      * JPA 엔티티 동등성: ID 기반 비교
@@ -56,10 +49,10 @@ class ApiSportsMatchTeamXG(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false
-        
+
         // 간단한 타입 체크
         if (other !is ApiSportsMatchTeamXG) return false
-        
+
         // ID 기반 비교 (영속 상태에서만)
         return id != null && id == other.id
     }
@@ -69,9 +62,7 @@ class ApiSportsMatchTeamXG(
      * - ID 변경에 영향받지 않음
      * - 영속 상태 전환 시에도 일관성 유지
      */
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
+    override fun hashCode(): Int = javaClass.hashCode()
 
     /**
      * 안전한 toString: 연관관계 제외
@@ -79,11 +70,10 @@ class ApiSportsMatchTeamXG(
      * - 무한 재귀 방지
      * - 디버깅에 필요한 정보만 포함
      */
-    override fun toString(): String {
-        return "ApiSportsMatchTeamXG(" +
-               "id=$id, " +
-               "elapsedTime=$elapsedTime, " +
-               "expectedGoals=$expectedGoals" +
-               ")"
-    }
-} 
+    override fun toString(): String =
+        "ApiSportsMatchTeamXG(" +
+            "id=$id, " +
+            "elapsedTime=$elapsedTime, " +
+            "expectedGoals=$expectedGoals" +
+            ")"
+}

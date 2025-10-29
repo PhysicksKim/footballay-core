@@ -4,9 +4,9 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
 
 /**
  * PlayerStats 처리 결과
- * 
+ *
  * PlayerStatsManager의 처리 결과를 담는 데이터 클래스입니다.
- * 
+ *
  * @param totalStats 총 처리된 통계 수
  * @param createdCount 새로 생성된 통계 수
  * @param updatedCount 수정된 통계 수
@@ -18,5 +18,5 @@ data class PlayerStatsProcessResult(
     val createdCount: Int,
     val updatedCount: Int,
     val deletedCount: Int,
-    val savedStats: List<ApiSportsMatchPlayerStatistics>
-) 
+    val savedStats: List<ApiSportsMatchPlayerStatistics>,
+)

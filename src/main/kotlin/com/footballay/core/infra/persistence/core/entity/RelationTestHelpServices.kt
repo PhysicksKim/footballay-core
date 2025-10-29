@@ -14,16 +14,24 @@ import org.springframework.transaction.annotation.Transactional
 class RelationTestHelpServices(
     private val leagueCoreRepository: LeagueCoreRepository,
     private val teamCoreRepository: TeamCoreRepository,
-    private val leagueTeamCoreRepository: LeagueTeamCoreRepository
+    private val leagueTeamCoreRepository: LeagueTeamCoreRepository,
 ) {
-
     /**
      * 리그에 팀 추가하기
      */
     @Transactional
-    fun addTeamToLeague(leagueId: Long, teamId: Long) {
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
+    fun addTeamToLeague(
+        leagueId: Long,
+        teamId: Long,
+    ) {
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
 
         league.addTeam(team)
         leagueCoreRepository.save(league)
@@ -33,9 +41,18 @@ class RelationTestHelpServices(
      * 리그에서 팀 제거하기
      */
     @Transactional
-    fun removeTeamFromLeague(leagueId: Long, teamId: Long) {
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
+    fun removeTeamFromLeague(
+        leagueId: Long,
+        teamId: Long,
+    ) {
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
 
         // 연관 관계 객체들 찾기 (중복된 관계가 있을 수 있음)
         val leagueTeams = leagueTeamCoreRepository.findByLeagueIdAndTeamId(leagueId, teamId)
@@ -61,9 +78,18 @@ class RelationTestHelpServices(
      * 팀에 리그 추가하기
      */
     @Transactional
-    fun addLeagueToTeam(teamId: Long, leagueId: Long) {
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
+    fun addLeagueToTeam(
+        teamId: Long,
+        leagueId: Long,
+    ) {
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
 
         team.addLeague(league)
         teamCoreRepository.save(team)
@@ -73,9 +99,18 @@ class RelationTestHelpServices(
      * 팀에서 리그 제거하기
      */
     @Transactional
-    fun removeLeagueFromTeam(teamId: Long, leagueId: Long) {
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
+    fun removeLeagueFromTeam(
+        teamId: Long,
+        leagueId: Long,
+    ) {
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
 
         // 연관 관계 객체들 찾기 (중복된 관계가 있을 수 있음)
         val leagueTeams = leagueTeamCoreRepository.findByLeagueIdAndTeamId(leagueId, teamId)
@@ -102,7 +137,10 @@ class RelationTestHelpServices(
      */
     @Transactional(readOnly = true)
     fun getTeamsInLeague(leagueId: Long): List<TeamCore> {
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
         return league.leagueTeams.mapNotNull { it.team }.toList()
     }
 
@@ -111,7 +149,10 @@ class RelationTestHelpServices(
      */
     @Transactional(readOnly = true)
     fun getLeaguesForTeam(teamId: Long): List<LeagueCore> {
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
         return team.getLeagues().toList()
     }
 
@@ -120,9 +161,18 @@ class RelationTestHelpServices(
      * 리그와 팀 간의 연관관계가 올바르게 설정되었는지 확인
      */
     @Transactional(readOnly = true)
-    fun verifyRelationship(leagueId: Long, teamId: Long): Boolean {
-        val league = leagueCoreRepository.findById(leagueId).orElseThrow { IllegalArgumentException("League not found with id: $leagueId") }
-        val team = teamCoreRepository.findById(teamId).orElseThrow { IllegalArgumentException("Team not found with id: $teamId") }
+    fun verifyRelationship(
+        leagueId: Long,
+        teamId: Long,
+    ): Boolean {
+        val league =
+            leagueCoreRepository.findById(leagueId).orElseThrow {
+                IllegalArgumentException("League not found with id: $leagueId")
+            }
+        val team =
+            teamCoreRepository.findById(teamId).orElseThrow {
+                IllegalArgumentException("Team not found with id: $teamId")
+            }
 
         val teamInLeague = league.leagueTeams.any { it.team?.id == teamId }
         val leagueInTeam = team.leagueTeams.any { it.league?.id == leagueId }
@@ -138,7 +188,8 @@ class RelationTestHelpServices(
      * 엔티티 캐시와 무관하게 DB에서 직접 확인
      */
     @Transactional(readOnly = true)
-    fun checkRelationshipInDatabase(leagueId: Long, teamId: Long): Boolean {
-        return leagueTeamCoreRepository.existsByLeagueIdAndTeamId(leagueId, teamId)
-    }
+    fun checkRelationshipInDatabase(
+        leagueId: Long,
+        teamId: Long,
+    ): Boolean = leagueTeamCoreRepository.existsByLeagueIdAndTeamId(leagueId, teamId)
 }

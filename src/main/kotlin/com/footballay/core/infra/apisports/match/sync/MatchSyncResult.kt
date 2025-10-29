@@ -8,13 +8,18 @@ data class MatchSyncResult(
     val processedCount: Int = 0,
     val newEntitiesCount: Int = 0,
     val errorMessage: String? = null,
-    val details: Map<String, Any> = emptyMap()
+    val details: Map<String, Any> = emptyMap(),
 ) {
     companion object {
-        fun success(processedCount: Int = 0, newEntitiesCount: Int = 0, details: Map<String, Any> = emptyMap()) =
-            MatchSyncResult(true, processedCount, newEntitiesCount, null, details)
+        fun success(
+            processedCount: Int = 0,
+            newEntitiesCount: Int = 0,
+            details: Map<String, Any> = emptyMap(),
+        ) = MatchSyncResult(true, processedCount, newEntitiesCount, null, details)
 
-        fun failure(errorMessage: String, details: Map<String, Any> = emptyMap()) =
-            MatchSyncResult(false, 0, 0, errorMessage, details)
+        fun failure(
+            errorMessage: String,
+            details: Map<String, Any> = emptyMap(),
+        ) = MatchSyncResult(false, 0, 0, errorMessage, details)
     }
 }

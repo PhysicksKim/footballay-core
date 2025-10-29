@@ -4,9 +4,9 @@ import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
+import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
-import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchEventRepository
 import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
@@ -14,13 +14,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 
 /**
  * MatchEventManager 테스트
- * 
+ *
  * MatchEventManager의 주요 기능들을 테스트합니다.
- * 
+ *
  * **테스트 대상:**
  * - Sequence 검증 기능
  * - 에러 처리 및 빈 이벤트 생성
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.assertThrows
  * - EntityBundle 업데이트
  */
 class MatchEventManagerTest {
-
     private lateinit var matchEventRepository: ApiSportsMatchEventRepository
     private lateinit var matchEventManager: MatchEventManager
     private lateinit var entityBundle: MatchEntityBundle
@@ -49,16 +47,19 @@ class MatchEventManagerTest {
     @DisplayName("정상적인 이벤트 처리를 수행할 수 있습니다")
     fun `processMatchEvents_should_process_events_successfully`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 0),
-                createMockEventDto(sequence = 1)
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 0),
+                        createMockEventDto(sequence = 1),
+                    ),
             )
-        )
-        val savedEvents = listOf(
-            createMockMatchEvent(sequence = 0),
-            createMockMatchEvent(sequence = 1)
-        )
+        val savedEvents =
+            listOf(
+                createMockMatchEvent(sequence = 0),
+                createMockMatchEvent(sequence = 1),
+            )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns savedEvents
 
         // when
@@ -77,18 +78,21 @@ class MatchEventManagerTest {
     @DisplayName("sequence 검증 - 중복된 sequence가 있으면 경고를 로그에 기록합니다")
     fun `processMatchEvents_duplicate_sequences_should_log_warning`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 0),
-                createMockEventDto(sequence = 0), // 중복
-                createMockEventDto(sequence = 1)
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 0),
+                        createMockEventDto(sequence = 0), // 중복
+                        createMockEventDto(sequence = 1),
+                    ),
             )
-        )
-        val savedEvents = listOf(
-            createMockMatchEvent(sequence = 0),
-            createMockMatchEvent(sequence = 0),
-            createMockMatchEvent(sequence = 1)
-        )
+        val savedEvents =
+            listOf(
+                createMockMatchEvent(sequence = 0),
+                createMockMatchEvent(sequence = 0),
+                createMockMatchEvent(sequence = 1),
+            )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns savedEvents
 
         // when
@@ -103,16 +107,19 @@ class MatchEventManagerTest {
     @DisplayName("sequence 검증 - 누락된 sequence가 있으면 경고를 로그에 기록합니다")
     fun `processMatchEvents_missing_sequences_should_log_warning`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 0),
-                createMockEventDto(sequence = 2) // 1이 누락됨
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 0),
+                        createMockEventDto(sequence = 2), // 1이 누락됨
+                    ),
             )
-        )
-        val savedEvents = listOf(
-            createMockMatchEvent(sequence = 0),
-            createMockMatchEvent(sequence = 2)
-        )
+        val savedEvents =
+            listOf(
+                createMockMatchEvent(sequence = 0),
+                createMockMatchEvent(sequence = 2),
+            )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns savedEvents
 
         // when
@@ -127,16 +134,19 @@ class MatchEventManagerTest {
     @DisplayName("sequence 검증 - 시작점이 0이 아니면 경고를 로그에 기록합니다")
     fun `processMatchEvents_non_zero_start_sequence_should_log_warning`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 1), // 0이 아닌 시작점
-                createMockEventDto(sequence = 2)
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 1), // 0이 아닌 시작점
+                        createMockEventDto(sequence = 2),
+                    ),
             )
-        )
-        val savedEvents = listOf(
-            createMockMatchEvent(sequence = 1),
-            createMockMatchEvent(sequence = 2)
-        )
+        val savedEvents =
+            listOf(
+                createMockMatchEvent(sequence = 1),
+                createMockMatchEvent(sequence = 2),
+            )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns savedEvents
 
         // when
@@ -151,13 +161,16 @@ class MatchEventManagerTest {
     @DisplayName("저장 실패 시 빈 이벤트로 대체합니다")
     fun `processMatchEvents_should_create_empty_events_on_save_failure`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 0),
-                createMockEventDto(sequence = 1)
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 0),
+                        createMockEventDto(sequence = 1),
+                    ),
             )
-        )
-        every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } throws RuntimeException("Database error")
+        every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } throws
+            RuntimeException("Database error")
 
         // when
         val result = matchEventManager.processMatchEvents(eventDto, entityBundle)
@@ -179,18 +192,21 @@ class MatchEventManagerTest {
     @DisplayName("저장된 이벤트를 sequence 순으로 정렬합니다")
     fun `processMatchEvents_should_sort_events_by_sequence`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(
-                createMockEventDto(sequence = 2),
-                createMockEventDto(sequence = 0),
-                createMockEventDto(sequence = 1)
+        val eventDto =
+            MatchEventSyncDto(
+                events =
+                    listOf(
+                        createMockEventDto(sequence = 2),
+                        createMockEventDto(sequence = 0),
+                        createMockEventDto(sequence = 1),
+                    ),
             )
-        )
-        val savedEvents = listOf(
-            createMockMatchEvent(sequence = 2),
-            createMockMatchEvent(sequence = 0),
-            createMockMatchEvent(sequence = 1)
-        )
+        val savedEvents =
+            listOf(
+                createMockMatchEvent(sequence = 2),
+                createMockMatchEvent(sequence = 0),
+                createMockMatchEvent(sequence = 1),
+            )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns savedEvents
 
         // when
@@ -200,7 +216,7 @@ class MatchEventManagerTest {
         val expectedSortedEvents = savedEvents.sortedBy { it.sequence }
         assertThat(result.savedEvents).isEqualTo(expectedSortedEvents)
         assertThat(entityBundle.allEvents).isEqualTo(expectedSortedEvents)
-        
+
         // sequence 순서 확인
         assertThat(result.savedEvents.map { it.sequence }).containsExactly(0, 1, 2)
     }
@@ -211,7 +227,7 @@ class MatchEventManagerTest {
         // given
         val existingEvent = createMockMatchEvent(sequence = 0)
         entityBundle.allEvents = listOf(existingEvent)
-        
+
         val eventDto = MatchEventSyncDto(events = emptyList()) // 모든 이벤트 삭제
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns emptyList()
 
@@ -230,10 +246,12 @@ class MatchEventManagerTest {
     @DisplayName("저장시 예외가 발생하더라도 예외가 바깥으로 던져지지 않습니다")
     fun `processMatchEvents_should_propagate_exceptions`() {
         // given
-        val eventDto = MatchEventSyncDto(
-            events = listOf(createMockEventDto(sequence = 0))
-        )
-        every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } throws RuntimeException("Critical error")
+        val eventDto =
+            MatchEventSyncDto(
+                events = listOf(createMockEventDto(sequence = 0)),
+            )
+        every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } throws
+            RuntimeException("Critical error")
 
         // when & then
         assertDoesNotThrow {
@@ -242,8 +260,8 @@ class MatchEventManagerTest {
     }
 
     // Helper methods
-    private fun createMockEventDto(sequence: Int): MatchEventDto {
-        return MatchEventDto(
+    private fun createMockEventDto(sequence: Int): MatchEventDto =
+        MatchEventDto(
             sequence = sequence,
             elapsedTime = 45,
             extraTime = null,
@@ -252,12 +270,11 @@ class MatchEventManagerTest {
             comments = "Test goal",
             teamApiId = 123L,
             playerMpKey = "player_123",
-            assistMpKey = null
+            assistMpKey = null,
         )
-    }
 
-    private fun createMockMatchEvent(sequence: Int): ApiSportsMatchEvent {
-        return ApiSportsMatchEvent(
+    private fun createMockMatchEvent(sequence: Int): ApiSportsMatchEvent =
+        ApiSportsMatchEvent(
             fixtureApi = createMockFixture(),
             matchTeam = createMockHomeTeam(),
             player = null,
@@ -267,19 +284,12 @@ class MatchEventManagerTest {
             extraTime = null,
             eventType = "Goal",
             detail = "Goal scored",
-            comments = "Test goal"
+            comments = "Test goal",
         )
-    }
 
-    private fun createMockFixture(): FixtureApiSports {
-        return mockk(relaxed = true)
-    }
+    private fun createMockFixture(): FixtureApiSports = mockk(relaxed = true)
 
-    private fun createMockHomeTeam(): ApiSportsMatchTeam {
-        return mockk(relaxed = true)
-    }
+    private fun createMockHomeTeam(): ApiSportsMatchTeam = mockk(relaxed = true)
 
-    private fun createMockAwayTeam(): ApiSportsMatchTeam {
-        return mockk(relaxed = true)
-    }
-} 
+    private fun createMockAwayTeam(): ApiSportsMatchTeam = mockk(relaxed = true)
+}

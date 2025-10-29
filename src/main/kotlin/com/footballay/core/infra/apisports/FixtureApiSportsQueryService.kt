@@ -9,12 +9,8 @@ import org.springframework.stereotype.Service
 @Service
 class FixtureApiSportsQueryService(
     private val fixtureCoreRepository: FixtureCoreRepository,
-    private val fixtureApiSportsRepository: FixtureApiSportsRepository
+    private val fixtureApiSportsRepository: FixtureApiSportsRepository,
 ) {
-
     @Transactional
-    fun getApiIdByFixtureUid(fixtureUid: String): FixtureApiSports? {
-        return fixtureApiSportsRepository.findByCoreUid(fixtureUid)
-    }
-
+    fun getApiIdByFixtureUid(fixtureUid: String): FixtureApiSports? = fixtureApiSportsRepository.findByCoreUid(fixtureUid)
 }

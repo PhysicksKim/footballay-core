@@ -1,18 +1,17 @@
 package com.footballay.core.infra.apisports.shared.fetch.impl
 
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.DisplayName
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.beans.factory.annotation.Autowired
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
 @ActiveProfiles("mockapi")
 @DisplayName("ApiSportsV3MockFetcher JSON 파일 기반 테스트")
 class ApiSportsV3MockFetcherJsonTest {
-
     @Autowired
     private lateinit var mockFetcher: ApiSportsV3MockFetcher
 
@@ -30,7 +29,7 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(result.get).isEqualTo("fixtures")
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.fixture).isNotNull()
         assertThat(fixture.fixture.id).isEqualTo(fixtureId)
@@ -54,7 +53,7 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(result.get).isEqualTo("fixtures")
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.fixture).isNotNull()
         assertThat(fixture.fixture.id).isEqualTo(fixtureId)
@@ -95,7 +94,7 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(result.get).isEqualTo("teams")
         assertThat(result.results).isEqualTo(20)
         assertThat(result.response).hasSize(20)
-        
+
         // 첫 번째 팀 (Manchester United) 검증
         val firstTeam = result.response.first()
         assertThat(firstTeam.team).isNotNull()
@@ -106,7 +105,7 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(firstTeam.team.founded).isEqualTo(1878)
         assertThat(firstTeam.team.national).isFalse()
         assertThat(firstTeam.team.logo).isEqualTo("https://media.api-sports.io/football/teams/33.png")
-        
+
         // 첫 번째 팀의 venue 검증
         assertThat(firstTeam.venue).isNotNull()
         assertThat(firstTeam.venue.id).isEqualTo(556)
@@ -116,7 +115,7 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(firstTeam.venue.capacity).isEqualTo(76212)
         assertThat(firstTeam.venue.surface).isEqualTo("grass")
         assertThat(firstTeam.venue.image).isEqualTo("https://media.api-sports.io/football/venues/556.png")
-        
+
         // 마지막 팀 (Aston Villa) 검증
         val lastTeam = result.response.last()
         assertThat(lastTeam.team.id).isEqualTo(66)
@@ -159,4 +158,4 @@ class ApiSportsV3MockFetcherJsonTest {
         assertThat(result.results).isEqualTo(0)
         assertThat(result.response).isEmpty()
     }
-} 
+}

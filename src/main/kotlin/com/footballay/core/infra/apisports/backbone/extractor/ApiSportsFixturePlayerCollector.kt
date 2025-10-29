@@ -17,12 +17,11 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Component
 class ApiSportsFixturePlayerCollector {
-
     private val log = logger()
 
     @Transactional
-    fun extractPlayersByTeam(response: ApiSportsFixtureSingle): Map<Long, List<PlayerApiSportsCreateDto>> {
-        return try {
+    fun extractPlayersByTeam(response: ApiSportsFixtureSingle): Map<Long, List<PlayerApiSportsCreateDto>> =
+        try {
             val home = extractTeamPlayers(response, isHome = true)
             val away = extractTeamPlayers(response, isHome = false)
             listOfNotNull(home, away).toMap()
@@ -33,9 +32,11 @@ class ApiSportsFixturePlayerCollector {
             log.error("선수 추출 중 예상치 못한 오류: ${e.message}", e)
             throw e
         }
-    }
 
-    private fun extractTeamPlayers(response: ApiSportsFixtureSingle, isHome: Boolean): Pair<Long, List<PlayerApiSportsCreateDto>>? {
+    private fun extractTeamPlayers(
+        response: ApiSportsFixtureSingle,
+        isHome: Boolean,
+    ): Pair<Long, List<PlayerApiSportsCreateDto>>? {
         val teamApiId = extractTeamApiId(response, isHome)
         requireNotNull(teamApiId) {
             "팀 API ID가 null입니다. teams=${response.response[0].teams}"
@@ -44,11 +45,17 @@ class ApiSportsFixturePlayerCollector {
         val lineupPlayers = extractPlayersFromLineup(response, teamApiId).filter { it.apiId != null }
         val lineupPlayerApiIds = lineupPlayers.mapNotNull { it.apiId }.toSet()
 
-        val statsPlayers = extractPlayersInStatsNotExistInLineup(response, teamApiId, lineupPlayerApiIds).filter { it.apiId != null }
+        val statsPlayers =
+            extractPlayersInStatsNotExistInLineup(response, teamApiId, lineupPlayerApiIds).filter {
+                it.apiId !=
+                    null
+            }
         if (statsPlayers.isNotEmpty()) {
-            log.warn("라인업과 통계에서 선수 불일치 발견 - lineup: ${lineupPlayers.size}, stats: ${statsPlayers.size}\n" +
+            log.warn(
+                "라인업과 통계에서 선수 불일치 발견 - lineup: ${lineupPlayers.size}, stats: ${statsPlayers.size}\n" +
                     "라인업: ${lineupPlayers.joinToString { it.name ?: "NO-NAME" }}\n" +
-                    "통계: ${statsPlayers.joinToString { it.name ?: "NO-NAME" }}")
+                    "통계: ${statsPlayers.joinToString { it.name ?: "NO-NAME" }}",
+            )
         }
 
         val allPlayers = lineupPlayers + statsPlayers
@@ -58,7 +65,7 @@ class ApiSportsFixturePlayerCollector {
 
     private fun extractPlayersFromLineup(
         response: ApiSportsFixtureSingle,
-        teamApiId: Long
+        teamApiId: Long,
     ): List<PlayerApiSportsCreateDto> {
         val lineups = response.response[0].lineups
         val teamLineup = lineups.find { it.team.id == teamApiId }
@@ -68,7 +75,7 @@ class ApiSportsFixturePlayerCollector {
             PlayerApiSportsCreateDto(
                 apiId = it.player.id,
                 name = it.player.name,
-                position = it.player.pos
+                position = it.player.pos,
             )
         }
     }
@@ -76,9 +83,10 @@ class ApiSportsFixturePlayerCollector {
     private fun extractPlayersInStatsNotExistInLineup(
         response: ApiSportsFixtureSingle,
         teamApiId: Long,
-        lineupPlayerApiIds: Set<Long>
-    ): List<PlayerApiSportsCreateDto> {
-        return response.response[0].players
+        lineupPlayerApiIds: Set<Long>,
+    ): List<PlayerApiSportsCreateDto> =
+        response.response[0]
+            .players
             .filter { it.team.id == teamApiId }
             .flatMap { teamStats ->
                 teamStats.players
@@ -90,9 +98,11 @@ class ApiSportsFixturePlayerCollector {
                         )
                     }
             }
-    }
 
-    private fun extractTeamApiId(response: ApiSportsFixtureSingle, isHome: Boolean): Long? {
+    private fun extractTeamApiId(
+        response: ApiSportsFixtureSingle,
+        isHome: Boolean,
+    ): Long? {
         val teams = response.response[0].teams
         return if (isHome) teams.home.id else teams.away.id
     }

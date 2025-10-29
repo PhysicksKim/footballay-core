@@ -12,7 +12,6 @@ import kotlin.test.Test
 @ActiveProfiles("devrealapi")
 @SpringBootTest
 class ApiSportsPropertiesTest {
-
     val log = logger()
 
     @Autowired

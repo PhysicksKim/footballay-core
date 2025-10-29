@@ -28,7 +28,6 @@ import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
  * @see MatchDataSyncResult
  */
 interface MatchSyncOrchestrator {
-
     /**
      * 해당 fixture Match Sync가 지원되는지 여부를 판단합니다.
      *

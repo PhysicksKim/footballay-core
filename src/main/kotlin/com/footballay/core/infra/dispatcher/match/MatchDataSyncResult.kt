@@ -10,21 +10,17 @@ import java.time.OffsetDateTime
  */
 data class MatchDataSyncResult(
     val isFinished: Boolean,
-    val kickoffTime: OffsetDateTime?
+    val kickoffTime: OffsetDateTime?,
 ) {
     companion object {
         /**
          * 경기가 종료된 경우의 인스턴스 생성
          */
-        fun finished(kickoffTime: OffsetDateTime?): MatchDataSyncResult {
-            return MatchDataSyncResult(true, kickoffTime)
-        }
+        fun finished(kickoffTime: OffsetDateTime?): MatchDataSyncResult = MatchDataSyncResult(true, kickoffTime)
 
         /**
          * 경기가 진행 중인 경우의 인스턴스 생성
          */
-        fun ongoing(kickoffTime: OffsetDateTime?): MatchDataSyncResult {
-            return MatchDataSyncResult(false, kickoffTime)
-        }
+        fun ongoing(kickoffTime: OffsetDateTime?): MatchDataSyncResult = MatchDataSyncResult(false, kickoffTime)
     }
 }

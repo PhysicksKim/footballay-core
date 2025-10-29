@@ -2,7 +2,6 @@ package com.footballay.core.infra.persistence.apisports.entity.live
 
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import jakarta.persistence.*
-import org.hibernate.proxy.HibernateProxy
 
 /**
  * Fixture Match data 에 등장하는 선수를 저장하는 엔티티입니다.
@@ -19,17 +18,14 @@ import org.hibernate.proxy.HibernateProxy
 @Table(
     name = "refac_apisports_match_player",
     uniqueConstraints = [
-        UniqueConstraint(columnNames = ["match_player_uid"])
-    ]
+        UniqueConstraint(columnNames = ["match_player_uid"]),
+    ],
 )
 class ApiSportsMatchPlayer(
-
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @Column(name = "match_player_uid", nullable = false, unique = true)
     var matchPlayerUid: String,
-
     /**
      * 선수의 ApiSports 데이터
      * match data 에서 player id 가 존재하는 경우 연관 관계를 맺습니다.
@@ -37,8 +33,7 @@ class ApiSportsMatchPlayer(
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_apisports_id", nullable = true)
-    var playerApiSports : PlayerApiSports? = null,
-
+    var playerApiSports: PlayerApiSports? = null,
 //    /**
 //     * ApiSports 데이터의 불완전성으로 인한 MatchPlayer 역추적을 위한 연관관계.
 //     *
@@ -59,10 +54,8 @@ class ApiSportsMatchPlayer(
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "fixture_apisports_id", nullable = false)
 //    var fixtureApiSports: FixtureApiSports,
-
     @Column(name = "name", nullable = false)
     var name: String,
-
     /**
      * 선수의 등번호
      * - ApiSports에서 제공하는 등번호 사용
@@ -70,7 +63,6 @@ class ApiSportsMatchPlayer(
      */
     @Column(name = "number", nullable = true)
     var number: Int? = null,
-
     /**
      * 선수의 포지션
      * - ApiSports에서 제공하는 포지션 코드 사용
@@ -78,13 +70,10 @@ class ApiSportsMatchPlayer(
      */
     @Column(name = "position", nullable = false)
     var position: String,
-
     @Column(name = "grid", nullable = true)
     var grid: String? = null,
-
     @Column(name = "substitute", nullable = false)
     var substitute: Boolean,
-
     /**
      * 정상 라인업 선수는 필수, 팀 불명확 선수는 nullable
      *
@@ -93,10 +82,8 @@ class ApiSportsMatchPlayer(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_team_id", nullable = true)
     var matchTeam: ApiSportsMatchTeam?,
-
     @OneToOne(mappedBy = "matchPlayer", cascade = [CascadeType.ALL], optional = true)
     var statistics: ApiSportsMatchPlayerStatistics? = null,
-
 ) {
     /**
      * JPA 엔티티 동등성: 자연 키 기반 비교
@@ -107,10 +94,10 @@ class ApiSportsMatchPlayer(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null) return false
-        
+
         // 간단한 타입 체크
         if (other !is ApiSportsMatchPlayer) return false
-        
+
         // 자연 키 기반 비교
         return matchPlayerUid == other.matchPlayerUid
     }
@@ -120,23 +107,20 @@ class ApiSportsMatchPlayer(
      * - 자연 키 사용으로 영속 상태 전환에 영향받지 않음
      * - 안정적인 해시코드 보장
      */
-    override fun hashCode(): Int {
-        return matchPlayerUid.hashCode()
-    }
+    override fun hashCode(): Int = matchPlayerUid.hashCode()
 
     /**
      * 안전한 toString: 연관관계 제외
      * - 지연 로딩 방지
      * - 디버깅에 필요한 정보만 포함
      */
-    override fun toString(): String {
-        return "ApiSportsMatchPlayer(" +
-               "id=$id, " +
-               "matchPlayerUid='$matchPlayerUid', " +
-               "name='$name', " +
-               "position='$position', " +
-               "number=$number, " +
-               "substitute=$substitute" +
-               ")"
-    }
+    override fun toString(): String =
+        "ApiSportsMatchPlayer(" +
+            "id=$id, " +
+            "matchPlayerUid='$matchPlayerUid', " +
+            "name='$name', " +
+            "position='$position', " +
+            "number=$number, " +
+            "substitute=$substitute" +
+            ")"
 }

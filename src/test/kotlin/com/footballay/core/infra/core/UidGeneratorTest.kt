@@ -8,9 +8,8 @@ import org.springframework.test.context.ActiveProfiles
 import kotlin.test.Test
 
 @SpringBootTest
-@ActiveProfiles("dev","devrealapi")
+@ActiveProfiles("dev", "devrealapi")
 class UidGeneratorTest {
-
     val log = logger()
 
     @Autowired
@@ -24,5 +23,4 @@ class UidGeneratorTest {
     }
 
     // log.info("generator class : ${uidGenerator::class.java.simpleName}, generated UID: $uid")
-
 }

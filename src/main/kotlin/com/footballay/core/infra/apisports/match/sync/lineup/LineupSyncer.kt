@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 /**
  * 라인업 데이터를 동기화합니다.
- * 
+ *
  * 책임:
  * - Lineup 선수 정보 (substitute 여부와 id=null 여부 포함) 처리
  * - Context를 통한 O(1) 조회로 성능 최적화
@@ -18,10 +18,12 @@ import org.springframework.stereotype.Component
  */
 @Component
 class LineupSyncer : MatchLineupDtoExtractor {
-
     private val log = logger()
 
-    override fun extractLineup(dto: FullMatchSyncDto, context: MatchPlayerContext): LineupSyncDto {
+    override fun extractLineup(
+        dto: FullMatchSyncDto,
+        context: MatchPlayerContext,
+    ): LineupSyncDto {
         val homeId = dto.teams.home.id
         val awayId = dto.teams.away.id
 
@@ -46,7 +48,7 @@ class LineupSyncer : MatchLineupDtoExtractor {
         val awayStartMpMap = createLineupMpMap(awayLineupDto, awayId, substitute = false)
         val awaySubMpMap = createLineupMpMap(awayLineupDto, awayId, substitute = true)
 
-        if(homeStartMpMap.size != 11 || awayStartMpMap.size != 11) {
+        if (homeStartMpMap.size != 11 || awayStartMpMap.size != 11) {
             logLineupAnomaly(homeLineupDto, awayLineupDto, homeStartMpMap.size, awayStartMpMap.size)
         }
 
@@ -60,32 +62,53 @@ class LineupSyncer : MatchLineupDtoExtractor {
 
         return LineupSyncDto(
             home = homeLineupSyncDto,
-            away = awayLineupSyncDto
+            away = awayLineupSyncDto,
         )
     }
 
     private fun toLineupSyncDto(
         lineupDto: FullMatchSyncDto.LineupDto,
         startMpMap: Map<String, MatchPlayerDto>,
-        subMpMap: Map<String, MatchPlayerDto>
-    ): LineupSyncDto.Lineup = LineupSyncDto.Lineup(
-        teamApiId = lineupDto.team.id,
-        teamName = lineupDto.team.name,
-        teamLogo = lineupDto.team.logo,
-        playerColor = LineupSyncDto.Color(
-            primary = lineupDto.team.colors?.player?.primary,
-            number = lineupDto.team.colors?.player?.number,
-            border = lineupDto.team.colors?.player?.border
-        ),
-        goalkeeperColor = LineupSyncDto.Color(
-            primary = lineupDto.team.colors?.goalkeeper?.primary,
-            number = lineupDto.team.colors?.goalkeeper?.number,
-            border = lineupDto.team.colors?.goalkeeper?.border
-        ),
-        formation = lineupDto.formation,
-        startMpKeys = startMpMap.keys.toList(),
-        subMpKeys = subMpMap.keys.toList()
-    )
+        subMpMap: Map<String, MatchPlayerDto>,
+    ): LineupSyncDto.Lineup =
+        LineupSyncDto.Lineup(
+            teamApiId = lineupDto.team.id,
+            teamName = lineupDto.team.name,
+            teamLogo = lineupDto.team.logo,
+            playerColor =
+                LineupSyncDto.Color(
+                    primary =
+                        lineupDto.team.colors
+                            ?.player
+                            ?.primary,
+                    number =
+                        lineupDto.team.colors
+                            ?.player
+                            ?.number,
+                    border =
+                        lineupDto.team.colors
+                            ?.player
+                            ?.border,
+                ),
+            goalkeeperColor =
+                LineupSyncDto.Color(
+                    primary =
+                        lineupDto.team.colors
+                            ?.goalkeeper
+                            ?.primary,
+                    number =
+                        lineupDto.team.colors
+                            ?.goalkeeper
+                            ?.number,
+                    border =
+                        lineupDto.team.colors
+                            ?.goalkeeper
+                            ?.border,
+                ),
+            formation = lineupDto.formation,
+            startMpKeys = startMpMap.keys.toList(),
+            subMpKeys = subMpMap.keys.toList(),
+        )
 
     private fun createLineupMpMap(
         lineupDto: FullMatchSyncDto.LineupDto,
@@ -93,7 +116,7 @@ class LineupSyncer : MatchLineupDtoExtractor {
         substitute: Boolean,
     ): Map<String, MatchPlayerDto> {
         val players = if (substitute) lineupDto.substitutes else lineupDto.startXI
-        
+
         return players
             .filter { it.player.name != null && it.player.name.isNotBlank() }
             .associate { player ->
@@ -106,27 +129,28 @@ class LineupSyncer : MatchLineupDtoExtractor {
     private fun lineupPlayerToMatchPlayerDto(
         player: FullMatchSyncDto.LineupDto.LineupPlayerDto,
         teamApiId: Long,
-        substitute: Boolean
-    ): MatchPlayerDto = MatchPlayerDto(
-        matchPlayerUid = null,
-        apiId = player.player.id,
-        name = player.player.name!!,
-        number = player.player.number,
-        position = player.player.pos ?: "Unknown",
-        grid = player.player.grid,
-        substitute = substitute,
-        teamApiId = teamApiId,
-        playerApiSportsInfo = null
-    )
+        substitute: Boolean,
+    ): MatchPlayerDto =
+        MatchPlayerDto(
+            matchPlayerUid = null,
+            apiId = player.player.id,
+            name = player.player.name!!,
+            number = player.player.number,
+            position = player.player.pos ?: "Unknown",
+            grid = player.player.grid,
+            substitute = substitute,
+            teamApiId = teamApiId,
+            playerApiSportsInfo = null,
+        )
 
     private fun logLineupAnomaly(
         homeLineupDto: FullMatchSyncDto.LineupDto,
         awayLineupDto: FullMatchSyncDto.LineupDto,
         homeStartCount: Int,
-        awayStartCount: Int
+        awayStartCount: Int,
     ) {
         val sb = StringBuilder()
-        sb.append("라인업 MatchPlayerDto 생성 결과 시작 선수 수가 11명이 아닙니다. 홈: ${homeStartCount}, 어웨이: ${awayStartCount}\n")
+        sb.append("라인업 MatchPlayerDto 생성 결과 시작 선수 수가 11명이 아닙니다. 홈: $homeStartCount, 어웨이: ${awayStartCount}\n")
 
         sb.append("\tHomeTeam {id=${homeLineupDto.team.id},name=${homeLineupDto.team.name}} lineup\n")
         val homePlayers = homeLineupDto.startXI.joinToString(", ") { "{id=${it.player.id},name=${it.player.name}}" }

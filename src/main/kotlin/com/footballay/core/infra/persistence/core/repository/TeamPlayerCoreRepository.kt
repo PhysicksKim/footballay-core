@@ -6,8 +6,20 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TeamPlayerCoreRepository : JpaRepository<TeamPlayerCore, Long> {
-    fun findByTeamIdAndPlayerId(teamId: Long, playerId: Long): List<TeamPlayerCore>
+    fun findByTeamIdAndPlayerId(
+        teamId: Long,
+        playerId: Long,
+    ): List<TeamPlayerCore>
+
     fun findByTeamId(teamId: Long): List<TeamPlayerCore>
-    fun deleteByTeamIdAndPlayerId(teamId: Long, playerId: Long)
-    fun existsByTeamIdAndPlayerId(teamId: Long, playerId: Long): Boolean
+
+    fun deleteByTeamIdAndPlayerId(
+        teamId: Long,
+        playerId: Long,
+    )
+
+    fun existsByTeamIdAndPlayerId(
+        teamId: Long,
+        playerId: Long,
+    ): Boolean
 }

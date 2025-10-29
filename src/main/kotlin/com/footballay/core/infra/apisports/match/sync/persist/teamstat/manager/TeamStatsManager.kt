@@ -24,9 +24,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Component
 class TeamStatsManager(
-    private val teamStatsRepository: ApiSportsMatchTeamStatisticsRepository
+    private val teamStatsRepository: ApiSportsMatchTeamStatisticsRepository,
 ) {
-
     private val log = logger()
 
     /**
@@ -40,27 +39,31 @@ class TeamStatsManager(
     @Transactional
     fun processTeamStats(
         teamStatDto: TeamStatSyncDto,
-        entityBundle: MatchEntityBundle
+        entityBundle: MatchEntityBundle,
     ): TeamStatsProcessResult {
-        log.info("Starting TeamStats processing - Home: ${teamStatDto.homeStats != null}, Away: ${teamStatDto.awayStats != null}")
+        log.info(
+            "Starting TeamStats processing - Home: ${teamStatDto.homeStats != null}, Away: ${teamStatDto.awayStats != null}",
+        )
 
         try {
             var createdCount = 0
             var updatedCount = 0
 
             // 1. Home TeamStats 처리
-            val homeTeamStat = teamStatDto.homeStats?.let { dto ->
-                processTeamStat(dto, entityBundle.homeTeam, entityBundle.homeTeamStat).also {
-                    if (entityBundle.homeTeamStat == null) createdCount++ else updatedCount++
+            val homeTeamStat =
+                teamStatDto.homeStats?.let { dto ->
+                    processTeamStat(dto, entityBundle.homeTeam, entityBundle.homeTeamStat).also {
+                        if (entityBundle.homeTeamStat == null) createdCount++ else updatedCount++
+                    }
                 }
-            }
 
             // 2. Away TeamStats 처리
-            val awayTeamStat = teamStatDto.awayStats?.let { dto ->
-                processTeamStat(dto, entityBundle.awayTeam, entityBundle.awayTeamStat).also {
-                    if (entityBundle.awayTeamStat == null) createdCount++ else updatedCount++
+            val awayTeamStat =
+                teamStatDto.awayStats?.let { dto ->
+                    processTeamStat(dto, entityBundle.awayTeam, entityBundle.awayTeamStat).also {
+                        if (entityBundle.awayTeamStat == null) createdCount++ else updatedCount++
+                    }
                 }
-            }
 
             // 3. 배치 저장
             val statsToSave = listOfNotNull(homeTeamStat, awayTeamStat)
@@ -73,7 +76,9 @@ class TeamStatsManager(
             entityBundle.homeTeamStat = homeTeamStat
             entityBundle.awayTeamStat = awayTeamStat
 
-            log.info("TeamStats processing completed - Home: ${homeTeamStat != null}, Away: ${awayTeamStat != null}, Created: $createdCount, Updated: $updatedCount")
+            log.info(
+                "TeamStats processing completed - Home: ${homeTeamStat != null}, Away: ${awayTeamStat != null}, Created: $createdCount, Updated: $updatedCount",
+            )
 
             return TeamStatsProcessResult(
                 hasHome = homeTeamStat != null,
@@ -81,9 +86,8 @@ class TeamStatsManager(
                 createdCount = createdCount,
                 updatedCount = updatedCount,
                 homeTeamStat = homeTeamStat,
-                awayTeamStat = awayTeamStat
+                awayTeamStat = awayTeamStat,
             )
-
         } catch (e: Exception) {
             log.error("Failed to process TeamStats", e)
             throw e
@@ -94,17 +98,18 @@ class TeamStatsManager(
     private fun processTeamStat(
         dto: MatchTeamStatisticsDto,
         matchTeam: ApiSportsMatchTeam?,
-        existingStat: ApiSportsMatchTeamStatistics?
+        existingStat: ApiSportsMatchTeamStatistics?,
     ): ApiSportsMatchTeamStatistics {
         if (matchTeam == null) {
             throw IllegalStateException("MatchTeam must not be null. It should be created in Phase 2.")
         }
 
         // 기존 있으면 업데이트, 없으면 생성
-        val teamStat = existingStat ?: ApiSportsMatchTeamStatistics(
-            matchTeam = matchTeam,
-            xgList = mutableListOf()
-        )
+        val teamStat =
+            existingStat ?: ApiSportsMatchTeamStatistics(
+                matchTeam = matchTeam,
+                xgList = mutableListOf(),
+            )
 
         // 필드 업데이트
         updateTeamStatFields(teamStat, dto)
@@ -122,7 +127,7 @@ class TeamStatsManager(
     /** TeamStats 필드를 DTO로 업데이트합니다. */
     private fun updateTeamStatFields(
         teamStat: ApiSportsMatchTeamStatistics,
-        dto: MatchTeamStatisticsDto
+        dto: MatchTeamStatisticsDto,
     ) {
         teamStat.apply {
             // 슈팅 관련 통계
@@ -159,7 +164,7 @@ class TeamStatsManager(
     /** XG 리스트를 처리합니다. (elapsed time 기준 생성/업데이트) */
     private fun processXGList(
         teamStat: ApiSportsMatchTeamStatistics,
-        xgDtoList: List<MatchTeamStatisticsDto.MatchTeamXGDto>
+        xgDtoList: List<MatchTeamStatisticsDto.MatchTeamXGDto>,
     ) {
         if (xgDtoList.isEmpty()) {
             log.debug("No XG data to process")
@@ -178,11 +183,12 @@ class TeamStatsManager(
                 log.debug("Updated XG at elapsed ${dto.elapsed}: ${dto.xg}")
             } else {
                 // 생성
-                val newXg = ApiSportsMatchTeamXG(
-                    matchTeamStatistics = teamStat,
-                    elapsedTime = dto.elapsed,
-                    expectedGoals = dto.xg
-                )
+                val newXg =
+                    ApiSportsMatchTeamXG(
+                        matchTeamStatistics = teamStat,
+                        elapsedTime = dto.elapsed,
+                        expectedGoals = dto.xg,
+                    )
                 teamStat.xgList.add(newXg)
                 log.debug("Created new XG at elapsed ${dto.elapsed}: ${dto.xg}")
             }

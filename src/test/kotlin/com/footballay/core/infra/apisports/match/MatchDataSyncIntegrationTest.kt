@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.match
 
-import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
+import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.logger
@@ -50,7 +50,6 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 @DisplayName("Match 데이터 저장 전체 흐름 통합 테스트")
 class MatchDataSyncIntegrationTest {
-
     private val log = logger()
 
     @Autowired
@@ -66,11 +65,11 @@ class MatchDataSyncIntegrationTest {
     private lateinit var em: EntityManager
 
     companion object {
-        private const val TEST_FIXTURE_API_ID = 1208397L  // Man Utd vs Aston Villa
-        private const val TEST_LEAGUE_API_ID = 39L        // Premier League
+        private const val TEST_FIXTURE_API_ID = 1208397L // Man Utd vs Aston Villa
+        private const val TEST_LEAGUE_API_ID = 39L // Premier League
         private const val TEST_SEASON = 2024
-        private const val HOME_TEAM_API_ID = 33L          // Manchester United
-        private const val AWAY_TEAM_API_ID = 66L          // Aston Villa
+        private const val HOME_TEAM_API_ID = 33L // Manchester United
+        private const val AWAY_TEAM_API_ID = 66L // Aston Villa
     }
 
     private lateinit var testFixtureUid: String
@@ -120,8 +119,12 @@ class MatchDataSyncIntegrationTest {
         assertThat(verifyFixture.core?.awayTeam).isNotNull
         log.info("[5/5] 사전 준비 검증 완료")
         log.info("  - Fixture UID: ${verifyFixture.core?.uid}")
-        log.info("  - Home Team: ${verifyFixture.core?.homeTeam?.name} (API ID: ${verifyFixture.core?.homeTeam?.teamApiSports?.apiId})")
-        log.info("  - Away Team: ${verifyFixture.core?.awayTeam?.name} (API ID: ${verifyFixture.core?.awayTeam?.teamApiSports?.apiId})")
+        log.info(
+            "  - Home Team: ${verifyFixture.core?.homeTeam?.name} (API ID: ${verifyFixture.core?.homeTeam?.teamApiSports?.apiId})",
+        )
+        log.info(
+            "  - Away Team: ${verifyFixture.core?.awayTeam?.name} (API ID: ${verifyFixture.core?.awayTeam?.teamApiSports?.apiId})",
+        )
 
         log.info("========================================")
         log.info("사전 준비 완료 - 이제 Match 저장 테스트 시작")
@@ -303,8 +306,10 @@ class MatchDataSyncIntegrationTest {
         // 교체 이벤트 검증 (assist가 교체 IN 선수)
         if (substEvents.isNotEmpty()) {
             val firstSubst = substEvents.first()
-            assertThat(firstSubst.player).isNotNull  // OUT 선수
-            log.info("  ✓ 첫 교체: ${firstSubst.player?.name} OUT → ${firstSubst.assist?.name} IN (${firstSubst.elapsedTime}분)")
+            assertThat(firstSubst.player).isNotNull // OUT 선수
+            log.info(
+                "  ✓ 첫 교체: ${firstSubst.player?.name} OUT → ${firstSubst.assist?.name} IN (${firstSubst.elapsedTime}분)",
+            )
         }
     }
 
@@ -324,7 +329,9 @@ class MatchDataSyncIntegrationTest {
             assertThat(brunoStats).isNotNull
             assertThat(brunoStats?.isCaptain).isTrue()
             assertThat(brunoStats?.minutesPlayed).isNotNull
-            log.info("  ✓ Bruno Fernandes 통계: 출전 ${brunoStats?.minutesPlayed}분, 주장: ${brunoStats?.isCaptain}, 평점: ${brunoStats?.rating}")
+            log.info(
+                "  ✓ Bruno Fernandes 통계: 출전 ${brunoStats?.minutesPlayed}분, 주장: ${brunoStats?.isCaptain}, 평점: ${brunoStats?.rating}",
+            )
         }
 
         // 골키퍼 통계 검증
@@ -356,7 +363,9 @@ class MatchDataSyncIntegrationTest {
         assertThat(homeStats?.ballPossession).isNotNull
         assertThat(homeStats?.totalShots).isNotNull
         assertThat(homeStats?.totalPasses).isNotNull
-        log.info("  ✓ Home Team 통계: 점유율 ${homeStats?.ballPossession}, 슈팅 ${homeStats?.totalShots}개, 패스 ${homeStats?.totalPasses}개")
+        log.info(
+            "  ✓ Home Team 통계: 점유율 ${homeStats?.ballPossession}, 슈팅 ${homeStats?.totalShots}개, 패스 ${homeStats?.totalPasses}개",
+        )
 
         // XG 리스트 검증
         val homeXgList = homeStats?.xgList
@@ -368,7 +377,9 @@ class MatchDataSyncIntegrationTest {
 
         val awayXgList = awayStats?.xgList
         assertThat(awayXgList).isNotEmpty
-        log.info("  ✓ Away Team XG: ${awayXgList?.first()?.expectedGoals} (elapsed: ${awayXgList?.first()?.elapsedTime}분)")
+        log.info(
+            "  ✓ Away Team XG: ${awayXgList?.first()?.expectedGoals} (elapsed: ${awayXgList?.first()?.elapsedTime}분)",
+        )
 
         // MatchTeam ↔ TeamStats 양방향 연관관계 검증
         assertThat(homeStats?.matchTeam).isEqualTo(homeTeam)
@@ -415,8 +426,9 @@ class MatchDataSyncIntegrationTest {
         val eventsWithPlayer = fixture.events.filter { it.player != null }
         eventsWithPlayer.forEach { event ->
             val playerName = event.player?.name
-            val foundInTeam = homeTeam.players.any { it.name == playerName } || 
-                             awayTeam.players.any { it.name == playerName }
+            val foundInTeam =
+                homeTeam.players.any { it.name == playerName } ||
+                    awayTeam.players.any { it.name == playerName }
             assertThat(foundInTeam).isTrue()
         }
         log.info("  ✓ MatchEvent → MatchPlayer 연결 정상 (${eventsWithPlayer.size}개 이벤트)")
@@ -445,7 +457,9 @@ class MatchDataSyncIntegrationTest {
         playersWithoutApiId.forEach { player ->
             assertThat(player.name).isNotBlank()
             assertThat(player.matchPlayerUid).isNotNull
-            log.info("    - ${player.name} (UID: ${player.matchPlayerUid}, 팀: ${player.matchTeam?.teamApiSports?.name})")
+            log.info(
+                "    - ${player.name} (UID: ${player.matchPlayerUid}, 팀: ${player.matchTeam?.teamApiSports?.name})",
+            )
         }
 
         log.info("=== ID=null 선수 처리 검증 완료 ===")
@@ -456,4 +470,3 @@ class MatchDataSyncIntegrationTest {
         em.clear()
     }
 }
-

@@ -13,5 +13,5 @@ import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 data class ProcessingCases(
     val bothExistTeams: List<TeamApiSports>,
     val apiOnlyTeams: List<Pair<TeamApiSports, TeamApiSportsCreateDto>>,
-    val bothNewDtos: List<TeamApiSportsCreateDto>
+    val bothNewDtos: List<TeamApiSportsCreateDto>,
 )

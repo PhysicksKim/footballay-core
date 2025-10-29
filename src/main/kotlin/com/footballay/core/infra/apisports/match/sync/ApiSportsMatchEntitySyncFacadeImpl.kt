@@ -1,6 +1,5 @@
 package com.footballay.core.infra.apisports.match.sync
 
-import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.base.MatchBaseDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
@@ -9,6 +8,7 @@ import com.footballay.core.infra.apisports.match.sync.lineup.MatchLineupDtoExtra
 import com.footballay.core.infra.apisports.match.sync.persist.MatchEntitySyncService
 import com.footballay.core.infra.apisports.match.sync.playerstat.MatchPlayerStatDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.teamstat.MatchTeamStatDtoExtractor
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 
@@ -40,9 +40,8 @@ class ApiSportsMatchEntitySyncFacadeImpl(
     private val eventDtoExtractor: MatchEventDtoExtractor,
     private val teamStatExtractor: MatchTeamStatDtoExtractor,
     private val playerStatExtractor: MatchPlayerStatDtoExtractor,
-    private val matchEntitySyncService: MatchEntitySyncService
+    private val matchEntitySyncService: MatchEntitySyncService,
 ) : ApiSportsMatchEntitySyncFacade {
-
     private val log = logger()
 
     override fun syncFixtureMatchEntities(dto: FullMatchSyncDto): MatchDataSyncResult {
@@ -59,20 +58,25 @@ class ApiSportsMatchEntitySyncFacadeImpl(
             val teamStatDto = teamStatExtractor.extractTeamStats(dto)
             val playerStatDto = playerStatExtractor.extractPlayerStats(dto, context)
 
-            log.info("Extracted DTOs - Lineup: ${context.lineupMpDtoMap.size}, Event: ${context.eventMpDtoMap.size}, Stat: ${context.statMpDtoMap.size}")
-
-            // Phase 2: 엔티티 동기화 (트랜잭션)
-            val syncResult = matchEntitySyncService.syncMatchEntities(
-                fixtureApiId = fixtureApiId,
-                baseDto = baseDto,
-                lineupDto = lineupDto,
-                eventDto = eventDto,
-                teamStatDto = teamStatDto,
-                playerStatDto = playerStatDto,
-                playerContext = context
+            log.info(
+                "Extracted DTOs - Lineup: ${context.lineupMpDtoMap.size}, Event: ${context.eventMpDtoMap.size}, Stat: ${context.statMpDtoMap.size}",
             )
 
-            log.info("Match sync completed - Created: ${syncResult.createdCount}, Updated: ${syncResult.updatedCount}, Deleted: ${syncResult.deletedCount}")
+            // Phase 2: 엔티티 동기화 (트랜잭션)
+            val syncResult =
+                matchEntitySyncService.syncMatchEntities(
+                    fixtureApiId = fixtureApiId,
+                    baseDto = baseDto,
+                    lineupDto = lineupDto,
+                    eventDto = eventDto,
+                    teamStatDto = teamStatDto,
+                    playerStatDto = playerStatDto,
+                    playerContext = context,
+                )
+
+            log.info(
+                "Match sync completed - Created: ${syncResult.createdCount}, Updated: ${syncResult.updatedCount}, Deleted: ${syncResult.deletedCount}",
+            )
 
             return MatchDataSyncResult.ongoing(dto.fixture.date)
         } catch (e: Exception) {

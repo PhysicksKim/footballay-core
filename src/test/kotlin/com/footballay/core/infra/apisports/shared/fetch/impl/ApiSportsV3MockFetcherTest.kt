@@ -10,7 +10,6 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 @ActiveProfiles("dev", "mockapi")
 class ApiSportsV3MockFetcherTest {
-
     @Autowired
     lateinit var mockFetcher: ApiSportsV3MockFetcher
 
@@ -38,7 +37,7 @@ class ApiSportsV3MockFetcherTest {
         assertThat(result.get).isEqualTo("leagues")
         assertThat(result.results).isEqualTo(2)
         assertThat(result.response).hasSize(2)
-        
+
         val premierLeague = result.response.find { it.league.id == ApiSportsV3MockFetcher.SUPPORTED_LEAGUE_ID.toInt() }
         assertThat(premierLeague).isNotNull
         assertThat(premierLeague!!.league.name).isEqualTo("Premier League")
@@ -61,7 +60,7 @@ class ApiSportsV3MockFetcherTest {
         assertThat(result.get).isEqualTo("teams")
         assertThat(result.results).isGreaterThan(0)
         assertThat(result.response).isNotEmpty
-        
+
         val manchesterCity = result.response.find { it.team.id == ApiSportsV3MockFetcher.SUPPORTED_TEAM_ID.toInt() }
         assertThat(manchesterCity).isNotNull
         assertThat(manchesterCity!!.team.name).isEqualTo("Manchester City")
@@ -111,12 +110,12 @@ class ApiSportsV3MockFetcherTest {
         assertThat(result.get).isEqualTo("players/squads")
         assertThat(result.results).isGreaterThan(0)
         assertThat(result.response).isNotEmpty
-        
+
         val teamResponse = result.response.first()
         assertThat(teamResponse.team.id).isEqualTo(supportedTeamId)
         assertThat(teamResponse.team.name).isEqualTo("Manchester City")
         assertThat(teamResponse.players).isNotEmpty
-        
+
         val erlingHaaland = teamResponse.players.find { it.name == "Erling Haaland" }
         assertThat(erlingHaaland).isNotNull
         assertThat(erlingHaaland!!.position).isEqualTo("Attacker")
@@ -184,7 +183,7 @@ class ApiSportsV3MockFetcherTest {
         assertThat(result.get).isEqualTo("fixtures")
         assertThat(result.results).isEqualTo(5)
         assertThat(result.response).hasSize(5)
-        
+
         // 첫 번째 경기 검증 (Manchester United vs Fulham)
         val firstFixture = result.response.first()
         assertThat(firstFixture.fixture.id).isEqualTo(1208021L)
@@ -239,7 +238,7 @@ class ApiSportsV3MockFetcherTest {
         assertThat(result.get).isEqualTo("fixtures")
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.fixture.id).isEqualTo(supportedFixtureId)
         assertThat(fixture.fixture.referee).isEqualTo("R. Jones")
@@ -277,11 +276,11 @@ class ApiSportsV3MockFetcherTest {
         // then
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.events).isNotNull
         assertThat(fixture.events).isNotEmpty()
-        
+
         val firstEvent = fixture.events.first()
         assertThat(firstEvent.type).isEqualTo("Card")
         assertThat(firstEvent.detail).isEqualTo("Yellow Card")
@@ -299,11 +298,11 @@ class ApiSportsV3MockFetcherTest {
         // then
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.lineups).isNotNull
         assertThat(fixture.lineups).isNotEmpty()
-        
+
         val lineup = fixture.lineups.first()
         assertThat(lineup.team.name).isEqualTo("Manchester United")
         assertThat(lineup.formation).isNotNull()
@@ -322,11 +321,11 @@ class ApiSportsV3MockFetcherTest {
         // then
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.statistics).isNotNull
         assertThat(fixture.statistics).isNotEmpty()
-        
+
         val teamStats = fixture.statistics.first()
         assertThat(teamStats.team.name).isEqualTo("Manchester United")
         assertThat(teamStats.statistics).isNotEmpty()
@@ -343,15 +342,15 @@ class ApiSportsV3MockFetcherTest {
         // then
         assertThat(result.results).isEqualTo(1)
         assertThat(result.response).hasSize(1)
-        
+
         val fixture = result.response.first()
         assertThat(fixture.players).isNotNull
         assertThat(fixture.players).isNotEmpty()
-        
+
         val teamPlayers = fixture.players.first()
         assertThat(teamPlayers.team.name).isEqualTo("Manchester United")
         assertThat(teamPlayers.players).isNotEmpty()
-        
+
         val player = teamPlayers.players.first()
         assertThat(player.player.name).isNotNull()
         assertThat(player.player.photo).isNotNull()
@@ -369,7 +368,11 @@ class ApiSportsV3MockFetcherTest {
             // 실제로는 일부 fixture ID만 지원되므로 조건부 검증
             if (result.results > 0) {
                 assertThat(result.response).hasSize(1)
-                assertThat(result.response.first().fixture.id).isEqualTo(fixtureId)
+                assertThat(
+                    result.response
+                        .first()
+                        .fixture.id,
+                ).isEqualTo(fixtureId)
             } else {
                 assertThat(result.response).isEmpty()
             }
@@ -402,5 +405,4 @@ class ApiSportsV3MockFetcherTest {
             assertThat(fixture.league.season).isEqualTo(ApiSportsV3MockFetcher.SUPPORTED_SEASON)
         }
     }
-
-} 
+}

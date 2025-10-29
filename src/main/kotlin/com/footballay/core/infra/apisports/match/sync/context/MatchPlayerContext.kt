@@ -17,11 +17,3 @@ class MatchPlayerContext {
         this.lineupMpDtoMap.putAll(lineupMpDtoMap)
     }
 }
-
-
-
-
-
-
-
-

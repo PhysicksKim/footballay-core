@@ -13,5 +13,5 @@ data class ApiSportsHeaders(
     val xRapidapiHostName: String = "x-rapidapi-host",
     val xRapidapiHostValue: String = "v3.football.api-sports.io",
     val xRapidapiKeyName: String = "x-rapid",
-    val xRapidapiKeyValue: String = "mock-api-key"
+    val xRapidapiKeyValue: String = "mock-api-key",
 )

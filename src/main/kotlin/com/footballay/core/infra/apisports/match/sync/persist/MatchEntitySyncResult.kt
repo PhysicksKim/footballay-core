@@ -10,37 +10,35 @@ data class MatchEntitySyncResult(
     val playerChanges: MatchPlayerSyncResult,
     val eventChanges: MatchEventSyncResult,
     val success: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 ) {
     companion object {
         fun success(
             createdCount: Int,
-            updatedCount: Int, 
+            updatedCount: Int,
             deletedCount: Int,
             playerChanges: MatchPlayerSyncResult,
-            eventChanges: MatchEventSyncResult
-        ): MatchEntitySyncResult {
-            return MatchEntitySyncResult(
+            eventChanges: MatchEventSyncResult,
+        ): MatchEntitySyncResult =
+            MatchEntitySyncResult(
                 createdCount = createdCount,
                 updatedCount = updatedCount,
                 deletedCount = deletedCount,
                 playerChanges = playerChanges,
                 eventChanges = eventChanges,
-                success = true
+                success = true,
             )
-        }
-        
-        fun failure(errorMessage: String): MatchEntitySyncResult {
-            return MatchEntitySyncResult(
+
+        fun failure(errorMessage: String): MatchEntitySyncResult =
+            MatchEntitySyncResult(
                 createdCount = 0,
                 updatedCount = 0,
                 deletedCount = 0,
                 playerChanges = MatchPlayerSyncResult.empty(),
                 eventChanges = MatchEventSyncResult.empty(),
                 success = false,
-                errorMessage = errorMessage
+                errorMessage = errorMessage,
             )
-        }
     }
 }
 
@@ -51,7 +49,7 @@ data class MatchPlayerSyncResult(
     val created: Int,
     val updated: Int,
     val deleted: Int,
-    val skipped: Int = 0
+    val skipped: Int = 0,
 ) {
     companion object {
         fun empty() = MatchPlayerSyncResult(0, 0, 0, 0)
@@ -65,9 +63,9 @@ data class MatchEventSyncResult(
     val created: Int,
     val updated: Int,
     val deleted: Int,
-    val skipped: Int = 0
+    val skipped: Int = 0,
 ) {
     companion object {
         fun empty() = MatchEventSyncResult(0, 0, 0, 0)
     }
-} 
+}

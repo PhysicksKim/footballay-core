@@ -3,7 +3,7 @@ package com.footballay.core.infra.persistence.apisports.entity
 import jakarta.persistence.Embeddable
 
 @Embeddable
-data class LeagueApiSportsCoverage (
+data class LeagueApiSportsCoverage(
     var fixturesEvents: Boolean? = null,
     var fixturesLineups: Boolean? = null,
     var fixturesStatistics: Boolean? = null,

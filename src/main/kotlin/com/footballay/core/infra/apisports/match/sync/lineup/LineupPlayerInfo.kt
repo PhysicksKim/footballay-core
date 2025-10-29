@@ -8,5 +8,5 @@ import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 data class LineupPlayerInfo(
     val player: FullMatchSyncDto.LineupDto.LineupPlayerDto.LineupPlayerDetailDto,
     val isSubstitute: Boolean,
-    val teamId: Long
+    val teamId: Long,
 )

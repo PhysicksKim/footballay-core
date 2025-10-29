@@ -3,7 +3,7 @@ package com.footballay.core.infra.persistence.apisports.entity
 import jakarta.persistence.Embeddable
 
 @Embeddable
-data class ApiSportsScore (
+data class ApiSportsScore(
     var totalHome: Int? = null,
     var totalAway: Int? = null,
     var halftimeHome: Int? = null,

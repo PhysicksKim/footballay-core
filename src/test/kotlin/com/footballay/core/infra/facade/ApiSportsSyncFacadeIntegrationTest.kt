@@ -5,8 +5,8 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
-import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
+import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.logger
 import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.*
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("dev", "mockapi")
 @Transactional
 class ApiSportsSyncFacadeIntegrationTest {
-
     val log = logger()
 
     @Autowired
@@ -83,8 +82,8 @@ class ApiSportsSyncFacadeIntegrationTest {
     fun `완전한 통합 테스트 - 전체 동기화 워크플로우`() {
         // when & then - 순차적으로 동기화
         // 1. 리그 동기화
-        val leagueSyncResult : DomainResult<Int, DomainFail>
-            = apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
+        val leagueSyncResult: DomainResult<Int, DomainFail> =
+            apiSportsBackboneSyncFacadeImpl.syncCurrentLeagues()
 
         val leagueCount = leagueSyncResult.getOrNull()
         assertThat(leagueCount).isEqualTo(2)
@@ -151,14 +150,44 @@ class ApiSportsSyncFacadeIntegrationTest {
         assertThat(firstFixture.round).isEqualTo("Regular Season - 1")
 
         // 홈팀 검증
-        assertThat(firstFixture.core?.homeTeam?.teamApiSports?.apiId).isEqualTo(33L)
-        assertThat(firstFixture.core?.homeTeam?.teamApiSports?.name).isEqualTo("Manchester United")
-        assertThat(firstFixture.core?.homeTeam?.teamApiSports?.logo).isEqualTo("https://media.api-sports.io/football/teams/33.png")
+        assertThat(
+            firstFixture.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.apiId,
+        ).isEqualTo(33L)
+        assertThat(
+            firstFixture.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Manchester United")
+        assertThat(
+            firstFixture.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.logo,
+        ).isEqualTo("https://media.api-sports.io/football/teams/33.png")
 
         // 원정팀 검증
-        assertThat(firstFixture.core?.awayTeam?.teamApiSports?.apiId).isEqualTo(36L)
-        assertThat(firstFixture.core?.awayTeam?.teamApiSports?.name).isEqualTo("Fulham")
-        assertThat(firstFixture.core?.awayTeam?.teamApiSports?.logo).isEqualTo("https://media.api-sports.io/football/teams/36.png")
+        assertThat(
+            firstFixture.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.apiId,
+        ).isEqualTo(36L)
+        assertThat(
+            firstFixture.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Fulham")
+        assertThat(
+            firstFixture.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.logo,
+        ).isEqualTo("https://media.api-sports.io/football/teams/36.png")
 
         // 스코어 검증
         assertThat(firstFixture.score?.halftimeHome).isEqualTo(1)
@@ -177,9 +206,10 @@ class ApiSportsSyncFacadeIntegrationTest {
         apiSportsBackboneSyncFacadeImpl.syncTeamsOfLeague(leagueApiId, supportSeason)
 
         // when
-        val exception = assertThrows<IllegalArgumentException> {
-            apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
-        }
+        val exception =
+            assertThrows<IllegalArgumentException> {
+                apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(leagueApiId, unsupportedSeason)
+            }
 
         // DB에 저장된 fixture가 없어야 함
         val savedFixtures = fixtureApiSportsRepository.findAll()
@@ -198,7 +228,11 @@ class ApiSportsSyncFacadeIntegrationTest {
         assertThat(teamSyncResult is DomainResult.Success).isTrue
 
         // 3. 경기 동기화
-        val fixtureSyncResult = apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(SUPPORTED_LEAGUE_API_ID, SUPPORTED_SEASON)
+        val fixtureSyncResult =
+            apiSportsBackboneSyncFacadeImpl.syncFixturesOfLeagueWithSeason(
+                SUPPORTED_LEAGUE_API_ID,
+                SUPPORTED_SEASON,
+            )
         assertThat(fixtureSyncResult.getOrNull()).isEqualTo(5)
 
         em.flush()
@@ -216,7 +250,13 @@ class ApiSportsSyncFacadeIntegrationTest {
         // 특정 데이터 검증
         val premierLeague = finalLeagues.find { it.apiId == SUPPORTED_LEAGUE_API_ID }
         val manchesterUnited = finalTeams.find { it.apiId == 33L }
-        val manchesterUnitedFixture = finalFixtures.find { it.core?.homeTeam?.teamApiSports?.apiId == 33L }
+        val manchesterUnitedFixture =
+            finalFixtures.find {
+                it.core
+                    ?.homeTeam
+                    ?.teamApiSports
+                    ?.apiId == 33L
+            }
 
         assertThat(premierLeague).isNotNull
         assertThat(manchesterUnited).isNotNull
@@ -224,8 +264,18 @@ class ApiSportsSyncFacadeIntegrationTest {
 
         // fixture 상세 검증
         assertThat(manchesterUnitedFixture!!.apiId).isEqualTo(1208021L)
-        assertThat(manchesterUnitedFixture.core?.homeTeam?.teamApiSports?.name).isEqualTo("Manchester United")
-        assertThat(manchesterUnitedFixture.core?.awayTeam?.teamApiSports?.name).isEqualTo("Fulham")
+        assertThat(
+            manchesterUnitedFixture.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Manchester United")
+        assertThat(
+            manchesterUnitedFixture.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Fulham")
         assertThat(manchesterUnitedFixture.season?.leagueApiSports?.apiId).isEqualTo(SUPPORTED_LEAGUE_API_ID)
         assertThat(manchesterUnitedFixture.season?.seasonYear).isEqualTo(SUPPORTED_SEASON)
     }
@@ -278,22 +328,58 @@ class ApiSportsSyncFacadeIntegrationTest {
 
         // Manchester United vs Fulham 검증
         assertThat(manUtdVsFulham).isNotNull
-        assertThat(manUtdVsFulham?.core?.homeTeam?.teamApiSports?.name).isEqualTo("Manchester United")
-        assertThat(manUtdVsFulham?.core?.awayTeam?.teamApiSports?.name).isEqualTo("Fulham")
+        assertThat(
+            manUtdVsFulham
+                ?.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Manchester United")
+        assertThat(
+            manUtdVsFulham
+                ?.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Fulham")
         assertThat(manUtdVsFulham?.score?.fulltimeHome).isEqualTo(1)
         assertThat(manUtdVsFulham?.score?.fulltimeAway).isEqualTo(0)
 
         // Arsenal vs Wolves 검증
         assertThat(arsenalVsWolves).isNotNull
-        assertThat(arsenalVsWolves?.core?.homeTeam?.teamApiSports?.name).isEqualTo("Arsenal")
-        assertThat(arsenalVsWolves?.core?.awayTeam?.teamApiSports?.name).isEqualTo("Wolves")
+        assertThat(
+            arsenalVsWolves
+                ?.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Arsenal")
+        assertThat(
+            arsenalVsWolves
+                ?.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Wolves")
         assertThat(arsenalVsWolves?.score?.fulltimeHome).isEqualTo(3)
         assertThat(arsenalVsWolves?.score?.fulltimeAway).isEqualTo(0)
 
         // Manchester United vs Aston Villa 검증 (마지막 경기)
         assertThat(manUtdVsAstonVilla).isNotNull
-        assertThat(manUtdVsAstonVilla?.core?.homeTeam?.teamApiSports?.name).isEqualTo("Manchester United")
-        assertThat(manUtdVsAstonVilla?.core?.awayTeam?.teamApiSports?.name).isEqualTo("Aston Villa")
+        assertThat(
+            manUtdVsAstonVilla
+                ?.core
+                ?.homeTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Manchester United")
+        assertThat(
+            manUtdVsAstonVilla
+                ?.core
+                ?.awayTeam
+                ?.teamApiSports
+                ?.name,
+        ).isEqualTo("Aston Villa")
         assertThat(manUtdVsAstonVilla?.score?.fulltimeHome).isEqualTo(2)
         assertThat(manUtdVsAstonVilla?.score?.fulltimeAway).isEqualTo(0)
         assertThat(manUtdVsAstonVilla?.round).isEqualTo("Regular Season - 38")

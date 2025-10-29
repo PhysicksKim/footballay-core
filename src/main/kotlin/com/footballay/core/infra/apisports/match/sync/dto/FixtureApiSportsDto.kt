@@ -20,7 +20,7 @@ data class FixtureApiSportsDto(
         val apiId: Long,
         val name: String,
         val logo: String = "",
-        val winner: Boolean? = null
+        val winner: Boolean? = null,
     )
 
     data class VenueDto(
@@ -36,7 +36,7 @@ data class FixtureApiSportsDto(
         var extra: Int? = null,
     )
 
-    data class ScoreDto (
+    data class ScoreDto(
         var totalHome: Int? = null,
         var totalAway: Int? = null,
         var halftimeHome: Int? = null,
@@ -49,5 +49,3 @@ data class FixtureApiSportsDto(
         var penaltyAway: Int? = null,
     )
 }
-
-

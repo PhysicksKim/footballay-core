@@ -13,9 +13,8 @@ import org.springframework.test.context.ActiveProfiles
  * 리그-팀 다대다 연관관계 메서드 테스트
  */
 @SpringBootTest
-@ActiveProfiles("dev","devrealapi")
+@ActiveProfiles("dev", "devrealapi")
 class LeagueTeamRelationTest {
-
     @Autowired
     private lateinit var relationTestHelpServices: RelationTestHelpServices
 

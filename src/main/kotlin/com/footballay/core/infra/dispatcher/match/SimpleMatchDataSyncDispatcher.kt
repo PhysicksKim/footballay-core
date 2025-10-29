@@ -21,9 +21,8 @@ import java.time.OffsetDateTime
  */
 @Component
 class SimpleMatchDataSyncDispatcher(
-    private val orchestrators: List<MatchSyncOrchestrator>
+    private val orchestrators: List<MatchSyncOrchestrator>,
 ) : MatchDataSyncDispatcher {
-
     private val log = logger()
 
     override fun syncByFixtureUid(fixtureUid: String): MatchDataSyncResult {
@@ -35,4 +34,4 @@ class SimpleMatchDataSyncDispatcher(
         log.warn("지원하는 Orchestrator를 찾지 못했습니다. fixtureUid=$fixtureUid")
         return MatchDataSyncResult.ongoing(OffsetDateTime.now().plusHours(1))
     }
-} 
+}

@@ -4,5 +4,5 @@ data class TeamApiSportsDto(
     val apiId: Long,
     val name: String?,
     val code: String?,
-    val logo: String?
+    val logo: String?,
 )

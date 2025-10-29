@@ -30,9 +30,8 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  */
 @Component
 class MatchEventManager(
-    private val matchEventRepository: ApiSportsMatchEventRepository
+    private val matchEventRepository: ApiSportsMatchEventRepository,
 ) {
-
     private val log = logger()
 
     /**
@@ -45,40 +44,43 @@ class MatchEventManager(
     @Transactional
     fun processMatchEvents(
         eventDto: MatchEventSyncDto,
-        entityBundle: MatchEntityBundle
+        entityBundle: MatchEntityBundle,
     ): MatchEventProcessResult {
         log.info("Starting MatchEvent processing - Events: ${eventDto.events.size}")
-        
+
         try {
             // event 의 순서를 나타내는 sequence field 검증
             validateEventSequences(eventDto.events)
-            
+
             // 기존에 저장된 이벤트를 고려해 변경 계획 수립 - MatchEventChangePlanner로 생성/수정/삭제 계획
             val entitySequenceMap = MatchEventChangePlanner.entitiesToSequenceMap(entityBundle.allEvents)
-            val eventChangeSet = MatchEventChangePlanner.planChanges(
-                eventDto,
-                entitySequenceMap,
-                entityBundle.fixture!!,
-                entityBundle.homeTeam,
-                entityBundle.awayTeam,
-                entityBundle.allMatchPlayers
+            val eventChangeSet =
+                MatchEventChangePlanner.planChanges(
+                    eventDto,
+                    entitySequenceMap,
+                    entityBundle.fixture!!,
+                    entityBundle.homeTeam,
+                    entityBundle.awayTeam,
+                    entityBundle.allMatchPlayers,
+                )
+            log.info(
+                "event change plan - Create: ${eventChangeSet.createCount}, Update: ${eventChangeSet.updateCount}, Delete: ${eventChangeSet.deleteCount}",
             )
-            log.info("event change plan - Create: ${eventChangeSet.createCount}, Update: ${eventChangeSet.updateCount}, Delete: ${eventChangeSet.deleteCount}")
-            
+
             // Event 엔티티 저장 - 데이터베이스에 변경사항 적용
             val savedEvents = persistEventChanges(eventChangeSet)
-            
+
             // EntityBundle 업데이트 - sequence 순으로 정렬하여 반영
             val sortedEvents = savedEvents.sortedBy { it.sequence }
             entityBundle.allEvents = sortedEvents
-            
+
             log.info("MatchEvent processing completed - Total saved: ${sortedEvents.size}")
             return MatchEventProcessResult(
                 totalEvents = sortedEvents.size,
                 createdCount = eventChangeSet.createCount,
                 updatedCount = eventChangeSet.updateCount,
                 deletedCount = eventChangeSet.deleteCount,
-                savedEvents = sortedEvents
+                savedEvents = sortedEvents,
             )
         } catch (e: Exception) {
             log.error("Failed to process MatchEvents", e)
@@ -89,22 +91,22 @@ class MatchEventManager(
     /** Event sequence 무결성을 검증합니다. (중복, 누락, 시작점) */
     private fun validateEventSequences(events: List<MatchEventDto>) {
         if (events.isEmpty()) return
-        
+
         val sequences = events.map { it.sequence }.sorted()
-        
+
         // 중복 검사 - 같은 sequence가 여러 번 나타나는지 확인
         val duplicates = sequences.groupingBy { it }.eachCount().filter { it.value > 1 }
         if (duplicates.isNotEmpty()) {
             log.warn("Event DTO에서 중복된 sequence 발견: ${duplicates.keys}")
         }
-        
+
         // 연속성 검사 - sequence가 연속적으로 증가하는지 확인
         val expectedSequences = (sequences.first()..sequences.last()).toList()
         val missingSequences = expectedSequences - sequences.toSet()
         if (missingSequences.isNotEmpty()) {
             log.warn("Event DTO에서 누락된 sequence 발견: $missingSequences")
         }
-        
+
         // 시작점 검사 - sequence가 0부터 시작하는지 확인
         if (sequences.first() != 0) {
             log.warn("Event DTO sequence가 0부터 시작하지 않음. 시작점: ${sequences.first()}")
@@ -114,14 +116,14 @@ class MatchEventManager(
     /** 변경사항을 데이터베이스에 저장합니다. (실패 시 빈 이벤트로 대체) */
     private fun persistEventChanges(changeSet: MatchEventChangeSet): List<ApiSportsMatchEvent> {
         val allEvents = mutableListOf<ApiSportsMatchEvent>()
-        
+
         try {
             // 1. 삭제 처리 - orphan 엔티티들을 먼저 삭제
             if (changeSet.toDelete.isNotEmpty()) {
                 matchEventRepository.deleteAll(changeSet.toDelete)
                 log.info("Deleted ${changeSet.toDelete.size} MatchEvents")
             }
-            
+
             // 2. 생성 및 업데이트 처리 - 새로운 이벤트 생성과 기존 이벤트 수정을 배치로 처리
             if (changeSet.toCreate.isNotEmpty() || changeSet.toUpdate.isNotEmpty()) {
                 val eventsToSave = changeSet.toCreate + changeSet.toUpdate
@@ -136,13 +138,13 @@ class MatchEventManager(
             val emptyEvents = createEmptyEventsForFailed(failedEvents)
             allEvents.addAll(emptyEvents)
         }
-        
+
         return allEvents
     }
 
     /** 실패한 이벤트를 빈 이벤트(UNKNOWN)로 대체합니다. */
-    private fun createEmptyEventsForFailed(failedEvents: List<ApiSportsMatchEvent>): List<ApiSportsMatchEvent> {
-        return failedEvents.map { event ->
+    private fun createEmptyEventsForFailed(failedEvents: List<ApiSportsMatchEvent>): List<ApiSportsMatchEvent> =
+        failedEvents.map { event ->
             ApiSportsMatchEvent(
                 fixtureApi = event.fixtureApi,
                 matchTeam = null,
@@ -153,10 +155,9 @@ class MatchEventManager(
                 extraTime = null,
                 eventType = "UNKNOWN",
                 detail = "Failed to process event",
-                comments = "Event processing failed"
+                comments = "Event processing failed",
             )
         }
-    }
 }
 
 /** MatchEvent 처리 결과 */
@@ -165,5 +166,5 @@ data class MatchEventProcessResult(
     val createdCount: Int,
     val updatedCount: Int,
     val deletedCount: Int,
-    val savedEvents: List<ApiSportsMatchEvent>
-) 
+    val savedEvents: List<ApiSportsMatchEvent>,
+)

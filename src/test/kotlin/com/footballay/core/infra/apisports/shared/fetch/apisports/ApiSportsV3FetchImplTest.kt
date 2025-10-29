@@ -14,7 +14,6 @@ import kotlin.test.Test
 @SpringBootTest
 @ActiveProfiles("dev", "devrealapi")
 class ApiSportsV3FetchImplTest {
-
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 

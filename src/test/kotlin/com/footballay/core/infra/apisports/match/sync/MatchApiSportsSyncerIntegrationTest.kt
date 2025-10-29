@@ -4,13 +4,13 @@ import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
 import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.persistence.apisports.repository.*
-import com.footballay.core.infra.persistence.core.repository.*
 import com.footballay.core.infra.persistence.apisports.repository.live.*
+import com.footballay.core.infra.persistence.core.repository.*
 import com.footballay.core.logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("mockapi")
 @DisplayName("MatchApiSportsSyncer 통합 테스트")
 class MatchApiSportsSyncerIntegrationTest {
-
     private val log = logger()
 
     @Autowired
@@ -84,14 +83,15 @@ class MatchApiSportsSyncerIntegrationTest {
         // 2. Match 데이터 동기화 테스트
         log.info("=== 2단계: Match 데이터 동기화 ===")
         val supportedFixtureIds = ApiSportsV3MockFetcher.TestHelpers.getSupportedFixtureIds(premierLeagueBundle)
-        
+
         for (fixtureId in supportedFixtureIds) {
             log.info("경기 ID $fixtureId 동기화 시작")
-            val syncResult = matchApiSportsSyncer.syncFixtureMatchEntities(
-                FullMatchSyncDto.of(
-                    mockFetcher.fetchFixtureSingle(fixtureId)
+            val syncResult =
+                matchApiSportsSyncer.syncFixtureMatchEntities(
+                    FullMatchSyncDto.of(
+                        mockFetcher.fetchFixtureSingle(fixtureId),
+                    ),
                 )
-            )
             log.info("경기 ID $fixtureId 동기화 완료: $syncResult")
         }
 
@@ -108,25 +108,27 @@ class MatchApiSportsSyncerIntegrationTest {
 
         // 2. League Teams 동기화 (Premier League 2024의 팀들)
         log.info("League Teams 동기화 시작")
-        val leagueTeamsResult = apiSportsBackboneSyncFacade.syncTeamsOfLeague(
-            bundle.leagueId!!, 
-            bundle.season!!
-        )
+        val leagueTeamsResult =
+            apiSportsBackboneSyncFacade.syncTeamsOfLeague(
+                bundle.leagueId!!,
+                bundle.season!!,
+            )
         log.info("League Teams 동기화 완료: $leagueTeamsResult")
 
         // 3. Fixtures 동기화 (Premier League 2024의 경기들)
         log.info("Fixtures 동기화 시작")
-        val fixturesResult = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithSeason(
-            bundle.leagueId!!, 
-            bundle.season!!
-        )
+        val fixturesResult =
+            apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithSeason(
+                bundle.leagueId!!,
+                bundle.season!!,
+            )
         log.info("Fixtures 동기화 완료: $fixturesResult")
     }
 
     private fun verifySavedData(bundle: ApiSportsV3MockFetcher.MockDataBundle) {
         // Backbone 데이터 검증
         log.info("--- Backbone 데이터 검증 ---")
-        
+
         // League 데이터
         val savedLeagues = leagueApiSportsRepository.findAll()
         log.info("저장된 LeagueApiSports 개수: ${savedLeagues.size}")
@@ -157,37 +159,47 @@ class MatchApiSportsSyncerIntegrationTest {
         val savedFixtures = fixtureApiSportsRepository.findAll()
         log.info("저장된 FixtureApiSports 개수: ${savedFixtures.size}")
         savedFixtures.forEach { fixture ->
-            log.info("Fixture: ID=${fixture.apiId}, Home=${fixture.core?.homeTeam?.teamApiSports?.apiId}, Away=${fixture.core?.awayTeam?.teamApiSports?.apiId}, Date=${fixture.date}")
+            log.info(
+                "Fixture: ID=${fixture.apiId}, Home=${fixture.core?.homeTeam?.teamApiSports?.apiId}, Away=${fixture.core?.awayTeam?.teamApiSports?.apiId}, Date=${fixture.date}",
+            )
         }
 
         val savedFixtureCores = fixtureCoreRepository.findAll()
         log.info("저장된 FixtureCore 개수: ${savedFixtureCores.size}")
         savedFixtureCores.forEach { fixture ->
-            log.info("FixtureCore: ID=${fixture.id}, Home=${fixture.homeTeam?.id}, Away=${fixture.awayTeam?.id}, UID=${fixture.uid}")
+            log.info(
+                "FixtureCore: ID=${fixture.id}, Home=${fixture.homeTeam?.id}, Away=${fixture.awayTeam?.id}, UID=${fixture.uid}",
+            )
         }
 
         // Match 데이터 검증
         log.info("--- Match 데이터 검증 ---")
-        
+
         // Match Team 데이터
         val savedMatchTeams = apiSportsMatchTeamRepository.findAll()
         log.info("저장된 ApiSportsMatchTeam 개수: ${savedMatchTeams.size}")
         savedMatchTeams.forEach { matchTeam ->
-            log.info("MatchTeam: ID=${matchTeam.id}, TeamApiId=${matchTeam.teamApiSports?.apiId}, Formation=${matchTeam.formation}")
+            log.info(
+                "MatchTeam: ID=${matchTeam.id}, TeamApiId=${matchTeam.teamApiSports?.apiId}, Formation=${matchTeam.formation}",
+            )
         }
 
         // Match Player 데이터
         val savedMatchPlayers = apiSportsMatchPlayerRepository.findAll()
         log.info("저장된 ApiSportsMatchPlayer 개수: ${savedMatchPlayers.size}")
         savedMatchPlayers.forEach { matchPlayer ->
-            log.info("MatchPlayer: ID=${matchPlayer.id}, Name=${matchPlayer.name}, Position=${matchPlayer.position}, Number=${matchPlayer.number}")
+            log.info(
+                "MatchPlayer: ID=${matchPlayer.id}, Name=${matchPlayer.name}, Position=${matchPlayer.position}, Number=${matchPlayer.number}",
+            )
         }
 
         // Match Event 데이터
         val savedMatchEvents = apiSportsMatchEventRepository.findAll()
         log.info("저장된 ApiSportsMatchEvent 개수: ${savedMatchEvents.size}")
         savedMatchEvents.forEach { matchEvent ->
-            log.info("MatchEvent: ID=${matchEvent.id}, Type=${matchEvent.eventType}, Detail=${matchEvent.detail}, Elapsed=${matchEvent.elapsedTime}")
+            log.info(
+                "MatchEvent: ID=${matchEvent.id}, Type=${matchEvent.eventType}, Detail=${matchEvent.detail}, Elapsed=${matchEvent.elapsedTime}",
+            )
         }
 
         // 검증 결과 요약
@@ -220,12 +232,12 @@ class MatchApiSportsSyncerIntegrationTest {
 
     private fun clearAllData() {
         log.info("테스트 데이터 초기화 시작")
-        
+
         // Match 데이터 삭제
         apiSportsMatchEventRepository.deleteAll()
         apiSportsMatchPlayerRepository.deleteAll()
         apiSportsMatchTeamRepository.deleteAll()
-        
+
         // Backbone 데이터 삭제
         fixtureApiSportsRepository.deleteAll()
         fixtureCoreRepository.deleteAll()
@@ -233,7 +245,7 @@ class MatchApiSportsSyncerIntegrationTest {
         teamCoreRepository.deleteAll()
         leagueApiSportsRepository.deleteAll()
         leagueCoreRepository.deleteAll()
-        
+
         log.info("테스트 데이터 초기화 완료")
     }
-} 
+}

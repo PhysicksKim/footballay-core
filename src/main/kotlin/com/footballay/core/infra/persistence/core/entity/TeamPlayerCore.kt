@@ -11,17 +11,14 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "refac_team_player")
-class TeamPlayerCore (
-
+class TeamPlayerCore(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_core_id", referencedColumnName = "id", nullable = false)
     var team: TeamCore? = null,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_core_id", referencedColumnName = "id", nullable = false)
-    var player: PlayerCore? = null
+    var player: PlayerCore? = null,
 )

@@ -2,15 +2,14 @@ package com.footballay.core.infra.apisports.match.sync.persist.player.manager
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
-import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator.generateMatchPlayerKey as createMpKey
-import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
+import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.UniformColor
-import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
-import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerRepository
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
+import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchPlayerRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.assertj.core.api.Assertions.assertThat
@@ -21,10 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
+import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator.generateMatchPlayerKey as createMpKey
 
 @ExtendWith(MockitoExtension::class)
 class MatchPlayerManagerTest {
-
     val log = logger()
 
     @Mock
@@ -40,11 +39,12 @@ class MatchPlayerManagerTest {
 
     @BeforeEach
     fun setUp() {
-        matchPlayerManager = MatchPlayerManager(
-            matchPlayerRepository,
-            playerApiSportsRepository,
-            uidGenerator
-        )
+        matchPlayerManager =
+            MatchPlayerManager(
+                matchPlayerRepository,
+                playerApiSportsRepository,
+                uidGenerator,
+            )
     }
 
     @Test
@@ -55,12 +55,13 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(123L, "New Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+            }
+
         // 실제 생성된 엔티티를 반환하도록 mock 설정
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>())).thenAnswer { invocation ->
             val players = invocation.getArgument<List<ApiSportsMatchPlayer>>(0)
@@ -75,7 +76,7 @@ class MatchPlayerManagerTest {
         assertThat(result.createdCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
         verify(matchPlayerRepository).saveAll(any<List<ApiSportsMatchPlayer>>())
-        
+
         // 엔티티 번들에서 실제 생성된 플레이어 검증
         assertThat(entityBundle.allMatchPlayers).hasSize(1)
         val createdPlayer = entityBundle.allMatchPlayers.values.first()
@@ -92,11 +93,11 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(123L, "Updated Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         // 기존 엔티티도 같은 키로 생성 (올바른 키 형식 사용)
         val existingPlayer = createMockMatchPlayerEntity(apiId = 123L, name = "Old Player", number = 9)
         existingPlayer.matchPlayerUid = "mp_id_123" // 올바른 키 형식 사용
-        
+
         // playerApiSports 설정하여 올바른 키 생성
         val playerApiSports = mock<PlayerApiSports>()
         whenever(playerApiSports.apiId).thenReturn(123L)
@@ -106,11 +107,12 @@ class MatchPlayerManagerTest {
         val allMatchPlayerMap = mapOf(mpkey to existingPlayer)
 
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-            this.allMatchPlayers = allMatchPlayerMap
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+                this.allMatchPlayers = allMatchPlayerMap
+            }
+
         // 실제 업데이트된 엔티티를 반환하도록 mock 설정
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>())).thenAnswer { invocation ->
             val players = invocation.getArgument<List<ApiSportsMatchPlayer>>(0)
@@ -129,7 +131,7 @@ class MatchPlayerManagerTest {
         assertThat(result.updatedCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
         verify(matchPlayerRepository).saveAll(any<List<ApiSportsMatchPlayer>>())
-        
+
         // 엔티티 번들에서 실제 업데이트된 플레이어 검증
         assertThat(entityBundle.allMatchPlayers).hasSize(1)
         val updatedPlayer = entityBundle.allMatchPlayers.values.first()
@@ -142,16 +144,18 @@ class MatchPlayerManagerTest {
     fun testDeleteOrphanedMatchPlayer() {
         // given
         val context = MatchPlayerContext() // 빈 컨텍스트
-        
+
         val existingPlayer = createMockMatchPlayerEntity(apiId = 123L, name = "Orphaned Player", number = 9)
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-            this.allMatchPlayers = mapOf(
-                createMpKey(existingPlayer.playerApiSports?.apiId, existingPlayer.name) to existingPlayer
-            )
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+                this.allMatchPlayers =
+                    mapOf(
+                        createMpKey(existingPlayer.playerApiSports?.apiId, existingPlayer.name) to existingPlayer,
+                    )
+            }
+
         doNothing().whenever(matchPlayerRepository).deleteAll(any<List<ApiSportsMatchPlayer>>())
 
         // when
@@ -167,25 +171,27 @@ class MatchPlayerManagerTest {
     @DisplayName("Lineup DTO의 정보를 바탕으로 MatchPlayer의 position, number, substitute 필드를 업데이트합니다")
     fun testUpdateMatchPlayerWithLineupInfo() {
         // given
-        val playerDto = createMockPlayerDto(
-            apiId = 123L, 
-            name = "Lineup Player", 
-            number = 10, 
-            position = "F", 
-            substitute = false
-        )
+        val playerDto =
+            createMockPlayerDto(
+                apiId = 123L,
+                name = "Lineup Player",
+                number = 10,
+                position = "F",
+                substitute = false,
+            )
         val context = MatchPlayerContext()
         val playerKey = createMpKey(123L, "Lineup Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         // Lineup 정보가 포함된 DTO 생성
         val lineupDto = createMockLineupDto()
-        
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+            }
+
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>())).thenAnswer { invocation ->
             val players = invocation.getArgument<List<ApiSportsMatchPlayer>>(0)
             // 실제 엔티티에 lineup 정보 적용
@@ -205,7 +211,7 @@ class MatchPlayerManagerTest {
         assertThat(result.createdCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
         verify(matchPlayerRepository).saveAll(any<List<ApiSportsMatchPlayer>>())
-        
+
         // 엔티티 번들에서 실제 저장된 플레이어 검증
         assertThat(entityBundle.allMatchPlayers).hasSize(1)
         val savedPlayer = entityBundle.allMatchPlayers.values.first()
@@ -223,25 +229,28 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(123L, "Test Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         // formation과 color 정보가 포함된 Lineup DTO
         val lineupDto = createMockLineupDtoWithFormationAndColor()
-        
-        val homeTeam = ApiSportsMatchTeam(
-            formation = "3-5-2",
-            playerColor = UniformColor(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
-            goalkeeperColor = UniformColor(primary = "#0000FF", number = "#FFFFFF", border = "#000000")
-        )
-        val awayTeam = ApiSportsMatchTeam(
-            formation = "4-3-3",
-            playerColor = UniformColor(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
-            goalkeeperColor = UniformColor(primary = "#FFFF00", number = "#000000", border = "#FFFFFF")
-        )
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-            this.awayTeam = awayTeam
-        }
-        
+
+        val homeTeam =
+            ApiSportsMatchTeam(
+                formation = "3-5-2",
+                playerColor = UniformColor(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
+                goalkeeperColor = UniformColor(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
+            )
+        val awayTeam =
+            ApiSportsMatchTeam(
+                formation = "4-3-3",
+                playerColor = UniformColor(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
+                goalkeeperColor = UniformColor(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
+            )
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+                this.awayTeam = awayTeam
+            }
+
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>())).thenAnswer { invocation ->
             val players = invocation.getArgument<List<ApiSportsMatchPlayer>>(0)
             players
@@ -255,17 +264,17 @@ class MatchPlayerManagerTest {
         assertThat(result.createdCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
         verify(matchPlayerRepository).saveAll(any<List<ApiSportsMatchPlayer>>())
-        
+
         // MatchTeam formation 업데이트 검증
         assertThat(entityBundle.homeTeam?.formation).isEqualTo("3-5-2")
         assertThat(entityBundle.awayTeam?.formation).isEqualTo("4-3-3")
-        
+
         // MatchTeam color 업데이트 검증
         assertThat(entityBundle.homeTeam?.playerColor?.primary).isEqualTo("#FF0000")
         assertThat(entityBundle.homeTeam?.playerColor?.number).isEqualTo("#FFFFFF")
         assertThat(entityBundle.homeTeam?.playerColor?.border).isEqualTo("#000000")
         assertThat(entityBundle.homeTeam?.goalkeeperColor?.primary).isEqualTo("#0000FF")
-        
+
         assertThat(entityBundle.awayTeam?.playerColor?.primary).isEqualTo("#00FF00")
         assertThat(entityBundle.awayTeam?.playerColor?.number).isEqualTo("#000000")
         assertThat(entityBundle.awayTeam?.playerColor?.border).isEqualTo("#FFFFFF")
@@ -278,17 +287,18 @@ class MatchPlayerManagerTest {
         // given
         val context = MatchPlayerContext()
         val entityBundle = MatchEntityBundle.createEmpty()
-        
+
         // 100개의 플레이어 생성
         repeat(100) { i ->
             val playerDto = createMockPlayerDto(apiId = i.toLong(), name = "Player $i")
             val playerKey = createMpKey(i.toLong(), "Player $i")
             context.lineupMpDtoMap[playerKey] = playerDto
         }
-        
-        val savedPlayers = (0..99).map { i ->
-            mock<ApiSportsMatchPlayer>()
-        }
+
+        val savedPlayers =
+            (0..99).map { i ->
+                mock<ApiSportsMatchPlayer>()
+            }
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>()))
             .thenAnswer { invocation ->
                 invocation.getArgument<List<ApiSportsMatchPlayer>>(0)
@@ -312,12 +322,13 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(33L, "Test Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+            }
+
         val playerApiSports = mock<PlayerApiSports>()
         // 실제 연결된 엔티티를 반환하도록 mock 설정
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>())).thenAnswer { invocation ->
@@ -348,28 +359,31 @@ class MatchPlayerManagerTest {
     fun testComplexScenarioIntegration() {
         // given
         val context = MatchPlayerContext()
-        
+
         // 새로운 플레이어 3개 추가
         repeat(3) { i ->
             val playerDto = createMockPlayerDto(apiId = i.toLong(), name = "New Player $i")
             val playerKey = createMpKey(i.toLong(), "New Player $i")
             context.lineupMpDtoMap[playerKey] = playerDto
         }
-        
+
         // 기존 플레이어 2개 (삭제될 예정)
-        val existingPlayers = listOf(
-            createMockMatchPlayerEntity(apiId = 100L, name = "Old Player 1"),
-            createMockMatchPlayerEntity(apiId = 101L, name = "Old Player 2")
-        )
-        
+        val existingPlayers =
+            listOf(
+                createMockMatchPlayerEntity(apiId = 100L, name = "Old Player 1"),
+                createMockMatchPlayerEntity(apiId = 101L, name = "Old Player 2"),
+            )
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-            this.allMatchPlayers = existingPlayers.associateBy {
-                createMpKey(it.playerApiSports?.apiId, it.name)
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+                this.allMatchPlayers =
+                    existingPlayers.associateBy {
+                        createMpKey(it.playerApiSports?.apiId, it.name)
+                    }
             }
-        }
-        
+
         val savedPlayers = (0..2).map { mock<ApiSportsMatchPlayer>() }
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>()))
             .thenAnswer { invocation ->
@@ -398,12 +412,13 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(null, "Name Only Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+            }
+
         val savedPlayer = mock<ApiSportsMatchPlayer>()
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>()))
             .thenAnswer { invocation ->
@@ -428,12 +443,13 @@ class MatchPlayerManagerTest {
         val context = MatchPlayerContext()
         val playerKey = createMpKey(123L, "Test Player")
         context.lineupMpDtoMap[playerKey] = playerDto
-        
+
         val homeTeam = mock<ApiSportsMatchTeam>()
-        val entityBundle = MatchEntityBundle.createEmpty().apply {
-            this.homeTeam = homeTeam
-        }
-        
+        val entityBundle =
+            MatchEntityBundle.createEmpty().apply {
+                this.homeTeam = homeTeam
+            }
+
         // 실제 저장된 엔티티를 반환하도록 mock 설정
         whenever(matchPlayerRepository.saveAll(any<List<ApiSportsMatchPlayer>>()))
             .thenAnswer { invocation ->
@@ -448,7 +464,7 @@ class MatchPlayerManagerTest {
         // then
         assertThat(result.createdCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
-        
+
         // EntityBundle에 저장된 플레이어가 반영되었는지 확인
         assertThat(entityBundle.allMatchPlayers).hasSize(1)
         val savedPlayer = entityBundle.allMatchPlayers.values.first()
@@ -462,7 +478,7 @@ class MatchPlayerManagerTest {
         // given
         val context = MatchPlayerContext()
         val entityBundle = MatchEntityBundle.createEmpty()
-        
+
         // when
         val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
 
@@ -471,7 +487,7 @@ class MatchPlayerManagerTest {
         assertThat(result.updatedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.totalPlayers).isEqualTo(0)
-        
+
         verify(matchPlayerRepository, never()).saveAll(any<List<ApiSportsMatchPlayer>>())
         verify(matchPlayerRepository, never()).deleteAll(any<List<ApiSportsMatchPlayer>>())
     }
@@ -482,9 +498,9 @@ class MatchPlayerManagerTest {
         name: String,
         number: Int? = null,
         position: String? = null,
-        substitute: Boolean = false
-    ): MatchPlayerDto {
-        return MatchPlayerDto(
+        substitute: Boolean = false,
+    ): MatchPlayerDto =
+        MatchPlayerDto(
             matchPlayerUid = null,
             apiId = apiId,
             name = name,
@@ -494,16 +510,15 @@ class MatchPlayerManagerTest {
             substitute = substitute,
             nonLineupPlayer = false,
             teamApiId = 1L,
-            playerApiSportsInfo = null
+            playerApiSportsInfo = null,
         )
-    }
 
     private fun createMockMatchPlayerEntity(
         apiId: Long?,
         name: String,
-        number: Int? = null
-    ): ApiSportsMatchPlayer {
-        return ApiSportsMatchPlayer(
+        number: Int? = null,
+    ): ApiSportsMatchPlayer =
+        ApiSportsMatchPlayer(
             matchPlayerUid = "mp_$apiId",
             playerApiSports = null,
             name = name,
@@ -511,57 +526,58 @@ class MatchPlayerManagerTest {
             position = "F",
             grid = null,
             substitute = false,
-            matchTeam = null
+            matchTeam = null,
         )
-    }
 
-    private fun createMockLineupDto(): LineupSyncDto {
-        return LineupSyncDto(
-            home = LineupSyncDto.Lineup(
-                teamApiId = 1L,
-                teamName = "Home Team",
-                teamLogo = "home_logo.png",
-                playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
-                goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
-                formation = "4-3-3",
-                startMpKeys = listOf("mp_id_123"),
-                subMpKeys = emptyList()
-            ),
-            away = LineupSyncDto.Lineup(
-                teamApiId = 2L,
-                teamName = "Away Team",
-                teamLogo = "away_logo.png",
-                playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
-                goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
-                formation = "4-4-2",
-                startMpKeys = emptyList(),
-                subMpKeys = emptyList()
-            )
+    private fun createMockLineupDto(): LineupSyncDto =
+        LineupSyncDto(
+            home =
+                LineupSyncDto.Lineup(
+                    teamApiId = 1L,
+                    teamName = "Home Team",
+                    teamLogo = "home_logo.png",
+                    playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
+                    goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
+                    formation = "4-3-3",
+                    startMpKeys = listOf("mp_id_123"),
+                    subMpKeys = emptyList(),
+                ),
+            away =
+                LineupSyncDto.Lineup(
+                    teamApiId = 2L,
+                    teamName = "Away Team",
+                    teamLogo = "away_logo.png",
+                    playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
+                    goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
+                    formation = "4-4-2",
+                    startMpKeys = emptyList(),
+                    subMpKeys = emptyList(),
+                ),
         )
-    }
 
-    private fun createMockLineupDtoWithFormationAndColor(): LineupSyncDto {
-        return LineupSyncDto(
-            home = LineupSyncDto.Lineup(
-                teamApiId = 1L,
-                teamName = "Home Team",
-                teamLogo = "home_logo.png",
-                playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
-                goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
-                formation = "3-5-2",
-                startMpKeys = listOf("mp_id_123"),
-                subMpKeys = emptyList()
-            ),
-            away = LineupSyncDto.Lineup(
-                teamApiId = 2L,
-                teamName = "Away Team",
-                teamLogo = "away_logo.png",
-                playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
-                goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
-                formation = "4-3-3",
-                startMpKeys = emptyList(),
-                subMpKeys = emptyList()
-            )
+    private fun createMockLineupDtoWithFormationAndColor(): LineupSyncDto =
+        LineupSyncDto(
+            home =
+                LineupSyncDto.Lineup(
+                    teamApiId = 1L,
+                    teamName = "Home Team",
+                    teamLogo = "home_logo.png",
+                    playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
+                    goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
+                    formation = "3-5-2",
+                    startMpKeys = listOf("mp_id_123"),
+                    subMpKeys = emptyList(),
+                ),
+            away =
+                LineupSyncDto.Lineup(
+                    teamApiId = 2L,
+                    teamName = "Away Team",
+                    teamLogo = "away_logo.png",
+                    playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
+                    goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
+                    formation = "4-3-3",
+                    startMpKeys = emptyList(),
+                    subMpKeys = emptyList(),
+                ),
         )
-    }
-} 
+}

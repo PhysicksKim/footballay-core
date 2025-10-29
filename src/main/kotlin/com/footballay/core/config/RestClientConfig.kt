@@ -7,16 +7,14 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.RestClient
 
 @Configuration
-class RestClientConfig (
-    private val objectMapper: ObjectMapper
-){
-
+class RestClientConfig(
+    private val objectMapper: ObjectMapper,
+) {
     @Bean
-    fun restClient(): RestClient {
-        return RestClient.builder()
-            .messageConverters{
+    fun restClient(): RestClient =
+        RestClient
+            .builder()
+            .messageConverters {
                 it.add(MappingJackson2HttpMessageConverter(objectMapper))
-            }
-            .build()
-    }
+            }.build()
 }

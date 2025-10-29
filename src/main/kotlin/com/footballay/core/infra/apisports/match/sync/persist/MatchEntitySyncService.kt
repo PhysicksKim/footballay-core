@@ -16,7 +16,6 @@ import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEnti
  * 추출된 DTO 를 바탕으로 엔티티를 create, update, delete 합니다.
  */
 interface MatchEntitySyncService {
-
     /**
      * 매치 엔티티들을 동기화합니다.
      * [MatchPlayerContext] 는 dto 들에서 등장한 선수들로 올바르게 채워져 있어야 합니다.
@@ -37,6 +36,6 @@ interface MatchEntitySyncService {
         eventDto: MatchEventSyncDto,
         teamStatDto: TeamStatSyncDto,
         playerStatDto: PlayerStatSyncDto,
-        playerContext: MatchPlayerContext
+        playerContext: MatchPlayerContext,
     ): MatchEntitySyncResult
 }

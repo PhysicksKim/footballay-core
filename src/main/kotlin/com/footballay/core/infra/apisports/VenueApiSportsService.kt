@@ -14,9 +14,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class VenueApiSportsService(
-    private val venueApiSportsRepository: VenueApiSportsRepository
+    private val venueApiSportsRepository: VenueApiSportsRepository,
 ) {
-    
     private val log = logger()
 
     /**
@@ -30,22 +29,25 @@ class VenueApiSportsService(
         }
 
         val venueApiIds = venueDtos.mapNotNull { it.apiId }.distinct()
-        val existingVenueMap = venueApiSportsRepository.findAllByApiIdIn(venueApiIds)
-            .associateBy { it.apiId }
+        val existingVenueMap =
+            venueApiSportsRepository
+                .findAllByApiIdIn(venueApiIds)
+                .associateBy { it.apiId }
 
         val resultMap = mutableMapOf<Long, VenueApiSports>()
-        
+
         venueDtos.forEach { venueDto ->
             val apiId = venueDto.apiId ?: return@forEach
-            
-            val venue = existingVenueMap[apiId]?.let { existingVenue ->
-                // 기존 Venue 업데이트
-                updateExistingVenue(existingVenue, venueDto)
-            } ?: run {
-                // 새 Venue 생성
-                createNewVenue(venueDto)
-            }
-            
+
+            val venue =
+                existingVenueMap[apiId]?.let { existingVenue ->
+                    // 기존 Venue 업데이트
+                    updateExistingVenue(existingVenue, venueDto)
+                } ?: run {
+                    // 새 Venue 생성
+                    createNewVenue(venueDto)
+                }
+
             resultMap[apiId] = venue
         }
 
@@ -58,7 +60,7 @@ class VenueApiSportsService(
      */
     private fun updateExistingVenue(
         venue: VenueApiSports,
-        dto: VenueOfFixtureApiSportsCreateDto
+        dto: VenueOfFixtureApiSportsCreateDto,
     ): VenueApiSports {
         venue.apply {
             name = dto.name
@@ -72,14 +74,15 @@ class VenueApiSportsService(
      * 새 Venue 생성
      */
     private fun createNewVenue(dto: VenueOfFixtureApiSportsCreateDto): VenueApiSports {
-        val newVenue = VenueApiSports(
-            apiId = dto.apiId,
-            name = dto.name,
-            city = dto.city
-            // address, capacity, surface, image는 DTO에 없으므로 null
-        )
+        val newVenue =
+            VenueApiSports(
+                apiId = dto.apiId,
+                name = dto.name,
+                city = dto.city,
+                // address, capacity, surface, image는 DTO에 없으므로 null
+            )
         val savedVenue = venueApiSportsRepository.save(newVenue)
         log.info("Created new venue: ${dto.name} (API ID: ${dto.apiId})")
         return savedVenue
     }
-} 
+}

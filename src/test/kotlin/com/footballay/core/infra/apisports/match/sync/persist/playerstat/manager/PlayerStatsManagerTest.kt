@@ -20,9 +20,9 @@ import org.mockito.kotlin.*
 
 /**
  * PlayerStatsManager 테스트
- * 
+ *
  * PlayerStatsManager의 주요 기능들을 테스트합니다.
- * 
+ *
  * **테스트 대상:**
  * - PlayerStats 생성/수정/삭제
  * - MatchPlayer와의 1:1 관계 설정
@@ -32,7 +32,6 @@ import org.mockito.kotlin.*
  */
 @ExtendWith(MockitoExtension::class)
 class PlayerStatsManagerTest {
-
     @Mock
     private lateinit var playerStatsRepository: ApiSportsMatchPlayerStatisticsRepository
 
@@ -51,10 +50,11 @@ class PlayerStatsManagerTest {
         // given
         val playerStatDto = createMockPlayerStatDto()
         val mockMatchPlayer = createMockMatchPlayer(apiId = 123L, name = "Test Player")
-        entityBundle.allMatchPlayers = mapOf(
-            MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer
-        )
-        
+        entityBundle.allMatchPlayers =
+            mapOf(
+                MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer,
+            )
+
         val savedStats = listOf(createMockPlayerStats(mockMatchPlayer))
         whenever(playerStatsRepository.saveAll(any<List<ApiSportsMatchPlayerStatistics>>())).thenReturn(savedStats)
 
@@ -65,7 +65,7 @@ class PlayerStatsManagerTest {
         assertThat(result.createdCount).isEqualTo(1)
         assertThat(result.totalStats).isEqualTo(1)
         assertThat(result.savedStats).hasSize(1)
-        
+
         // saveAll이 호출되었는지 확인
         verify(playerStatsRepository).saveAll(any<List<ApiSportsMatchPlayerStatistics>>())
     }
@@ -77,15 +77,16 @@ class PlayerStatsManagerTest {
         val playerStatDto = createMockPlayerStatDto()
         val mockMatchPlayer = createMockMatchPlayer(apiId = 123L, name = "Test Player")
         val existingStats = createMockPlayerStats(mockMatchPlayer)
-        
-        entityBundle.allMatchPlayers = mapOf(
-            MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer
-        )
+
+        entityBundle.allMatchPlayers =
+            mapOf(
+                MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer,
+            )
         entityBundle.setPlayerStats(
             MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player"),
-            existingStats
+            existingStats,
         )
-        
+
         val updatedStats = listOf(existingStats)
         whenever(playerStatsRepository.saveAll(any<List<ApiSportsMatchPlayerStatistics>>())).thenReturn(updatedStats)
 
@@ -95,7 +96,7 @@ class PlayerStatsManagerTest {
         // then
         // 실제 결과에 따라 검증 (실제 구현에 맞춤)
         assertThat(result.totalStats).isGreaterThanOrEqualTo(0)
-        
+
         // saveAll이 호출되었는지 확인
         verify(playerStatsRepository).saveAll(any<List<ApiSportsMatchPlayerStatistics>>())
     }
@@ -114,7 +115,7 @@ class PlayerStatsManagerTest {
         assertThat(result.createdCount).isEqualTo(0)
         assertThat(result.totalStats).isEqualTo(0)
         assertThat(result.savedStats).isEmpty()
-        
+
         // saveAll이 호출되지 않았는지 확인
         verify(playerStatsRepository, never()).saveAll(any<List<ApiSportsMatchPlayerStatistics>>())
     }
@@ -126,22 +127,23 @@ class PlayerStatsManagerTest {
         val playerStatDto = PlayerStatSyncDto(emptyList(), emptyList()) // 빈 통계
         val mockMatchPlayer = createMockMatchPlayer(apiId = 123L, name = "Test Player")
         val existingStats = createMockPlayerStats(mockMatchPlayer)
-        
-        entityBundle.allMatchPlayers = mapOf(
-            MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer
-        )
+
+        entityBundle.allMatchPlayers =
+            mapOf(
+                MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer,
+            )
         entityBundle.setPlayerStats(
             MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player"),
-            existingStats
+            existingStats,
         )
-        
+
         // when
         val result = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
 
         // then
         assertThat(result.deletedCount).isEqualTo(1)
         assertThat(result.totalStats).isEqualTo(0)
-        
+
         // deleteAll이 호출되었는지 확인
         verify(playerStatsRepository).deleteAll(any<List<ApiSportsMatchPlayerStatistics>>())
     }
@@ -151,22 +153,24 @@ class PlayerStatsManagerTest {
     fun `processPlayerStats_should_use_batch_processing`() {
         // given
         val playerStatDto = createMockPlayerStatDtoForBatch()
-        val mockMatchPlayers = (1..5).map { i ->
-            createMockMatchPlayer(apiId = i.toLong(), name = "Test Player $i")
-        }
-        
+        val mockMatchPlayers =
+            (1..5).map { i ->
+                createMockMatchPlayer(apiId = i.toLong(), name = "Test Player $i")
+            }
+
         // MatchPlayer 키를 올바르게 생성하여 매핑
-        entityBundle.allMatchPlayers = mockMatchPlayers.associate { player ->
-            MatchPlayerKeyGenerator.generateMatchPlayerKey(player.playerApiSports?.apiId, player.name) to player
-        }
-        
+        entityBundle.allMatchPlayers =
+            mockMatchPlayers.associate { player ->
+                MatchPlayerKeyGenerator.generateMatchPlayerKey(player.playerApiSports?.apiId, player.name) to player
+            }
+
         // when
         val result = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
 
         // then
         // 실제 결과에 따라 검증 (실제 구현에 맞춤)
         assertThat(result.totalStats).isGreaterThanOrEqualTo(0)
-        
+
         // 실제로는 통계가 수집되지 않을 수 있으므로 조건부 검증
         if (result.totalStats > 0) {
             verify(playerStatsRepository, atLeastOnce()).saveAll(any<List<ApiSportsMatchPlayerStatistics>>())
@@ -180,10 +184,10 @@ class PlayerStatsManagerTest {
     fun `processPlayerStats_should_skip_id_null_player_stats`() {
         // given
         val playerStatDto = createMockPlayerStatDtoWithNullId()
-        
+
         // ID null 선수는 매칭되지 않으므로 MatchPlayer가 없음
         entityBundle.allMatchPlayers = emptyMap()
-        
+
         // when
         val result = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
 
@@ -191,7 +195,7 @@ class PlayerStatsManagerTest {
         assertThat(result.createdCount).isEqualTo(0)
         assertThat(result.totalStats).isEqualTo(0)
         assertThat(result.savedStats).isEmpty()
-        
+
         // saveAll이 호출되지 않았는지 확인
         verify(playerStatsRepository, never()).saveAll(any<List<ApiSportsMatchPlayerStatistics>>())
     }
@@ -203,10 +207,11 @@ class PlayerStatsManagerTest {
         val mockMatchPlayer = createMockMatchPlayer(apiId = 123L, name = "Test Player")
         val mockStats = createMockPlayerStats(mockMatchPlayer)
         mockMatchPlayer.statistics = mockStats
-        
-        entityBundle.allMatchPlayers = mapOf(
-            MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer
-        )
+
+        entityBundle.allMatchPlayers =
+            mapOf(
+                MatchPlayerKeyGenerator.generateMatchPlayerKey(123L, "Test Player") to mockMatchPlayer,
+            )
 
         // when
         val allStats = entityBundle.getAllPlayerStats()
@@ -217,18 +222,20 @@ class PlayerStatsManagerTest {
     }
 
     // Helper methods
-    private fun createMockEntityBundle(): MatchEntityBundle {
-        return MatchEntityBundle.createEmpty().apply {
+    private fun createMockEntityBundle(): MatchEntityBundle =
+        MatchEntityBundle.createEmpty().apply {
             fixture = mock<FixtureApiSports>()
             homeTeam = mock<ApiSportsMatchTeam>()
             awayTeam = mock<ApiSportsMatchTeam>()
             allMatchPlayers = emptyMap()
             allEvents = emptyList()
         }
-    }
 
-    private fun createMockMatchPlayer(apiId: Long?, name: String): ApiSportsMatchPlayer {
-        return ApiSportsMatchPlayer(
+    private fun createMockMatchPlayer(
+        apiId: Long?,
+        name: String,
+    ): ApiSportsMatchPlayer =
+        ApiSportsMatchPlayer(
             matchPlayerUid = "mp_$name",
             playerApiSports = null, // 실제 테스트에서는 null로 설정
             name = name,
@@ -236,12 +243,11 @@ class PlayerStatsManagerTest {
             position = "F",
             grid = "10:10",
             substitute = false,
-            matchTeam = null
+            matchTeam = null,
         )
-    }
 
-    private fun createMockPlayerStats(matchPlayer: ApiSportsMatchPlayer): ApiSportsMatchPlayerStatistics {
-        return ApiSportsMatchPlayerStatistics(
+    private fun createMockPlayerStats(matchPlayer: ApiSportsMatchPlayer): ApiSportsMatchPlayerStatistics =
+        ApiSportsMatchPlayerStatistics(
             matchPlayer = matchPlayer,
             minutesPlayed = 90,
             shirtNumber = 10,
@@ -275,52 +281,51 @@ class PlayerStatsManagerTest {
             penaltyCommitted = 0,
             penaltyScored = 0,
             penaltyMissed = 0,
-            penaltySaved = 0
+            penaltySaved = 0,
         )
-    }
 
-    private fun createMockPlayerStatDto(): PlayerStatSyncDto {
-        return PlayerStatSyncDto(
-            homePlayerStatList = listOf(
-                PlayerStatSyncDto.PlayerStatSyncItemDto(
-                    playerApiId = 123L,
-                    name = "Test Player",
-                    minutesPlayed = 90,
-                    goalsTotal = 2,
-                    assists = 1
-                )
-            ),
-            awayPlayerStatList = emptyList()
+    private fun createMockPlayerStatDto(): PlayerStatSyncDto =
+        PlayerStatSyncDto(
+            homePlayerStatList =
+                listOf(
+                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                        playerApiId = 123L,
+                        name = "Test Player",
+                        minutesPlayed = 90,
+                        goalsTotal = 2,
+                        assists = 1,
+                    ),
+                ),
+            awayPlayerStatList = emptyList(),
         )
-    }
 
-    private fun createMockPlayerStatDtoForBatch(): PlayerStatSyncDto {
-        return PlayerStatSyncDto(
-            homePlayerStatList = (1..5).map { i ->
-                PlayerStatSyncDto.PlayerStatSyncItemDto(
-                    playerApiId = i.toLong(),
-                    name = "Test Player $i",
-                    minutesPlayed = 90,
-                    goalsTotal = 2,
-                    assists = 1
-                )
-            },
-            awayPlayerStatList = emptyList()
+    private fun createMockPlayerStatDtoForBatch(): PlayerStatSyncDto =
+        PlayerStatSyncDto(
+            homePlayerStatList =
+                (1..5).map { i ->
+                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                        playerApiId = i.toLong(),
+                        name = "Test Player $i",
+                        minutesPlayed = 90,
+                        goalsTotal = 2,
+                        assists = 1,
+                    )
+                },
+            awayPlayerStatList = emptyList(),
         )
-    }
 
-    private fun createMockPlayerStatDtoWithNullId(): PlayerStatSyncDto {
-        return PlayerStatSyncDto(
-            homePlayerStatList = listOf(
-                PlayerStatSyncDto.PlayerStatSyncItemDto(
-                    playerApiId = null, // ID null
-                    name = "Null ID Player",
-                    minutesPlayed = 90,
-                    goalsTotal = 1,
-                    assists = 0
-                )
-            ),
-            awayPlayerStatList = emptyList()
+    private fun createMockPlayerStatDtoWithNullId(): PlayerStatSyncDto =
+        PlayerStatSyncDto(
+            homePlayerStatList =
+                listOf(
+                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                        playerApiId = null, // ID null
+                        name = "Null ID Player",
+                        minutesPlayed = 90,
+                        goalsTotal = 1,
+                        assists = 0,
+                    ),
+                ),
+            awayPlayerStatList = emptyList(),
         )
-    }
-} 
+}

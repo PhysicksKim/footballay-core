@@ -6,7 +6,11 @@ package com.footballay.core.infra.apisports.shared.fetch.response
 sealed interface ApiSportsResponse
 
 sealed interface FixtureResponse : ApiSportsResponse
+
 sealed interface LeagueResponse : ApiSportsResponse
+
 sealed interface TeamResponse : ApiSportsResponse
+
 sealed interface PlayerResponse : ApiSportsResponse
+
 sealed interface StatusResponse : ApiSportsResponse

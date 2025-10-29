@@ -1,24 +1,22 @@
 package com.footballay.core.infra.apisports.shared.fetch.response
 
 object ApiSportsLeague {
-
     data class Current(
         val league: LeagueInfo,
         val country: CountryInfo,
-        val seasons: List<SeasonInfo>
+        val seasons: List<SeasonInfo>,
     ) : LeagueResponse {
-
         data class LeagueInfo(
             val id: Int,
             val name: String,
             val type: String?,
-            val logo: String?
+            val logo: String?,
         )
 
         data class CountryInfo(
             val name: String?,
             val code: String?,
-            val flag: String?
+            val flag: String?,
         )
 
         data class SeasonInfo(
@@ -26,7 +24,7 @@ object ApiSportsLeague {
             val start: String?,
             val end: String?,
             val current: Boolean?,
-            val coverage: CoverageInfo?
+            val coverage: CoverageInfo?,
         ) {
             data class CoverageInfo(
                 val fixtures: FixturesCoverage?,
@@ -37,13 +35,13 @@ object ApiSportsLeague {
                 val top_cards: Boolean,
                 val injuries: Boolean,
                 val predictions: Boolean,
-                val odds: Boolean
+                val odds: Boolean,
             ) {
                 data class FixturesCoverage(
                     val events: Boolean,
                     val lineups: Boolean,
                     val statistics_fixtures: Boolean,
-                    val statistics_players: Boolean
+                    val statistics_players: Boolean,
                 )
             }
         }

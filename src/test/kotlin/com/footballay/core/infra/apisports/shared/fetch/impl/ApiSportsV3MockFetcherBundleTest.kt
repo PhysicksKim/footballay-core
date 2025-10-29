@@ -1,13 +1,12 @@
 package com.footballay.core.infra.apisports.shared.fetch.impl
 
-import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher.MockDataBundle
 import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher.TestHelpers
 import com.footballay.core.logger
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -16,7 +15,6 @@ import org.springframework.test.context.ActiveProfiles
 @ActiveProfiles("mockapi")
 @DisplayName("ApiSportsV3MockFetcher Bundle 구조 테스트")
 class ApiSportsV3MockFetcherBundleTest {
-
     private val log = logger()
 
     @Autowired
@@ -178,4 +176,4 @@ class ApiSportsV3MockFetcherBundleTest {
         assertThat(jsonPaths).containsKey("fixture_1208022")
         assertThat(jsonPaths["teams"]).contains("teamsOfLeague_leagueId39_season2024.json")
     }
-} 
+}

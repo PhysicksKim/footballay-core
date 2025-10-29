@@ -1,9 +1,9 @@
 package com.footballay.core.infra.apisports.match.sync.event
 
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
-import com.footballay.core.infra.apisports.match.sync.event.EventSyncer
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
+import com.footballay.core.infra.apisports.match.sync.event.EventSyncer
 import com.footballay.core.logger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +13,6 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
 class EventSyncerTest {
-
     val log = logger()
 
     private lateinit var eventSyncer: EventSyncer
@@ -75,7 +74,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("subst", event.eventType)
         // player는 후보 선수 (sub-in), assist는 선발 선수 (sub-out)
@@ -94,7 +93,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("subst", event.eventType)
         // 정규화 후: player는 후보 선수 (sub-in), assist는 선발 선수 (sub-out)
@@ -113,7 +112,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("goal", event.eventType)
         assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10001", event.playerMpKey) // 그대로 유지
@@ -131,12 +130,12 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         // Context에 이벤트 전용 선수가 추가되었는지 확인
         assertTrue(context.eventMpDtoMap.isNotEmpty())
         val eventOnlyPlayerKey = "${MatchPlayerKeyGenerator.ID_PREFIX}99999"
         assertTrue(context.eventMpDtoMap.containsKey(eventOnlyPlayerKey))
-        
+
         val eventOnlyPlayer = context.eventMpDtoMap[eventOnlyPlayerKey]
         assertNotNull(eventOnlyPlayer)
         assertEquals("Event Only Player", eventOnlyPlayer!!.name)
@@ -155,12 +154,12 @@ class EventSyncerTest {
 
         // then
         assertEquals(3, result.events.size)
-        
+
         // 순서 확인
         val event1 = result.events[0]
         val event2 = result.events[1]
         val event3 = result.events[2]
-        
+
         assertEquals(0, event1.sequence)
         assertEquals("goal", event1.eventType)
         assertEquals(1, event2.sequence)
@@ -180,13 +179,13 @@ class EventSyncerTest {
 
         // then
         assertEquals(2, result.events.size)
-        
+
         // 첫 번째 교체: Player 1 OUT, Sub Player 12 IN
         val firstSubst = result.events[0]
         assertEquals("subst", firstSubst.eventType)
         assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10012", firstSubst.playerMpKey) // sub-in
         assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10001", firstSubst.assistMpKey) // sub-out
-        
+
         // 두 번째 교체: Sub Player 12 OUT, Sub Player 13 IN (이미 교체된 선수가 다시 교체됨)
         val secondSubst = result.events[1]
         assertEquals("subst", secondSubst.eventType)
@@ -205,7 +204,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("subst", event.eventType)
         // 비정상적인 경우 원본 순서 유지
@@ -224,7 +223,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("card", event.eventType)
         assertNull(event.playerMpKey)
@@ -242,7 +241,7 @@ class EventSyncerTest {
 
         // then
         assertEquals(1, result.events.size)
-        
+
         val event = result.events[0]
         assertEquals("subst", event.eventType)
         // null name이 있는 경우 원본 이벤트 그대로 유지
@@ -261,14 +260,14 @@ class EventSyncerTest {
 
         // then
         assertEquals(2, result.events.size)
-        
+
         // 홈팀 교체
         val homeSubst = result.events[0]
         assertEquals("subst", homeSubst.eventType)
         assertEquals(100L, homeSubst.teamApiId)
         assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10012", homeSubst.playerMpKey)
         assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10001", homeSubst.assistMpKey)
-        
+
         // 어웨이팀 교체
         val awaySubst = result.events[1]
         assertEquals("subst", awaySubst.eventType)
@@ -279,8 +278,8 @@ class EventSyncerTest {
 
     // Test Data 생성 메서드들
 
-    private fun createDtoWithEmptyEvents(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithEmptyEvents(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createNormalFixture(),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -289,29 +288,40 @@ class EventSyncerTest {
             events = emptyList(),
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithNullTeamIds(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNullTeamIds(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createNormalFixture(),
             league = createNormalLeague(),
-            teams = FullMatchSyncDto.TeamsDto(
-                home = FullMatchSyncDto.TeamsDto.TeamDto(id = null, name = "Arsenal", logo = "arsenal.png", winner = null),
-                away = FullMatchSyncDto.TeamsDto.TeamDto(id = null, name = "Manchester City", logo = "city.png", winner = null)
-            ),
+            teams =
+                FullMatchSyncDto.TeamsDto(
+                    home =
+                        FullMatchSyncDto.TeamsDto.TeamDto(
+                            id = null,
+                            name = "Arsenal",
+                            logo = "arsenal.png",
+                            winner = null,
+                        ),
+                    away =
+                        FullMatchSyncDto.TeamsDto.TeamDto(
+                            id = null,
+                            name = "Manchester City",
+                            logo = "city.png",
+                            winner = null,
+                        ),
+                ),
             goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
             score = createNormalScore(),
             events = listOf(createGoalEvent()),
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithEmptyLineups(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithEmptyLineups(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createNormalFixture(),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -320,22 +330,22 @@ class EventSyncerTest {
             events = listOf(createGoalEvent()),
             lineups = emptyList(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
     private fun createDtoWithNormalSubstEvent(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
-                type = "subst",
-                detail = "Substitution",
-                comments = "Player 1 out, Sub Player 12 in"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Player 1 out, Sub Player 12 in",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -346,22 +356,23 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithReversedSubstEvent(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
-                type = "subst",
-                detail = "Substitution",
-                comments = "Player 1 out, Sub Player 12 in"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Player 1 out, Sub Player 12 in",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -372,7 +383,7 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
@@ -388,22 +399,23 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithEventOnlyPlayer(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 99999L, name = "Event Only Player"), // 라인업에 없는 선수
-                assist = null,
-                type = "card",
-                detail = "Yellow Card",
-                comments = "Foul play"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 99999L, name = "Event Only Player"),
+                    assist = null,
+                    type = "card",
+                    detail = "Yellow Card",
+                    comments = "Foul play",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -414,16 +426,17 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithMultipleEvents(): FullMatchSyncDto {
-        val events = listOf(
-            createGoalEvent(),
-            createNormalSubstEvent(),
-            createCardEvent()
-        )
+        val events =
+            listOf(
+                createGoalEvent(),
+                createNormalSubstEvent(),
+                createCardEvent(),
+            )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -434,33 +447,34 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithConsecutiveSubstitutions(): FullMatchSyncDto {
-        val events = listOf(
-            // 첫 번째 교체: Player 1 OUT, Sub Player 12 IN
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
-                type = "subst",
-                detail = "Substitution",
-                comments = "Player 1 out, Sub Player 12 in"
-            ),
-            // 두 번째 교체: Sub Player 12 OUT, Sub Player 13 IN (이미 교체된 선수가 다시 교체됨)
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10013L, name = "Sub Player 13"), // 후보 선수
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 이미 교체된 선수
-                type = "subst",
-                detail = "Substitution",
-                comments = "Sub Player 12 out, Sub Player 13 in"
+        val events =
+            listOf(
+                // 첫 번째 교체: Player 1 OUT, Sub Player 12 IN
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 선발 선수
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Player 1 out, Sub Player 12 in",
+                ),
+                // 두 번째 교체: Sub Player 12 OUT, Sub Player 13 IN (이미 교체된 선수가 다시 교체됨)
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10013L, name = "Sub Player 13"), // 후보 선수
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 이미 교체된 선수
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Sub Player 12 out, Sub Player 13 in",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -471,22 +485,23 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithAbnormalSubstEvent(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10013L, name = "Sub Player 13"), // 후보 선수
-                type = "subst",
-                detail = "Substitution",
-                comments = "Abnormal substitution"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"), // 후보 선수
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10013L, name = "Sub Player 13"), // 후보 선수
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Abnormal substitution",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -497,22 +512,23 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithNullPlayerAssist(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = null,
-                assist = null,
-                type = "card",
-                detail = "Yellow Card",
-                comments = "Team foul"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = null,
+                    assist = null,
+                    type = "card",
+                    detail = "Yellow Card",
+                    comments = "Team foul",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -523,22 +539,23 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithNullPlayerAssistNames(): FullMatchSyncDto {
-        val events = listOf(
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = null), // null name
-                type = "subst",
-                detail = "Substitution",
-                comments = "Substitution with null name"
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = null), // null name
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Substitution with null name",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -549,33 +566,34 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     private fun createDtoWithMultiTeamSubstitutions(): FullMatchSyncDto {
-        val events = listOf(
-            // 홈팀 교체
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"),
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
-                type = "subst",
-                detail = "Substitution",
-                comments = "Home team substitution"
-            ),
-            // 어웨이팀 교체
-            FullMatchSyncDto.EventDto(
-                time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
-                team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
-                player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 20012L, name = "Sub Player 12"),
-                assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 20001L, name = "Player 1"),
-                type = "subst",
-                detail = "Substitution",
-                comments = "Away team substitution"
+        val events =
+            listOf(
+                // 홈팀 교체
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Home team substitution",
+                ),
+                // 어웨이팀 교체
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 20012L, name = "Sub Player 12"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 20001L, name = "Player 1"),
+                    type = "subst",
+                    detail = "Substitution",
+                    comments = "Away team substitution",
+                ),
             )
-        )
 
         return FullMatchSyncDto(
             fixture = createNormalFixture(),
@@ -586,52 +604,49 @@ class EventSyncerTest {
             events = events,
             lineups = createNormalLineups(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
     }
 
     // 개별 이벤트 생성 메서드들
 
-    private fun createGoalEvent(): FullMatchSyncDto.EventDto {
-        return FullMatchSyncDto.EventDto(
+    private fun createGoalEvent(): FullMatchSyncDto.EventDto =
+        FullMatchSyncDto.EventDto(
             time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 23, extra = null),
             team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
             player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
             assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
             type = "goal",
             detail = "Goal",
-            comments = "Beautiful goal!"
+            comments = "Beautiful goal!",
         )
-    }
 
-    private fun createNormalSubstEvent(): FullMatchSyncDto.EventDto {
-        return FullMatchSyncDto.EventDto(
+    private fun createNormalSubstEvent(): FullMatchSyncDto.EventDto =
+        FullMatchSyncDto.EventDto(
             time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
             team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
             player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"),
             assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
             type = "subst",
             detail = "Substitution",
-            comments = "Player 1 out, Sub Player 12 in"
+            comments = "Player 1 out, Sub Player 12 in",
         )
-    }
 
-    private fun createCardEvent(): FullMatchSyncDto.EventDto {
-        return FullMatchSyncDto.EventDto(
+    private fun createCardEvent(): FullMatchSyncDto.EventDto =
+        FullMatchSyncDto.EventDto(
             time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 67, extra = null),
             team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
             player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 20001L, name = "Player 1"),
             assist = null,
             type = "card",
             detail = "Yellow Card",
-            comments = "Foul play"
+            comments = "Foul play",
         )
-    }
 
     // 공통 테스트 데이터 생성 메서드들
 
-    private fun createNormalFixture(): FullMatchSyncDto.FixtureDto {
-        return FullMatchSyncDto.FixtureDto(
+    private fun createNormalFixture(): FullMatchSyncDto.FixtureDto =
+        FullMatchSyncDto.FixtureDto(
             id = 12345L,
             referee = "Mike Dean",
             timezone = "Europe/London",
@@ -639,12 +654,17 @@ class EventSyncerTest {
             timestamp = 1705334400L,
             periods = FullMatchSyncDto.FixtureDto.PeriodsDto(first = 1705334400L, second = 1705338000L),
             venue = FullMatchSyncDto.FixtureDto.VenueDto(id = 1L, name = "Emirates Stadium", city = "London"),
-            status = FullMatchSyncDto.FixtureDto.StatusDto(long = "Match Finished", short = "FT", elapsed = 90, extra = null)
+            status =
+                FullMatchSyncDto.FixtureDto.StatusDto(
+                    long = "Match Finished",
+                    short = "FT",
+                    elapsed = 90,
+                    extra = null,
+                ),
         )
-    }
 
-    private fun createNormalLeague(): FullMatchSyncDto.LeagueDto {
-        return FullMatchSyncDto.LeagueDto(
+    private fun createNormalLeague(): FullMatchSyncDto.LeagueDto =
+        FullMatchSyncDto.LeagueDto(
             id = 39L,
             name = "Premier League",
             country = "England",
@@ -652,81 +672,111 @@ class EventSyncerTest {
             flag = "england.png",
             season = 2024,
             round = "Regular Season - 20",
-            standings = true
+            standings = true,
         )
-    }
 
-    private fun createNormalTeams(): FullMatchSyncDto.TeamsDto {
-        return FullMatchSyncDto.TeamsDto(
+    private fun createNormalTeams(): FullMatchSyncDto.TeamsDto =
+        FullMatchSyncDto.TeamsDto(
             home = FullMatchSyncDto.TeamsDto.TeamDto(id = 100L, name = "Arsenal", logo = "arsenal.png", winner = true),
-            away = FullMatchSyncDto.TeamsDto.TeamDto(id = 200L, name = "Manchester City", logo = "city.png", winner = false)
+            away =
+                FullMatchSyncDto.TeamsDto.TeamDto(
+                    id = 200L,
+                    name = "Manchester City",
+                    logo = "city.png",
+                    winner = false,
+                ),
         )
-    }
 
-    private fun createNormalScore(): FullMatchSyncDto.ScoreDto {
-        return FullMatchSyncDto.ScoreDto(
+    private fun createNormalScore(): FullMatchSyncDto.ScoreDto =
+        FullMatchSyncDto.ScoreDto(
             halftime = FullMatchSyncDto.ScoreDto.PairDto(home = 1, away = 0),
             fulltime = FullMatchSyncDto.ScoreDto.PairDto(home = 2, away = 1),
             extratime = null,
-            penalty = null
+            penalty = null,
         )
-    }
 
-    private fun createNormalLineups(): List<FullMatchSyncDto.LineupDto> {
-        return listOf(
+    private fun createNormalLineups(): List<FullMatchSyncDto.LineupDto> =
+        listOf(
             createLineupWithTeamId(100L, "Arsenal", "4-3-3"),
-            createLineupWithTeamId(200L, "Manchester City", "4-2-3-1")
+            createLineupWithTeamId(200L, "Manchester City", "4-2-3-1"),
         )
-    }
 
-    private fun createLineupWithTeamId(teamId: Long, teamName: String, formation: String): FullMatchSyncDto.LineupDto {
+    private fun createLineupWithTeamId(
+        teamId: Long,
+        teamName: String,
+        formation: String,
+    ): FullMatchSyncDto.LineupDto {
         // 팀별 고유한 선수 ID 생성: teamId * 100 + index
-        val startXI = (1..11).map { index ->
-            FullMatchSyncDto.LineupDto.LineupPlayerDto(
-                FullMatchSyncDto.LineupDto.LineupPlayerDto.LineupPlayerDetailDto(
-                    id = teamId * 100 + index, // 팀별 고유 ID: 100팀은 10001~10011, 200팀은 20001~20011
-                    name = "Player $index",
-                    number = index,
-                    pos = if (index == 1) "G" else if (index <= 4) "D" else if (index <= 8) "M" else "F",
-                    grid = "${index}:${index}"
+        val startXI =
+            (1..11).map { index ->
+                FullMatchSyncDto.LineupDto.LineupPlayerDto(
+                    FullMatchSyncDto.LineupDto.LineupPlayerDto.LineupPlayerDetailDto(
+                        id = teamId * 100 + index, // 팀별 고유 ID: 100팀은 10001~10011, 200팀은 20001~20011
+                        name = "Player $index",
+                        number = index,
+                        pos =
+                            if (index == 1) {
+                                "G"
+                            } else if (index <= 4) {
+                                "D"
+                            } else if (index <= 8) {
+                                "M"
+                            } else {
+                                "F"
+                            },
+                        grid = "$index:$index",
+                    ),
                 )
-            )
-        }
+            }
 
-        val substitutes = (12..18).map { index ->
-            FullMatchSyncDto.LineupDto.LineupPlayerDto(
-                FullMatchSyncDto.LineupDto.LineupPlayerDto.LineupPlayerDetailDto(
-                    id = teamId * 100 + index, // 후보 선수: 100팀은 10012~10018, 200팀은 20012~20018
-                    name = "Sub Player $index",
-                    number = index,
-                    pos = if (index == 12) "G" else if (index <= 14) "D" else if (index <= 16) "M" else "F",
-                    grid = null
+        val substitutes =
+            (12..18).map { index ->
+                FullMatchSyncDto.LineupDto.LineupPlayerDto(
+                    FullMatchSyncDto.LineupDto.LineupPlayerDto.LineupPlayerDetailDto(
+                        id = teamId * 100 + index, // 후보 선수: 100팀은 10012~10018, 200팀은 20012~20018
+                        name = "Sub Player $index",
+                        number = index,
+                        pos =
+                            if (index == 12) {
+                                "G"
+                            } else if (index <= 14) {
+                                "D"
+                            } else if (index <= 16) {
+                                "M"
+                            } else {
+                                "F"
+                            },
+                        grid = null,
+                    ),
                 )
-            )
-        }
+            }
 
         return FullMatchSyncDto.LineupDto(
-            team = FullMatchSyncDto.LineupTeamDto(
-                id = teamId,
-                name = teamName,
-                logo = "$teamName.png",
-                colors = FullMatchSyncDto.LineupTeamDto.ColorsDto(
-                    player = FullMatchSyncDto.LineupTeamDto.ColorsDto.ColorDetailDto(
-                        primary = "#FF0000",
-                        number = "#FFFFFF",
-                        border = "#000000"
-                    ),
-                    goalkeeper = FullMatchSyncDto.LineupTeamDto.ColorsDto.ColorDetailDto(
-                        primary = "#00FF00",
-                        number = "#FFFFFF",
-                        border = "#000000"
-                    )
-                )
-            ),
+            team =
+                FullMatchSyncDto.LineupTeamDto(
+                    id = teamId,
+                    name = teamName,
+                    logo = "$teamName.png",
+                    colors =
+                        FullMatchSyncDto.LineupTeamDto.ColorsDto(
+                            player =
+                                FullMatchSyncDto.LineupTeamDto.ColorsDto.ColorDetailDto(
+                                    primary = "#FF0000",
+                                    number = "#FFFFFF",
+                                    border = "#000000",
+                                ),
+                            goalkeeper =
+                                FullMatchSyncDto.LineupTeamDto.ColorsDto.ColorDetailDto(
+                                    primary = "#00FF00",
+                                    number = "#FFFFFF",
+                                    border = "#000000",
+                                ),
+                        ),
+                ),
             coach = FullMatchSyncDto.LineupDto.CoachDto(id = 9001L, name = "Coach", photo = null),
             formation = formation,
             startXI = startXI,
-            substitutes = substitutes
+            substitutes = substitutes,
         )
     }
-} 
+}

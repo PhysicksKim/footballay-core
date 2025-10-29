@@ -12,5 +12,5 @@ data class MatchEventDto(
     val comments: String?,
     val teamApiId: Long?, // nullable: 팀 불명확한 이벤트
     val playerMpKey: String?, // nullable: 선수 무관한 이벤트
-    val assistMpKey: String? // nullable: 어시스트 없는 경우
+    val assistMpKey: String?, // nullable: 어시스트 없는 경우
 )

@@ -1,7 +1,5 @@
 package com.footballay.core.infra.apisports.match.sync.dto
 
-import java.math.BigDecimal
-
 data class MatchTeamStatisticsDto(
     val teamApiId: Long,
     // 슈팅 관련 통계
@@ -31,7 +29,7 @@ data class MatchTeamStatisticsDto(
      * xg 값은 시간에 따라 변하는 값입니다.
      * 적절한 xg 값이 아직 제공되지 않은 경우 비어있을 수 있습니다.
      */
-    val xgList: List<MatchTeamXGDto> = emptyList() // XG 리스트
+    val xgList: List<MatchTeamXGDto> = emptyList(), // XG 리스트
 ) {
     data class MatchTeamXGDto(
         val xg: Double,

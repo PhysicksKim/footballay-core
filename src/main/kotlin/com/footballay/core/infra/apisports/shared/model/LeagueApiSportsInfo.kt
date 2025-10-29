@@ -12,16 +12,13 @@ data class LeagueApiSportsInfo(
     val countryName: String? = null,
     val countryCode: String? = null,
 ) {
-    
     /**
      * 현재 시즌이 설정되어 있는지 확인
      */
     fun hasCurrentSeason(): Boolean = currentSeason != null
-    
+
     /**
      * 현재 시즌을 반환하거나 예외 발생
      */
-    fun getCurrentSeasonOrThrow(): Int {
-        return currentSeason ?: throw IllegalStateException("Current season is not set for league $name (apiId: $apiId)")
-    }
-} 
+    fun getCurrentSeasonOrThrow(): Int = currentSeason ?: throw IllegalStateException("Current season is not set for league $name (apiId: $apiId)")
+}

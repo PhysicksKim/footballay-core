@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 @Import(MatchEntityGenerator::class)
 class LeagueApiSportsRepositoryTest {
-
     val log = logger()
 
     @Autowired
@@ -31,10 +30,13 @@ class LeagueApiSportsRepositoryTest {
 
     @Autowired
     private lateinit var leagueCoreRepository: LeagueCoreRepository
+
     @Autowired
     private lateinit var leagueApiSportsSeasonRepository: LeagueApiSportsSeasonRepository
+
     @Autowired
     private lateinit var uidGenerator: UidGenerator
+
     @Autowired
     private lateinit var em: EntityManager
 
@@ -48,13 +50,17 @@ class LeagueApiSportsRepositoryTest {
     fun setUp() {
         val uid = uidGenerator.generateUid()
         val name = "Premier League"
-        leagueCore = leagueCoreRepository.save(LeagueCore(uid=uid,name=name))
+        leagueCore = leagueCoreRepository.save(LeagueCore(uid = uid, name = name))
         val apiId = 39L
-        leagueApiSports = leagueApiSportsRepository.save(LeagueApiSports(leagueCore = leagueCore, apiId = apiId, name = name))
+        leagueApiSports =
+            leagueApiSportsRepository.save(LeagueApiSports(leagueCore = leagueCore, apiId = apiId, name = name))
         val seasonYear = 2024
         val seasonStart = "2024-08-10"
         val seasonEnd = "2025-05-18"
-        leagueSeason = createLeagueSeason(seasonYear, seasonStart, seasonEnd, leagueApiSports).also { leagueApiSportsSeasonRepository.save(it) }
+        leagueSeason =
+            createLeagueSeason(seasonYear, seasonStart, seasonEnd, leagueApiSports).also {
+                leagueApiSportsSeasonRepository.save(it)
+            }
         em.flush()
         em.clear()
     }
@@ -66,7 +72,13 @@ class LeagueApiSportsRepositoryTest {
         val wrongYear = 9999
         val wrongStart = "9998-01-01"
         val wrongEnd = "9999-06-20"
-        val wrongSeason = createLeagueSeason(wrongYear,wrongStart,wrongEnd,leagueApiSports).also { leagueApiSportsSeasonRepository.save(it) }
+        val wrongSeason =
+            createLeagueSeason(
+                wrongYear,
+                wrongStart,
+                wrongEnd,
+                leagueApiSports,
+            ).also { leagueApiSportsSeasonRepository.save(it) }
 
         // when
         val apiId = 39L
@@ -81,19 +93,33 @@ class LeagueApiSportsRepositoryTest {
         assertThat(leagueApiSports.seasons[0].seasonYear).isEqualTo(leagueSeason.seasonYear)
     }
 
-    private fun createLeagueSeason(year: Int, start: String, end : String, leagueApiSports:LeagueApiSports): LeagueApiSportsSeason {
-        val leagueCoverage = LeagueApiSportsCoverage(true, true, true, true, true, true,
-            true, true, true, true, true, true)
+    private fun createLeagueSeason(
+        year: Int,
+        start: String,
+        end: String,
+        leagueApiSports: LeagueApiSports,
+    ): LeagueApiSportsSeason {
+        val leagueCoverage =
+            LeagueApiSportsCoverage(
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+                true,
+            )
         return LeagueApiSportsSeason(
             seasonYear = year,
             seasonStart = start,
             seasonEnd = end,
             coverage = leagueCoverage,
-            leagueApiSports = leagueApiSports
+            leagueApiSports = leagueApiSports,
         )
     }
-
-
-
-
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 /**
  * 기본 Match 엔티티를 동기화합니다.
- * 
+ *
  * 책임:
  * - FixtureApiSports 기본 정보 업데이트
  * - VenueApiSports 연결 및 업데이트
@@ -15,12 +15,11 @@ import org.springframework.stereotype.Component
  */
 @Component
 class BaseMatchSyncer : MatchBaseDtoExtractor {
-
     private val log = logger()
 
     override fun extractBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto {
         log.info("기본 매치 정보 dto: fixtureId=${dto.fixture.id}")
-        
+
         return FixtureApiSportsDto(
             apiId = dto.fixture.id,
             referee = dto.fixture.referee,
@@ -35,30 +34,33 @@ class BaseMatchSyncer : MatchBaseDtoExtractor {
             awayTeam = mapBaseTeam(dto.teams.away),
         )
     }
-    
+
     private fun mapVenue(venue: FullMatchSyncDto.FixtureDto.VenueDto): FixtureApiSportsDto.VenueDto? {
         if (venue.id == null && venue.name == null && venue.city == null) {
             return null
         }
-        
+
         return FixtureApiSportsDto.VenueDto(
             apiId = venue.id,
             name = venue.name,
-            city = venue.city
+            city = venue.city,
         )
     }
-    
-    private fun mapStatus(status: FullMatchSyncDto.FixtureDto.StatusDto): FixtureApiSportsDto.StatusDto {
-        return FixtureApiSportsDto.StatusDto(
+
+    private fun mapStatus(status: FullMatchSyncDto.FixtureDto.StatusDto): FixtureApiSportsDto.StatusDto =
+        FixtureApiSportsDto.StatusDto(
             longStatus = status.long,
             shortStatus = status.short,
             elapsed = status.elapsed,
-            extra = status.extra
+            extra = status.extra,
         )
-    }
-    
-    private fun mapScore(score: FullMatchSyncDto.ScoreDto, homeTotal: Int, awayTotal: Int): FixtureApiSportsDto.ScoreDto {
-        return FixtureApiSportsDto.ScoreDto(
+
+    private fun mapScore(
+        score: FullMatchSyncDto.ScoreDto,
+        homeTotal: Int,
+        awayTotal: Int,
+    ): FixtureApiSportsDto.ScoreDto =
+        FixtureApiSportsDto.ScoreDto(
             totalHome = homeTotal,
             totalAway = awayTotal,
             halftimeHome = score.halftime?.home,
@@ -70,14 +72,16 @@ class BaseMatchSyncer : MatchBaseDtoExtractor {
             penaltyHome = score.penalty?.home,
             penaltyAway = score.penalty?.away,
         )
-    }
 
-     private fun mapBaseTeam(team: FullMatchSyncDto.TeamsDto.TeamDto): FixtureApiSportsDto.BaseTeamDto? {
-         return if(team.id != null) FixtureApiSportsDto.BaseTeamDto(
-             apiId = team.id,
-             name = team.name,
-             logo = team.logo,
-             winner = team.winner
-         ) else { null }
-     }
-} 
+    private fun mapBaseTeam(team: FullMatchSyncDto.TeamsDto.TeamDto): FixtureApiSportsDto.BaseTeamDto? =
+        if (team.id != null) {
+            FixtureApiSportsDto.BaseTeamDto(
+                apiId = team.id,
+                name = team.name,
+                logo = team.logo,
+                winner = team.winner,
+            )
+        } else {
+            null
+        }
+}

@@ -6,9 +6,9 @@ import com.footballay.core.infra.apisports.backbone.extractor.ApiSportsFixturePl
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.ApiSportsFixtureSingle
-import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.apisports.match.sync.ApiSportsMatchEntitySyncFacade
 import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import org.springframework.stereotype.Component
 
 /**
@@ -36,7 +36,6 @@ class ApiSportsMatchSyncOrchestrator(
     private val playerApiSportsSyncer: PlayerApiSportsSyncer,
     private val matchSyncService: ApiSportsMatchEntitySyncFacade,
 ) : MatchSyncOrchestrator {
-
     override fun isSupport(uid: String): Boolean = true
 
     override fun syncMatchData(uid: String): MatchDataSyncResult {

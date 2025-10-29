@@ -5,5 +5,8 @@ import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
 
 interface MatchLineupDtoExtractor {
-    fun extractLineup(dto: FullMatchSyncDto, context: MatchPlayerContext): LineupSyncDto
+    fun extractLineup(
+        dto: FullMatchSyncDto,
+        context: MatchPlayerContext,
+    ): LineupSyncDto
 }

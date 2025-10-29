@@ -1,10 +1,10 @@
 package com.footballay.core.web.admin.apisports.controller
 
 import com.footballay.core.TestSecurityConfig
+import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
-import com.footballay.core.common.result.DomainResult
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
@@ -25,7 +25,6 @@ import org.springframework.web.context.WebApplicationContext
 @WebMvcTest(AdminApiSportsController::class)
 @Import(TestSecurityConfig::class)
 class AdminApiSportsControllerTest {
-
     @Autowired
     private lateinit var context: WebApplicationContext
 
@@ -38,16 +37,18 @@ class AdminApiSportsControllerTest {
 
     @BeforeEach
     fun setup() {
-        mvc = MockMvcBuilders
-            .webAppContextSetup(context)
-            .apply<DefaultMockMvcBuilder>(springSecurity())
-            .build()
+        mvc =
+            MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply<DefaultMockMvcBuilder>(springSecurity())
+                .build()
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `컨트롤러 헬스 테스트 엔드포인트가 정상 동작한다`() {
-        mvc.get("/api/v1/admin/apisports/test")
+        mvc
+            .get("/api/v1/admin/apisports/test")
             .andExpect {
                 status { isOk() }
                 content { contentTypeCompatibleWith(MediaType.TEXT_PLAIN) }
@@ -63,16 +64,12 @@ class AdminApiSportsControllerTest {
             .thenReturn(DomainResult.Success(mockResult))
 
         // When & Then
-        mvc.post("/api/v1/admin/apisports/leagues/sync") {
-            contentType = MediaType.APPLICATION_JSON
-        }.andExpect {
-            status { isOk() }
-            content { contentType(MediaType.APPLICATION_JSON) }
-        }
+        mvc
+            .post("/api/v1/admin/apisports/leagues/sync") {
+                contentType = MediaType.APPLICATION_JSON
+            }.andExpect {
+                status { isOk() }
+                content { contentType(MediaType.APPLICATION_JSON) }
+            }
     }
-
-
-
 }
-
-

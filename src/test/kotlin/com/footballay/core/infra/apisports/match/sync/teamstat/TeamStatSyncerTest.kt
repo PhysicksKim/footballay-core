@@ -10,7 +10,6 @@ import java.time.ZoneOffset
 import kotlin.test.assertNull
 
 class TeamStatSyncerTest {
-
     private lateinit var teamStatSyncer: TeamStatSyncer
 
     @BeforeEach
@@ -30,7 +29,7 @@ class TeamStatSyncerTest {
         assertNotNull(result)
         assertNotNull(result.homeStats)
         assertNotNull(result.awayStats)
-        
+
         // 홈팀 통계 검증
         result.homeStats!!.let { homeStats ->
             assertEquals(100L, homeStats.teamApiId)
@@ -51,13 +50,13 @@ class TeamStatSyncerTest {
             assertEquals(405, homeStats.passesAccurate)
             assertEquals("90%", homeStats.passesPercentage)
             assertEquals(1, homeStats.goalsPrevented)
-            
+
             // xG 검증
             assertEquals(1, homeStats.xgList.size)
             assertEquals(2.45, homeStats.xgList[0].xg)
             assertEquals(67, homeStats.xgList[0].elapsed)
         }
-        
+
         // 원정팀 통계 검증
         result.awayStats!!.let { awayStats ->
             assertEquals(200L, awayStats.teamApiId)
@@ -78,7 +77,7 @@ class TeamStatSyncerTest {
             assertEquals(200, awayStats.passesAccurate)
             assertEquals("80%", awayStats.passesPercentage)
             assertEquals(0, awayStats.goalsPrevented)
-            
+
             // xG 검증
             assertEquals(1, awayStats.xgList.size)
             assertEquals(1.23, awayStats.xgList[0].xg)
@@ -240,7 +239,7 @@ class TeamStatSyncerTest {
         assertNotNull(result)
         assertNotNull(result.homeStats)
         assertNotNull(result.awayStats)
-        
+
         result.homeStats!!.let { homeStats ->
             assertEquals(100L, homeStats.teamApiId)
             assertNull(homeStats.shotsOnGoal)
@@ -296,8 +295,8 @@ class TeamStatSyncerTest {
 
     // ========== 테스트 데이터 생성 메서드들 ==========
 
-    private fun createDtoWithNormalStatistics(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNormalStatistics(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -305,16 +304,16 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                createHomeTeamStatistics(),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            statistics =
+                listOf(
+                    createHomeTeamStatistics(),
+                    createAwayTeamStatistics(),
+                ),
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithEmptyStatistics(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithEmptyStatistics(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createNormalFixture(),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -323,12 +322,11 @@ class TeamStatSyncerTest {
             events = emptyList(),
             lineups = emptyList(),
             statistics = emptyList(),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithHomeTeamStatisticsOnly(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithHomeTeamStatisticsOnly(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -337,12 +335,11 @@ class TeamStatSyncerTest {
             events = emptyList(),
             lineups = emptyList(),
             statistics = listOf(createHomeTeamStatistics()),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithAwayTeamStatisticsOnly(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithAwayTeamStatisticsOnly(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -351,12 +348,11 @@ class TeamStatSyncerTest {
             events = emptyList(),
             lineups = emptyList(),
             statistics = listOf(createAwayTeamStatistics()),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithNullTeamId(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNullTeamId(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -364,19 +360,19 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = null, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail()
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = null, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail(),
+                    ),
+                    createAwayTeamStatistics(),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithNullElapsedTime(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNullElapsedTime(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(null),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -385,12 +381,11 @@ class TeamStatSyncerTest {
             events = emptyList(),
             lineups = emptyList(),
             statistics = listOf(createHomeTeamStatistics(), createAwayTeamStatistics()),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithNullXG(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNullXG(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -398,19 +393,19 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = null)
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = null),
+                    ),
+                    createAwayTeamStatistics(),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithAllNullStatistics(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithAllNullStatistics(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -418,22 +413,22 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createAllNullStatisticsDetail()
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createAllNullStatisticsDetail(),
+                    ),
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
+                        statistics = createAllNullStatisticsDetail(),
+                    ),
                 ),
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
-                    statistics = createAllNullStatisticsDetail()
-                )
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithMismatchedTeamIds(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithMismatchedTeamIds(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -441,22 +436,27 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 999L, name = "Unknown Team", logo = "unknown.png"),
-                    statistics = createHomeTeamStatisticsDetail()
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 999L, name = "Unknown Team", logo = "unknown.png"),
+                        statistics = createHomeTeamStatisticsDetail(),
+                    ),
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team =
+                            FullMatchSyncDto.TeamSimpleDto(
+                                id = 888L,
+                                name = "Another Unknown Team",
+                                logo = "unknown2.png",
+                            ),
+                        statistics = createAwayTeamStatisticsDetail(),
+                    ),
                 ),
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 888L, name = "Another Unknown Team", logo = "unknown2.png"),
-                    statistics = createAwayTeamStatisticsDetail()
-                )
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithInvalidXGFormat(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithInvalidXGFormat(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -464,19 +464,19 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "invalid_xg")
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "invalid_xg"),
+                    ),
+                    createAwayTeamStatistics(),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithEmptyXG(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithEmptyXG(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -484,19 +484,19 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "")
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = ""),
+                    ),
+                    createAwayTeamStatistics(),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithThreeTeamStatistics(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithThreeTeamStatistics(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -504,40 +504,20 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                createHomeTeamStatistics(),
-                createAwayTeamStatistics(),
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 300L, name = "Unknown Team", logo = "unknown.png"),
-                    statistics = createHomeTeamStatisticsDetail()
-                )
-            ),
-            players = emptyList()
-        )
-    }
-
-    private fun createDtoWithNegativeXG(): FullMatchSyncDto {
-        return FullMatchSyncDto(
-            fixture = createFixtureWithElapsed(67),
-            league = createNormalLeague(),
-            teams = createNormalTeams(),
-            goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
-            score = createNormalScore(),
-            events = emptyList(),
-            lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "-1.5")
+            statistics =
+                listOf(
+                    createHomeTeamStatistics(),
+                    createAwayTeamStatistics(),
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 300L, name = "Unknown Team", logo = "unknown.png"),
+                        statistics = createHomeTeamStatisticsDetail(),
+                    ),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
 
-    private fun createDtoWithLargeXG(): FullMatchSyncDto {
-        return FullMatchSyncDto(
+    private fun createDtoWithNegativeXG(): FullMatchSyncDto =
+        FullMatchSyncDto(
             fixture = createFixtureWithElapsed(67),
             league = createNormalLeague(),
             teams = createNormalTeams(),
@@ -545,21 +525,41 @@ class TeamStatSyncerTest {
             score = createNormalScore(),
             events = emptyList(),
             lineups = emptyList(),
-            statistics = listOf(
-                FullMatchSyncDto.TeamStatisticsDto(
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-                    statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "9999.99")
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "-1.5"),
+                    ),
+                    createAwayTeamStatistics(),
                 ),
-                createAwayTeamStatistics()
-            ),
-            players = emptyList()
+            players = emptyList(),
         )
-    }
+
+    private fun createDtoWithLargeXG(): FullMatchSyncDto =
+        FullMatchSyncDto(
+            fixture = createFixtureWithElapsed(67),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 2, away = 1),
+            score = createNormalScore(),
+            events = emptyList(),
+            lineups = emptyList(),
+            statistics =
+                listOf(
+                    FullMatchSyncDto.TeamStatisticsDto(
+                        team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                        statistics = createHomeTeamStatisticsDetail().copy(expectedGoals = "9999.99"),
+                    ),
+                    createAwayTeamStatistics(),
+                ),
+            players = emptyList(),
+        )
 
     // ========== 헬퍼 메서드들 ==========
 
-    private fun createFixtureWithElapsed(elapsed: Int?): FullMatchSyncDto.FixtureDto {
-        return FullMatchSyncDto.FixtureDto(
+    private fun createFixtureWithElapsed(elapsed: Int?): FullMatchSyncDto.FixtureDto =
+        FullMatchSyncDto.FixtureDto(
             id = 12345L,
             referee = "Michael Oliver",
             timezone = "UTC",
@@ -567,16 +567,19 @@ class TeamStatSyncerTest {
             timestamp = 1710513600L,
             periods = FullMatchSyncDto.FixtureDto.PeriodsDto(first = 1710513600L, second = 1710517200L),
             venue = FullMatchSyncDto.FixtureDto.VenueDto(id = 555L, name = "Emirates Stadium", city = "London"),
-            status = FullMatchSyncDto.FixtureDto.StatusDto(long = "Match Finished", short = "FT", elapsed = elapsed, extra = null)
+            status =
+                FullMatchSyncDto.FixtureDto.StatusDto(
+                    long = "Match Finished",
+                    short = "FT",
+                    elapsed = elapsed,
+                    extra = null,
+                ),
         )
-    }
 
-    private fun createNormalFixture(): FullMatchSyncDto.FixtureDto {
-        return createFixtureWithElapsed(90)
-    }
+    private fun createNormalFixture(): FullMatchSyncDto.FixtureDto = createFixtureWithElapsed(90)
 
-    private fun createNormalLeague(): FullMatchSyncDto.LeagueDto {
-        return FullMatchSyncDto.LeagueDto(
+    private fun createNormalLeague(): FullMatchSyncDto.LeagueDto =
+        FullMatchSyncDto.LeagueDto(
             id = 39L,
             name = "Premier League",
             country = "England",
@@ -584,42 +587,43 @@ class TeamStatSyncerTest {
             flag = "flag.png",
             season = 2024,
             round = "Regular Season - 29",
-            standings = true
+            standings = true,
         )
-    }
 
-    private fun createNormalTeams(): FullMatchSyncDto.TeamsDto {
-        return FullMatchSyncDto.TeamsDto(
+    private fun createNormalTeams(): FullMatchSyncDto.TeamsDto =
+        FullMatchSyncDto.TeamsDto(
             home = FullMatchSyncDto.TeamsDto.TeamDto(id = 100L, name = "Arsenal", logo = "arsenal.png", winner = true),
-            away = FullMatchSyncDto.TeamsDto.TeamDto(id = 200L, name = "Manchester City", logo = "city.png", winner = false)
+            away =
+                FullMatchSyncDto.TeamsDto.TeamDto(
+                    id = 200L,
+                    name = "Manchester City",
+                    logo = "city.png",
+                    winner = false,
+                ),
         )
-    }
 
-    private fun createNormalScore(): FullMatchSyncDto.ScoreDto {
-        return FullMatchSyncDto.ScoreDto(
+    private fun createNormalScore(): FullMatchSyncDto.ScoreDto =
+        FullMatchSyncDto.ScoreDto(
             halftime = FullMatchSyncDto.ScoreDto.PairDto(home = 1, away = 0),
             fulltime = FullMatchSyncDto.ScoreDto.PairDto(home = 2, away = 1),
             extratime = null,
-            penalty = null
+            penalty = null,
         )
-    }
 
-    private fun createHomeTeamStatistics(): FullMatchSyncDto.TeamStatisticsDto {
-        return FullMatchSyncDto.TeamStatisticsDto(
+    private fun createHomeTeamStatistics(): FullMatchSyncDto.TeamStatisticsDto =
+        FullMatchSyncDto.TeamStatisticsDto(
             team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
-            statistics = createHomeTeamStatisticsDetail()
+            statistics = createHomeTeamStatisticsDetail(),
         )
-    }
 
-    private fun createAwayTeamStatistics(): FullMatchSyncDto.TeamStatisticsDto {
-        return FullMatchSyncDto.TeamStatisticsDto(
+    private fun createAwayTeamStatistics(): FullMatchSyncDto.TeamStatisticsDto =
+        FullMatchSyncDto.TeamStatisticsDto(
             team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Manchester City", logo = "city.png"),
-            statistics = createAwayTeamStatisticsDetail()
+            statistics = createAwayTeamStatisticsDetail(),
         )
-    }
 
-    private fun createHomeTeamStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto {
-        return FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
+    private fun createHomeTeamStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto =
+        FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
             shotsOnGoal = 8,
             shotsOffGoal = 5,
             totalShots = 13,
@@ -637,12 +641,11 @@ class TeamStatSyncerTest {
             passesAccurate = 405,
             passesPercentage = "90%",
             expectedGoals = "2.45",
-            goalsPrevented = 1
+            goalsPrevented = 1,
         )
-    }
 
-    private fun createAwayTeamStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto {
-        return FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
+    private fun createAwayTeamStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto =
+        FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
             shotsOnGoal = 4,
             shotsOffGoal = 3,
             totalShots = 7,
@@ -660,12 +663,11 @@ class TeamStatSyncerTest {
             passesAccurate = 200,
             passesPercentage = "80%",
             expectedGoals = "1.23",
-            goalsPrevented = 0
+            goalsPrevented = 0,
         )
-    }
 
-    private fun createAllNullStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto {
-        return FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
+    private fun createAllNullStatisticsDetail(): FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto =
+        FullMatchSyncDto.TeamStatisticsDto.TeamStatisticsDetailDto(
             shotsOnGoal = null,
             shotsOffGoal = null,
             totalShots = null,
@@ -683,7 +685,6 @@ class TeamStatSyncerTest {
             passesAccurate = null,
             passesPercentage = null,
             expectedGoals = null,
-            goalsPrevented = null
+            goalsPrevented = null,
         )
-    }
 }

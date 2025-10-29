@@ -14,30 +14,30 @@ import org.springframework.security.web.SecurityFilterChain
 @TestConfiguration
 @EnableWebSecurity
 class TestSecurityConfig {
-
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
-    }
+    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 
     @Bean
     fun userDetailsService(): UserDetailsService {
-        val admin = User.withUsername("admin")
-            .password("{noop}password")
-            .roles("ADMIN")
-            .build()
+        val admin =
+            User
+                .withUsername("admin")
+                .password("{noop}password")
+                .roles("ADMIN")
+                .build()
         return InMemoryUserDetailsManager(admin)
     }
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
-        return http
+    fun filterChain(http: HttpSecurity): SecurityFilterChain =
+        http
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
-                auth.requestMatchers("/admin/**").hasRole("ADMIN")
-                    .anyRequest().permitAll()
-            }
-            .httpBasic { }
+                auth
+                    .requestMatchers("/admin/**")
+                    .hasRole("ADMIN")
+                    .anyRequest()
+                    .permitAll()
+            }.httpBasic { }
             .build()
-    }
 }

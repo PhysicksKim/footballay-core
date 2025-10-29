@@ -6,12 +6,11 @@ import com.footballay.core.infra.persistence.core.entity.FixtureCore
 
 /**
  * FixtureCore 엔티티 동기화를 위한 서비스 인터페이스
- * 
+ *
  * FixtureCore 엔티티의 생성, 업데이트를 배치로 처리합니다.
  * API 계층의 명세에 의존하지 않는 순수한 Core 계층 서비스입니다.
  */
 interface FixtureCoreSyncService {
-
     /**
      * 요청 목록에 대해 UID를 생성하여 Pair로 매핑합니다.
      *
@@ -59,20 +58,20 @@ interface FixtureCoreSyncService {
      * @return UID와 요청 객체의 쌍 목록 (매칭 전략 지원)
      */
     fun <T> generateUidPairs(requests: List<T>): List<Pair<String, T>>
-    
+
     /**
      * FixtureCore들을 배치로 생성합니다.
-     * 
+     *
      * @param createPairs UID와 FixtureCore 생성 DTO의 쌍 목록
      * @return `Map<UID, FixtureCore>` 영속 상태의 FixtureCore 맵
      */
     fun createFixtureCores(createPairs: List<Pair<String, FixtureCoreCreateDto>>): Map<String, FixtureCore>
-    
+
     /**
      * FixtureCore들을 배치로 업데이트합니다.
-     * 
+     *
      * @param updatePairs FixtureCore 엔티티와 업데이트 DTO의 쌍 목록
      * @return `Map<UID, FixtureCore>` 영속 상태의 FixtureCore 맵
      */
     fun updateFixtureCores(updatePairs: List<Pair<FixtureCore, FixtureCoreUpdateDto>>): Map<String, FixtureCore>
-} 
+}

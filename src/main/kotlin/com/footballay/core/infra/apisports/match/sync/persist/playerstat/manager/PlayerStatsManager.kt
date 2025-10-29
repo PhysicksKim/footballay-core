@@ -33,9 +33,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Component
 class PlayerStatsManager(
-    private val playerStatsRepository: ApiSportsMatchPlayerStatisticsRepository
+    private val playerStatsRepository: ApiSportsMatchPlayerStatisticsRepository,
 ) {
-
     private val log = logger()
 
     /**
@@ -48,50 +47,60 @@ class PlayerStatsManager(
     @Transactional
     fun processPlayerStats(
         playerStatDto: PlayerStatSyncDto,
-        entityBundle: MatchEntityBundle
+        entityBundle: MatchEntityBundle,
     ): PlayerStatsProcessResult {
-        log.info("Starting PlayerStats processing - Home stats: ${playerStatDto.homePlayerStatList.size}, Away stats: ${playerStatDto.awayPlayerStatList.size}")
-        
+        log.info(
+            "Starting PlayerStats processing - Home stats: ${playerStatDto.homePlayerStatList.size}, Away stats: ${playerStatDto.awayPlayerStatList.size}",
+        )
+
         try {
             // 1단계: MatchPlayer 기반으로 통계 데이터 수집
             val collectedStatsList = PlayerStatsDtoCollector.collectFrom(playerStatDto, entityBundle.allMatchPlayers)
             log.info("Collected ${collectedStatsList.size} player statistics from DTO")
-            
+
             // 2단계: 변경 계획 수립
-            val existingStatsMap = PlayerStatsChangePlanner.entitiesToKeyMap(entityBundle.getAllPlayerStats().values.toList())
-            val statsChangeSet = PlayerStatsChangePlanner.planChanges(
-                collectedStatsList,
-                existingStatsMap,
-                entityBundle.allMatchPlayers
+            val existingStatsMap =
+                PlayerStatsChangePlanner.entitiesToKeyMap(
+                    entityBundle.getAllPlayerStats().values.toList(),
+                )
+            val statsChangeSet =
+                PlayerStatsChangePlanner.planChanges(
+                    collectedStatsList,
+                    existingStatsMap,
+                    entityBundle.allMatchPlayers,
+                )
+            log.info(
+                "Planned changes - Create: ${statsChangeSet.createCount}, Update: ${statsChangeSet.updateCount}, Delete: ${statsChangeSet.deleteCount}",
             )
-            log.info("Planned changes - Create: ${statsChangeSet.createCount}, Update: ${statsChangeSet.updateCount}, Delete: ${statsChangeSet.deleteCount}")
-            
+
             // 3단계: MatchPlayer 연결 및 영속 상태 저장
-            val savedStats = persistChangesWithMatchPlayerConnection(
-                statsChangeSet,
-                entityBundle.allMatchPlayers
-            )
-            
+            val savedStats =
+                persistChangesWithMatchPlayerConnection(
+                    statsChangeSet,
+                    entityBundle.allMatchPlayers,
+                )
+
             // 4단계: EntityBundle 업데이트 (MatchPlayer.statistics 필드에 반영)
             savedStats.forEach { savedStat ->
                 val matchPlayer = savedStat.matchPlayer
                 if (matchPlayer != null) {
-                    val key = MatchPlayerKeyGenerator.generateMatchPlayerKey(
-                        matchPlayer.playerApiSports?.apiId,
-                        matchPlayer.name
-                    )
+                    val key =
+                        MatchPlayerKeyGenerator.generateMatchPlayerKey(
+                            matchPlayer.playerApiSports?.apiId,
+                            matchPlayer.name,
+                        )
                     entityBundle.setPlayerStats(key, savedStat)
                     log.debug("Updated EntityBundle with PlayerStats: ${matchPlayer.name} (${savedStat.id})")
                 }
             }
-            
+
             log.info("PlayerStats processing completed - Total saved: ${savedStats.size}")
             return PlayerStatsProcessResult(
                 totalStats = savedStats.size,
                 createdCount = statsChangeSet.createCount,
                 updatedCount = statsChangeSet.updateCount,
                 deletedCount = statsChangeSet.deleteCount,
-                savedStats = savedStats
+                savedStats = savedStats,
             )
         } catch (e: Exception) {
             log.error("Failed to process PlayerStats", e)
@@ -102,45 +111,50 @@ class PlayerStatsManager(
     /** 변경사항을 데이터베이스에 저장하고 MatchPlayer와 양방향 연결합니다. */
     private fun persistChangesWithMatchPlayerConnection(
         statsChangeSet: PlayerStatsChangeSet,
-        matchPlayers: Map<String, ApiSportsMatchPlayer>
+        matchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): List<ApiSportsMatchPlayerStatistics> {
         val allStats = mutableListOf<ApiSportsMatchPlayerStatistics>()
-        
+
         // 1. 삭제 처리 (기존 로직 유지)
         if (statsChangeSet.toDelete.isNotEmpty()) {
             playerStatsRepository.deleteAll(statsChangeSet.toDelete)
             log.info("Deleted ${statsChangeSet.toDelete.size} player statistics")
         }
-        
+
         // 2. 생성할 통계: MatchPlayer 연결 후 저장
-        val statsToCreate = statsChangeSet.toCreate.map { statsDto ->
-            val matchPlayer = findMatchPlayerByKey(statsDto.playerKey, matchPlayers)
-            if (matchPlayer == null) {
-                log.warn("MatchPlayer not found for key: ${statsDto.playerKey}, skipping statistics creation")
-                return@map null
-            }
-            
-            // PlayerStats 생성 (비영속 상태)
-            val playerStats = StatsEntityFrom(matchPlayer, statsDto)
-            
-            log.debug("Created player statistics for: ${matchPlayer.name} (${statsDto.playerKey})")
-            playerStats
-        }.filterNotNull()
-        
+        val statsToCreate =
+            statsChangeSet.toCreate
+                .map { statsDto ->
+                    val matchPlayer = findMatchPlayerByKey(statsDto.playerKey, matchPlayers)
+                    if (matchPlayer == null) {
+                        log.warn("MatchPlayer not found for key: ${statsDto.playerKey}, skipping statistics creation")
+                        return@map null
+                    }
+
+                    // PlayerStats 생성 (비영속 상태)
+                    val playerStats = StatsEntityFrom(matchPlayer, statsDto)
+
+                    log.debug("Created player statistics for: ${matchPlayer.name} (${statsDto.playerKey})")
+                    playerStats
+                }.filterNotNull()
+
         // 3. 수정할 통계: 기존 통계 업데이트
-        val statsToUpdate = statsChangeSet.toUpdate.map { (existingStats, statsDto) ->
-            updateStats(existingStats, statsDto)
-            
-            log.debug("Updated player statistics for: ${existingStats.matchPlayer?.name} (${statsDto.playerKey})")
-            existingStats
-        }
-        
+        val statsToUpdate =
+            statsChangeSet.toUpdate.map { (existingStats, statsDto) ->
+                updateStats(existingStats, statsDto)
+
+                log.debug("Updated player statistics for: ${existingStats.matchPlayer?.name} (${statsDto.playerKey})")
+                existingStats
+            }
+
         // 4. 배치 저장 (성능 최적화)
         val allStatsToSave = statsToCreate + statsToUpdate
         if (allStatsToSave.isNotEmpty()) {
             val savedStats = playerStatsRepository.saveAll(allStatsToSave)
-            log.info("Saved ${savedStats.size} player statistics (Create: ${statsToCreate.size}, Update: ${statsToUpdate.size})")
-            
+            log.info(
+                "Saved ${savedStats.size} player statistics (Create: ${statsToCreate.size}, Update: ${statsToUpdate.size})",
+            )
+
             // 5. 영속화 후 MatchPlayer와 연관관계 설정
             savedStats.forEach { savedStat ->
                 val matchPlayer = savedStat.matchPlayer
@@ -150,16 +164,16 @@ class PlayerStatsManager(
                     log.debug("Set bidirectional relationship: ${matchPlayer.name} <-> ${savedStat.id}")
                 }
             }
-            
+
             allStats.addAll(savedStats)
         }
-        
+
         return allStats
     }
 
     private fun updateStats(
         existingStats: ApiSportsMatchPlayerStatistics,
-        statsDto: PlayerStatsDto
+        statsDto: PlayerStatsDto,
     ) {
         existingStats.apply {
             minutesPlayed = statsDto.minutesPlayed
@@ -200,54 +214,54 @@ class PlayerStatsManager(
 
     private fun StatsEntityFrom(
         matchPlayer: ApiSportsMatchPlayer,
-        statsDto: PlayerStatsDto
-    ): ApiSportsMatchPlayerStatistics = ApiSportsMatchPlayerStatistics(
-        matchPlayer = matchPlayer,
-        minutesPlayed = statsDto.minutesPlayed,
-        shirtNumber = statsDto.shirtNumber,
-        position = statsDto.position,
-        rating = statsDto.rating,
-        isCaptain = statsDto.isCaptain,
-        isSubstitute = statsDto.isSubstitute,
-        offsides = statsDto.offsides,
-        shotsTotal = statsDto.shotsTotal,
-        shotsOnTarget = statsDto.shotsOnTarget,
-        goalsTotal = statsDto.goalsTotal,
-        goalsConceded = statsDto.goalsConceded,
-        assists = statsDto.assists,
-        saves = statsDto.saves,
-        passesTotal = statsDto.passesTotal,
-        keyPasses = statsDto.keyPasses,
-        passesAccuracy = statsDto.passesAccuracy,
-        tacklesTotal = statsDto.tacklesTotal,
-        blocks = statsDto.blocks,
-        interceptions = statsDto.interceptions,
-        duelsTotal = statsDto.duelsTotal,
-        duelsWon = statsDto.duelsWon,
-        dribblesAttempts = statsDto.dribblesAttempts,
-        dribblesSuccess = statsDto.dribblesSuccess,
-        dribblesPast = statsDto.dribblesPast,
-        foulsDrawn = statsDto.foulsDrawn,
-        foulsCommitted = statsDto.foulsCommitted,
-        yellowCards = statsDto.yellowCards,
-        redCards = statsDto.redCards,
-        penaltyWon = statsDto.penaltyWon,
-        penaltyCommitted = statsDto.penaltyCommitted,
-        penaltyScored = statsDto.penaltyScored,
-        penaltyMissed = statsDto.penaltyMissed,
-        penaltySaved = statsDto.penaltySaved
-    )
+        statsDto: PlayerStatsDto,
+    ): ApiSportsMatchPlayerStatistics =
+        ApiSportsMatchPlayerStatistics(
+            matchPlayer = matchPlayer,
+            minutesPlayed = statsDto.minutesPlayed,
+            shirtNumber = statsDto.shirtNumber,
+            position = statsDto.position,
+            rating = statsDto.rating,
+            isCaptain = statsDto.isCaptain,
+            isSubstitute = statsDto.isSubstitute,
+            offsides = statsDto.offsides,
+            shotsTotal = statsDto.shotsTotal,
+            shotsOnTarget = statsDto.shotsOnTarget,
+            goalsTotal = statsDto.goalsTotal,
+            goalsConceded = statsDto.goalsConceded,
+            assists = statsDto.assists,
+            saves = statsDto.saves,
+            passesTotal = statsDto.passesTotal,
+            keyPasses = statsDto.keyPasses,
+            passesAccuracy = statsDto.passesAccuracy,
+            tacklesTotal = statsDto.tacklesTotal,
+            blocks = statsDto.blocks,
+            interceptions = statsDto.interceptions,
+            duelsTotal = statsDto.duelsTotal,
+            duelsWon = statsDto.duelsWon,
+            dribblesAttempts = statsDto.dribblesAttempts,
+            dribblesSuccess = statsDto.dribblesSuccess,
+            dribblesPast = statsDto.dribblesPast,
+            foulsDrawn = statsDto.foulsDrawn,
+            foulsCommitted = statsDto.foulsCommitted,
+            yellowCards = statsDto.yellowCards,
+            redCards = statsDto.redCards,
+            penaltyWon = statsDto.penaltyWon,
+            penaltyCommitted = statsDto.penaltyCommitted,
+            penaltyScored = statsDto.penaltyScored,
+            penaltyMissed = statsDto.penaltyMissed,
+            penaltySaved = statsDto.penaltySaved,
+        )
 
     /** MatchPlayer 키로 EntityBundle에서 MatchPlayer를 찾습니다. */
     private fun findMatchPlayerByKey(
         playerKey: String,
-        matchPlayers: Map<String, ApiSportsMatchPlayer>
-    ): ApiSportsMatchPlayer? {
-        return matchPlayers[playerKey]?.also {
+        matchPlayers: Map<String, ApiSportsMatchPlayer>,
+    ): ApiSportsMatchPlayer? =
+        matchPlayers[playerKey]?.also {
             log.debug("Found MatchPlayer for key: $playerKey -> ${it.name}")
         } ?: run {
             log.warn("MatchPlayer not found for key: $playerKey")
             null
         }
-    }
-} 
+}

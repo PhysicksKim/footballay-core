@@ -10,20 +10,28 @@ data class ApiResponseV2<T>(
     /**
      * [org.apache.http.HttpStatus] 를 사용하여 int 값을 전달할 수 있습니다.
      */
-    val code: Int? = null
+    val code: Int? = null,
 ) {
     companion object {
-        fun <T> success(data: T, code: Int = 200): ApiResponseV2<T> = ApiResponseV2(
-            success = true,
-            code = code,
-            data = data
-        )
-        
-        fun <T> failure(error: ErrorDetail, code: Int): ApiResponseV2<T> = ApiResponseV2(
-            success = false,
-            code = code,
-            error = error
-        )
+        fun <T> success(
+            data: T,
+            code: Int = 200,
+        ): ApiResponseV2<T> =
+            ApiResponseV2(
+                success = true,
+                code = code,
+                data = data,
+            )
+
+        fun <T> failure(
+            error: ErrorDetail,
+            code: Int,
+        ): ApiResponseV2<T> =
+            ApiResponseV2(
+                success = false,
+                code = code,
+                error = error,
+            )
     }
 }
 
@@ -32,5 +40,5 @@ data class ApiResponseV2<T>(
  */
 data class ErrorDetail(
     val message: String,
-    val field: String? = null // 유효성 검사 에러 시에만 사용
-) 
+    val field: String? = null, // 유효성 검사 에러 시에만 사용
+)

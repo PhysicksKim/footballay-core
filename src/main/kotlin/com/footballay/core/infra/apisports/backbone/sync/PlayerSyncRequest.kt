@@ -14,5 +14,5 @@ data class PlayerApiSportsCreateDto(
     val number: Int? = null,
     val photo: String? = null,
     // API별 추가 필드들 확장 가능
-    val additionalData: Map<String, Any> = emptyMap()
+    val additionalData: Map<String, Any> = emptyMap(),
 )

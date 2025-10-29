@@ -13,9 +13,8 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class LeagueApiSportsQueryService(
-    private val leagueApiSportsRepository: LeagueApiSportsRepository
+    private val leagueApiSportsRepository: LeagueApiSportsRepository,
 ) {
-    
     private val log = logger()
 
     /**
@@ -24,8 +23,9 @@ class LeagueApiSportsQueryService(
     @Transactional(readOnly = true)
     fun findByApiId(apiId: Long): LeagueApiSportsInfo? {
         log.debug("Querying league by apiId: $apiId")
-        
-        return leagueApiSportsRepository.findByApiId(apiId)
+
+        return leagueApiSportsRepository
+            .findByApiId(apiId)
             ?.let { mapToInfo(it) }
     }
 
@@ -33,10 +33,9 @@ class LeagueApiSportsQueryService(
      * API ID로 리그 정보 조회 (필수)
      */
     @Transactional(readOnly = true)
-    fun findByApiIdOrThrow(apiId: Long): LeagueApiSportsInfo {
-        return findByApiId(apiId) 
+    fun findByApiIdOrThrow(apiId: Long): LeagueApiSportsInfo =
+        findByApiId(apiId)
             ?: throw IllegalArgumentException("League not found with apiId: $apiId")
-    }
 
     /**
      * 특정 국가의 리그들 조회
@@ -44,22 +43,22 @@ class LeagueApiSportsQueryService(
     @Transactional(readOnly = true)
     fun findByCountryCode(countryCode: String): List<LeagueApiSportsInfo> {
         log.debug("Querying leagues by countryCode: $countryCode")
-        
-        return leagueApiSportsRepository.findByCountryCode(countryCode)
+
+        return leagueApiSportsRepository
+            .findByCountryCode(countryCode)
             .map { mapToInfo(it) }
     }
 
     /**
      * 엔티티를 도메인 모델로 변환
      */
-    private fun mapToInfo(entity: LeagueApiSports): LeagueApiSportsInfo {
-        return LeagueApiSportsInfo(
+    private fun mapToInfo(entity: LeagueApiSports): LeagueApiSportsInfo =
+        LeagueApiSportsInfo(
             apiId = entity.apiId,
             name = entity.name,
             currentSeason = entity.currentSeason,
             type = entity.type,
             countryName = entity.countryName,
-            countryCode = entity.countryCode
+            countryCode = entity.countryCode,
         )
-    }
-} 
+}

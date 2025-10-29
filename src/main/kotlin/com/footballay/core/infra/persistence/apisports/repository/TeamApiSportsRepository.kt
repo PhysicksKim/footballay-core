@@ -9,37 +9,42 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TeamApiSportsRepository : JpaRepository<TeamApiSports, Long> {
-
     fun findByApiId(apiId: Long): TeamApiSports?
 
     fun findAllByApiIdIn(apiIds: List<Long>): List<TeamApiSports>
 
     @Query("SELECT t FROM TeamApiSports t LEFT JOIN FETCH t.teamCore WHERE t.apiId = :apiId")
     fun findTeamApiSportsByApiIdWithTeamCore(apiId: Long): TeamApiSports?
-    
+
     fun findTeamApiSportsByApiId(apiId: Long): TeamApiSports?
 
-    @Query("SELECT ta FROM TeamApiSports ta " +
+    @Query(
+        "SELECT ta FROM TeamApiSports ta " +
             "LEFT JOIN FETCH ta.teamCore tc " +
-            "WHERE tc IN :teamCores")
-    fun findTeamApiSportsInTeamCore(teamCores: List<TeamCore>) : List<TeamApiSports>
+            "WHERE tc IN :teamCores",
+    )
+    fun findTeamApiSportsInTeamCore(teamCores: List<TeamCore>): List<TeamApiSports>
 
-    @Query("SELECT ta FROM TeamApiSports ta " +
+    @Query(
+        "SELECT ta FROM TeamApiSports ta " +
             "JOIN ta.teamCore tc " +
             "JOIN LeagueTeamCore ltc ON ltc.team = tc " +
-            "WHERE ltc.league.id = :leagueId")
+            "WHERE ltc.league.id = :leagueId",
+    )
     fun findAllByLeagueId(leagueId: Long): List<TeamApiSports>
-    
+
     /**
      * TeamApiSports 조회 (PK OR ApiId 기반)
      */
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT tas FROM TeamApiSports tas
         LEFT JOIN FETCH tas.teamCore tc
         WHERE tas.id IN :teamApiSportsIds OR tas.apiId IN :teamApiIds
-    """)
+    """,
+    )
     fun findAllWithTeamCoreByPkOrApiIds(
         @Param("teamApiSportsIds") teamApiSportsIds: List<Long>,
-        @Param("teamApiIds") teamApiIds: List<Long>
+        @Param("teamApiIds") teamApiIds: List<Long>,
     ): List<TeamApiSports>
 }
