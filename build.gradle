@@ -140,3 +140,34 @@ tasks.withType(KotlinCompile).configureEach {
 kotlin {
     jvmToolchain(17)
 }
+
+// WireMock Mock Server Tasks
+task exportOpenApi(type: Exec) {
+    description = 'Export OpenAPI JSON from running application'
+    group = 'wiremock'
+    commandLine 'curl', '-o', 'wiremock/__files/openapi.json',
+                'http://localhost:8083/v3/api-docs'
+    doFirst {
+        println 'Exporting OpenAPI JSON from http://localhost:8083/v3/api-docs'
+        println 'Make sure the application is running with: ./gradlew bootRun'
+    }
+}
+
+task generateMockServer(type: Exec) {
+    description = 'Generate WireMock stubs and seed data'
+    group = 'wiremock'
+    dependsOn 'exportOpenApi'
+    commandLine './scripts/generate-stubs.sh'
+    doFirst {
+        println 'Generating WireMock stubs from OpenAPI specification'
+    }
+}
+
+task seedMockData(type: Exec) {
+    description = 'Generate seed data for WireMock mock server'
+    group = 'wiremock'
+    commandLine './scripts/seed-data.sh'
+    doFirst {
+        println 'Generating seed data for mock server'
+    }
+}

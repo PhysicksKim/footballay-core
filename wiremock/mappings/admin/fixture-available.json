@@ -1,0 +1,34 @@
+{
+  "mappings": [
+    {
+      "name": "add-available-fixture",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/v1/admin/fixtures/([0-9]+)/available"
+      },
+      "response": {
+        "status": 200,
+        "body": "apisports:1208021",
+        "headers": {
+          "Content-Type": "text/plain"
+        }
+      }
+    },
+    {
+      "name": "remove-available-fixture",
+      "priority": 1,
+      "request": {
+        "method": "DELETE",
+        "urlPathPattern": "/api/v1/admin/fixtures/([0-9]+)/available"
+      },
+      "response": {
+        "status": 200,
+        "body": "apisports:1208021",
+        "headers": {
+          "Content-Type": "text/plain"
+        }
+      }
+    }
+  ]
+}
