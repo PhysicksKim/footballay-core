@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
+import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -42,37 +43,28 @@ class AdminFixtureController(
     private val availableFixtureFacade: AvailableFixtureFacade,
 ) {
     /**
-     * Fixture를 Available로 설정
-     *
-     * Available로 설정하면 PreMatchJob이 등록되어 실시간 Match Data Sync가 시작됩니다.
-     *
-     * @param fixtureId FixtureCore ID
-     * @return 성공 시 200 OK (fixture UID 반환)
-     *         실패 시 404 Not Found (Fixture 없음)
-     *               400 Bad Request (Job 등록 실패)
+     * Fixture 가용성 설정(활성/비활성) - PUT + JSON 바디
      */
     @Operation(
-        summary = "경기 가용성 활성화 및 Job 등록",
+        summary = "경기 가용성 설정",
         description =
-            "경기를 available 상태로 설정하고 Match Data Sync Job을 등록합니다. " +
-                "등록되는 Job: PreMatchJob (경기 1시간 전 시작, 라인업 수집), " +
-                "LiveMatchJob (킥오프 시간부터 시작, 실시간 매치 데이터 polling). " +
-                "Job 자동 전환: PreMatchJob 완료 → LiveMatchJob 시작 → LiveMatchJob 종료 감지 → PostMatchJob 자동 등록. " +
-                "전제조건: 경기의 kickoff time이 설정되어 있어야 하며, 일정이 미정인 경기는 available로 설정할 수 없습니다.",
-        operationId = "addAvailableFixture",
+            "경기를 available/unavailable 상태로 설정합니다. " +
+                "available=true인 경우: PreMatchJob 등록 후 LiveMatchJob으로 이어집니다. " +
+                "available=false인 경우: 등록된 Match Data Sync Job이 삭제됩니다.",
+        operationId = "setFixtureAvailable",
     )
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "성공적으로 경기를 available로 설정하고 Job을 등록함",
+                description = "성공적으로 가용성 상태를 변경함",
                 content = [
                     Content(
                         examples = [
                             ExampleObject(
                                 name = "success",
                                 value = "apisports:1208021",
-                                description = "등록된 경기의 UID (provider:id 형식)",
+                                description = "대상 경기의 UID",
                             ),
                         ],
                     ),
@@ -94,97 +86,48 @@ class AdminFixtureController(
             ),
             ApiResponse(
                 responseCode = "400",
-                description = "유효성 검증 실패 (kickoff time 미설정 등)",
-                content = [
-                    Content(
-                        examples = [
-                            ExampleObject(
-                                name = "validation error",
-                                value = "Validation error: Kickoff time must be set",
-                            ),
-                        ],
-                    ),
-                ],
+                description = "유효성 검증 실패",
             ),
         ],
     )
-    @PostMapping("/{fixtureId}/available")
-    fun addAvailableFixture(
+    @PutMapping("/{fixtureId}/available")
+    fun setFixtureAvailable(
         @Parameter(
             description = "FixtureCore ID (데이터베이스 내부 ID)",
             example = "12345",
             required = true,
         )
         @PathVariable fixtureId: Long,
-    ): ResponseEntity<String> =
-        when (val result = availableFixtureFacade.addAvailableFixture(fixtureId)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
-
-    /**
-     * Fixture를 Unavailable로 설정
-     *
-     * Unavailable로 설정하면 모든 Match Data Sync Job이 삭제됩니다.
-     *
-     * @param fixtureId FixtureCore ID
-     * @return 성공 시 200 OK (fixture UID 반환)
-     *         실패 시 404 Not Found (Fixture 없음)
-     */
-    @Operation(
-        summary = "경기 가용성 비활성화 및 Job 삭제",
-        description =
-            "경기를 unavailable 상태로 설정하고 등록된 모든 Match Data Sync Job을 삭제합니다. " +
-                "삭제되는 Job: PreMatchJob (경기 시작 전 라인업 수집), LiveMatchJob (실시간 매치 데이터 polling), " +
-                "PostMatchJob (경기 종료 후 최종 통계 수집). " +
-                "사용 시나리오: 경기가 취소된 경우, 라이브 데이터 수집을 중단하고 싶은 경우, Job 설정을 초기화하고 다시 등록하고 싶은 경우.",
-        operationId = "removeAvailableFixture",
-    )
-    @ApiResponses(
-        value = [
-            ApiResponse(
-                responseCode = "200",
-                description = "성공적으로 경기를 unavailable로 설정하고 Job을 삭제함",
-                content = [
-                    Content(
-                        examples = [
-                            ExampleObject(
-                                name = "success",
-                                value = "apisports:1208021",
-                                description = "삭제된 경기의 UID",
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-            ApiResponse(
-                responseCode = "404",
-                description = "경기를 찾을 수 없음",
-                content = [
-                    Content(
-                        examples = [
-                            ExampleObject(
-                                name = "not found",
-                                value = "Fixture not found: 12345",
-                            ),
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    )
-    @DeleteMapping("/{fixtureId}/available")
-    fun removeAvailableFixture(
-        @Parameter(
-            description = "FixtureCore ID (데이터베이스 내부 ID)",
-            example = "12345",
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "가용성 토글 요청 바디",
             required = true,
+            content = [
+                Content(
+                    examples = [
+                        ExampleObject(
+                            name = "enable",
+                            value = "{\\n  \"available\": true\\n}",
+                        ),
+                        ExampleObject(
+                            name = "disable",
+                            value = "{\\n  \"available\": false\\n}",
+                        ),
+                    ],
+                ),
+            ],
         )
-        @PathVariable fixtureId: Long,
+        @RequestBody request: AvailabilityToggleRequest,
     ): ResponseEntity<String> =
-        when (val result = availableFixtureFacade.removeAvailableFixture(fixtureId)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
+        if (request.available) {
+            when (val result = availableFixtureFacade.addAvailableFixture(fixtureId)) {
+                is DomainResult.Success -> ResponseEntity.ok(result.value)
+                is DomainResult.Fail -> toErrorResponse(result.error)
+            }
+        } else {
+            when (val result = availableFixtureFacade.removeAvailableFixture(fixtureId)) {
+                is DomainResult.Success -> ResponseEntity.ok(result.value)
+                is DomainResult.Fail -> toErrorResponse(result.error)
+            }
         }
 
     /**

@@ -6,6 +6,7 @@ import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
+import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -18,16 +19,30 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import com.footballay.core.web.admin.league.dto.AvailableLeagueDto
+import com.footballay.core.web.admin.league.service.AdminLeagueQueryWebService
+import com.footballay.core.web.admin.fixture.service.AdminFixtureQueryWebService
+import com.footballay.core.web.admin.fixture.dto.FixtureSummaryDto
+import java.time.Instant
 
 @Tag(
     name = "Admin - ApiSports Sync",
-    description = "ApiSports 데이터 동기화 API. 동기화 순서: 1) Leagues Sync (현재 시즌 리그), 2) Teams Sync (리그별 팀), 3) Players Sync (팀별 선수), 4) Fixtures Sync (리그별 경기 일정), 5) League Available (리그 활성화). 주의사항: 동기화는 순차적으로 진행되어야 하며, ApiSports API 호출 제한을 고려해야 합니다.",
+    description =
+        "ApiSports 데이터 동기화 API. " +
+            "동기화 순서: 1) Leagues Sync (현재 시즌 리그), " +
+            "2) Teams Sync (리그별 팀), " +
+            "3) Players Sync (팀별 선수), " +
+            "4) Fixtures Sync (리그별 경기 일정), " +
+            "5) League Available (리그 활성화). " +
+            "주의사항: 동기화는 순차적으로 진행되어야 하며, ApiSports API 호출 제한을 고려해야 합니다.",
 )
 @SecurityRequirement(name = "cookieAuth")
 @RestController
 @RequestMapping("/api/v1/admin/apisports")
 class AdminApiSportsController(
     private val adminApiSportsWebService: AdminApiSportsWebService,
+    private val adminLeagueQueryWebService: AdminLeagueQueryWebService,
+    private val adminFixtureQueryWebService: AdminFixtureQueryWebService,
 ) {
     /**
      * Controller 헬스 테스트용 엔드포인트
@@ -44,7 +59,11 @@ class AdminApiSportsController(
      */
     @Operation(
         summary = "현재 시즌 리그 동기화",
-        description = "ApiSports에서 현재 시즌의 모든 리그 정보를 가져와 동기화합니다. 동기화 프로세스: 1) ApiSports API에서 현재 시즌 리그 목록 조회, 2) LeagueApiSports 엔티티 생성/업데이트, 3) LeagueCore 엔티티 생성/업데이트. 첫 번째 단계: 데이터 동기화의 시작점입니다.",
+        description =
+            "ApiSports에서 현재 시즌의 모든 리그 정보를 가져와 동기화합니다. " +
+                "동기화 프로세스: 1) ApiSports API에서 현재 시즌 리그 목록 조회, " +
+                "2) LeagueApiSports 엔티티 생성/업데이트, " +
+                "3) LeagueCore 엔티티 생성/업데이트. 첫 번째 단계: 데이터 동기화의 시작점입니다.",
         operationId = "syncCurrentLeagues",
     )
     @ApiResponses(
@@ -76,7 +95,11 @@ class AdminApiSportsController(
      */
     @Operation(
         summary = "리그의 팀 동기화 (현재 시즌)",
-        description = "특정 리그의 팀들을 현재 시즌 기준으로 동기화합니다. 동기화 프로세스: 1) ApiSports API에서 리그의 현재 시즌 팀 목록 조회, 2) TeamApiSports 엔티티 생성/업데이트, 3) TeamCore 엔티티 생성/업데이트. 전제조건: League Sync가 먼저 완료되어야 합니다.",
+        description =
+            "특정 리그의 팀들을 현재 시즌 기준으로 동기화합니다. " +
+                "동기화 프로세스: 1) ApiSports API에서 리그의 현재 시즌 팀 목록 조회, " +
+                "2) TeamApiSports 엔티티 생성/업데이트, " +
+                "3) TeamCore 엔티티 생성/업데이트. 전제조건: League Sync가 먼저 완료되어야 합니다.",
         operationId = "syncTeamsOfLeagueCurrentSeason",
     )
     @ApiResponses(
@@ -137,7 +160,12 @@ class AdminApiSportsController(
      */
     @Operation(
         summary = "팀의 선수 동기화",
-        description = "특정 팀의 스쿼드(선수 명단)를 동기화합니다. 동기화 프로세스: 1) ApiSports API에서 팀의 선수 목록 조회, 2) PlayerApiSports 엔티티 생성/업데이트, 3) PlayerCore 엔티티 생성/업데이트. 전제조건: Team Sync가 먼저 완료되어야 합니다.",
+        description =
+            "특정 팀의 스쿼드(선수 명단)를 동기화합니다. " +
+                "동기화 프로세스: 1) ApiSports API에서 팀의 선수 목록 조회, " +
+                "2) PlayerApiSports 엔티티 생성/업데이트, " +
+                "3) PlayerCore 엔티티 생성/업데이트. " +
+                "전제조건: Team Sync가 먼저 완료되어야 합니다.",
         operationId = "syncPlayersOfTeam",
     )
     @ApiResponses(
@@ -188,6 +216,66 @@ class AdminApiSportsController(
     }
 
     /**
+     * 가용 리그 목록 조회
+     *
+     * GET /api/v1/admin/apisports/leagues/available
+     */
+    @Operation(
+        summary = "가용 리그 목록 조회",
+        description = "현재 available=true로 설정된 리그 목록을 반환합니다.",
+        operationId = "getAvailableLeagues",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content = [Content(schema = Schema(implementation = AvailableLeagueDto::class))],
+            ),
+        ],
+    )
+    @GetMapping("/leagues/available")
+    fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> =
+        ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
+
+    /**
+     * 리그별 픽스처 조회 (시간: ISO-8601 UTC)
+     *
+     * GET /api/v1/admin/apisports/leagues/{leagueId}/fixtures?at=2025-03-04T00:00:00Z&mode=nearest|exact
+     */
+    @Operation(
+        summary = "리그별 픽스처 조회",
+        description =
+            "리그의 픽스처를 조회합니다. at(ISO-8601 UTC) 기준으로 exact/nearest를 처리하며, at 미지정 시 서버 now를 기준으로 합니다.",
+        operationId = "getLeagueFixtures",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content = [Content(schema = Schema(implementation = FixtureSummaryDto::class))],
+            ),
+        ],
+    )
+    @GetMapping("/leagues/{leagueId}/fixtures")
+    fun getLeagueFixtures(
+        @Parameter(description = "LeagueCore ID", required = true, example = "1")
+        @PathVariable leagueId: Long,
+        @Parameter(description = "ISO-8601 UTC. 생략 시 서버 now")
+        @RequestParam(required = false) at: String?,
+        @Parameter(description = "nearest | exact. 기본값 exact")
+        @RequestParam(required = false, defaultValue = "exact") mode: String,
+    ): ResponseEntity<List<FixtureSummaryDto>> {
+        val atInstant = try {
+            at?.let { Instant.parse(it) }
+        } catch (e: Exception) {
+            null
+        }
+        return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueId, atInstant, mode))
+    }
+
+    /**
      * 특정 리그의 Fixture 들을 저장합니다.
      *
      * POST /api/v1/admin/apisports/leagues/{leagueId}/fixtures/sync
@@ -195,7 +283,14 @@ class AdminApiSportsController(
      */
     @Operation(
         summary = "리그의 경기 일정 동기화",
-        description = "특정 리그의 경기 일정(Fixtures)을 동기화합니다. 동기화 프로세스: 1) ApiSports API에서 리그의 경기 일정 조회, 2) VenueApiSports 엔티티 생성/업데이트, 3) FixtureCore 엔티티 생성 (UID 자동 생성), 4) FixtureApiSports 엔티티 생성/업데이트. 전제조건: League Sync 완료, Team Sync 완료. 주의: 경기가 많은 리그는 API 호출 제한에 걸릴 수 있습니다.",
+        description =
+            "특정 리그의 경기 일정(Fixtures)을 동기화합니다. " +
+                "동기화 프로세스: 1) ApiSports API에서 리그의 경기 일정 조회, " +
+                "2) VenueApiSports 엔티티 생성/업데이트, " +
+                "3) FixtureCore 엔티티 생성 (UID 자동 생성), " +
+                "4) FixtureApiSports 엔티티 생성/업데이트. " +
+                "전제조건: League Sync 완료, Team Sync 완료. " +
+                "주의: 경기가 많은 리그는 API 호출 제한에 걸릴 수 있습니다.",
         operationId = "syncFixturesOfLeague",
     )
     @ApiResponses(
@@ -249,7 +344,11 @@ class AdminApiSportsController(
      */
     @Operation(
         summary = "리그 가용성 설정",
-        description = "리그를 available/unavailable 상태로 설정합니다. Available 설정: 리그를 공개 API에 노출, 사용자가 해당 리그의 경기를 조회할 수 있게 됨. 사용 시나리오: 새 시즌이 시작되어 리그를 공개하는 경우, 특정 리그를 서비스에서 제외하는 경우. 주의: 리그의 경기들도 개별적으로 available 설정이 필요합니다.",
+        description =
+            "리그를 available/unavailable 상태로 설정합니다. " +
+                "Available 설정: 리그를 공개 API에 노출, 사용자가 해당 리그의 경기를 조회할 수 있게 됨. " +
+                "사용 시나리오: 새 시즌이 시작되어 리그를 공개하는 경우, 특정 리그를 서비스에서 제외하는 경우. " +
+                "주의: 리그의 경기들도 개별적으로 available 설정이 필요합니다.",
         operationId = "setLeagueAvailable",
     )
     @ApiResponses(
@@ -278,7 +377,7 @@ class AdminApiSportsController(
             ),
         ],
     )
-    @PostMapping("/leagues/{leagueId}/available")
+    @PutMapping("/leagues/{leagueId}/available")
     fun setLeagueAvailable(
         @Parameter(
             description = "LeagueCore ID (내부 데이터베이스 ID)",
@@ -286,14 +385,27 @@ class AdminApiSportsController(
             required = true,
         )
         @PathVariable leagueId: Long,
-        @Parameter(
-            description = "Available 상태 (true: 활성화, false: 비활성화)",
-            example = "true",
+        @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "가용성 토글 요청 바디",
             required = true,
+            content = [
+                Content(
+                    examples = [
+                        ExampleObject(
+                            name = "enable",
+                            value = "{\n  \"available\": true\n}",
+                        ),
+                        ExampleObject(
+                            name = "disable",
+                            value = "{\n  \"available\": false\n}",
+                        ),
+                    ],
+                ),
+            ],
         )
-        @RequestParam available: Boolean,
+        @RequestBody request: AvailabilityToggleRequest,
     ): ResponseEntity<String> =
-        when (val result = adminApiSportsWebService.setLeagueAvailable(leagueId, available)) {
+        when (val result = adminApiSportsWebService.setLeagueAvailable(leagueId, request.available)) {
             is DomainResult.Success -> ResponseEntity.ok(result.value)
             is DomainResult.Fail -> toErrorResponse(result.error)
         }

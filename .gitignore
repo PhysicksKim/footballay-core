@@ -52,6 +52,7 @@ src/main/resources/config/dev/application-apirefacsecret.yml
 
 ### secret ai context
 .ai/secret/**
+.ai
 
 !docker/**
 !docker/dev/**
@@ -61,7 +62,6 @@ src/main/resources/config/dev/application-apirefacsecret.yml
 
 /monitoring/*
 
-.ai
 
 monitoring/prometheus/credentials.yml
 monitoring/prometheus/secrets/*
@@ -73,3 +73,5 @@ lombok.config
 lombok.jar
 
 docs/**
+
+.claude/settings.local.json
