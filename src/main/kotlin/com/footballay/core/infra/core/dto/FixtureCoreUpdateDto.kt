@@ -1,7 +1,7 @@
 package com.footballay.core.infra.core.dto
 
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * FixtureCore 업데이트에 필요한 Core 전용 DTO
@@ -9,8 +9,7 @@ import java.time.OffsetDateTime
  * API 계층의 명세에 의존하지 않는 순수한 Core 계층 DTO입니다.
  */
 data class FixtureCoreUpdateDto(
-    val kickoff: OffsetDateTime?,
-    val timestamp: Long?,
+    val kickoff: Instant?,
     val status: String?,
     val statusShort: FixtureStatusShort?,
     val elapsedMin: Int?,

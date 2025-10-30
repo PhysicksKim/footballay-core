@@ -10,8 +10,8 @@ import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * Fixture 데이터 매핑 담당 인터페이스
@@ -124,7 +124,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
      * API Sports DTO를 FixtureCore 생성 DTO로 변환
      *
      * ## 변환 규칙
-     * - `date` 문자열을 ISO_OFFSET_DATE_TIME 형식으로 파싱 (실패 시 null)
+     * - `date` 문자열을 ISO-8601 Instant 형식으로 파싱 (실패 시 null)
      * - `status.longStatus`를 status 필드로 사용 (없으면 "Unknown")
      * - `status.shortStatus`를 FixtureStatusShort enum으로 변환 (없으면 NS)
      * - `score.fulltimeHome/Away`를 홈/어웨이 골로 매핑
@@ -144,20 +144,24 @@ class FixtureDataMapperImpl : FixtureDataMapper {
         homeTeam: TeamCore?,
         awayTeam: TeamCore?,
     ): FixtureCoreCreateDto {
-        // date 문자열을 OffsetDateTime으로 변환
+        // date 문자열을 Instant로 변환
         val kickoff =
             dto.date?.let { dateString ->
+                // +09:00 등 오프셋 포함 문자열과 Z(UTC) 문자열 모두 지원
                 try {
-                    OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                } catch (e: Exception) {
-                    null
+                    OffsetDateTime.parse(dateString).toInstant()
+                } catch (ignored: Exception) {
+                    try {
+                        Instant.parse(dateString)
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
             }
 
         return FixtureCoreCreateDto(
             uid = uid,
             kickoff = kickoff,
-            timestamp = dto.timestamp,
             status = dto.status?.longStatus ?: "Unknown",
             statusShort = mapStatusToCore(dto.status) ?: FixtureStatusShort.NS,
             elapsedMin = dto.status?.elapsed,

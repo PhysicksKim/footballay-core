@@ -7,7 +7,7 @@ import org.quartz.Scheduler
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.TriggerBuilder
 import org.springframework.stereotype.Service
-import java.time.OffsetDateTime
+import java.time.Instant
 import java.util.*
 
 /**
@@ -38,12 +38,12 @@ class JobSchedulerService(
      * 경기 시작 전 라인업 캐싱을 위한 Job을 등록합니다.
      *
      * @param fixtureUid Fixture UID
-     * @param startTime Job 시작 시각 (킥오프 1시간 전 권장)
+     * @param startTime Job 시작 시각 (OffsetDateTime, 킥오프 1시간 전 권장)
      * @return Job이 성공적으로 추가되었는지 여부
      */
     fun addPreMatchJob(
         fixtureUid: String,
-        startTime: OffsetDateTime = OffsetDateTime.now(),
+        startTime: java.time.OffsetDateTime,
     ): Boolean {
         try {
             val jobKey = createJobKey(JOB_GROUP_PRE_MATCH, fixtureUid)
@@ -94,7 +94,7 @@ class JobSchedulerService(
      */
     fun addLiveMatchJob(
         fixtureUid: String,
-        startTime: OffsetDateTime = OffsetDateTime.now(),
+        startTime: Instant,
     ): Boolean {
         try {
             val jobKey = createJobKey(JOB_GROUP_LIVE_MATCH, fixtureUid)
@@ -116,7 +116,7 @@ class JobSchedulerService(
                 TriggerBuilder
                     .newTrigger()
                     .withIdentity("live-match-trigger-$fixtureUid", JOB_GROUP_LIVE_MATCH)
-                    .startAt(Date.from(startTime.toInstant()))
+                    .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()
@@ -145,7 +145,7 @@ class JobSchedulerService(
      */
     fun addPostMatchJob(
         fixtureUid: String,
-        startTime: OffsetDateTime = OffsetDateTime.now(),
+        startTime: Instant = Instant.now(),
     ): Boolean {
         try {
             val jobKey = createJobKey(JOB_GROUP_POST_MATCH, fixtureUid)
@@ -167,7 +167,7 @@ class JobSchedulerService(
                 TriggerBuilder
                     .newTrigger()
                     .withIdentity("post-match-trigger-$fixtureUid", JOB_GROUP_POST_MATCH)
-                    .startAt(Date.from(startTime.toInstant()))
+                    .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()

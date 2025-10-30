@@ -16,7 +16,8 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -74,8 +75,7 @@ class FixtureCoreSyncServiceTest {
         val createDto1 =
             FixtureCoreCreateDto(
                 uid = uid1,
-                kickoff = OffsetDateTime.now(),
-                timestamp = 1234567890L,
+                kickoff = Instant.now(),
                 status = "Match Finished",
                 statusShort = FixtureStatusShort.FT,
                 elapsedMin = 90,
@@ -92,8 +92,7 @@ class FixtureCoreSyncServiceTest {
         val createDto2 =
             FixtureCoreCreateDto(
                 uid = uid2,
-                kickoff = OffsetDateTime.now().plusDays(1),
-                timestamp = 1234567891L,
+                kickoff = Instant.now().plus(1, ChronoUnit.DAYS),
                 status = "Not Started",
                 statusShort = FixtureStatusShort.NS,
                 elapsedMin = null,
@@ -117,7 +116,6 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid1,
                 kickoff = createDto1.kickoff!!,
-                timestamp = createDto1.timestamp!!,
                 status = createDto1.status!!,
                 statusShort = createDto1.statusShort!!,
                 elapsedMin = createDto1.elapsedMin,
@@ -135,7 +133,6 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid2,
                 kickoff = createDto2.kickoff!!,
-                timestamp = createDto2.timestamp!!,
                 status = createDto2.status!!,
                 statusShort = createDto2.statusShort!!,
                 elapsedMin = createDto2.elapsedMin,
@@ -185,8 +182,7 @@ class FixtureCoreSyncServiceTest {
         val existingFixtureCore1 =
             FixtureCore(
                 uid = uid1,
-                kickoff = OffsetDateTime.now(),
-                timestamp = 1234567890L,
+                kickoff = Instant.now(),
                 status = "Match Finished",
                 statusShort = FixtureStatusShort.FT,
                 elapsedMin = 90,
@@ -203,8 +199,7 @@ class FixtureCoreSyncServiceTest {
         val existingFixtureCore2 =
             FixtureCore(
                 uid = uid2,
-                kickoff = OffsetDateTime.now().plusDays(1),
-                timestamp = 1234567891L,
+                kickoff = Instant.now().plus(1, ChronoUnit.DAYS),
                 status = "Not Started",
                 statusShort = FixtureStatusShort.NS,
                 elapsedMin = null,
@@ -220,8 +215,7 @@ class FixtureCoreSyncServiceTest {
 
         val updateDto1 =
             FixtureCoreUpdateDto(
-                kickoff = OffsetDateTime.now().plusHours(1),
-                timestamp = 1234567892L,
+                kickoff = Instant.now().plus(1, ChronoUnit.HOURS),
                 status = "Match Finished",
                 statusShort = FixtureStatusShort.FT,
                 elapsedMin = 90,
@@ -233,8 +227,7 @@ class FixtureCoreSyncServiceTest {
 
         val updateDto2 =
             FixtureCoreUpdateDto(
-                kickoff = OffsetDateTime.now().plusDays(1).plusHours(1),
-                timestamp = 1234567893L,
+                kickoff = Instant.now().plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS),
                 status = "First Half",
                 statusShort = FixtureStatusShort.FIRST_HALF,
                 elapsedMin = 45,
@@ -253,7 +246,6 @@ class FixtureCoreSyncServiceTest {
         val expectedUpdatedFixtureCore1 =
             existingFixtureCore1.copy(
                 kickoff = updateDto1.kickoff!!,
-                timestamp = updateDto1.timestamp!!,
                 status = updateDto1.status!!,
                 statusShort = updateDto1.statusShort!!,
                 elapsedMin = updateDto1.elapsedMin,
@@ -266,7 +258,6 @@ class FixtureCoreSyncServiceTest {
         val expectedUpdatedFixtureCore2 =
             existingFixtureCore2.copy(
                 kickoff = updateDto2.kickoff!!,
-                timestamp = updateDto2.timestamp!!,
                 status = updateDto2.status!!,
                 statusShort = updateDto2.statusShort!!,
                 elapsedMin = updateDto2.elapsedMin,

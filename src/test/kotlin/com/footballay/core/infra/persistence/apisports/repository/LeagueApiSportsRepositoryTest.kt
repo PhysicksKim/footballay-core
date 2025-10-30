@@ -116,8 +116,8 @@ class LeagueApiSportsRepositoryTest {
             )
         return LeagueApiSportsSeason(
             seasonYear = year,
-            seasonStart = start,
-            seasonEnd = end,
+            seasonStart = java.time.LocalDate.parse(start),
+            seasonEnd = java.time.LocalDate.parse(end),
             coverage = leagueCoverage,
             leagueApiSports = leagueApiSports,
         )

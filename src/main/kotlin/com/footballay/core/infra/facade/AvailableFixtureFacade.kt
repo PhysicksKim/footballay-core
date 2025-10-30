@@ -8,7 +8,9 @@ import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneId
 
 /**
  * Available Fixture 관리 Facade
@@ -178,10 +180,11 @@ class AvailableFixtureFacade(
      * - 이미 킥오프 1시간 전이 지났으면 즉시 시작
      *
      * @param kickoff 경기 킥오프 시각 (non-null, addAvailableFixture에서 이미 검증됨)
-     * @return PreMatchJob 시작 시각
+     * @return PreMatchJob 시작 시각 (OffsetDateTime)
      */
-    private fun calculatePreMatchJobStartTime(kickoff: OffsetDateTime): OffsetDateTime {
-        val oneHourBeforeKickoff = kickoff.minusHours(1)
+    private fun calculatePreMatchJobStartTime(kickoff: Instant): OffsetDateTime {
+        val kickoffDateTime = kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime()
+        val oneHourBeforeKickoff = kickoffDateTime.minusHours(1)
         val now = OffsetDateTime.now()
 
         return if (oneHourBeforeKickoff.isBefore(now)) {

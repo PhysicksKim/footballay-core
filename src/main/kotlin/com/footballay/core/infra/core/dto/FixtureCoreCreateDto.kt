@@ -3,7 +3,7 @@ package com.footballay.core.infra.core.dto
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * FixtureCore 생성에 필요한 Core 전용 DTO
@@ -12,8 +12,7 @@ import java.time.OffsetDateTime
  */
 data class FixtureCoreCreateDto(
     val uid: String,
-    val kickoff: OffsetDateTime?,
-    val timestamp: Long?,
+    val kickoff: Instant?,
     val status: String?,
     val statusShort: FixtureStatusShort?,
     val elapsedMin: Int?,

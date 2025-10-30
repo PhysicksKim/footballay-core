@@ -8,5 +8,3 @@ data class FixtureSummaryDto(
     val status: String,
     val available: Boolean,
 )
-
-

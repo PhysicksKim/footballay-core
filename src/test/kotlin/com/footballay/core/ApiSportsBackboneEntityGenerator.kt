@@ -14,7 +14,9 @@ import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.boot.test.context.TestComponent
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * ApiSports Backbone 테스트용 엔티티 팩토리
@@ -103,8 +105,8 @@ class ApiSportsBackboneEntityGenerator(
         leagueApiSportsSeasonRepository.save(
             LeagueApiSportsSeason(
                 seasonYear = seasonYear,
-                seasonStart = "$seasonYear-08-17",
-                seasonEnd = "${seasonYear + 1}-05-25",
+                seasonStart = LocalDate.parse("$seasonYear-08-17"),
+                seasonEnd = LocalDate.parse("${seasonYear + 1}-05-25"),
                 coverage =
                     LeagueApiSportsCoverage(
                         fixturesEvents = true,
@@ -203,7 +205,6 @@ class ApiSportsBackboneEntityGenerator(
                     referee = fixtureConfig.referee,
                     timezone = "UTC",
                     date = fixtureConfig.kickoffTime,
-                    timestamp = fixtureConfig.kickoffTime.toEpochSecond(),
                     round = fixtureConfig.round,
                     status =
                         ApiSportsStatus(
@@ -254,9 +255,9 @@ data class BackboneConfig(
 
         fun defaultFixtureConfigs(): List<FixtureConfig> =
             listOf(
-                FixtureConfig(12345L, "Michael Oliver", "Regular Season - 10", OffsetDateTime.now().plusDays(1)),
-                FixtureConfig(12346L, "Anthony Taylor", "Regular Season - 11", OffsetDateTime.now().plusDays(2)),
-                FixtureConfig(12347L, "Paul Tierney", "Regular Season - 12", OffsetDateTime.now().plusDays(3)),
+                FixtureConfig(12345L, "Michael Oliver", "Regular Season - 10", Instant.now().plus(1, ChronoUnit.DAYS)),
+                FixtureConfig(12346L, "Anthony Taylor", "Regular Season - 11", Instant.now().plus(2, ChronoUnit.DAYS)),
+                FixtureConfig(12347L, "Paul Tierney", "Regular Season - 12", Instant.now().plus(3, ChronoUnit.DAYS)),
             )
     }
 }
@@ -279,7 +280,7 @@ data class FixtureConfig(
     val apiId: Long,
     val referee: String,
     val round: String,
-    val kickoffTime: OffsetDateTime,
+    val kickoffTime: Instant,
 )
 
 /**

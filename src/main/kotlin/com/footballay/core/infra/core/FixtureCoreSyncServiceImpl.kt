@@ -64,7 +64,6 @@ class FixtureCoreSyncServiceImpl(
         FixtureCore(
             uid = uid,
             kickoff = createDto.kickoff,
-            timestamp = createDto.timestamp,
             status = createDto.status ?: "Unknown",
             statusShort = createDto.statusShort ?: FixtureStatusShort.NS,
             elapsedMin = createDto.elapsedMin,
@@ -83,7 +82,6 @@ class FixtureCoreSyncServiceImpl(
         updateDto: FixtureCoreUpdateDto,
     ): FixtureCore {
         updateDto.kickoff?.let { fixtureCore.kickoff = it }
-        updateDto.timestamp?.let { fixtureCore.timestamp = it }
         updateDto.status?.let { fixtureCore.status = it }
         updateDto.statusShort?.let { fixtureCore.statusShort = it }
         updateDto.elapsedMin?.let { fixtureCore.elapsedMin = it }

@@ -1,13 +1,12 @@
 package com.footballay.core.infra.apisports.match.sync.dto
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class FixtureApiSportsDto(
     val apiId: Long,
     val referee: String?,
     val timezone: String?,
-    val date: OffsetDateTime?,
-    val timestamp: Long?,
+    val date: Instant?,
     val round: String?,
     val status: StatusDto? = null,
     val score: ScoreDto? = null,

@@ -308,7 +308,6 @@ class ApiSportsSyncFacadeIntegrationTest {
             assertThat(fixture.referee).isNotNull()
             assertThat(fixture.timezone).isNotNull()
             assertThat(fixture.date).isNotNull()
-            assertThat(fixture.timestamp).isNotNull()
             assertThat(fixture.round).isNotNull()
             assertThat(fixture.core).isNotNull()
             assertThat(fixture.core?.homeTeam).isNotNull()

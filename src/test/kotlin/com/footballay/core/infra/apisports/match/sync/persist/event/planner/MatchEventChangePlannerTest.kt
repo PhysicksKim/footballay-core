@@ -736,7 +736,6 @@ class MatchEventChangePlannerTest {
             referee = null,
             timezone = "UTC",
             date = null,
-            timestamp = 1704067200L,
             round = null,
             status = null,
             score = null,

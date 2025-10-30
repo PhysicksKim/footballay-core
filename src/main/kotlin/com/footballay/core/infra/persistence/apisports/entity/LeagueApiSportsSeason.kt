@@ -1,6 +1,7 @@
 package com.footballay.core.infra.persistence.apisports.entity
 
 import jakarta.persistence.*
+import java.time.LocalDate
 
 @Entity
 @Table(
@@ -11,8 +12,8 @@ data class LeagueApiSportsSeason(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     var seasonYear: Int? = -1,
-    var seasonStart: String? = null,
-    var seasonEnd: String? = null,
+    var seasonStart: LocalDate? = null,
+    var seasonEnd: LocalDate? = null,
     @Embedded
     var coverage: LeagueApiSportsCoverage? = null,
     @ManyToOne(fetch = FetchType.LAZY)

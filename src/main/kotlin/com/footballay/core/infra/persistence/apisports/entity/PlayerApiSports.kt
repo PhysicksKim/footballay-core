@@ -3,6 +3,7 @@ package com.footballay.core.infra.persistence.apisports.entity
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import jakarta.persistence.*
 import org.hibernate.proxy.HibernateProxy
+import java.time.LocalDate
 
 @Entity
 @Table(
@@ -20,7 +21,7 @@ data class PlayerApiSports(
     var firstname: String? = null, // API 응답의 player.firstname
     var lastname: String? = null, // API 응답의 player.lastname
     var age: Int? = null, // API 응답의 player.age
-    var birthDate: String? = null, // API 응답의 player.birth.date
+    var birthDate: LocalDate? = null, // API 응답의 player.birth.date
     var birthPlace: String? = null, // API 응답의 player.birth.place
     var birthCountry: String? = null,
     var nationality: String? = null,

@@ -4,7 +4,7 @@ import com.footballay.core.infra.MatchSyncOrchestrator
 import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * 매치 데이터 동기화 Dispatcher 기본 구현체
@@ -88,7 +88,7 @@ class SimpleMatchDataSyncDispatcher(
                     jobSchedulerService.removeJob(jobContext.jobKey)
                     jobSchedulerService.addPostMatchJob(
                         fixtureUid = fixtureUid,
-                        startTime = OffsetDateTime.now(),
+                        startTime = Instant.now(),
                     )
                 }
             }

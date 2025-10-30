@@ -235,8 +235,7 @@ class AdminApiSportsController(
         ],
     )
     @GetMapping("/leagues/available")
-    fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> =
-        ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
+    fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> = ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
 
     /**
      * 리그별 픽스처 조회 (시간: ISO-8601 UTC)
@@ -267,11 +266,12 @@ class AdminApiSportsController(
         @Parameter(description = "nearest | exact. 기본값 exact")
         @RequestParam(required = false, defaultValue = "exact") mode: String,
     ): ResponseEntity<List<FixtureSummaryDto>> {
-        val atInstant = try {
-            at?.let { Instant.parse(it) }
-        } catch (e: Exception) {
-            null
-        }
+        val atInstant =
+            try {
+                at?.let { Instant.parse(it) }
+            } catch (e: Exception) {
+                null
+            }
         return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueId, atInstant, mode))
     }
 

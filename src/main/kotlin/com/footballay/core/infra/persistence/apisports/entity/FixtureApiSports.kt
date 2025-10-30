@@ -6,7 +6,7 @@ import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import jakarta.persistence.*
 import org.hibernate.annotations.Cache
 import org.hibernate.annotations.CacheConcurrencyStrategy
-import java.time.OffsetDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -27,8 +27,7 @@ data class FixtureApiSports(
     var apiId: Long,
     var referee: String? = null,
     var timezone: String? = null,
-    var date: OffsetDateTime? = null,
-    var timestamp: Long? = null,
+    var date: Instant? = null,
     var round: String? = null,
     /**
      * ApiSports 측에서 제공하는 fixture 업데이트를 방지하기 위한 플래그입니다.
@@ -61,6 +60,6 @@ data class FixtureApiSports(
 ) {
     override fun toString(): String =
         "FixtureApiSports(id=$id, core.id=${core?.id}, apiId=$apiId, referee=$referee, timezone=$timezone, " +
-            "date=$date, timestamp=$timestamp, round=$round, venue.id=${venue?.id}, status=$status, " +
+            "date=$date, round=$round, venue.id=${venue?.id}, status=$status, " +
             "score=$score, homeTeam.id=${homeTeam?.id}, awayTeam.id=${awayTeam?.id})"
 }

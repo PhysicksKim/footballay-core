@@ -13,8 +13,8 @@ import org.springframework.context.annotation.Import
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
@@ -44,8 +44,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(post("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isOk)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": true" + "}"),
+            ).andExpect(status().isOk)
             .andExpect(content().string(fixtureUid))
 
         verify(availableFixtureFacade).addAvailableFixture(fixtureId)
@@ -69,8 +72,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(post("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isNotFound)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": true" + "}"),
+            ).andExpect(status().isNotFound)
             .andExpect(content().string("Fixture not found: $fixtureId"))
 
         verify(availableFixtureFacade).addAvailableFixture(fixtureId)
@@ -95,8 +101,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(post("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isBadRequest)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": true" + "}"),
+            ).andExpect(status().isBadRequest)
             .andExpect(content().string("Validation error: Failed to register PreMatchJob for fixture fixture_uid_123"))
 
         verify(availableFixtureFacade).addAvailableFixture(fixtureId)
@@ -121,8 +130,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(post("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isBadRequest)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": true" + "}"),
+            ).andExpect(status().isBadRequest)
             .andExpect(content().string("Validation error: 경기 시작 시간이 미정입니다. 킥오프 시간 확정 후 다시 시도해주세요."))
 
         verify(availableFixtureFacade).addAvailableFixture(fixtureId)
@@ -140,8 +152,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(delete("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isOk)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": false" + "}"),
+            ).andExpect(status().isOk)
             .andExpect(content().string(fixtureUid))
 
         verify(availableFixtureFacade).removeAvailableFixture(fixtureId)
@@ -165,8 +180,11 @@ class AdminFixtureControllerTest {
 
         // When & Then
         mockMvc
-            .perform(delete("/api/v1/admin/fixtures/$fixtureId/available"))
-            .andExpect(status().isNotFound)
+            .perform(
+                put("/api/v1/admin/fixtures/$fixtureId/available")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{" + "\"available\": false" + "}"),
+            ).andExpect(status().isNotFound)
             .andExpect(content().string("Fixture not found: $fixtureId"))
 
         verify(availableFixtureFacade).removeAvailableFixture(fixtureId)

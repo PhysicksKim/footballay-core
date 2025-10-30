@@ -22,5 +22,3 @@ data class FixtureModel(
     val available: Boolean,
     val extra: FixtureExtra? = null,
 )
-
-

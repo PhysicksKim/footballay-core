@@ -10,5 +10,3 @@ data class LeagueModel(
     val available: Boolean,
     val extra: LeagueExtra? = null,
 )
-
-

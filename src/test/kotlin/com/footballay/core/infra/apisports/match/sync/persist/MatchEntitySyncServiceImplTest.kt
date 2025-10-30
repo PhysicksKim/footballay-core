@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
-import java.time.OffsetDateTime
 
 class MatchEntitySyncServiceImplTest {
     private lateinit var matchEntitySyncService: MatchEntitySyncServiceImpl
@@ -437,8 +436,7 @@ class MatchEntitySyncServiceImplTest {
             apiId = 12345L,
             referee = "Test Referee",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1704067200L,
+            date = java.time.Instant.now(),
             round = "Round 1",
             status =
                 FixtureApiSportsDto.StatusDto(
@@ -568,8 +566,7 @@ class MatchEntitySyncServiceImplTest {
             apiId = 12345L,
             referee = "Test Referee",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1704067200L,
+            date = java.time.Instant.now(),
             round = "Round 1",
             status = null,
             score = null,

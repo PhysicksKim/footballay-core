@@ -14,5 +14,3 @@ object FixtureWebMapper {
             available = model.available,
         )
 }
-
-

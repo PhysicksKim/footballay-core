@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 /**
  * LeagueApiSportsWithCoreSyncSyncer 통합 테스트
@@ -329,8 +330,8 @@ class LeagueApiSportsWithCoreSyncerIntegrationTest {
 
         val season2023 = savedSeasons.find { it.seasonYear == 2023 }
         assertNotNull(season2023)
-        assertEquals("2023-08-01", season2023?.seasonStart)
-        assertEquals("2024-05-31", season2023?.seasonEnd)
+        assertEquals(LocalDate.of(2023, 8, 1), season2023?.seasonStart)
+        assertEquals(LocalDate.of(2024, 5, 31), season2023?.seasonEnd)
 
         val coverage2023 = season2023?.coverage
         assertNotNull(coverage2023)

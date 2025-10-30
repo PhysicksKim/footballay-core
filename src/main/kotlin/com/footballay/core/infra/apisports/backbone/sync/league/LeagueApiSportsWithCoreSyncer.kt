@@ -13,6 +13,7 @@ import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSport
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
+import java.time.LocalDate
 
 /**
  * ApiSports 리그 데이터를 Core 시스템과 동기화하는 핵심 구현체
@@ -117,8 +118,8 @@ class LeagueApiSportsWithCoreSyncer(
         seasonDtos.map { seasonDto ->
             LeagueApiSportsSeason(
                 seasonYear = seasonDto.seasonYear,
-                seasonStart = seasonDto.seasonStart,
-                seasonEnd = seasonDto.seasonEnd,
+                seasonStart = seasonDto.seasonStart?.let { LocalDate.parse(it) },
+                seasonEnd = seasonDto.seasonEnd?.let { LocalDate.parse(it) },
                 coverage =
                     seasonDto.coverage?.let {
                         createLeagueApiSportsCoverage(it)

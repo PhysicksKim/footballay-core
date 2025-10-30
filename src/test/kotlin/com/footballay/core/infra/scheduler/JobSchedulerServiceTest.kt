@@ -14,6 +14,7 @@ import org.quartz.JobDetail
 import org.quartz.JobKey
 import org.quartz.Scheduler
 import org.quartz.Trigger
+import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.Date
 
@@ -71,10 +72,10 @@ class JobSchedulerServiceTest {
     fun `LiveMatchJob 추가 성공`() {
         // Given
         val fixtureUid = "apisports:12345"
-        val startTime = OffsetDateTime.now()
+        val startTime = Instant.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
-        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime.toInstant()))
+        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime))
 
         // When
         val result = jobSchedulerService.addLiveMatchJob(fixtureUid, startTime)
@@ -88,10 +89,10 @@ class JobSchedulerServiceTest {
     fun `PostMatchJob 추가 성공`() {
         // Given
         val fixtureUid = "apisports:12345"
-        val startTime = OffsetDateTime.now()
+        val startTime = Instant.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
-        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime.toInstant()))
+        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime))
 
         // When
         val result = jobSchedulerService.addPostMatchJob(fixtureUid, startTime)
@@ -147,10 +148,11 @@ class JobSchedulerServiceTest {
     fun `Scheduler 예외 발생 시 false 반환 - PreMatchJob 추가`() {
         // Given
         val fixtureUid = "apisports:12345"
+        val startTime = java.time.OffsetDateTime.now()
         given(scheduler.checkExists(any(JobKey::class.java))).willThrow(RuntimeException("Scheduler error"))
 
         // When
-        val result = jobSchedulerService.addPreMatchJob(fixtureUid)
+        val result = jobSchedulerService.addPreMatchJob(fixtureUid, startTime)
 
         // Then
         assertThat(result).isFalse()

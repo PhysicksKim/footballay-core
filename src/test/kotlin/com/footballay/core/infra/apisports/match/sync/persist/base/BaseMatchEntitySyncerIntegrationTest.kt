@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
 
 /**
  * BaseMatchEntitySyncer 통합 테스트
@@ -263,8 +262,7 @@ class BaseMatchEntitySyncerIntegrationTest {
             apiId = fixtureApiId,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam =
                 FixtureApiSportsDto.BaseTeamDto(
@@ -287,8 +285,7 @@ class BaseMatchEntitySyncerIntegrationTest {
             apiId = fixtureApiId,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam =
                 FixtureApiSportsDto.BaseTeamDto(
@@ -305,8 +302,7 @@ class BaseMatchEntitySyncerIntegrationTest {
             apiId = fixtureApiId,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             score =
                 FixtureApiSportsDto.ScoreDto(
@@ -342,8 +338,7 @@ class BaseMatchEntitySyncerIntegrationTest {
             apiId = fixtureApiId,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             status =
                 FixtureApiSportsDto.StatusDto(

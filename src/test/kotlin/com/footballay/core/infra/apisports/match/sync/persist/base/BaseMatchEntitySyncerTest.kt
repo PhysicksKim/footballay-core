@@ -17,7 +17,6 @@ import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
 import org.springframework.test.context.ActiveProfiles
-import java.time.OffsetDateTime
 
 /**
  * BaseMatchEntitySyncer 단위 테스트
@@ -200,8 +199,7 @@ class BaseMatchEntitySyncerTest {
             apiId = 12345L,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             status =
                 FixtureApiSportsDto.StatusDto(
@@ -244,8 +242,7 @@ class BaseMatchEntitySyncerTest {
             apiId = 12345L,
             referee = "Michael Oliver",
             timezone = "UTC",
-            date = OffsetDateTime.now(),
-            timestamp = 1234567890L,
+            date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam = null,
             awayTeam = null,

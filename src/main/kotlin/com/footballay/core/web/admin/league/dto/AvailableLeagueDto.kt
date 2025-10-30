@@ -4,5 +4,3 @@ data class AvailableLeagueDto(
     val leagueId: Long,
     val name: String,
 )
-
-

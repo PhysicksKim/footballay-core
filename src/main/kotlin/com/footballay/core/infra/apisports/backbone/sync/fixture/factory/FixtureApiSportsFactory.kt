@@ -8,6 +8,7 @@ import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
+import java.time.Instant
 import java.time.OffsetDateTime
 
 /**
@@ -64,8 +65,7 @@ class FixtureApiSportsFactory(
             season = season,
             referee = dto.referee,
             timezone = dto.timezone,
-            date = parseOffsetDateTime(dto.date),
-            timestamp = dto.timestamp,
+            date = parseInstant(dto.date),
             round = dto.round,
             status = fixtureDataMapper.mapStatusToApi(dto.status),
             score = fixtureDataMapper.mapScoreToApi(dto.score),
@@ -116,8 +116,7 @@ class FixtureApiSportsFactory(
             this.season = season
             this.referee = dto.referee
             this.timezone = dto.timezone
-            this.date = parseOffsetDateTime(dto.date)
-            this.timestamp = dto.timestamp
+            this.date = parseInstant(dto.date)
             this.round = dto.round
             this.status = fixtureDataMapper.mapStatusToApi(dto.status)
             this.score = fixtureDataMapper.mapScoreToApi(dto.score)
@@ -126,18 +125,24 @@ class FixtureApiSportsFactory(
     }
 
     /**
-     * 날짜 문자열을 OffsetDateTime으로 파싱
+     * 날짜 문자열을 Instant로 파싱
      *
-     * @param dateString 파싱할 날짜 문자열
-     * @return 파싱된 OffsetDateTime 또는 null
+     * @param dateString 파싱할 날짜 문자열 (ISO-8601 형식)
+     * @return 파싱된 Instant 또는 null
      */
-    private fun parseOffsetDateTime(dateString: String?): OffsetDateTime? =
+    private fun parseInstant(dateString: String?): Instant? =
         dateString?.let {
             try {
-                OffsetDateTime.parse(it)
-            } catch (e: Exception) {
-                log.warn("Fail to parse offset date time from string: $dateString")
-                null
+                // 우선 OffsetDateTime 으로 파싱 후 Instant 로 변환 (+09:00 등 오프셋 포함 포맷 지원)
+                OffsetDateTime.parse(it).toInstant()
+            } catch (ignored: Exception) {
+                try {
+                    // 순수 UTC 문자열(Z)인 경우
+                    Instant.parse(it)
+                } catch (e: Exception) {
+                    log.warn("Fail to parse instant from string: $dateString")
+                    null
+                }
             }
         }
 }

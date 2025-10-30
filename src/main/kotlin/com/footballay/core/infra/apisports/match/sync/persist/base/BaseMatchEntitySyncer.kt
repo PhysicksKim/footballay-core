@@ -99,7 +99,6 @@ class BaseMatchEntitySyncer(
             referee = baseDto.referee ?: referee
             timezone = baseDto.timezone ?: timezone
             date = baseDto.date ?: date
-            timestamp = baseDto.timestamp ?: timestamp
             round = baseDto.round ?: round
 
             // Status 업데이트

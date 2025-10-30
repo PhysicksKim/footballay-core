@@ -28,7 +28,6 @@ class MatchDtoMapper {
             referee = fixture.referee,
             timezone = fixture.timezone,
             date = fixture.date,
-            timestamp = fixture.timestamp,
             round = fixture.round,
             venue = fixture.venue?.let { toVenueDto(it) },
             status = fixture.status?.let { toStatusDto(it) },

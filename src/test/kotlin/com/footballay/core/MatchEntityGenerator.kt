@@ -24,7 +24,9 @@ import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
 import org.springframework.boot.test.context.TestComponent
-import java.time.OffsetDateTime
+import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 /**
  * 테스트용 매치 엔티티 팩토리
@@ -167,13 +169,12 @@ class MatchEntityGenerator(
         league: LeagueCore,
         homeTeam: TeamCore,
         awayTeam: TeamCore,
-        kickoffTime: OffsetDateTime,
+        kickoffTime: Instant,
     ): FixtureCore =
         fixtureCoreRepository.save(
             FixtureCore(
                 uid = uidGenerator.generateUid(),
                 kickoff = kickoffTime,
-                timestamp = kickoffTime.toEpochSecond(),
                 status = "Not Started",
                 statusShort = FixtureStatusShort.NS,
                 elapsedMin = null,
@@ -211,8 +212,8 @@ class MatchEntityGenerator(
         leagueApiSportsSeasonRepository.save(
             LeagueApiSportsSeason(
                 seasonYear = seasonYear,
-                seasonStart = "$seasonYear-08-17",
-                seasonEnd = "${seasonYear + 1}-05-25",
+                seasonStart = LocalDate.parse("$seasonYear-08-17"),
+                seasonEnd = LocalDate.parse("${seasonYear + 1}-05-25"),
                 coverage =
                     LeagueApiSportsCoverage(
                         fixturesEvents = true,
@@ -301,7 +302,6 @@ class MatchEntityGenerator(
                 referee = config.referee,
                 timezone = "UTC",
                 date = config.kickoffTime,
-                timestamp = config.kickoffTime.toEpochSecond(),
                 round = config.round,
                 status =
                     ApiSportsStatus(
@@ -518,7 +518,7 @@ data class MatchConfig(
     val awayTeamApiId: Long = 42L,
     val fixtureApiId: Long = 12345L,
     // Match info
-    val kickoffTime: OffsetDateTime = OffsetDateTime.now().plusDays(1),
+    val kickoffTime: Instant = Instant.now().plus(1, ChronoUnit.DAYS),
     val referee: String = "Michael Oliver",
     val round: String = "Regular Season - 10",
     val seasonYear: Int = 2024,
