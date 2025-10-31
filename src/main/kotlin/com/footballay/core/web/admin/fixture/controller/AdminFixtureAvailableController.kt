@@ -96,8 +96,8 @@ class AdminFixtureAvailableController(
     @PutMapping("/{fixtureId}/available")
     fun setFixtureAvailable(
         @Parameter(
-            description = "FixtureCore ID (데이터베이스 내부 ID)",
-            example = "12345",
+            description = "ApiSports Fixture ID",
+            example = "1208021",
             required = true,
         )
         @PathVariable fixtureId: Long,

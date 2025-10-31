@@ -1,6 +1,5 @@
 package com.footballay.core.web.admin.common.util
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Clock

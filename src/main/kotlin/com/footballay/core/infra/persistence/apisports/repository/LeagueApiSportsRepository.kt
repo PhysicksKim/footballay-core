@@ -55,4 +55,9 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
      * 국가 코드로 리그 조회
      */
     fun findByCountryCode(countryCode: String): List<LeagueApiSports>
+
+    /**
+     * LeagueCore ID로 LeagueApiSports 조회
+     */
+    fun findByLeagueCoreId(leagueCoreId: Long): LeagueApiSports?
 }

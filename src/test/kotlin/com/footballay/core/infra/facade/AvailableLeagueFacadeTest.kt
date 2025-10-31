@@ -2,19 +2,17 @@ package com.footballay.core.infra.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
+import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
-import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
 import org.mockito.BDDMockito.given
 import org.mockito.InjectMocks
 import org.mockito.Mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
-import java.util.Optional
 
 /**
  * AvailableLeagueFacade 단위 테스트
@@ -24,7 +22,7 @@ import java.util.Optional
 @ExtendWith(MockitoExtension::class)
 class AvailableLeagueFacadeTest {
     @Mock
-    private lateinit var leagueCoreRepository: LeagueCoreRepository
+    private lateinit var leagueApiSportsRepository: LeagueApiSportsRepository
 
     @InjectMocks
     private lateinit var facade: AvailableLeagueFacade
@@ -32,81 +30,96 @@ class AvailableLeagueFacadeTest {
     @Test
     fun `League available 설정 성공`() {
         // Given
-        val leagueId = 39L
+        val leagueApiId = 39L
         val leagueUid = "league_uid_123"
 
         val leagueCore =
             createLeagueCore(
-                id = leagueId,
+                id = 1L,
                 uid = leagueUid,
                 available = false,
             )
 
-        // findByIdOrNull은 findById의 확장 함수이므로 findById를 mock
-        given(leagueCoreRepository.findById(leagueId)).willReturn(Optional.of(leagueCore))
-        // save()는 저장된 엔티티를 반환하므로 동일 객체 반환
-        given(leagueCoreRepository.save(any(LeagueCore::class.java))).willReturn(leagueCore)
+        val leagueApiSports =
+            createLeagueApiSports(
+                id = 1L,
+                apiId = leagueApiId,
+                leagueCore = leagueCore,
+                available = false,
+            )
+
+        // findByApiId로 LeagueApiSports를 mock
+        given(leagueApiSportsRepository.findByApiId(leagueApiId)).willReturn(leagueApiSports)
 
         // When
-        val result = facade.setLeagueAvailable(leagueId, true)
+        val result = facade.setLeagueAvailable(leagueApiId, true)
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        assertThat((result as DomainResult.Success).value).isEqualTo(leagueUid)
+        assertThat((result as DomainResult.Success).value).isEqualTo(leagueApiId.toString())
         assertThat(leagueCore.available).isTrue()
+        assertThat(leagueApiSports.available).isTrue()
 
-        verify(leagueCoreRepository).save(leagueCore)
+        // save는 자동으로 호출되지 않음 (entity 상태 변경만)
+        verify(leagueApiSportsRepository).findByApiId(leagueApiId)
     }
 
     @Test
     fun `League unavailable 설정 성공`() {
         // Given
-        val leagueId = 39L
+        val leagueApiId = 39L
         val leagueUid = "league_uid_123"
 
         val leagueCore =
             createLeagueCore(
-                id = leagueId,
+                id = 1L,
                 uid = leagueUid,
                 available = true,
             )
 
-        // findByIdOrNull은 findById의 확장 함수이므로 findById를 mock
-        given(leagueCoreRepository.findById(leagueId)).willReturn(Optional.of(leagueCore))
-        // save()는 저장된 엔티티를 반환하므로 동일 객체 반환
-        given(leagueCoreRepository.save(any(LeagueCore::class.java))).willReturn(leagueCore)
+        val leagueApiSports =
+            createLeagueApiSports(
+                id = 1L,
+                apiId = leagueApiId,
+                leagueCore = leagueCore,
+                available = true,
+            )
+
+        // findByApiId로 LeagueApiSports를 mock
+        given(leagueApiSportsRepository.findByApiId(leagueApiId)).willReturn(leagueApiSports)
 
         // When
-        val result = facade.setLeagueAvailable(leagueId, false)
+        val result = facade.setLeagueAvailable(leagueApiId, false)
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        assertThat((result as DomainResult.Success).value).isEqualTo(leagueUid)
+        assertThat((result as DomainResult.Success).value).isEqualTo(leagueApiId.toString())
         assertThat(leagueCore.available).isFalse()
+        assertThat(leagueApiSports.available).isFalse()
 
-        verify(leagueCoreRepository).save(leagueCore)
+        verify(leagueApiSportsRepository).findByApiId(leagueApiId)
     }
 
     @Test
     fun `존재하지 않는 League는 NotFound 반환`() {
         // Given
-        val leagueId = 99999L
+        val leagueApiId = 99999L
 
-        // findByIdOrNull은 findById의 확장 함수이므로 findById를 mock (Optional.empty())
-        given(leagueCoreRepository.findById(leagueId)).willReturn(Optional.empty())
+        // findByApiId가 null을 반환하도록 mock
+        given(leagueApiSportsRepository.findByApiId(leagueApiId)).willReturn(null)
 
         // When
-        val result = facade.setLeagueAvailable(leagueId, true)
+        val result = facade.setLeagueAvailable(leagueApiId, true)
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
         val fail = result as DomainResult.Fail
         assertThat(fail.error).isInstanceOf(DomainFail.NotFound::class.java)
         val notFound = fail.error as DomainFail.NotFound
-        assertThat(notFound.resource).isEqualTo("LEAGUE_CORE")
+        assertThat(notFound.resource).isEqualTo("LEAGUE_API_SPORTS")
         assertThat(notFound.id).isEqualTo("99999")
 
-        verify(leagueCoreRepository, never()).save(any())
+        verify(leagueApiSportsRepository).findByApiId(leagueApiId)
     }
 
     /**
@@ -123,5 +136,22 @@ class AvailableLeagueFacadeTest {
             name = "Test League",
             available = available,
             autoGenerated = false,
+        )
+
+    /**
+     * 테스트용 LeagueApiSports 생성 헬퍼
+     */
+    private fun createLeagueApiSports(
+        id: Long,
+        apiId: Long,
+        leagueCore: LeagueCore,
+        available: Boolean,
+    ): LeagueApiSports =
+        LeagueApiSports(
+            id = id,
+            leagueCore = leagueCore,
+            apiId = apiId,
+            name = "Test League",
+            available = available,
         )
 }

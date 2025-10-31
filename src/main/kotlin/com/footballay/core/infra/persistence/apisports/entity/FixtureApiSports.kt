@@ -36,6 +36,8 @@ data class FixtureApiSports(
      * 기존에 저장된 fixture 정보를 그대로 유지합니다.
      */
     var preventUpdate: Boolean = false,
+    @Column(nullable = false)
+    var available: Boolean = false,
     @Embedded
     var status: ApiSportsStatus? = null,
     @Embedded

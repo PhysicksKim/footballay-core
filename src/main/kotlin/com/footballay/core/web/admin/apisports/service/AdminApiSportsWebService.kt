@@ -108,12 +108,12 @@ class AdminApiSportsWebService(
     /**
      * 특정 리그의 현재 시즌 경기들을 sync 합니다.
      *
-     * @param leagueId 리그의 ApiSports ID
+     * @param leagueApiId 리그의 ApiSports ID
      */
     @PreAuthorize("hasRole('ADMIN')")
-    fun syncFixturesOfLeague(leagueId: Long): DomainResult<Int, DomainFail> {
-        log.info("Starting fixtures sync request for leagueId=$leagueId")
-        val result = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueId)
+    fun syncFixturesOfLeague(leagueApiId: Long): DomainResult<Int, DomainFail> {
+        log.info("Starting fixtures sync request for leagueId=$leagueApiId")
+        val result = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueApiId)
         return when (result) {
             is DomainResult.Success -> DomainResult.Success(result.value)
             is DomainResult.Fail -> DomainResult.Fail(result.error)
@@ -126,13 +126,13 @@ class AdminApiSportsWebService(
      * Available 리그는 해당 리그의 경기들이 실시간 동기화 대상이 됩니다.
      * (Fixture 개별 available 설정과는 별개로 작동)
      *
-     * @param leagueId LeagueCore ID
+     * @param leagueApiId LeagueApiId ID
      * @param available Available 상태 (true: 활성화, false: 비활성화)
      * @return 성공 시 league UID, 실패 시 DomainFail
      */
     @PreAuthorize("hasRole('ADMIN')")
     fun setLeagueAvailable(
-        leagueId: Long,
+        leagueApiId: Long,
         available: Boolean,
-    ): DomainResult<String, DomainFail> = availableLeagueFacade.setLeagueAvailable(leagueId, available)
+    ): DomainResult<String, DomainFail> = availableLeagueFacade.setLeagueAvailable(leagueApiId, available)
 }

@@ -2,11 +2,11 @@ package com.footballay.core.infra.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
+import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.logger
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 
 /**
  * Available League 관리 Facade
@@ -17,45 +17,57 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class AvailableLeagueFacade(
-    private val leagueCoreRepository: LeagueCoreRepository,
+    private val leagueApiSportsRepository: LeagueApiSportsRepository,
 ) {
     private val log = logger()
 
     /**
      * 리그의 available 상태를 설정합니다.
      *
-     * @param leagueId LeagueCore ID
+     * [LeagueApiSports.apiId] 를 기준으로 available 상태를 설정합니다.
+     * [com.footballay.core.infra.persistence.core.entity.LeagueCore.available] 도 자동으로 변경됩니다.
+     *
+     * @param apiId [LeagueApiSports.apiId]
      * @param available Available 상태 (true: 활성화, false: 비활성화)
      * @return 성공 시 league UID, 실패 시 DomainFail
      */
     @Transactional
     fun setLeagueAvailable(
-        leagueId: Long,
+        apiId: Long,
         available: Boolean,
     ): DomainResult<String, DomainFail> {
-        log.info("Setting league available - leagueId={}, available={}", leagueId, available)
+        log.info("Setting leagueApiSports available with Core - leagueApiId={}, available={}", apiId, available)
 
-        // 1. LeagueCore 조회
-        val leagueCore =
-            leagueCoreRepository.findByIdOrNull(leagueId)
-                ?: return DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "LEAGUE_CORE",
-                        id = leagueId.toString(),
-                    ),
-                )
+        val leagueApiSports = leagueApiSportsRepository.findByApiId(apiId)
+        if (leagueApiSports == null) {
+            log.warn("LeagueApiSports not found - leagueApiId={}", apiId)
+            return DomainResult.Fail(
+                DomainFail.NotFound(
+                    resource = "LEAGUE_API_SPORTS",
+                    id = apiId.toString(),
+                ),
+            )
+        }
+        val core = leagueApiSports.leagueCore
+        if (core == null) {
+            log.warn("LeagueCore not found for LeagueApiSports - leagueApiId={}", apiId)
+            return DomainResult.Fail(
+                DomainFail.NotFound(
+                    resource = "LEAGUE_CORE_FOR_API_SPORTS",
+                    id = apiId.toString(),
+                ),
+            )
+        }
 
-        // 2. Available 플래그 설정
-        leagueCore.available = available
-        leagueCoreRepository.save(leagueCore)
-
+        leagueApiSports.available = available
+        core.available = available
         log.info(
-            "League available status updated - leagueId={}, uid={}, available={}",
-            leagueId,
-            leagueCore.uid,
+            "LeagueApiSports and LeagueCore available updated - coreUid={}, apiId={}, available={}",
+            core.uid,
+            leagueApiSports.apiId,
             available,
         )
 
-        return DomainResult.Success(leagueCore.uid)
+        return DomainResult.Success(apiId.toString())
     }
 }

@@ -380,8 +380,8 @@ class AdminApiSportsController(
     @PutMapping("/leagues/{leagueId}/available")
     fun setLeagueAvailable(
         @Parameter(
-            description = "LeagueCore ID (내부 데이터베이스 ID)",
-            example = "1",
+            description = "ApiSports League ID",
+            example = "39",
             required = true,
         )
         @PathVariable leagueId: Long,

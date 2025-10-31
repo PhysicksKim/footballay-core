@@ -23,6 +23,8 @@ data class LeagueApiSports(
     var countryCode: String? = null,
     var countryFlag: String? = null,
     var currentSeason: Int? = null,
+    @Column(nullable = false)
+    var available: Boolean = false,
     @OneToMany(
         mappedBy = "leagueApiSports",
         cascade = [],

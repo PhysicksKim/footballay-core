@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface LeagueCoreRepository : JpaRepository<LeagueCore, Long> {
     fun findByAvailableTrue(): List<LeagueCore>
+
+    fun findByUid(uid: String): LeagueCore?
 }

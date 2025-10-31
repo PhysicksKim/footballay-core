@@ -2,7 +2,7 @@ package com.footballay.core.infra.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.infra.core.FixtureCoreQueryService
+import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
@@ -25,8 +25,8 @@ import java.time.ZoneId
  */
 @Service
 class AvailableFixtureFacade(
-    private val fixtureCoreQueryService: FixtureCoreQueryService,
     private val fixtureCoreRepository: FixtureCoreRepository,
+    private val fixtureApiSportsRepository: FixtureApiSportsRepository,
     private val jobSchedulerService: JobSchedulerService,
 ) {
     private val log = logger()
@@ -47,33 +47,43 @@ class AvailableFixtureFacade(
      * - 추후 kickoff 시간 변경 이벤트 처리
      * - 미확정 경기에 대한 대기열 시스템 도입
      *
-     * @param fixtureId FixtureCore ID
+     * @param fixtureApiId FixtureApiSports API ID
      * @return 성공 시 fixture UID, 실패 시 DomainFail
      */
     @Transactional
-    fun addAvailableFixture(fixtureId: Long): DomainResult<String, DomainFail> {
-        log.info("Adding available fixture - fixtureId={}", fixtureId)
+    fun addAvailableFixture(fixtureApiId: Long): DomainResult<String, DomainFail> {
+        log.info("Adding available fixture - fixtureApiId={}", fixtureApiId)
 
-        // 1. FixtureCore 조회
-        val fixtureCore =
-            fixtureCoreQueryService.findById(fixtureId)
+        // 1. FixtureApiSports 조회
+        val fixtureApiSports =
+            fixtureApiSportsRepository.findByApiId(fixtureApiId)
                 ?: return DomainResult.Fail(
                     DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = fixtureId.toString(),
+                        resource = "FIXTURE_API_SPORTS",
+                        id = fixtureApiId.toString(),
                     ),
                 )
 
-        // 2. 이미 available인지 확인
+        // 2. FixtureCore 조회 (연관관계로 접근)
+        val fixtureCore =
+            fixtureApiSports.core
+                ?: return DomainResult.Fail(
+                    DomainFail.NotFound(
+                        resource = "FIXTURE_CORE",
+                        id = "core not linked to apiId=$fixtureApiId",
+                    ),
+                )
+
+        // 3. 이미 available인지 확인
         if (fixtureCore.available) {
-            log.warn("Fixture is already available - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
+            log.warn("Fixture is already available - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
             return DomainResult.Success(fixtureCore.uid)
         }
 
-        // 3. kickoff 시간이 확정되지 않은 경우 Job 등록 불가
+        // 4. kickoff 시간이 확정되지 않은 경우 Job 등록 불가
         val kickoff = fixtureCore.kickoff
         if (kickoff == null) {
-            log.warn("Cannot make fixture available - kickoff time is not set - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
+            log.warn("Cannot make fixture available - kickoff time is not set - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "KICKOFF_TIME_NOT_SET",
@@ -83,44 +93,49 @@ class AvailableFixtureFacade(
             )
         }
 
-        // 4. available 플래그 설정
+        // 5. FixtureCore available 플래그 설정
         fixtureCore.available = true
         fixtureCoreRepository.save(fixtureCore)
 
-        // 4. PreMatchJob 등록 (킥오프 1시간 전)
+        // 6. FixtureApiSports available 플래그 동기화
+        fixtureApiSports.available = true
+        fixtureApiSportsRepository.save(fixtureApiSports)
+        log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true", fixtureApiId, fixtureCore.uid)
+
+        // 7. PreMatchJob 등록 (킥오프 1시간 전)
         val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
         val preJobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, preMatchStartTime)
 
         if (!preJobAdded) {
-            log.error("Failed to add PreMatchJob - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
+            log.error("Failed to add PreMatchJob - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
                     message = "Failed to register PreMatchJob for fixture ${fixtureCore.uid}",
-                    field = "fixtureId",
+                    field = "fixtureApiId",
                 ),
             )
         }
 
-        // 5. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
+        // 8. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
         val liveJobAdded = jobSchedulerService.addLiveMatchJob(fixtureCore.uid, kickoff)
 
         if (!liveJobAdded) {
-            log.error("Failed to add LiveMatchJob - fixtureId={}, uid={}, rolling back PreMatchJob", fixtureId, fixtureCore.uid)
+            log.error("Failed to add LiveMatchJob - fixtureApiId={}, uid={}, rolling back PreMatchJob", fixtureApiId, fixtureCore.uid)
             // PreMatchJob 롤백
             jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "LIVE_MATCH_JOB_REGISTRATION_FAILED",
                     message = "Failed to register LiveMatchJob for fixture ${fixtureCore.uid}",
-                    field = "fixtureId",
+                    field = "fixtureApiId",
                 ),
             )
         }
 
         log.info(
-            "Available fixture added successfully - fixtureId={}, uid={}, kickoff={}, preMatchStart={}, liveMatchStart={}",
-            fixtureId,
+            "Available fixture added successfully - fixtureApiId={}, uid={}, kickoff={}, preMatchStart={}, liveMatchStart={}",
+            fixtureApiId,
             fixtureCore.uid,
             kickoff,
             preMatchStartTime,
@@ -133,39 +148,54 @@ class AvailableFixtureFacade(
     /**
      * Fixture를 Unavailable로 설정하고 모든 Job 삭제
      *
-     * @param fixtureId FixtureCore ID
+     * @param fixtureApiId FixtureApiSports API ID
      * @return 성공 시 fixture UID, 실패 시 DomainFail
      */
     @Transactional
-    fun removeAvailableFixture(fixtureId: Long): DomainResult<String, DomainFail> {
-        log.info("Removing available fixture - fixtureId={}", fixtureId)
+    fun removeAvailableFixture(fixtureApiId: Long): DomainResult<String, DomainFail> {
+        log.info("Removing available fixture - fixtureApiId={}", fixtureApiId)
 
-        // 1. FixtureCore 조회
-        val fixtureCore =
-            fixtureCoreQueryService.findById(fixtureId)
+        // 1. FixtureApiSports 조회
+        val fixtureApiSports =
+            fixtureApiSportsRepository.findByApiId(fixtureApiId)
                 ?: return DomainResult.Fail(
                     DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = fixtureId.toString(),
+                        resource = "FIXTURE_API_SPORTS",
+                        id = fixtureApiId.toString(),
                     ),
                 )
 
-        // 2. 이미 unavailable인지 확인
+        // 2. FixtureCore 조회 (연관관계로 접근)
+        val fixtureCore =
+            fixtureApiSports.core
+                ?: return DomainResult.Fail(
+                    DomainFail.NotFound(
+                        resource = "FIXTURE_CORE",
+                        id = "core not linked to apiId=$fixtureApiId",
+                    ),
+                )
+
+        // 3. 이미 unavailable인지 확인
         if (!fixtureCore.available) {
-            log.warn("Fixture is already unavailable - fixtureId={}, uid={}", fixtureId, fixtureCore.uid)
+            log.warn("Fixture is already unavailable - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
             return DomainResult.Success(fixtureCore.uid)
         }
 
-        // 3. available 플래그 해제
+        // 4. FixtureCore available 플래그 해제
         fixtureCore.available = false
         fixtureCoreRepository.save(fixtureCore)
 
-        // 4. 모든 Job 삭제
+        // 5. FixtureApiSports available 플래그 동기화
+        fixtureApiSports.available = false
+        fixtureApiSportsRepository.save(fixtureApiSports)
+        log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
+
+        // 6. 모든 Job 삭제
         val deletedCount = jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
 
         log.info(
-            "Available fixture removed successfully - fixtureId={}, uid={}, deletedJobs={}",
-            fixtureId,
+            "Available fixture removed successfully - fixtureApiId={}, uid={}, deletedJobs={}",
+            fixtureApiId,
             fixtureCore.uid,
             deletedCount,
         )

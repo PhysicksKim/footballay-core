@@ -3,6 +3,7 @@ package com.footballay.core.infra.facade
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.core.FixtureCoreQueryService
+import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
@@ -38,6 +39,9 @@ class AvailableFixtureFacadeTest {
 
     @Mock
     private lateinit var fixtureCoreRepository: FixtureCoreRepository
+
+    @Mock
+    private lateinit var fixtureApiSportsRepository: FixtureApiSportsRepository
 
     @Mock
     private lateinit var jobSchedulerService: JobSchedulerService
