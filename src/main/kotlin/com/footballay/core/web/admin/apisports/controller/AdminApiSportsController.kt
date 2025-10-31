@@ -4,6 +4,7 @@ import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
+import com.footballay.core.web.admin.apisports.dto.SeasonSyncRequestDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
 import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
@@ -23,7 +24,9 @@ import com.footballay.core.web.admin.league.dto.AvailableLeagueDto
 import com.footballay.core.web.admin.league.service.AdminLeagueQueryWebService
 import com.footballay.core.web.admin.fixture.service.AdminFixtureQueryWebService
 import com.footballay.core.web.admin.fixture.dto.FixtureSummaryDto
+import org.springframework.security.access.prepost.PreAuthorize
 import java.time.Instant
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwagRequestBody
 
 @Tag(
     name = "Admin - ApiSports Sync",
@@ -38,6 +41,7 @@ import java.time.Instant
 )
 @SecurityRequirement(name = "cookieAuth")
 @RestController
+@PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/apisports")
 class AdminApiSportsController(
     private val adminApiSportsWebService: AdminApiSportsWebService,
@@ -45,12 +49,19 @@ class AdminApiSportsController(
     private val adminFixtureQueryWebService: AdminFixtureQueryWebService,
 ) {
     /**
-     * Controller 헬스 테스트용 엔드포인트
+     * API 상태 확인용 헬스체크 엔드포인트
      *
-     * GET /api/v1/admin/apisports/test
+     * GET /api/v1/admin/apisports/health
      */
-    @GetMapping("/test")
-    fun testAdminController(): ResponseEntity<String> = ResponseEntity.ok("Admin API Sports Controller is working!")
+    @GetMapping("/health")
+    fun healthCheck(): ResponseEntity<Map<String, String>> {
+        val healthData =
+            mapOf(
+                "status" to "up",
+                "timestamp" to System.currentTimeMillis().toString(),
+            )
+        return ResponseEntity.ok(healthData)
+    }
 
     /**
      * 현재 시즌의 모든 리그를 동기화합니다.
@@ -120,36 +131,41 @@ class AdminApiSportsController(
         ],
     )
     @PostMapping("/leagues/{leagueId}/teams/sync")
-    fun syncTeamsOfLeagueWithCurrentSeason(
+    fun syncTeamsOfLeague(
         @Parameter(
             description = "ApiSports 리그 ID",
             example = "39",
             required = true,
         )
         @PathVariable leagueId: Long,
-    ): ResponseEntity<TeamsSyncResultDto> =
-        when (val result = adminApiSportsWebService.syncTeamsOfLeague(leagueId, null)) {
+        @SwagRequestBody(
+            description = "동기화 대상 시즌 정보 (없으면 현재 시즌으로 동기화)",
+            required = false,
+            content = [
+                Content(
+                    schema = Schema(implementation = SeasonSyncRequestDto::class),
+                    examples = [
+                        ExampleObject(
+                            name = "현재 시즌 동기화",
+                            value = """{}""",
+                        ),
+                        ExampleObject(
+                            name = "특정 시즌 동기화",
+                            value = """{ "season": 2024 }""",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        @RequestBody(required = false) body: SeasonSyncRequestDto?,
+    ): ResponseEntity<TeamsSyncResultDto> {
+        val season = body?.season
+        val result = adminApiSportsWebService.syncTeamsOfLeague(leagueId, season)
+        return when (result) {
             is DomainResult.Success -> ResponseEntity.ok(result.value)
             is DomainResult.Fail -> toErrorResponse(result.error)
         }
-
-    /**
-     * 특정 리그의 팀들을 지정된 시즌으로 동기화합니다.
-     *
-     * POST /api/v1/admin/apisports/leagues/{leagueId}/teams/sync?season={season}
-     *
-     * @param leagueId ApiSports 리그 ID
-     * @param season 시즌 연도 (예: 2024)
-     */
-    @PostMapping("/leagues/{leagueId}/teams/sync", params = ["season"])
-    fun syncTeamsOfLeagueWithSeason(
-        @PathVariable leagueId: Long,
-        @RequestParam season: Int,
-    ): ResponseEntity<TeamsSyncResultDto> =
-        when (val result = adminApiSportsWebService.syncTeamsOfLeague(leagueId, season)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
+    }
 
     /**
      * 특정 팀의 선수들(스쿼드)을 동기화합니다.
@@ -198,22 +214,6 @@ class AdminApiSportsController(
             is DomainResult.Success -> ResponseEntity.ok(result.value)
             is DomainResult.Fail -> toErrorResponse(result.error)
         }
-
-    /**
-     * API 상태 확인용 헬스체크 엔드포인트
-     *
-     * GET /api/v1/admin/apisports/health
-     */
-    @GetMapping("/health")
-    fun healthCheck(): ResponseEntity<Map<String, String>> {
-        val healthData =
-            mapOf(
-                "status" to "UP",
-                "service" to "AdminApiSportsService",
-                "timestamp" to System.currentTimeMillis().toString(),
-            )
-        return ResponseEntity.ok(healthData)
-    }
 
     /**
      * 가용 리그 목록 조회
@@ -343,7 +343,7 @@ class AdminApiSportsController(
      * @param available Available 상태 (true: 활성화, false: 비활성화)
      */
     @Operation(
-        summary = "리그 가용성 설정",
+        summary = "리그 available 설정",
         description =
             "리그를 available/unavailable 상태로 설정합니다. " +
                 "Available 설정: 리그를 공개 API에 노출, 사용자가 해당 리그의 경기를 조회할 수 있게 됨. " +
@@ -355,7 +355,7 @@ class AdminApiSportsController(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "리그 가용성 설정 성공",
+                description = "리그 available 설정 성공",
                 content = [
                     Content(
                         examples = [
@@ -385,8 +385,8 @@ class AdminApiSportsController(
             required = true,
         )
         @PathVariable leagueId: Long,
-        @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "가용성 토글 요청 바디",
+        @SwagRequestBody(
+            description = "available 토글 요청 바디",
             required = true,
             content = [
                 Content(

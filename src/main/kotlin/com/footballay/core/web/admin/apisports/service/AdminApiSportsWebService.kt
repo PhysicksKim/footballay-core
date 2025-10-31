@@ -8,6 +8,7 @@ import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
 @Service
@@ -20,6 +21,7 @@ class AdminApiSportsWebService(
     /**
      * 현재 시즌의 모든 리그를 동기화합니다.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     fun syncCurrentLeagues(): DomainResult<LeaguesSyncResultDto, DomainFail> {
         log.info("Starting current leagues sync request")
         val result = apiSportsBackboneSyncFacade.syncCurrentLeagues()
@@ -44,6 +46,7 @@ class AdminApiSportsWebService(
      * @param leagueApiId 리그의 ApiSports ID
      * @param season 시즌 연도 (선택사항, 없으면 현재 시즌 사용)
      */
+    @PreAuthorize("hasRole('ADMIN')")
     fun syncTeamsOfLeague(
         leagueApiId: Long,
         season: Int?,
@@ -77,6 +80,7 @@ class AdminApiSportsWebService(
      *
      * @param teamApiId 팀의 ApiSports ID
      */
+    @PreAuthorize("hasRole('ADMIN')")
     fun syncPlayersOfTeam(teamApiId: Long): DomainResult<PlayersSyncResultDto, DomainFail> {
         log.info("Starting players sync request for teamApiId=$teamApiId")
         val result = apiSportsBackboneSyncFacade.syncPlayersOfTeam(teamApiId)
@@ -106,6 +110,7 @@ class AdminApiSportsWebService(
      *
      * @param leagueId 리그의 ApiSports ID
      */
+    @PreAuthorize("hasRole('ADMIN')")
     fun syncFixturesOfLeague(leagueId: Long): DomainResult<Int, DomainFail> {
         log.info("Starting fixtures sync request for leagueId=$leagueId")
         val result = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueId)
@@ -125,6 +130,7 @@ class AdminApiSportsWebService(
      * @param available Available 상태 (true: 활성화, false: 비활성화)
      * @return 성공 시 league UID, 실패 시 DomainFail
      */
+    @PreAuthorize("hasRole('ADMIN')")
     fun setLeagueAvailable(
         leagueId: Long,
         available: Boolean,

@@ -221,7 +221,7 @@ POST http://localhost:8888/api/v1/admin/apisports/teams/{teamId}/players/sync
 # 경기 일정 동기화
 POST http://localhost:8888/api/v1/admin/apisports/leagues/{leagueId}/fixtures/sync
 
-# 리그 가용성 설정
+# 리그 available 설정
 POST http://localhost:8888/api/v1/admin/apisports/leagues/{leagueId}/available?available=true
 ```
 

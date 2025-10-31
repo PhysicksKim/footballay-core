@@ -12,12 +12,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwagRequestBody
 
 /**
- * Admin Fixture Controller
+ * Fixture의 available 상태를 관리합니다.
  *
- * Admin 권한으로 Fixture의 available 상태를 관리하는 REST API입니다.
+ * fixture available 은 false <-> true 토글 방식으로 동작하며, Live Match data polling 의 트리거가 됩니다.
  *
  * **주요 기능:**
  * - Fixture를 available로 설정하여 실시간 Match Data Sync 활성화
@@ -38,15 +40,16 @@ import org.springframework.web.bind.annotation.*
 )
 @SecurityRequirement(name = "cookieAuth")
 @RestController
+@PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/fixtures")
-class AdminFixtureController(
+class AdminFixtureAvailableController(
     private val availableFixtureFacade: AvailableFixtureFacade,
 ) {
     /**
-     * Fixture 가용성 설정(활성/비활성) - PUT + JSON 바디
+     * Fixture available 설정(활성/비활성) - PUT + JSON 바디
      */
     @Operation(
-        summary = "경기 가용성 설정",
+        summary = "경기 available 설정",
         description =
             "경기를 available/unavailable 상태로 설정합니다. " +
                 "available=true인 경우: PreMatchJob 등록 후 LiveMatchJob으로 이어집니다. " +
@@ -57,7 +60,7 @@ class AdminFixtureController(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "성공적으로 가용성 상태를 변경함",
+                description = "성공적으로 available 상태를 변경함",
                 content = [
                     Content(
                         examples = [
@@ -98,8 +101,8 @@ class AdminFixtureController(
             required = true,
         )
         @PathVariable fixtureId: Long,
-        @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            description = "가용성 토글 요청 바디",
+        @SwagRequestBody(
+            description = "available 토글 요청 바디",
             required = true,
             content = [
                 Content(

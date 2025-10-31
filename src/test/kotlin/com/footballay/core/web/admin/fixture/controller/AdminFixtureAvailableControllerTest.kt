@@ -23,9 +23,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
  *
  * Facade를 Mock으로 주입하여 Controller 레이어만 테스트합니다.
  */
-@WebMvcTest(AdminFixtureController::class)
+@WebMvcTest(AdminFixtureAvailableController::class)
 @Import(TestSecurityConfig::class)
-class AdminFixtureControllerTest {
+class AdminFixtureAvailableControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
