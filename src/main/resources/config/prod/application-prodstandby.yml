@@ -1,0 +1,40 @@
+spring:
+    jpa:
+        hibernate:
+            ddl-auto: none
+        open-in-view: false
+    quartz:
+        auto-startup: false
+    datasource:
+        hikari:
+            minimum-idle: 2
+            maximum-pool-size: 5
+            connection-timeout: 30000
+
+server:
+    error:
+        whitelabel:
+            enabled: false
+
+    # monitoring
+    tomcat:
+        mbeanregistry: # 톰캣 정보에 대한 정보 노출
+            enabled: true
+        threads:
+            max: 10
+
+# monitoring
+management:
+    server:
+        port: 9001          # actuator 전용 포트
+        address: 0.0.0.0    # Docker 컨테이너 환경: 모든 인터페이스에서 리슨 (port publish 시 필수)
+
+    endpoints:
+        web:
+            exposure:
+                include: health,info,metrics,prometheus   # 필요한 엔드포인트만
+
+
+# 운영 환경에서 허용할 CORS 출처
+cors:
+    allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,https://gyechune.com,https://static.gyechune.com,chuncity://chuncity.app,footballay://footballay.app"

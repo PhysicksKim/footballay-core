@@ -1,14 +1,28 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.2.2'
+    id 'org.springframework.boot' version '3.4.6'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'org.jetbrains.kotlin.jvm'
+
+    id 'org.jetbrains.kotlin.jvm' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '2.1.21'
+    id 'org.jetbrains.kotlin.plugin.jpa' version '2.1.21'
+    id 'org.jetbrains.kotlin.kapt' version '2.1.21' // kotlin annotation processing
+
+    id "org.jlleitschuh.gradle.ktlint" version "13.1.0"
 }
 
 group = 'com.footballay'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 
 java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+kapt {
+    useBuildCache = true
 }
 
 configurations {
@@ -28,7 +42,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // SpringDoc OpenAPI (Swagger UI)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    kapt "org.springframework.boot:spring-boot-configuration-processor"
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    // kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.7.0"
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'io.mockk:mockk:1.14.2'
 
     // Monitoring
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -55,6 +83,7 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'com.fasterxml.jackson.module:jackson-module-blackbird'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
 
     // to set more detail Jsession cookie policies
     implementation 'org.springframework.session:spring-session-core'
@@ -83,6 +112,7 @@ dependencies {
     // 테스트 관련
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.mockito.kotlin:mockito-kotlin:5.4.0'
 
     // 테스트용 레디스 컨테이너
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
@@ -97,6 +127,47 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+tasks.withType(KotlinCompile).configureEach {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+
+        freeCompilerArgs.set([
+                "-Xjsr305=strict",  // Spring과 상호 운용성 강화
+        ])
+    }
+}
+
 kotlin {
     jvmToolchain(17)
+}
+
+// WireMock Mock Server Tasks
+task exportOpenApi(type: Exec) {
+    description = 'Export OpenAPI JSON from running application'
+    group = 'wiremock'
+    commandLine 'curl', '-o', 'wiremock/__files/openapi.json',
+                'http://localhost:8083/v3/api-docs'
+    doFirst {
+        println 'Exporting OpenAPI JSON from http://localhost:8083/v3/api-docs'
+        println 'Make sure the application is running with: ./gradlew bootRun'
+    }
+}
+
+task generateMockServer(type: Exec) {
+    description = 'Generate WireMock stubs and seed data'
+    group = 'wiremock'
+    dependsOn 'exportOpenApi'
+    commandLine './scripts/generate-stubs.sh'
+    doFirst {
+        println 'Generating WireMock stubs from OpenAPI specification'
+    }
+}
+
+task seedMockData(type: Exec) {
+    description = 'Generate seed data for WireMock mock server'
+    group = 'wiremock'
+    commandLine './scripts/seed-data.sh'
+    doFirst {
+        println 'Generating seed data for mock server'
+    }
 }

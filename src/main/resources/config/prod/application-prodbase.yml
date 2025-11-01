@@ -34,7 +34,7 @@ server:
 
   # monitoring
   tomcat:
-    mbeanregistry:
+    mbeanregistry: # 톰캣 정보에 대한 정보 노출
       enabled: true
     threads:
       max: 200
@@ -43,7 +43,7 @@ server:
 management:
   server:
     port: 9001          # actuator 전용 포트
-    address: 127.0.0.1  # 오직 로컬에서만 바인딩
+    address: 0.0.0.0    # Docker 컨테이너 환경: 모든 인터페이스에서 리슨 (port publish 시 필수)
 
   endpoints:
     web:

@@ -1,7 +1,7 @@
 spring:
-  config:
-    import:
-      - classpath:config/live/application-api.yml
-      - classpath:config/live/application-aws.yml
-      - classpath:config/live/application-path.yml
-      - classpath:config/live/application-secret.yml
+    config:
+        import:
+            - file:/config-external/application-api.yml
+            - file:/config-external/application-aws.yml
+            - file:/config-external/application-path.yml
+            - file:/config-external/application-secret.yml

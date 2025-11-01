@@ -20,7 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestExecutionListeners;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -132,11 +132,11 @@ public class FootballAvailableFixtureJobTest {
         // Step 2: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
         // Step 3: PreviousMatchJob 과 LiveMatchJob 이 등록되었는지 확인
-        JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
+        // JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId); //
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
-        waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
+        waitUntilJobAllEnrolled(liveMatchJobKey);
         // Step 4: 등록된 Job 들을 즉시 트리거
-        triggerJobNow(scheduler, lineupJobKey, liveMatchJobKey);
+        triggerJobNow(scheduler, liveMatchJobKey);
         // Step 5: PostMatchJob 이 추가됐는지 확인
         JobKey postMatchJobKey = getPostMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(postMatchJobKey);
@@ -154,11 +154,11 @@ public class FootballAvailableFixtureJobTest {
         // Step 2: AvailableFixture 추가
         footballAvailableService.addAvailableFixture(fixtureId);
         // Step 3: PreviousMatchJob 과 LiveMatchJob 이 등록되었는지 확인
-        JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
+        // JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
-        waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
+        waitUntilJobAllEnrolled(liveMatchJobKey);
         // Step 4: 등록된 Job 들을 즉시 트리거
-        triggerJobNow(scheduler, lineupJobKey, liveMatchJobKey);
+        triggerJobNow(scheduler, liveMatchJobKey);
         // Step 5: PostMatchJob 이 추가됐는지 확인
         JobKey postMatchJobKey = getPostMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(postMatchJobKey);

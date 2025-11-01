@@ -4,13 +4,11 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    # host 모드시 127.0.0.1:9001 그대로 스크랩 가능
     network_mode: host
     volumes:
-      # ① 메인 설정 파일
+      # 메인 설정 파일
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-
-      # ② 시크릿들(파일 단위) 전체 마운트
+      # 시크릿들 파일 전체 마운트
       - ./prometheus/secrets:/etc/prometheus/secrets:ro
 
     command:

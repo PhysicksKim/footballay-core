@@ -64,25 +64,7 @@ class FootballPreferenceServiceTest {
         User user = User.builder().username(USERNAME).password(PASSWORD).enabled(true).build();
         userRepository.save(user);
         preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
-        // SecurityContext 에 인증 정보 추가
-        // SecurityContext context = SecurityContextHolder.createEmptyContext();
-        // SimpleGrantedAuthority authority = new SimpleGrantedAuthority(Role.ROLE_ADMIN.name());
-        // Collection<? extends GrantedAuthority> authorities = List.of(authority);
-        // UsernamePasswordAuthenticationToken authentication =
-        //         new UsernamePasswordAuthenticationToken(USERNAME, PASSWORD, authorities);
-        // authentication.eraseCredentials();
-        // context.setAuthentication(authentication);
-        // SecurityContextHolder.setContext(context);
     }
-
-    @AfterEach
-    void tearDown() {
-        PLAYER_LIST.clear();
-        preferenceKeyRepository.deleteAll();
-        userRepository.deleteAll();
-        playerRepository.deleteAll();
-    }
-
 
     @Nested
     @DisplayName("savePlayerCustomPhoto 메서드")

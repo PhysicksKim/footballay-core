@@ -1,5 +1,8 @@
 package com.footballay.core.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.module.kotlin.KotlinFeature;
+import com.fasterxml.jackson.module.kotlin.KotlinModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -17,6 +20,11 @@ public class JacksonConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
+        KotlinModule kotlinModule = new KotlinModule.Builder()
+                .enable(KotlinFeature.StrictNullChecks)
+                .build();
+        mapper.registerModule(kotlinModule);
+
         registerAfterBurner(mapper);
         registerTimeModule(mapper);
         return mapper;

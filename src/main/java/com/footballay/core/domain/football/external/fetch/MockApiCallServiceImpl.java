@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-@Profile("mockapi")
+@Profile("mockapi & !api")
 @Service
 public class MockApiCallServiceImpl implements ApiCallService {
     private final ObjectMapper objectMapper;
@@ -107,9 +107,10 @@ public class MockApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    // TODO : MOCK playerSingle() api 요청 구현필요
+
     @Override
     public PlayerInfoResponse playerSingle(long playerId, long leagueId, int season) {
+        // TODO : MOCK playerSingle() api 요청 구현필요
         return null;
     }
 
