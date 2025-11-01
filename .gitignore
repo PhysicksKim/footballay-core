@@ -47,6 +47,9 @@ out/
 src/main/resources/config/dev/application-apirefacsecret.yml
 !src/main/resources/config/dev/**
 
+### Local Docker development configs (contains dummy secrets for testing)
+local-config/
+
 ### AWS Cloudfront pem key files
 /src/main/resources/keys/
 
