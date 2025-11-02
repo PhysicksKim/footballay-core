@@ -35,8 +35,20 @@ jobs:
       run: |
         ./gradlew --no-daemon clean test
 
+    # ⬇ 새로 추가: 항상 리포트 업로드
+    - name: Upload test report
+      if: always() # 테스트 실패해도 이 스텝은 실행
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: |
+          build/reports/tests/test
+          build/test-results/test
+        if-no-files-found: ignore
+
     # private repo로 repository_dispatch 날리기
     - name: Trigger private deploy workflow
+      if: env.SKIP_TESTS == 'true' || success() # 테스트 스킵이거나, 테스트 성공한 경우만 배포 트리거
       env:
         TOKEN: ${{ secrets.ACTIONS_RELAY_TOKEN }}
         MANUAL_SWITCH: ${{ env.MANUAL_SWITCH }}
