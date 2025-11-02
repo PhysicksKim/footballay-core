@@ -1,14 +1,12 @@
-# 전역 설정: 스크랩 주기 및 평가 주기
 global:
   scrape_interval: 30s
   evaluation_interval: 30s
 
-# Spring Boot Actuator 스크랩
 scrape_configs:
   - job_name: 'footballay-actuator'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['127.0.0.1:9001']
+      - targets: ['127.0.0.1:9100']
         labels:
           application: 'footballay'
 

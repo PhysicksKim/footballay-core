@@ -63,11 +63,10 @@ local-config/
 .DS_Store
 **/.DS_Store
 
-/monitoring/*
+/monitoring/
 
-
-monitoring/prometheus/credentials.yml
-monitoring/prometheus/secrets/*
+**/prometheus/credentials.yml
+**/prometheus/secrets/*
 
 .env/**
 .env
