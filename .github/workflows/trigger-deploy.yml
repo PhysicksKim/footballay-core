@@ -35,16 +35,13 @@ jobs:
       run: |
         ./gradlew --no-daemon clean test
 
-    # ⬇ 새로 추가: 항상 리포트 업로드
-    - name: Upload test report
-      if: always() # 테스트 실패해도 이 스텝은 실행
+    # 테스트 리포트 업로드
+    - name: Upload test report (HTML)
+      if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-report
-        path: |
-          build/reports/tests/test
-          build/test-results/test
-        if-no-files-found: ignore
+        name: junit-html-report
+        path: build/reports/tests/test
 
     # private repo로 repository_dispatch 날리기
     - name: Trigger private deploy workflow

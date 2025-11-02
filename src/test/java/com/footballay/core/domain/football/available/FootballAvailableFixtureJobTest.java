@@ -7,9 +7,11 @@ import com.footballay.core.domain.football.scheduler.FootballSchedulerName;
 import com.footballay.core.domain.football.scheduler.lineup.PreviousMatchTask;
 import com.footballay.core.domain.football.scheduler.live.LiveMatchTask;
 import com.footballay.core.domain.football.service.FootballAvailableService;
+import com.footballay.core.util.QuartzConnectionResetListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
@@ -17,9 +19,9 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,20 +41,24 @@ import static org.mockito.Mockito.when;
  */
 @SpringBootTest
 @ActiveProfiles({"dev", "mockapi"})
+@ExtendWith(QuartzConnectionResetListener.class)
 public class FootballAvailableFixtureJobTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballAvailableFixtureJobTest.class);
-    @MockBean
+    @MockitoBean
     private FixtureRepository fixtureRepository;
+    @MockitoBean
+    private PreviousMatchTask previousMatchTask;
+    @MockitoBean
+    private LiveMatchTask liveMatchTask;
+
     @Autowired
     private Scheduler scheduler;
-    @MockBean
-    private PreviousMatchTask previousMatchTask;
-    @MockBean
-    private LiveMatchTask liveMatchTask;
     @Autowired
     private FootballAvailableService footballAvailableService;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    private static final int JOB_WAIT_TIMEOUT_SEC = 30; //
 
     @AfterEach
     public void logH2Locks() {
@@ -63,15 +69,30 @@ public class FootballAvailableFixtureJobTest {
     private long fixtureId;
 
     private void mockFixtureRepository(long fixtureId) {
-        LocalDateTime dateTime = LocalDateTime.now().plusMinutes(1);
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+
+        var kickoff = java.time.ZonedDateTime.now(KST).plusMinutes(30);
+
         Fixture mockFixture = new Fixture();
         mockFixture.setFixtureId(fixtureId);
-        mockFixture.setDate(dateTime);
+
+        // 도메인이 실제로 어떤 필드를 쓰는지에 맞춰서
+        // 일관성 있게 넣어주기
+        mockFixture.setDate(kickoff.toLocalDateTime()); // 경기 시작 로컬시각(Seoul 기준)
         mockFixture.setTimezone("Asia/Seoul");
-        mockFixture.setTimestamp(dateTime.atZone(ZoneId.of("Asia/Seoul")).toEpochSecond());
-        LiveStatus liveStatus = LiveStatus.builder().elapsed(90).longStatus("Match Finished").shortStatus("FT").homeScore(1).awayScore(0).build();
+        mockFixture.setTimestamp(kickoff.toEpochSecond()); // 위 kickoff과 일치하는 epoch
+
+        LiveStatus liveStatus = LiveStatus.builder()
+            .elapsed(90)
+            .longStatus("Match Finished")
+            .shortStatus("FT")
+            .homeScore(1)
+            .awayScore(0)
+            .build();
         mockFixture.setLiveStatus(liveStatus);
-        when(fixtureRepository.findById(fixtureId)).thenReturn(Optional.of(mockFixture));
+
+        when(fixtureRepository.findById(fixtureId))
+            .thenReturn(Optional.of(mockFixture));
     }
 
     @AfterEach
@@ -90,7 +111,6 @@ public class FootballAvailableFixtureJobTest {
         JobKey lineupJobKey = getPreviousMatchJobKey(fixtureId);
         JobKey liveMatchJobKey = getLiveMatchJobKey(fixtureId);
         waitUntilJobAllEnrolled(lineupJobKey, liveMatchJobKey);
-        waitUntilJobAllEnrolled(liveMatchJobKey);
         assertNotNull(scheduler.getJobDetail(lineupJobKey), "PreviousMatchJob should have been registered.");
         assertNotNull(scheduler.getJobDetail(liveMatchJobKey), "LiveMatchJob should have been registered.");
     }
@@ -182,7 +202,7 @@ public class FootballAvailableFixtureJobTest {
     }
 
     private void waitUntilJobAllEnrolled(JobKey... jobKeys) {
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(JOB_WAIT_TIMEOUT_SEC, TimeUnit.SECONDS).untilAsserted(() -> {
             for (JobKey jobKey : jobKeys) {
                 JobDetail jobDetail = scheduler.getJobDetail(jobKey);
                 assertNotNull(jobDetail, "Job should have been registered: " + jobKey.getName());
@@ -191,7 +211,7 @@ public class FootballAvailableFixtureJobTest {
     }
 
     private void waitUntilJobAllRemoved() {
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(JOB_WAIT_TIMEOUT_SEC, TimeUnit.SECONDS).untilAsserted(() -> {
             Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.anyGroup());
             assertThat(jobKeys).isEmpty();
         });

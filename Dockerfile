@@ -6,7 +6,6 @@ WORKDIR /app
 COPY build/libs/*.jar /app/app.jar
 
 ENV SERVER_PORT=8080
-ENV SPRING_PROFILE="base,live,prod"
 ENV JAVA_TOOL_OPTIONS=""
 
 VOLUME ["/config-external"]
@@ -18,5 +17,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 ENTRYPOINT ["sh", "-c", "java ${JAVA_TOOL_OPTIONS} -jar /app/app.jar \
   --server.port=${SERVER_PORT} \
-  --spring.profiles.active=${SPRING_PROFILE} \
+  --spring.profiles.active=${SPRING_PROFILES_ACTIVE} \
   --spring.config.additional-location=file:/config-external/"]
+

@@ -8,14 +8,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
 class AdminPageServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminPageServiceTest.class);
-    @MockBean
+    @MockitoBean
     private AppEnvironmentVariable envVar;
     @Autowired
     private AdminPageService adminPageService;

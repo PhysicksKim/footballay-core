@@ -13,6 +13,7 @@ import com.footballay.core.logger
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -42,6 +43,7 @@ import java.time.LocalDate
 @SpringBootTest
 @ActiveProfiles("dev", "devrealapi")
 @Transactional
+@Disabled("실제 API를 호출하므로 기본 테스트에서는 제외합니다")
 class LeagueApiSportsWithCoreSyncerIntegrationTest {
     val log = logger()
 

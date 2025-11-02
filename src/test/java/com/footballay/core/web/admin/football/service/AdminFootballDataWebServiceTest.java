@@ -20,8 +20,8 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -51,9 +51,9 @@ class AdminFootballDataWebServiceTest {
     private ObjectMapper jacksonObjectMapper;
     @Autowired
     private Scheduler scheduler;
-    @MockBean
+    @MockitoBean
     private PreviousMatchJobSchedulerService previousMatchJobSchedulerService;
-    @MockBean
+    @MockitoBean
     private LiveMatchJobSchedulerService liveMatchJobSchedulerService;
     @Autowired
     private FootballRoot footballRoot;

@@ -15,9 +15,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,9 +27,9 @@ import static org.mockito.Mockito.*;
 @SpringBootTest
 class AdminFootballPreferenceServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballPreferenceServiceTest.class);
-    @MockBean
+    @MockitoBean
     private FootballPreferenceService footballPreferenceService;
-    @MockBean
+    @MockitoBean
     private FootballRoot footballRoot;
     @Autowired
     private ApiCommonResponseService apiResponseService;

@@ -8,8 +8,9 @@ import org.quartz.Scheduler;
 import org.quartz.TriggerKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
 import java.time.ZonedDateTime;
 import static com.footballay.core.util.TestJobKeyUtil.*;
 import static com.footballay.core.util.TestQuartzJobWaitUtil.waitForJobToBeRemoved;
@@ -17,14 +18,14 @@ import static com.footballay.core.util.TestQuartzJobWaitUtil.waitForJobToBeSched
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
-// @ExtendWith(MockitoExtension.class)
+
 @SpringBootTest
 @ActiveProfiles({"dev", "mockapi"})
 public class LiveMatchJobTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveMatchJobTest.class);
     @Autowired
     private Scheduler scheduler; // Quartz 스케줄러를 자동 주입
-    @MockBean
+    @MockitoBean
     private LiveMatchTask liveMatchTask; // Mock LiveMatchTask
     @Autowired
     private LiveMatchJobSchedulerService liveMatchJobSchedulerService; // 테스트할 서비스

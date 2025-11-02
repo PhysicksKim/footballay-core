@@ -2,6 +2,7 @@ package com.footballay.core.monitor.alert.notify;
 
 import com.footballay.core.monitor.alert.NotificationException;
 import com.footballay.core.monitor.alert.manaer.AlertSeverity;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,7 +11,8 @@ import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ActiveProfiles({"dev", "api"})
-// @TestPropertySource(properties = "discord.debug-mode=true") // 실제로 알림을 보내고 싶다면 주석을 해제하세요
+@TestPropertySource(properties = "discord.debug-mode=true")
+@Disabled("실제 Discord 웹훅을 사용하므로, 필요 시에만 활성화하세요.")
 class LineupAlertNotifierTest {
 
     @Autowired
