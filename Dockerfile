@@ -14,7 +14,7 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -fsS "http://localhost:${SERVER_PORT}/health" || exit 1
 
-ENTRYPOINT ["sh", "-c", "java ${JAVA_TOOL_OPTIONS} -jar /app/app.jar \
+ENTRYPOINT ["sh", "-c", "java ${JAVA_MEMORY} ${JAVA_TOOL_OPTIONS} -jar /app/app.jar \
   --server.port=${SERVER_PORT} \
   --spring.profiles.active=${SPRING_PROFILES_ACTIVE} \
   --spring.config.additional-location=file:/config-external/"]
