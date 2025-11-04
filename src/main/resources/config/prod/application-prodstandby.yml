@@ -11,6 +11,9 @@ spring:
             maximum-pool-size: 5
             connection-timeout: 30000
 
+        data-source-properties:
+            prepareThreshold: 0
+
 server:
     error:
         whitelabel:

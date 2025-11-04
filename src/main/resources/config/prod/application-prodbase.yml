@@ -11,7 +11,7 @@ spring:
       org:
         quartz:
           scheduler:
-            instanceName: GyechunsikScheduler
+            instanceName: FootballayScheduler
             instanceId: AUTO
           jobStore:
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
@@ -26,6 +26,9 @@ spring:
       minimum-idle: 10
       maximum-pool-size: 40
       connection-timeout: 30000
+
+      data-source-properties:
+        prepareThreshold: 0
 
 server:
   error:

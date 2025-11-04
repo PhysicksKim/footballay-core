@@ -6,10 +6,9 @@ WORKDIR /app
 COPY build/libs/*.jar /app/app.jar
 
 ENV SERVER_PORT=8080
-ENV JAVA_TOOL_OPTIONS=""
+ENV JAVA_TOOL_OPTIONS="-Djava.net.preferIPv6Addresses=true -Djava.net.preferIPv4Stack=false -Dsun.net.inetaddr.negative.ttl=0"
 
 VOLUME ["/config-external"]
-
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
