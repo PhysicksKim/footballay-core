@@ -1,18 +1,11 @@
-spring:
-  datasource:
-    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
 server:
   port: 8083
-  ssl:
-    key-store: classpath:keystore.p12
-    key-store-password: -wva9.ea7)}}
-    key-store-type: PKCS12
-    key-alias: scoreboarddev
-    enabled: true
+#  ssl:
+#    key-store: classpath:keystore.p12
+#    key-store-password: -wva9.ea7)}}
+#    key-store-type: PKCS12
+#    key-alias: scoreboarddev
+#    enabled: true
 
 # 개발 환경에서 허용할 CORS 출처
 cors:

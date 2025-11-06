@@ -2,11 +2,8 @@ package com.footballay.core.websocket.domain.scoreboard.remote.autoremote.reposi
 
 import com.footballay.core.websocket.domain.scoreboard.remote.RemoteExpireTimes;
 import io.jsonwebtoken.lang.Strings;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,19 +30,15 @@ import java.util.Set;
  * value : {groupid}
  * </pre>
  */
-@Slf4j
-@RequiredArgsConstructor
 @Repository
 public class AutoRemoteRedisRepository {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AutoRemoteRedisRepository.class);
     private static final String PREFIX_AUTOREMOTE_COMMON = "autoremote_";
     private static final String IDENTIFIER_BEFORE_CACHE = "usercookie_";
     private static final String IDENTIFIER_GROUP_ID = "groupid_";
     private static final String IDENTIFIER_REMOTE_CODE = "remotecode_";
-
     private static final Duration EXP_ACTIVE_GROUP = RemoteExpireTimes.ACTIVE_REMOTE_GROUP;
     private static final Duration EXP_USER_PRE_CACHE = RemoteExpireTimes.USER_PRE_CACHING;
-
     private final StringRedisTemplate stringRedisTemplate;
 
     public void setActiveAutoRemoteKeyPair(String autoGroupId, String remoteCode) {
@@ -55,10 +48,8 @@ public class AutoRemoteRedisRepository {
         // Key log
         log.info("Key from autogroup: {}", KEY_FROM_AUTOGROUP);
         log.info("Key from remotecode: {}", KEY_FROM_REMOTECODE);
-        stringRedisTemplate.opsForValue()
-                .set(KEY_FROM_AUTOGROUP, remoteCode, EXP_ACTIVE_GROUP);
-        stringRedisTemplate.opsForValue()
-                .set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
+        stringRedisTemplate.opsForValue().set(KEY_FROM_AUTOGROUP, remoteCode, EXP_ACTIVE_GROUP);
+        stringRedisTemplate.opsForValue().set(KEY_FROM_REMOTECODE, autoGroupId, EXP_ACTIVE_GROUP);
     }
 
     public void setUserPreCacheForCookie(String principalName, String userId) {
@@ -77,11 +68,8 @@ public class AutoRemoteRedisRepository {
         String remoteCode = stringRedisTemplate.opsForValue().get(KEY_FROM_AUTOGROUP);
         // 만약 이미 생성된 remoteGroup id-remoteCode key pair 가 없는 경우에
         // early return 을 한다
-        if(remoteCode == null)
-            return;
-
+        if (remoteCode == null) return;
         final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
-
         stringRedisTemplate.delete(KEY_FROM_AUTOGROUP);
         stringRedisTemplate.delete(KEY_FROM_REMOTECODE);
     }
@@ -96,8 +84,7 @@ public class AutoRemoteRedisRepository {
         String activeKey = activeKeyFromGroup(autoGroupId);
         log.info("Find RemoteCode from AutoGroupId: {}", autoGroupId);
         log.info("Active Key: {}", activeKey);
-        String remoteCode = stringRedisTemplate.opsForValue()
-                .get(activeKey);
+        String remoteCode = stringRedisTemplate.opsForValue().get(activeKey);
         if (!Strings.hasText(remoteCode)) {
             return null;
         }
@@ -106,8 +93,7 @@ public class AutoRemoteRedisRepository {
     }
 
     public Optional<String> findAutoGroupIdFromRemoteCode(String remoteCode) {
-        String autoGroupId = stringRedisTemplate.opsForValue()
-                .get(activeKeyFromCode(remoteCode));
+        String autoGroupId = stringRedisTemplate.opsForValue().get(activeKeyFromCode(remoteCode));
         if (autoGroupId != null && remoteCode != null) {
             setActiveAutoRemoteKeyPair(autoGroupId, remoteCode);
         }
@@ -132,11 +118,8 @@ public class AutoRemoteRedisRepository {
     }
 
     public void removeAllActiveGroups() {
-        Set<String> activeFromGroupKeys = stringRedisTemplate
-                .keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_GROUP_ID + '*');
-        Set<String> activeFromRemoteKeys = stringRedisTemplate
-                .keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_REMOTE_CODE + '*');
-
+        Set<String> activeFromGroupKeys = stringRedisTemplate.keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_GROUP_ID + '*');
+        Set<String> activeFromRemoteKeys = stringRedisTemplate.keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_REMOTE_CODE + '*');
         if (activeFromGroupKeys != null) {
             activeFromGroupKeys.forEach(stringRedisTemplate::delete);
         }
@@ -147,22 +130,16 @@ public class AutoRemoteRedisRepository {
 
     public void removeGroupIfExist(String remoteCode) {
         final String KEY_FROM_REMOTECODE = activeKeyFromCode(remoteCode);
-        String autoGroupId = stringRedisTemplate.opsForValue()
-                .get(KEY_FROM_REMOTECODE);
-        if(autoGroupId == null) return;
-
+        String autoGroupId = stringRedisTemplate.opsForValue().get(KEY_FROM_REMOTECODE);
+        if (autoGroupId == null) return;
         final String KEY_FROM_AUTOGROUP = activeKeyFromGroup(autoGroupId);
-
         stringRedisTemplate.delete(KEY_FROM_AUTOGROUP);
         stringRedisTemplate.delete(KEY_FROM_REMOTECODE);
     }
 
     public Map<String, String> getAllActiveGroups() {
-        Set<String> activeFromGroupKeys = stringRedisTemplate
-                .keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_GROUP_ID + '*');
-        Set<String> activeFromRemoteKeys = stringRedisTemplate
-                .keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_REMOTE_CODE + '*');
-
+        Set<String> activeFromGroupKeys = stringRedisTemplate.keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_GROUP_ID + '*');
+        Set<String> activeFromRemoteKeys = stringRedisTemplate.keys(PREFIX_AUTOREMOTE_COMMON + IDENTIFIER_REMOTE_CODE + '*');
         Map<String, String> map = new HashMap<>();
         for (String key : activeFromRemoteKeys) {
             String value = stringRedisTemplate.opsForValue().get(key);
@@ -175,4 +152,7 @@ public class AutoRemoteRedisRepository {
         return map;
     }
 
+    public AutoRemoteRedisRepository(final StringRedisTemplate stringRedisTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+    }
 }

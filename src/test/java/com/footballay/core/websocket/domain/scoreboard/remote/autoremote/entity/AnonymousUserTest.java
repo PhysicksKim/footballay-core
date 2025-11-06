@@ -1,20 +1,17 @@
 package com.footballay.core.websocket.domain.scoreboard.remote.autoremote.entity;
 
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Slf4j
 @DataJpaTest
 class AnonymousUserTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AnonymousUserTest.class);
     @Autowired
     private EntityManager em;
 
@@ -24,12 +21,10 @@ class AnonymousUserTest {
         // given
         UUID uuid = UUID.randomUUID();
         log.info("uuid: {}", uuid);
-
         // when
         String uuidString = uuid.toString();
         UUID convertedUuid = UUID.fromString(uuidString);
         log.info("convertedUuid: {}", convertedUuid);
-
         // then
         Assertions.assertThat(convertedUuid.toString()).isEqualTo(uuidString);
     }
@@ -42,7 +37,6 @@ class AnonymousUserTest {
         autoRemoteGroup.setExpiredAt(LocalDateTime.now().plusDays(1));
         autoRemoteGroup.setLastActiveAt(LocalDateTime.now());
         em.persist(autoRemoteGroup);
-
         AnonymousUser anonymousUser = new AnonymousUser();
         anonymousUser.setAutoRemoteGroup(autoRemoteGroup);
         anonymousUser.setLastConnectedAt(LocalDateTime.now());
@@ -50,19 +44,15 @@ class AnonymousUserTest {
         em.persist(anonymousUser);
         em.flush();
         em.clear();
-
         // when
         AnonymousUser foundAnonymousUser = em.find(AnonymousUser.class, anonymousUser.getId());
         UUID id = foundAnonymousUser.getId();
         AutoRemoteGroup fkRemoteGroup = foundAnonymousUser.getAutoRemoteGroup();
-
         // then
         Assertions.assertThat(foundAnonymousUser).isNotNull();
         Assertions.assertThat(fkRemoteGroup).isNotNull();
         Assertions.assertThat(id).isNotNull();
-
         log.info("fkRemoteGroup: {}", fkRemoteGroup);
         log.info("id: {}", id);
     }
-
 }

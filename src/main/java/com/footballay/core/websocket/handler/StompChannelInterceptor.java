@@ -4,26 +4,20 @@ import com.footballay.core.websocket.domain.scoreboard.remote.ScoreBoardRemoteSe
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.footballay.core.websocket.response.RemoteMembersResponse;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class StompChannelInterceptor implements ChannelInterceptor {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(StompChannelInterceptor.class);
     private final SimpMessagingTemplate messagingTemplate;
-
     private final ScoreBoardRemoteServiceImpl scoreBoardRemoteService;
 
     /**
@@ -42,52 +36,49 @@ public class StompChannelInterceptor implements ChannelInterceptor {
         String destination = accessor.getDestination();
         Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
         HttpSession webSession = (HttpSession) sessionAttributes.get("webSession");
-
         if (accessor.getCommand() == null) {
             log.info("STOMP interceptor 에서 command 가 null 입니다");
             return;
         }
-
         switch ((accessor.getCommand())) {
-            case CONNECT:
-                log.info("세션 연결됨 :: {}", sessionId);
+        case CONNECT: 
+            log.info("세션 연결됨 :: {}", sessionId);
+            break;
+        case DISCONNECT: 
+            log.info("세션 끊음 :: {}", sessionId);
+            Principal user = accessor.getUser();
+            String remoteCode = (String) sessionAttributes.get("remoteCode");
+            if (user == null) {
+                log.info("Principal User IS NULL");
                 break;
-            case DISCONNECT:
-                log.info("세션 끊음 :: {}", sessionId);
-                Principal user = accessor.getUser();
-                String remoteCode = (String) sessionAttributes.get("remoteCode");
-                if (user == null) {
-                    log.info("Principal User IS NULL");
-                    break;
-                }
-                if (remoteCode == null) {
-                    log.info("remoteCode IS NULL");
-                    break;
-                }
-
-                log.info("remoteCode :: {} , Principal :: {}", remoteCode, user.getName());
-                RemoteCode remoteCodeInstance = RemoteCode.of(remoteCode);
-                scoreBoardRemoteService.exitUser(remoteCodeInstance, user);
-
-                List<List<String>> remoteUserDetails = scoreBoardRemoteService.getRemoteUserDetails(remoteCodeInstance);
-                List<String> principals = remoteUserDetails.get(0);
-                List<String> nicknames = remoteUserDetails.get(1);
-                RemoteMembersResponse memberResponse = new RemoteMembersResponse(nicknames);
-                for (String userName : principals) {
-                    messagingTemplate.convertAndSendToUser(
-                            userName,
-                            "/topic/remote/"+remoteCode,
-                            memberResponse
-                    );
-                }
+            }
+            if (remoteCode == null) {
+                log.info("remoteCode IS NULL");
                 break;
-            case SUBSCRIBE:
-                log.info("구독 요청한 WebsocketSession :: {}", sessionId);
-                log.info("구독 주소 :: {}", destination);
-                break;
-            default:
-                log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession.getId());
-                break;
+            }
+            log.info("remoteCode :: {} , Principal :: {}", remoteCode, user.getName());
+            RemoteCode remoteCodeInstance = RemoteCode.of(remoteCode);
+            scoreBoardRemoteService.exitUser(remoteCodeInstance, user);
+            List<List<String>> remoteUserDetails = scoreBoardRemoteService.getRemoteUserDetails(remoteCodeInstance);
+            List<String> principals = remoteUserDetails.get(0);
+            List<String> nicknames = remoteUserDetails.get(1);
+            RemoteMembersResponse memberResponse = new RemoteMembersResponse(nicknames);
+            for (String userName : principals) {
+                messagingTemplate.convertAndSendToUser(userName, "/topic/remote/" + remoteCode, memberResponse);
+            }
+            break;
+        case SUBSCRIBE: 
+            log.info("구독 요청한 WebsocketSession :: {}", sessionId);
+            log.info("구독 주소 :: {}", destination);
+            break;
+        default: 
+            log.info("세션 상태 변경 command {} :: websocket {} , WebSession {}", accessor.getCommand(), sessionId, webSession.getId());
+            break;
         }
+    }
+
+    public StompChannelInterceptor(final SimpMessagingTemplate messagingTemplate, final ScoreBoardRemoteServiceImpl scoreBoardRemoteService) {
+        this.messagingTemplate = messagingTemplate;
+        this.scoreBoardRemoteService = scoreBoardRemoteService;
     }
 }

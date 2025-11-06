@@ -2,5 +2,5 @@ spring:
   config:
     import:
       - classpath:config/dev/application-devbase.yml
-      - classpath:config/dev/application-devmariadb.yml
+      - classpath:config/dev/application-devpostgre.yml
       - classpath:config/dev/application-devaws.yml

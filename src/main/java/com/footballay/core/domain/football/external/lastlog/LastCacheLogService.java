@@ -3,19 +3,14 @@ package com.footballay.core.domain.football.external.lastlog;
 import com.footballay.core.domain.football.persistence.apicache.ApiCacheType;
 import com.footballay.core.domain.football.persistence.apicache.LastCacheLog;
 import com.footballay.core.domain.football.repository.apicache.LastCacheLogRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class LastCacheLogService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LastCacheLogService.class);
     private final LastCacheLogRepository lastCacheLogRepository;
 
     /**
@@ -36,11 +31,12 @@ public class LastCacheLogService {
 
     public LastCacheLog findApiCache(ApiCacheType type, Map<String, Object> parameters) {
         Optional<LastCacheLog> findApiCache = lastCacheLogRepository.findLastCacheLogByApiCacheTypeAndParametersJson(type, parameters);
-        LastCacheLog lastCacheLog = findApiCache.orElseThrow(()
-                -> new IllegalArgumentException("일치하는 Api Cache 를 찾지 못했습니다.\n" +
-                "type=" + type + ",parameters=" + parameters.toString()));
+        LastCacheLog lastCacheLog = findApiCache.orElseThrow(() -> new IllegalArgumentException("일치하는 Api Cache 를 찾지 못했습니다.\n" + "type=" + type + ",parameters=" + parameters.toString()));
         log.info("find api cache : {}", lastCacheLog);
         return lastCacheLog;
     }
 
+    public LastCacheLogService(final LastCacheLogRepository lastCacheLogRepository) {
+        this.lastCacheLogRepository = lastCacheLogRepository;
+    }
 }

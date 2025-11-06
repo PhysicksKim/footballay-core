@@ -1,11 +1,10 @@
 package com.footballay.core.domain.quartz;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 public class JobAutowireTestService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JobAutowireTestService.class);
 
     public void test() {
         log.info("JobAutowireTestService test called");

@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:7.2.4-alpine
+    container_name: redis                # 앱에서 SPRING_DATA_REDIS_HOST=redis 로 접근
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+        - /srv/footballay/runtime/redis-data:/data
+    networks:
+      footballay-net:
+        aliases: ["redis"]
+
+networks:
+  footballay-net:
+    external: true # ec2 내부에 미리 docker network 명령으로 생성된 네트워크를 사용

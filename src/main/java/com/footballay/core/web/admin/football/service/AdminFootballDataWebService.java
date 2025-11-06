@@ -9,10 +9,7 @@ import com.footballay.core.web.admin.football.response.*;
 import com.footballay.core.web.admin.football.response.mapper.FootballDtoMapper;
 import com.footballay.core.web.common.dto.ApiResponse;
 import com.footballay.core.web.common.service.ApiCommonResponseService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,19 +17,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class AdminFootballDataWebService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballDataWebService.class);
     private final FootballRoot footballRoot;
     private final ApiCommonResponseService apiCommonResponseService;
 
     public ApiResponse<AvailableLeagueResponse> getAvailableLeagues(String requestUrl) {
         List<LeagueDto> availableLeagues = footballRoot.getAvailableLeagues();
-        AvailableLeagueResponse[] array = availableLeagues.stream()
-                .map(FootballDtoMapper::toAvailableLeagueDto)
-                .toArray(AvailableLeagueResponse[]::new);
+        AvailableLeagueResponse[] array = availableLeagues.stream().map(FootballDtoMapper::toAvailableLeagueDto).toArray(AvailableLeagueResponse[]::new);
         return apiCommonResponseService.createSuccessResponse(array, requestUrl);
     }
 
@@ -57,21 +50,15 @@ public class AdminFootballDataWebService {
             log.error("error while deleting available league :: leagueId={}", leagueId);
             return apiCommonResponseService.createFailureResponse("리그 삭제 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new String[]{"리그 삭제 성공"}, requestUrl, params);
+        return apiCommonResponseService.createSuccessResponse(new String[] {"리그 삭제 성공"}, requestUrl, params);
     }
 
     public ApiResponse<AvailableFixtureResponse> getAvailableFixtures(long leagueId, ZonedDateTime date, String requestUrl) {
-        Map<String, String> params = Map.of(
-                "leagueId", String.valueOf(leagueId),
-                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        );
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId), "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         try {
             date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
             List<FixtureInfoDto> availableFixtures = footballRoot.getAvailableFixturesOnNearestDate(leagueId, date);
-            AvailableFixtureResponse[] array = availableFixtures.stream()
-                    .map(FootballDtoMapper::toAvailableFixtureDto)
-                    .sorted(Comparator.comparing(AvailableFixtureResponse::date))
-                    .toArray(AvailableFixtureResponse[]::new);
+            AvailableFixtureResponse[] array = availableFixtures.stream().map(FootballDtoMapper::toAvailableFixtureDto).sorted(Comparator.comparing(AvailableFixtureResponse::date)).toArray(AvailableFixtureResponse[]::new);
             return apiCommonResponseService.createSuccessResponse(array, requestUrl, params);
         } catch (Exception e) {
             log.error("error while getting available fixtures :: {}", e.getMessage());
@@ -100,7 +87,7 @@ public class AdminFootballDataWebService {
             log.error("error while deleting available fixture :: fixtureId={}", fixtureId);
             return apiCommonResponseService.createFailureResponse("경기 삭제 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new String[]{"경기 삭제 성공"}, requestUrl, params);
+        return apiCommonResponseService.createSuccessResponse(new String[] {"경기 삭제 성공"}, requestUrl, params);
     }
 
     // teams, player, fixtures 조회
@@ -108,9 +95,7 @@ public class AdminFootballDataWebService {
         Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId));
         TeamResponse[] teamResponses;
         try {
-            teamResponses = footballRoot.getTeamsOfLeague(leagueId).stream()
-                    .map(FootballDtoMapper::toTeamResponse)
-                    .toArray(TeamResponse[]::new);
+            teamResponses = footballRoot.getTeamsOfLeague(leagueId).stream().map(FootballDtoMapper::toTeamResponse).toArray(TeamResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting teams of league :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("팀 조회 실패", requestUrl, params);
@@ -122,9 +107,7 @@ public class AdminFootballDataWebService {
         Map<String, String> params = Map.of("teamId", String.valueOf(teamId));
         PlayerResponse[] playerResponses;
         try {
-            playerResponses = footballRoot.getSquadOfTeam(teamId).stream()
-                    .map(FootballDtoMapper::toPlayerDto)
-                    .toArray(PlayerResponse[]::new);
+            playerResponses = footballRoot.getSquadOfTeam(teamId).stream().map(FootballDtoMapper::toPlayerDto).toArray(PlayerResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting squad of team :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl, params);
@@ -141,21 +124,15 @@ public class AdminFootballDataWebService {
             log.error("error while getting player info :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("선수 조회 실패", requestUrl, params);
         }
-        return apiCommonResponseService.createSuccessResponse(new PlayerResponse[]{playerResponse}, requestUrl, params);
+        return apiCommonResponseService.createSuccessResponse(new PlayerResponse[] {playerResponse}, requestUrl, params);
     }
 
     public ApiResponse<FixtureResponse> getFixturesFromDate(long leagueId, ZonedDateTime date, String requestUrl) {
-        Map<String, String> params = Map.of(
-                "leagueId", String.valueOf(leagueId),
-                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        );
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId), "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;
         try {
-            fixtures = footballRoot.getFixturesOnNearestDate(leagueId, date).stream()
-                    .map(FootballDtoMapper::toFixtureDto)
-                    .sorted(Comparator.comparing(FixtureResponse::date))
-                    .toArray(FixtureResponse[]::new);
+            fixtures = footballRoot.getNextFixturesFromDate(leagueId, date).stream().map(FootballDtoMapper::toFixtureDto).sorted(Comparator.comparing(FixtureResponse::date)).toArray(FixtureResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting fixture info :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl, params);
@@ -164,10 +141,7 @@ public class AdminFootballDataWebService {
     }
 
     public ApiResponse<Void> addTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
-        Map<String, String> params = Map.of(
-                "teamId", String.valueOf(teamId),
-                "playerId", String.valueOf(playerId)
-        );
+        Map<String, String> params = Map.of("teamId", String.valueOf(teamId), "playerId", String.valueOf(playerId));
         boolean isSuccess = footballRoot.addTeamPlayerRelation(teamId, playerId);
         if (!isSuccess) {
             log.error("error while adding team-player relation :: teamId={}, playerId={}", teamId, playerId);
@@ -178,10 +152,7 @@ public class AdminFootballDataWebService {
     }
 
     public ApiResponse<Void> removeTeamPlayerRelation(long teamId, long playerId, String requestUrl) {
-        Map<String, String> params = Map.of(
-                "teamId", String.valueOf(teamId),
-                "playerId", String.valueOf(playerId)
-        );
+        Map<String, String> params = Map.of("teamId", String.valueOf(teamId), "playerId", String.valueOf(playerId));
         boolean isSuccess = footballRoot.removeTeamPlayerRelation(teamId, playerId);
         if (!isSuccess) {
             log.error("error while removing team-player relation :: teamId={}, playerId={}", teamId, playerId);
@@ -193,11 +164,11 @@ public class AdminFootballDataWebService {
 
     public ApiResponse<TeamsOfPlayerResponse> getTeamsOfPlayer(long playerId, String requestUrl) {
         Map<String, String> params = Map.of("playerId", String.valueOf(playerId));
-        try{
+        try {
             PlayerDto player = footballRoot.getPlayer(playerId);
             List<TeamDto> teamsOfPlayer = footballRoot.getTeamsOfPlayer(playerId);
             TeamsOfPlayerResponse response = FootballDtoMapper.toTeamsOfPlayer(player, teamsOfPlayer);
-            return apiCommonResponseService.createSuccessResponse(new TeamsOfPlayerResponse[]{response}, requestUrl, params);
+            return apiCommonResponseService.createSuccessResponse(new TeamsOfPlayerResponse[] {response}, requestUrl, params);
         } catch (Exception e) {
             log.error("error while getting teams of player :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("선수의 팀 조회 실패", requestUrl, params);
@@ -205,21 +176,20 @@ public class AdminFootballDataWebService {
     }
 
     public ApiResponse<FixtureResponse> getFixturesOnDate(long leagueId, ZonedDateTime date, String requestUrl) {
-        Map<String, String> params = Map.of(
-                "leagueId", String.valueOf(leagueId),
-                "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        );
+        Map<String, String> params = Map.of("leagueId", String.valueOf(leagueId), "date", date.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         date = date.withZoneSameInstant(ZoneId.of("Asia/Seoul"));
         FixtureResponse[] fixtures;
         try {
-            fixtures = footballRoot.getFixturesOnDate(leagueId, date).stream()
-                    .map(FootballDtoMapper::toFixtureDto)
-                    .sorted(Comparator.comparing(FixtureResponse::date))
-                    .toArray(FixtureResponse[]::new);
+            fixtures = footballRoot.getFixturesOnDate(leagueId, date).stream().map(FootballDtoMapper::toFixtureDto).sorted(Comparator.comparing(FixtureResponse::date)).toArray(FixtureResponse[]::new);
         } catch (Exception e) {
             log.error("error while getting fixture info :: {}", e.getMessage());
             return apiCommonResponseService.createFailureResponse("경기 조회 실패", requestUrl, params);
         }
         return apiCommonResponseService.createSuccessResponse(fixtures, requestUrl, params);
+    }
+
+    public AdminFootballDataWebService(final FootballRoot footballRoot, final ApiCommonResponseService apiCommonResponseService) {
+        this.footballRoot = footballRoot;
+        this.apiCommonResponseService = apiCommonResponseService;
     }
 }

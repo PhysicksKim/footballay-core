@@ -1,10 +1,6 @@
 package com.footballay.core.websocket.response;
 
-import lombok.Getter;
-
-@Getter
-abstract public class AbstractRemoteResponse extends AbstractBaseResponse{
-
+public abstract class AbstractRemoteResponse extends AbstractBaseResponse {
     protected final String pubPath;
     protected final String subPath;
     protected final String remoteCode;
@@ -18,5 +14,17 @@ abstract public class AbstractRemoteResponse extends AbstractBaseResponse{
         this.pubPath = "/app/remote/" + remoteCode;
         this.subPath = "/user/topic/remote/" + remoteCode;
         this.remoteCode = remoteCode;
+    }
+
+    public String getPubPath() {
+        return this.pubPath;
+    }
+
+    public String getSubPath() {
+        return this.subPath;
+    }
+
+    public String getRemoteCode() {
+        return this.remoteCode;
     }
 }

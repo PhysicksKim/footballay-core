@@ -1,5 +1,6 @@
 HELP.md
 .gradle
+.kotlin
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -42,13 +43,37 @@ out/
 **/application-aws.yml
 **/application-path.yml
 **/application-api.yml
+**/application-apirefacsecret.yml
+src/main/resources/config/dev/application-apirefacsecret.yml
 !src/main/resources/config/dev/**
+
+### Local Docker development configs (contains dummy secrets for testing)
+local-config/
 
 ### AWS Cloudfront pem key files
 /src/main/resources/keys/
+
+### secret ai context
+.ai/secret/**
+.ai
 
 !docker/**
 !docker/dev/**
 
 .DS_Store
 **/.DS_Store
+
+/monitoring/
+
+**/prometheus/credentials.yml
+**/prometheus/secrets/*
+
+.env/**
+.env
+
+lombok.config
+lombok.jar
+
+docs/**
+
+.claude/settings.local.json

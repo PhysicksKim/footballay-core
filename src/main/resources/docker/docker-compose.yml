@@ -6,20 +6,19 @@ services:
     ports:
       - "6379:6379"
 
-  mariadb:
-    image: mariadb:latest
-    container_name: footballay-dev-mariadb
+  postgres:
+    image: postgres:17.4
+    container_name: footballay-dev-postgres
     environment:
-      MARIADB_ROOT_PASSWORD: 1234
-      MARIADB_DATABASE: footballay
-      MARIADB_USER: dev
-      MARIADB_PASSWORD: dev1234
+      POSTGRES_DB: footballay_core
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev1234
       TZ: Asia/Seoul
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  mariadb_data:
+  postgres_data:
     driver: local

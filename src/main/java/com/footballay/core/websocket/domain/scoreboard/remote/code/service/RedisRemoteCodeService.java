@@ -3,30 +3,23 @@ package com.footballay.core.websocket.domain.scoreboard.remote.code.service;
 import com.footballay.core.websocket.domain.scoreboard.remote.RemoteExpireTimes;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class RedisRemoteCodeService implements RemoteCodeService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RedisRemoteCodeService.class);
     private final StringRedisTemplate stringRedisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
-
     private static final String REMOTECODE_SET_PREFIX = "remote:";
     private static final Duration REMOTECODE_EXPIRATION = RemoteExpireTimes.REMOTECODE_EXP;
-
     protected static final int MAX_CHANNEL_MEMBER = 5;
 
     /**
@@ -41,20 +34,17 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     @Override
     public RemoteCode generateCodeAndSubscribe(String principalName, String nickname) {
         RemoteCode remoteCode;
-        try{
+        try {
             do {
                 remoteCode = RemoteCode.generate();
             } while (stringRedisTemplate.hasKey(getRemoteCodeKey(remoteCode)));
         } catch (RedisConnectionFailureException e) {
-            throw new RuntimeException("Maybe Redis Docker is Not running.",e);
+            throw new RuntimeException("Maybe Redis Docker is Not running.", e);
         }
         log.info("CodeService - generateCodeAndSubscribe: {}", remoteCode.getRemoteCode());
-
         // 코드 SET 생성 - set 의 key 를 remote:remoteCode 로 하고, value 는 구독자들의 이름으로 한다.
         final String REMOTE_CODE_KEY = getRemoteCodeKey(remoteCode);
-        stringRedisTemplate.opsForHash()
-                .put(REMOTE_CODE_KEY, principalName, nickname);
-
+        stringRedisTemplate.opsForHash().put(REMOTE_CODE_KEY, principalName, nickname);
         // 코드 만료시간 설정
         this.refreshExpiration(remoteCode);
         return remoteCode;
@@ -68,8 +58,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
      */
     @Override
     public Map<Object, Object> getSubscribers(String remoteCode) {
-        return stringRedisTemplate.opsForHash()
-                .entries(getRemoteCodeKey(RemoteCode.of(remoteCode)));
+        return stringRedisTemplate.opsForHash().entries(getRemoteCodeKey(RemoteCode.of(remoteCode)));
     }
 
     @Override
@@ -88,9 +77,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
     @Override
     public void addSubscriber(RemoteCode remoteCode, String subscriberPrincipalName, String nickname) {
         final String REMOTE_CODE_KEY = getRemoteCodeKey(remoteCode);
-        Set<String> nicknameSet = stringRedisTemplate.opsForHash()
-                .entries(REMOTE_CODE_KEY)
-                .entrySet().stream().map(entry -> entry.getValue().toString()).collect(Collectors.toSet());
+        Set<String> nicknameSet = stringRedisTemplate.opsForHash().entries(REMOTE_CODE_KEY).entrySet().stream().map(entry -> entry.getValue().toString()).collect(Collectors.toSet());
         if (nicknameSet.isEmpty()) {
             log.info("Throw Exception - remotecode:{}, 존재하지 않는 원격 코드입니다", remoteCode.getRemoteCode());
             throw new IllegalArgumentException("remotecode:존재하지 않는 원격 코드입니다");
@@ -105,10 +92,8 @@ public class RedisRemoteCodeService implements RemoteCodeService {
             log.info("최대 참가자 수 초과, subscriber : {}", subscriberPrincipalName);
             throw new IllegalArgumentException("general:최대 참가자 수(" + MAX_CHANNEL_MEMBER + ")를 초과했습니다.");
         }
-
         log.info("add sub nickname : {}", nickname);
-        stringRedisTemplate.opsForHash()
-                .put(REMOTE_CODE_KEY, subscriberPrincipalName, nickname);
+        stringRedisTemplate.opsForHash().put(REMOTE_CODE_KEY, subscriberPrincipalName, nickname);
         this.refreshExpiration(remoteCode);
     }
 
@@ -168,10 +153,7 @@ public class RedisRemoteCodeService implements RemoteCodeService {
             // 코드 삭제 실패
             return false;
         }
-
-        subs.forEach(sub ->
-                messagingTemplate.convertAndSendToUser((String) sub, "/topic/remote/" + remoteCode.getRemoteCode(), "code expired")
-        );
+        subs.forEach(sub -> messagingTemplate.convertAndSendToUser((String) sub, "/topic/remote/" + remoteCode.getRemoteCode(), "code expired"));
         return true;
     }
 
@@ -200,5 +182,10 @@ public class RedisRemoteCodeService implements RemoteCodeService {
 
     private boolean isOverLimitIfAddMember(Map<?, ?> map) {
         return map.size() + 1 > MAX_CHANNEL_MEMBER;
+    }
+
+    public RedisRemoteCodeService(final StringRedisTemplate stringRedisTemplate, final SimpMessagingTemplate messagingTemplate) {
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.messagingTemplate = messagingTemplate;
     }
 }

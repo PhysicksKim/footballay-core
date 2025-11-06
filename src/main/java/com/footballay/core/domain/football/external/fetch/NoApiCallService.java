@@ -1,14 +1,13 @@
 package com.footballay.core.domain.football.external.fetch;
 
 import com.footballay.core.domain.football.external.fetch.response.*;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Profile("!mockapi & !api")
 @Service
-public class NoApiCallService implements ApiCallService{
+public class NoApiCallService implements ApiCallService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NoApiCallService.class);
 
     @Override
     public ExternalApiStatusResponse status() {

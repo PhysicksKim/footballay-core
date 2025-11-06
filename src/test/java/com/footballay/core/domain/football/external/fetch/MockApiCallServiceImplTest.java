@@ -6,24 +6,20 @@ import com.footballay.core.domain.football.constant.FixtureId;
 import com.footballay.core.domain.football.constant.LeagueId;
 import com.footballay.core.domain.football.constant.TeamId;
 import com.footballay.core.domain.football.external.fetch.response.*;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @Transactional
 @ActiveProfiles("mockapi")
 @SpringBootTest
 class MockApiCallServiceImplTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MockApiCallServiceImplTest.class);
     @Autowired
     private MockApiCallServiceImpl mockApiCallService;
     @Autowired
@@ -34,28 +30,22 @@ class MockApiCallServiceImplTest {
     void success_league() {
         // given
         long epl = LeagueId.EPL;
-
         // when
         LeagueInfoResponse leagueInfoResponse = mockApiCallService.leagueInfo(epl);
-
         // then
         assertThat(leagueInfoResponse).isNotNull();
         assertThat(leagueInfoResponse.getResponse().get(0)).isNotNull();
-
         _LeagueResponse leagueResponse = leagueInfoResponse.getResponse().get(0).getLeague();
         log.info("_LeagueResponse _FixtureSingle : {}", leagueResponse);
     }
-
 
     @DisplayName("Mock Api 로 team 의 현재 leagues 를 반환")
     @Test
     void success_teamCurrentLeagues() {
         // given
         long manutd = TeamId.MANUTD;
-
         // when
         LeagueInfoResponse leagueInfoResponse = mockApiCallService.teamCurrentLeaguesInfo(manutd);
-
         // then
         assertThat(leagueInfoResponse).isNotNull();
         assertThat(leagueInfoResponse.getResponse()).size().isGreaterThan(2);
@@ -70,14 +60,11 @@ class MockApiCallServiceImplTest {
     void success_team() {
         // given
         long mancity = TeamId.MANCITY;
-
         // when
         TeamInfoResponse teamInfoResponse = mockApiCallService.teamInfo(mancity);
-
         // then
         assertThat(teamInfoResponse).isNotNull();
         assertThat(teamInfoResponse.getResponse().get(0)).isNotNull();
-
         TeamInfoResponse._TeamResponse team = teamInfoResponse.getResponse().get(0).getTeam();
         log.info("_Team _FixtureSingle : {}", team);
     }
@@ -88,10 +75,8 @@ class MockApiCallServiceImplTest {
         // given
         final long leagueId = LeagueId.EPL; // 39
         final int currentSeason = 2023; // 2023
-
         // when
         TeamInfoResponse teamInfoResponse = mockApiCallService.teamsInfo(leagueId, currentSeason);
-
         // then
         assertThat(teamInfoResponse).isNotNull();
         assertThat(teamInfoResponse.getResponse().get(0)).isNotNull();
@@ -103,14 +88,11 @@ class MockApiCallServiceImplTest {
     void success_playerSquad() {
         // given
         long mancity = TeamId.MANCITY;
-
         // when
         PlayerSquadResponse playerSquadResponse = mockApiCallService.playerSquad(mancity);
-
         // then
         assertThat(playerSquadResponse).isNotNull();
         assertThat(playerSquadResponse.getResponse().get(0)).isNotNull();
-
         List<PlayerSquadResponse._PlayerData> players = playerSquadResponse.getResponse().get(0).getPlayers();
         for (PlayerSquadResponse._PlayerData player : players) {
             log.info("player : {}", player);
@@ -122,7 +104,6 @@ class MockApiCallServiceImplTest {
     void success_fixtureSingle() throws JsonProcessingException {
         // given
         long fixtureId = FixtureId.FIXTURE_SINGLE_1145526;
-
         // when
         FixtureSingleResponse fixture = mockApiCallService.fixtureSingle(fixtureId);
         String json = jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(fixture);

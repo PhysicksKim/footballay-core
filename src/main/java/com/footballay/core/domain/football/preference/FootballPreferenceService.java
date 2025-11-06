@@ -6,15 +6,12 @@ import com.footballay.core.domain.football.preference.service.PlayerCustomPhotoS
 import com.footballay.core.domain.football.preference.service.PreferenceKeyService;
 import com.footballay.core.domain.user.entity.User;
 import com.footballay.core.domain.user.service.UserService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.*;
 
 /**
@@ -23,11 +20,9 @@ import java.util.*;
  * Admin Page 에서 진입하는 경우 Username 으로 User - PreferenceKey 를 인증하며 이외의 경우 KeyHash - PreferenceKey 를 인증합니다. <br>
  * 진입점에 해당하므로 {@link Transactional} 을 사용하지 않습니다. <br>
  */
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class FootballPreferenceService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballPreferenceService.class);
     private final PreferenceKeyService preferenceKeyService;
     private final PlayerCustomPhotoService playerCustomPhotoService;
     private final UserService userService;
@@ -49,7 +44,6 @@ public class FootballPreferenceService {
         if (optionKey.isPresent()) {
             throw new IllegalStateException("PreferenceKey already exists for user=" + username);
         }
-
         PreferenceKey preferenceKey = preferenceKeyService.generatePreferenceKeyForUser(user);
         return preferenceKey.getKeyhash();
     }
@@ -101,8 +95,7 @@ public class FootballPreferenceService {
      * @return playerId - photoUrl map
      */
     public Map<Long, String> getSquadActiveCustomPhotos(String username, long teamId) {
-        Map<Long, PlayerCustomPhotoDto> photoMap =
-                playerCustomPhotoService.getActiveCustomPhotosWithUsernameAndTeamId(username, teamId);
+        Map<Long, PlayerCustomPhotoDto> photoMap = playerCustomPhotoService.getActiveCustomPhotosWithUsernameAndTeamId(username, teamId);
         return extractPhotoUrlMap(photoMap);
     }
 
@@ -115,8 +108,7 @@ public class FootballPreferenceService {
      * @return
      */
     public Map<Long, String> getCustomPhotoUrlsOfPlayers(String keyHash, Set<Long> playerIds) {
-        Map<Long, PlayerCustomPhotoDto> photoMap =
-                playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
+        Map<Long, PlayerCustomPhotoDto> photoMap = playerCustomPhotoService.getActiveCustomPhotos(keyHash, playerIds);
         return extractPhotoUrlMap(photoMap);
     }
 
@@ -135,7 +127,7 @@ public class FootballPreferenceService {
     }
 
     public boolean deactivatePhoto(String username, long photoId) {
-        try{
+        try {
             boolean success = playerCustomPhotoService.deactivatePhotoWithUsername(username, photoId);
             log.info("Deactivate photo success={}", success);
             return success;
@@ -145,11 +137,10 @@ public class FootballPreferenceService {
         }
     }
 
-    @PreAuthorize("hasAnyRole({'ADMIN', 'STREAMER'})")
+    @PreAuthorize("hasAnyRole({\'ADMIN\', \'STREAMER\'})")
     public boolean switchToDefaultPhoto(long playerId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-
         return playerCustomPhotoService.deactivatePhotoWithUsernameAndPlayerId(username, playerId);
     }
 
@@ -167,4 +158,9 @@ public class FootballPreferenceService {
         return photoUrls;
     }
 
+    public FootballPreferenceService(final PreferenceKeyService preferenceKeyService, final PlayerCustomPhotoService playerCustomPhotoService, final UserService userService) {
+        this.preferenceKeyService = preferenceKeyService;
+        this.playerCustomPhotoService = playerCustomPhotoService;
+        this.userService = userService;
+    }
 }

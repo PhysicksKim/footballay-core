@@ -4,28 +4,20 @@ import com.footballay.core.domain.football.preference.persistence.UserFilePath;
 import com.footballay.core.domain.football.preference.persistence.UserPathCategory;
 import com.footballay.core.domain.football.preference.repository.UserFilePathRepository;
 import com.footballay.core.domain.user.entity.User;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.security.SecureRandom;
 import java.util.Optional;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class UserFilePathService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserFilePathService.class);
     private final UserFilePathRepository userFilePathRepository;
-
     @Value("${aws.cloudfront.domain}")
     private String CLOUDFRONT_DOMAIN;
-
     @Value("${path.football.players.photo.prefix}")
     private String PLAYER_CUSTOM_PHOTO_PREFIX;
-
     @Value("${path.football.players.photo.suffix}")
     private String PLAYER_CUSTOM_PHOTO_SUFFIX;
 
@@ -38,35 +30,25 @@ public class UserFilePathService {
     @Transactional
     public UserFilePath getPlayerCustomPhotoPath(User user) {
         UserPathCategory category = UserPathCategory.PLAYER_CUSTOM_PHOTO;
-
         Optional<UserFilePath> optionalUserFilePath = userFilePathRepository.findByUserIdAndUserPathCategory(user.getId(), category);
         UserFilePath userFilePath;
-        if(optionalUserFilePath.isEmpty()) {
+        if (optionalUserFilePath.isEmpty()) {
             String userPathHash;
             do {
                 userPathHash = HashGenerator.generateUserPathHash();
             } while (userFilePathRepository.existsByUserPathHash(userPathHash));
-
-            UserFilePath build = UserFilePath.builder()
-                    .user(user)
-                    .domain(CLOUDFRONT_DOMAIN)
-                    .prefixPath(PLAYER_CUSTOM_PHOTO_PREFIX)
-                    .suffixPath(PLAYER_CUSTOM_PHOTO_SUFFIX)
-                    .userPathCategory(category)
-                    .userPathHash(userPathHash)
-                    .build();
+            UserFilePath build = UserFilePath.builder().user(user).domain(CLOUDFRONT_DOMAIN).prefixPath(PLAYER_CUSTOM_PHOTO_PREFIX).suffixPath(PLAYER_CUSTOM_PHOTO_SUFFIX).userPathCategory(category).userPathHash(userPathHash).build();
             userFilePath = userFilePathRepository.save(build);
         } else {
             userFilePath = optionalUserFilePath.get();
         }
-
         return userFilePath;
     }
+
 
     private static final class HashGenerator {
         private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789";
         private static final int KEY_LENGTH = 16;
-
         private static final SecureRandom RANDOM = new SecureRandom();
 
         public static String generateUserPathHash() {
@@ -78,4 +60,7 @@ public class UserFilePathService {
         }
     }
 
+    public UserFilePathService(final UserFilePathRepository userFilePathRepository) {
+        this.userFilePathRepository = userFilePathRepository;
+    }
 }

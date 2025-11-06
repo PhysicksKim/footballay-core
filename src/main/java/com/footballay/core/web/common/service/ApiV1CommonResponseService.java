@@ -2,17 +2,15 @@ package com.footballay.core.web.common.service;
 
 import com.footballay.core.web.common.dto.ApiResponse;
 import com.footballay.core.web.common.dto.MetaData;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 
-@Slf4j
 @Service
 public class ApiV1CommonResponseService implements ApiCommonResponseService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiV1CommonResponseService.class);
 
     @Override
     public <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl) {
@@ -23,17 +21,7 @@ public class ApiV1CommonResponseService implements ApiCommonResponseService {
     public <T> ApiResponse<T> createSuccessResponse(T[] response, String requestUrl, Map<String, String> params) {
         String successUUID = UUID.randomUUID().toString();
         log.info("success request UUID={}, requestUrl={}, params={}", successUUID, requestUrl, params.toString());
-
-        MetaData metaData = new MetaData(
-                successUUID,
-                ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                STATUS_SUCCESS,
-                CODE_SUCCESS,
-                "Request processed successfully",
-                requestUrl,
-                params,
-                VERSION
-        );
+        MetaData metaData = new MetaData(successUUID, ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), STATUS_SUCCESS, CODE_SUCCESS, "Request processed successfully", requestUrl, params, VERSION);
         return new ApiResponse<>(metaData, response);
     }
 
@@ -46,31 +34,12 @@ public class ApiV1CommonResponseService implements ApiCommonResponseService {
     public <T> ApiResponse<T> createFailureResponse(String message, String requestUrl, Map<String, String> params) {
         String failureUUID = UUID.randomUUID().toString();
         log.info("failure request UUID={}, requestUrl={}, params={}", failureUUID, requestUrl, params.toString());
-
-        MetaData metaData = new MetaData(
-                failureUUID,
-                ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                STATUS_FAILURE,
-                CODE_FAILURE,
-                message,
-                requestUrl,
-                params,
-                VERSION
-        );
+        MetaData metaData = new MetaData(failureUUID, ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), STATUS_FAILURE, CODE_FAILURE, message, requestUrl, params, VERSION);
         return new ApiResponse<>(metaData, null);
     }
 
     @Override
     public MetaData createSuccessMetaData(String requestUrl, Map<String, String> params) {
-        return new MetaData(
-                UUID.randomUUID().toString(),
-                ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                STATUS_SUCCESS,
-                CODE_SUCCESS,
-                "Request processed successfully",
-                requestUrl,
-                params,
-                VERSION
-        );
+        return new MetaData(UUID.randomUUID().toString(), ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME), STATUS_SUCCESS, CODE_SUCCESS, "Request processed successfully", requestUrl, params, VERSION);
     }
 }

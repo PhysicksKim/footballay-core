@@ -1,18 +1,20 @@
 package com.footballay.core.domain.quartz;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
 
 import java.time.LocalDateTime;
 
-@Slf4j
-@RequiredArgsConstructor
 public class SimpleJob implements Job {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(SimpleJob.class);
     private final JobAutowireTestService jobAutowireTestService;
+
+    public SimpleJob(JobAutowireTestService jobAutowireTestService) {
+        this.jobAutowireTestService = jobAutowireTestService;
+    }
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {

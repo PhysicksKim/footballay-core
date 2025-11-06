@@ -1,20 +1,17 @@
 package com.footballay.core.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.StringUtils;
-
 import static org.assertj.core.api.Assertions.*;
 
-@Slf4j
 @ActiveProfiles("dev")
 @SpringBootTest
 class AppEnvironmentVariableTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AppEnvironmentVariableTest.class);
     @Autowired
     private AppEnvironmentVariable appEnvironmentVariable;
 
@@ -22,10 +19,12 @@ class AppEnvironmentVariableTest {
     @Test
     void getEnvVal() {
         // when
-        String mainDomain = appEnvironmentVariable.getDomain();
-
+        String gyeDomain = appEnvironmentVariable.getGYE_DOMAIN();
+        String footballayDomain = appEnvironmentVariable.getFOOTBALLAY_DOMAIN();
         // then
-        log.info("mainDomain: {}", mainDomain);
-        assertThat(StringUtils.hasText(mainDomain)).isTrue();
+        log.info("gyechunhoe domain : {}", gyeDomain);
+        log.info("footballay domain : {}", footballayDomain);
+        assertThat(StringUtils.hasText(gyeDomain)).isTrue();
+        assertThat(StringUtils.hasText(footballayDomain)).isTrue();
     }
 }

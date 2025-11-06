@@ -4,9 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -14,10 +12,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @Service
 public class RemoteHostTokenService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RemoteHostTokenService.class);
     private final SecretKey SECRET_KEY; // provider 에 의해 주입받음
 
     public RemoteHostTokenService(HS256KeyProvider provider) {
@@ -44,13 +41,7 @@ public class RemoteHostTokenService {
     private String generateToken(String remoteCode, LocalDateTime generatedTime) {
         Map<String, Object> claims = createClaimsForRemoteHost(remoteCode);
         Date issuedDate = convertIssuedAt(generatedTime);
-
-        return Jwts.builder()
-                .subject("remoteHost")
-                .claims(claims)
-                .issuedAt(issuedDate)
-                .signWith(SECRET_KEY)
-                .compact();
+        return Jwts.builder().subject("remoteHost").claims(claims).issuedAt(issuedDate).signWith(SECRET_KEY).compact();
     }
 
     private Map<String, Object> createClaimsForRemoteHost(String remoteCode) {

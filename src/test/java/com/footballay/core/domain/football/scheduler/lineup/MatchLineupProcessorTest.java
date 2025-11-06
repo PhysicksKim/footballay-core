@@ -3,29 +3,24 @@ package com.footballay.core.domain.football.scheduler.lineup;
 import com.footballay.core.domain.football.external.fetch.ApiCallService;
 import com.footballay.core.domain.football.external.fetch.response.FixtureSingleResponse;
 import com.footballay.core.domain.football.external.lineup.LineupService;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-@Slf4j
-@ActiveProfiles({"dev","mockapi"})
+@ActiveProfiles({"dev", "mockapi"})
 @SpringBootTest
 class MatchLineupProcessorTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MatchLineupProcessorTest.class);
     @Mock
     private ApiCallService apiCallService;
-
     @Mock
     private LineupService lineupService;
-
     @InjectMocks
     private PreviousMatchProcessor previousMatchProcessor;
 
@@ -37,10 +32,8 @@ class MatchLineupProcessorTest {
         when(apiCallService.fixtureSingle(anyLong())).thenReturn(fixtureSingleResponse);
         when(lineupService.existLineupDataInResponse(fixtureSingleResponse)).thenReturn(true);
         when(lineupService.saveLineup(fixtureSingleResponse)).thenReturn(true);
-
         // When
         boolean result = previousMatchProcessor.requestAndSaveLineup(1L);
-
         // Then
         assertFalse(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());
@@ -51,10 +44,8 @@ class MatchLineupProcessorTest {
     public void testRequestAndSaveLineupException() throws Exception {
         // Given
         when(apiCallService.fixtureSingle(anyLong())).thenThrow(new RuntimeException("API call failed"));
-
         // When
         boolean result = previousMatchProcessor.requestAndSaveLineup(1L);
-
         // Then
         assertFalse(result);
         verify(apiCallService, times(1)).fixtureSingle(anyLong());

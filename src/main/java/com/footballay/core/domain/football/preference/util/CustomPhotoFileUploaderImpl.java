@@ -2,13 +2,10 @@ package com.footballay.core.domain.football.preference.util;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,16 +13,12 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 @Profile("aws")
-@Slf4j
-@RequiredArgsConstructor
 @Component
 public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CustomPhotoFileUploaderImpl.class);
     private final AmazonS3 amazonS3;
-
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
-
     @Value("${aws.s3.public-domain}")
     private String s3domain;
 
@@ -36,16 +29,14 @@ public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
      * @param localDownloadPath 다운로드 받을 로컬 경로 (예: "src/main/resources/devdata/test_downloaded.png")
      */
     public void downloadFile(String s3Key, String localDownloadPath) {
-        try (S3Object s3Object = amazonS3.getObject(bucketName, s3Key);
-             S3ObjectInputStream inputStream = s3Object.getObjectContent()) {
-
+        try (
+            S3Object s3Object = amazonS3.getObject(bucketName, s3Key);
+            S3ObjectInputStream inputStream = s3Object.getObjectContent()) {
             // 로컬에 파일 생성
             Path path = Paths.get(localDownloadPath);
             Files.createDirectories(path.getParent()); // 디렉토리 없으면 생성
             Files.copy(inputStream, path, StandardCopyOption.REPLACE_EXISTING);
-
             log.info("Downloaded file from S3. localPath={}", localDownloadPath);
-
         } catch (AmazonS3Exception e) {
             log.error("[CustomPhotoFileUploaderImpl] Failed to download file from S3. error={}", e.getMessage(), e);
             throw e;
@@ -65,14 +56,8 @@ public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(multipartFile.getSize());
             metadata.setContentType(multipartFile.getContentType());
-
             log.info("Uploading file to S3. s3Key={}", s3Key);
-            PutObjectRequest putObjectRequest = new PutObjectRequest(
-                    bucketName,
-                    s3Key,
-                    multipartFile.getInputStream(),
-                    metadata
-            );
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, s3Key, multipartFile.getInputStream(), metadata);
             amazonS3.putObject(putObjectRequest);
         } catch (IOException e) {
             throw new RuntimeException("fail S3 file upload", e);
@@ -104,4 +89,7 @@ public class CustomPhotoFileUploaderImpl implements CustomPhotoFileUploader {
         }
     }
 
+    public CustomPhotoFileUploaderImpl(final AmazonS3 amazonS3) {
+        this.amazonS3 = amazonS3;
+    }
 }

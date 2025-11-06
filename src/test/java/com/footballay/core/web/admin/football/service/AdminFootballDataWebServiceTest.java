@@ -13,7 +13,6 @@ import com.footballay.core.domain.football.util.DevInitData;
 import com.footballay.core.web.admin.football.response.AvailableFixtureResponse;
 import com.footballay.core.web.admin.football.response.AvailableLeagueResponse;
 import com.footballay.core.web.common.dto.ApiResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,13 +20,11 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.ZonedDateTime;
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -39,31 +36,24 @@ import static org.mockito.Mockito.doNothing;
  * <h3>dev profile</h3>
  * dev profile 활성화 시, MockApiInitDataRunner 가 실행되어 개발용 데이터들이 삽입됩니다.
  */
-@Slf4j
-@ActiveProfiles({"mockapi","dev"})
+@ActiveProfiles({"mockapi", "dev"})
 @SpringBootTest
 @Transactional
 class AdminFootballDataWebServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballDataWebServiceTest.class);
     @Autowired
     AdminFootballDataWebService adminFootballDataWebService;
-
     @Autowired
     private FootballAvailableService footballAvailableService;
-
     @Autowired
     private DevInitData devInitData;
-
     @Autowired
     private ObjectMapper jacksonObjectMapper;
-
     @Autowired
     private Scheduler scheduler;
-
-    @MockBean
+    @MockitoBean
     private PreviousMatchJobSchedulerService previousMatchJobSchedulerService;
-
-    @MockBean
+    @MockitoBean
     private LiveMatchJobSchedulerService liveMatchJobSchedulerService;
     @Autowired
     private FootballRoot footballRoot;
@@ -82,26 +72,19 @@ class AdminFootballDataWebServiceTest {
         // "dev" profile 의 runner 에 의해서 자동으로 기본 데이터가 삽입됩니다.
         List<League> availableLeagues = footballAvailableService.getAvailableLeagues();
         log.info("availableLeagues={}", availableLeagues);
-
         // when
-        ApiResponse<AvailableLeagueResponse> responseAvailableLeagues =
-                adminFootballDataWebService.getAvailableLeagues("/api/admin/football/available/leagues/available");
-
+        ApiResponse<AvailableLeagueResponse> responseAvailableLeagues = adminFootballDataWebService.getAvailableLeagues("/api/admin/football/available/leagues/available");
         String responseJsonString = jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseAvailableLeagues);
         log.info("responseAvailableLeagues={}", responseJsonString);
-
         // then
         assertThat(responseAvailableLeagues).isNotNull();
         assertThat(responseAvailableLeagues.metaData().status()).isEqualTo("SUCCESS");
         assertThat(responseAvailableLeagues.metaData().responseCode()).isEqualTo(200);
         assertThat(responseAvailableLeagues.metaData().requestUrl()).isEqualTo("/api/admin/football/available/leagues/available");
-
         assertThat(responseAvailableLeagues.response()).hasSize(availableLeagues.size());
-
         for (int i = 0; i < availableLeagues.size(); i++) {
             League expectedLeague = availableLeagues.get(i);
             AvailableLeagueResponse actualLeagueDto = responseAvailableLeagues.response()[i];
-
             assertThat(actualLeagueDto.leagueId()).isEqualTo(expectedLeague.getLeagueId());
             assertThat(actualLeagueDto.name()).isEqualTo(expectedLeague.getName());
             assertThat(actualLeagueDto.koreanName()).isEqualTo(expectedLeague.getKoreanName());
@@ -116,10 +99,8 @@ class AdminFootballDataWebServiceTest {
     void success_addAvailableLeague() throws JsonProcessingException {
         // given
         long leagueId = LeagueId.EURO; // 예시 리그 ID
-
         // when
         ApiResponse<AvailableLeagueResponse> response = adminFootballDataWebService.addAvailableLeague(leagueId, "/api/admin/football/available/leagues/available");
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("SUCCESS");
@@ -135,10 +116,8 @@ class AdminFootballDataWebServiceTest {
     void success_deleteAvailableLeague() throws JsonProcessingException {
         // given
         long leagueId = LeagueId.EURO; // 예시 리그 ID
-
         // when
         ApiResponse<String> response = adminFootballDataWebService.deleteAvailableLeague(leagueId, "/api/admin/football/available/leagues/available");
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("SUCCESS");
@@ -153,11 +132,9 @@ class AdminFootballDataWebServiceTest {
         // given
         long leagueId = LeagueId.EURO; // 예시 리그 ID
         ZonedDateTime date = ZonedDateTime.now(); // 현재 날짜
-
         // when
         ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.getAvailableFixtures(leagueId, date, "/api/admin/football/available/fixtures/available");
         log.info("response={}", jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response));
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("SUCCESS");
@@ -170,10 +147,8 @@ class AdminFootballDataWebServiceTest {
     void fail_addAvailableFixture() throws JsonProcessingException {
         // given
         long fixtureId = FixtureId.FIXTURE_EURO2024_1; // 예시 경기 ID
-
         // when
         ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("FAILURE");
@@ -188,10 +163,8 @@ class AdminFootballDataWebServiceTest {
         long fixtureId = FixtureId.FIXTURE_EURO2024_SPAIN_CROATIA; // 예시 경기 ID
         // InitData 에서 available 로 설정해뒀으므로 제거
         footballRoot.removeAvailableFixture(fixtureId);
-
         // when
         ApiResponse<AvailableFixtureResponse> response = adminFootballDataWebService.addAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("SUCCESS");
@@ -207,10 +180,8 @@ class AdminFootballDataWebServiceTest {
     void success_deleteAvailableFixture() throws JsonProcessingException {
         // given
         long fixtureId = FixtureId.FIXTURE_EURO2024_1; // 예시 경기 ID
-
         // when
         ApiResponse<String> response = adminFootballDataWebService.deleteAvailableFixture(fixtureId, "/api/admin/football/available/fixtures/available");
-
         // then
         assertThat(response).isNotNull();
         assertThat(response.metaData().status()).isEqualTo("SUCCESS");

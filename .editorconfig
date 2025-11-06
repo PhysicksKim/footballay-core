@@ -1,0 +1,27 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+max_line_length = 120
+tab_width = 4
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+# 와일드카드 import 허용
+ktlint_standard_no-wildcard-imports = disabled
+# 함수 이름 규칙 비활성화 (테스트 메서드의 백틱 이름 허용)
+ktlint_standard_function-naming = disabled
+# Property 이름 규칙 비활성화 (테스트 property 백틱 이름 허용)
+ktlint_standard_property-naming = disabled
+# KDoc과 EOL comment 사이 빈 줄 요구사항 완화
+ktlint_standard_comment-wrapping = disabled
+# 파일 이름 규칙 비활성화 (일부 파일은 여러 클래스를 포함할 수 있음)
+ktlint_standard_filename = disabled
+# Import 순서 규칙 완화 (주석이 있는 import는 자동 수정 불가)
+ktlint_standard_import-ordering = disabled
+# 최대 라인 길이 제한 완화 (나중에 수동으로 처리)
+ktlint_standard_max-line-length = disabled

@@ -6,16 +6,12 @@ import com.footballay.core.web.admin.football.response.UserInfoResponse;
 import com.footballay.core.web.common.dto.ApiResponse;
 import com.footballay.core.web.common.service.ApiCommonResponseService;
 import jakarta.annotation.Nullable;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class AdminUserRoleService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminUserRoleService.class);
     private final ApiCommonResponseService apiCommonResponseService;
     private final UserRoot userRoot;
 
@@ -26,8 +22,8 @@ public class AdminUserRoleService {
      * @return
      */
     public ApiResponse<UserInfoResponse> getUserInfo(@Nullable Authentication auth, String requestUrl) {
-        try{
-            if(auth == null) {
+        try {
+            if (auth == null) {
                 log.info("Authentication is null while getting user info in AdminUserRoleService");
                 return apiCommonResponseService.createFailureResponse("anonymous user", requestUrl);
             }
@@ -44,4 +40,8 @@ public class AdminUserRoleService {
         return new UserInfoResponse(nickname, roles, profileImage, preferenceKey);
     }
 
+    public AdminUserRoleService(final ApiCommonResponseService apiCommonResponseService, final UserRoot userRoot) {
+        this.apiCommonResponseService = apiCommonResponseService;
+        this.userRoot = userRoot;
+    }
 }

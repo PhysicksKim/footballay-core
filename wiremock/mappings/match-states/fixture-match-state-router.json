@@ -1,0 +1,167 @@
+{
+  "mappings": [
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "pre-match"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/pre-match.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "lineup-announced"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/lineup-announced.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "first-half"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/first-half.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "half-time"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/half-time.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "second-half"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/second-half.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        },
+        "headers": {
+          "X-Mock-Match-State": {
+            "equalTo": "full-time"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/full-time.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "priority": 10,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/fixtures",
+        "queryParameters": {
+          "id": {
+            "equalTo": "1208021"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyFileName": "match-states/pre-match.json",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    }
+  ]
+}

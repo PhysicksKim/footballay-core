@@ -1,47 +1,30 @@
 package com.footballay.core.domain.football.external.fetch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.footballay.core.domain.football.exception.ApiRateLimitException;
 import com.footballay.core.domain.football.external.fetch.response.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 
-@RequiredArgsConstructor
-@Slf4j
-@Profile("api")
+@Profile("api & !mockapi")
 @Service
 public class ApiCallServiceImpl implements ApiCallService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiCallServiceImpl.class);
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper objectMapper;
-
-    private static final int API_REQUEST_LIMIT_CODE = 429;
-
-    @Value("${rapidapi.football.key}")
+    @Value("${footballay.apisports.headers.rapidapi:APISPORTSKEY}")
     private String key;
 
     @Override
     public ExternalApiStatusResponse status() {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/status")
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/status").get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             Headers headers = response.headers();
-
             if (responseBody == null) {
                 throw new IllegalArgumentException("Api Status body is null");
             }
@@ -54,16 +37,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public LeagueInfoResponse leagueInfo(long leagueId) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/leagues?id=" + leagueId + "&current=true")
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/leagues?id=" + leagueId + "&current=true").get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for league ID " + leagueId);
@@ -77,16 +53,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public LeagueInfoResponse teamCurrentLeaguesInfo(long teamId) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/leagues?team=" + teamId + "&current=true")
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/leagues?team=" + teamId + "&current=true").get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for league ID " + teamId);
@@ -100,16 +69,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public TeamInfoResponse teamsInfo(long leagueId, int currentSeason) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/teams?league=" + leagueId + "&season=" + currentSeason)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/teams?league=" + leagueId + "&season=" + currentSeason).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for league ID " + leagueId);
@@ -123,16 +85,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public TeamInfoResponse teamInfo(long teamId) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/teams?id=" + teamId)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/teams?id=" + teamId).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for team ID " + teamId);
@@ -146,16 +101,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public PlayerSquadResponse playerSquad(long teamId) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/players/squads?team=" + teamId)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/players/squads?team=" + teamId).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for team ID " + teamId);
@@ -169,16 +117,9 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public LeagueInfoResponse allLeagueCurrent() {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/leagues?current=true")
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/leagues?current=true").get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("unExpected Error when cache All Current Leagues");
@@ -189,18 +130,13 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    // example request
+    // _FixtureSingle | GET : https://v3.football.api-sports.io/fixtures?league=4&season=2024
     @Override
     public FixtureResponse fixturesOfLeagueSeason(long leagueId, int season) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/fixtures?league=" + leagueId + "&season=" + season)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/fixtures?league=" + leagueId + "&season=" + season).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null for league ID " + leagueId);
@@ -214,34 +150,24 @@ public class ApiCallServiceImpl implements ApiCallService {
 
     @Override
     public FixtureSingleResponse fixtureSingle(long fixtureId) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/fixtures?id=" + fixtureId)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/fixtures?id=" + fixtureId).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("_FixtureSingle body is null. fixture ID : " + fixtureId);
             }
             FixtureSingleResponse fixtureSingleResponse = objectMapper.readValue(responseBody.string(), FixtureSingleResponse.class);
-
             // DEBUG for 2024-11-11 EPL 11R chelsea vs arsenal
             final boolean DEBUG_UNREGI_PLAYER = false;
-            if(fixtureId == 1208125 && DEBUG_UNREGI_PLAYER) {
+            if (fixtureId == 1208125 && DEBUG_UNREGI_PLAYER) {
                 // Modify the player ID if it matches the target ID
                 final long chelseaJacksonId = 283058L; // Jackson player's original ID
-
                 // Call helper methods to update the player ID
                 updateEventPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updateLineupPlayerIdToNull(fixtureSingleResponse, chelseaJacksonId);
                 updatePlayerStatisticsIdToNull(fixtureSingleResponse, chelseaJacksonId);
             }
-
             return fixtureSingleResponse;
         } catch (IOException exception) {
             log.error("Api-Football call error :: fixtureId={} ", fixtureId, exception);
@@ -249,18 +175,12 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    // Response | GET : https://v3.football.api-sports.io/players?id=629&league=39&season=2024
     @Override
     public PlayerInfoResponse playerSingle(long playerId, long leagueId, int season) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/players?id=" + playerId + "&league=" + leagueId + "&season=" + season)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
+        Request request = new Request.Builder().url("https://v3.football.api-sports.io/players?id=" + playerId + "&league=" + leagueId + "&season=" + season).get().addHeader("X-RapidAPI-Host", "v3.football.api-sports.io").addHeader("X-RapidAPI-Key", key).build();
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
+            if (!response.isSuccessful()) throw new IllegalArgumentException("response fail : " + response);
             ResponseBody responseBody = response.body();
             if (responseBody == null) {
                 throw new IllegalArgumentException("player single body is null for player ID " + playerId);
@@ -268,52 +188,20 @@ public class ApiCallServiceImpl implements ApiCallService {
             return objectMapper.readValue(responseBody.string(), PlayerInfoResponse.class);
         } catch (IOException exception) {
             log.error("Api-Football call error :: playerId={},leagueId={},season={} ", playerId, leagueId, season, exception);
-            throw new RuntimeException("Api-Football call error :: playerId=" + playerId + ",leagueId="+leagueId+",season="+season, exception);
+            throw new RuntimeException("Api-Football call error :: playerId=" + playerId + ",leagueId=" + leagueId + ",season=" + season, exception);
         }
     }
 
-    @Override
-    public StandingsResponse standings(long leagueId, int season) {
-        Request request = new Request.Builder()
-                .url("https://v3.football.api-sports.io/standings?league=" + leagueId + "&season=" + season)
-                .get()
-                .addHeader("X-RapidAPI-Host", "v3.football.api-sports.io")
-                .addHeader("X-RapidAPI-Key", key)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (response.code() == API_REQUEST_LIMIT_CODE)
-                throw new ApiRateLimitException("when fetching standings, API request limit exceeded. leagueId=" + leagueId + ", season=" + season);
-
-            if (!response.isSuccessful())
-                throw new IllegalArgumentException("response fail : " + response);
-
-
-            ResponseBody responseBody = response.body();
-            if (responseBody == null) {
-                throw new IllegalArgumentException("standing body is null for leagueId=" + leagueId +",season=" + season);
-            }
-            return objectMapper.readValue(responseBody.string(), StandingsResponse.class);
-        } catch (IOException exception) {
-            log.error("Api-Football call error :: leagueId={} ", leagueId, exception);
-            throw new RuntimeException("Api-Football call error :: leagueId=" + leagueId, exception);
-        }
-    }
-
-    /**
-     * Helper method to update player ID in events
-     */
+    // Helper method to update player ID in events
     private void updateEventPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
                 if (fixtureSingle.getEvents() != null) {
                     for (FixtureSingleResponse._Events event : fixtureSingle.getEvents()) {
-                        if (event.getPlayer() != null && event.getPlayer().getId() != null
-                                && event.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                        if (event.getPlayer() != null && event.getPlayer().getId() != null && event.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
                             event.getPlayer().setId(null);
                         }
-                        if (event.getAssist() != null && event.getAssist().getId() != null
-                                && event.getAssist().getId().equals(targetUnregisteredPlayerId)) {
+                        if (event.getAssist() != null && event.getAssist().getId() != null && event.getAssist().getId().equals(targetUnregisteredPlayerId)) {
                             event.getPlayer().setId(null);
                         }
                     }
@@ -322,9 +210,7 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    /**
-     * Helper method to update player ID in lineups
-     */
+    // Helper method to update player ID in lineups
     private void updateLineupPlayerIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
@@ -332,16 +218,14 @@ public class ApiCallServiceImpl implements ApiCallService {
                     for (FixtureSingleResponse._Lineups lineup : fixtureSingle.getLineups()) {
                         if (lineup.getStartXI() != null) {
                             for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getStartXI()) {
-                                if (player.getPlayer() != null && player.getPlayer().getId() != null
-                                        && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                                if (player.getPlayer() != null && player.getPlayer().getId() != null && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
                                     player.getPlayer().setId(null); // Set the ID to null
                                 }
                             }
                         }
                         if (lineup.getSubstitutes() != null) {
                             for (FixtureSingleResponse._Lineups._StartPlayer player : lineup.getSubstitutes()) {
-                                if (player.getPlayer() != null && player.getPlayer().getId() != null
-                                        && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
+                                if (player.getPlayer() != null && player.getPlayer().getId() != null && player.getPlayer().getId().equals(targetUnregisteredPlayerId)) {
                                     player.getPlayer().setId(null); // Set the ID to null
                                 }
                             }
@@ -352,9 +236,7 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    /**
-     * Helper method to update player ID in playerStatistics
-     */
+    // Helper method to update player ID in playerStatistics
     private void updatePlayerStatisticsIdToNull(FixtureSingleResponse fixtureSingleResponse, long targetUnregisteredPlayerId) {
         if (fixtureSingleResponse.getResponse() != null) {
             for (FixtureSingleResponse._FixtureSingle fixtureSingle : fixtureSingleResponse.getResponse()) {
@@ -374,7 +256,8 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
-    private @NotNull ExternalApiStatusResponse mapToStatusResponse(ResponseBody responseBody, Headers headers) throws IOException {
+    @NotNull
+    private ExternalApiStatusResponse mapToStatusResponse(ResponseBody responseBody, Headers headers) throws IOException {
         ExternalApiStatusResponse mappedResponse = objectMapper.readValue(responseBody.string(), ExternalApiStatusResponse.class);
         ExternalApiStatusResponse._Headers mappedHeaders = new ExternalApiStatusResponse._Headers();
         mappedHeaders.setXRatelimitLimit(parseIntOrMinusOne(headers.get("X-Ratelimit-Limit")));
@@ -393,4 +276,7 @@ public class ApiCallServiceImpl implements ApiCallService {
         }
     }
 
+    public ApiCallServiceImpl(final ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 }

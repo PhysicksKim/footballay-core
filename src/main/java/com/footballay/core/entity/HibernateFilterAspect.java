@@ -1,7 +1,5 @@
 package com.footballay.core.entity;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,14 +13,11 @@ import org.springframework.stereotype.Component;
  * soft delete 된 엔티티를 포함해서 조회하고 싶은 경우 사용합니다.
  * @see IncludeDeleted
  */
-@Slf4j
-@RequiredArgsConstructor
 @Aspect
 @Component
 public class HibernateFilterAspect {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HibernateFilterAspect.class);
     private final SessionFactory sessionFactory;
-
     private static final String SOFT_DELETE_FILTER_NAME = "SoftDeleteFilter";
 
     /**
@@ -43,5 +38,9 @@ public class HibernateFilterAspect {
         Filter filter = session.enableFilter(SOFT_DELETE_FILTER_NAME);
         filter.setParameter("softDeleteBool", true);
         filter.validate();
+    }
+
+    public HibernateFilterAspect(final SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 }

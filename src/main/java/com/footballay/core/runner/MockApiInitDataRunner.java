@@ -4,8 +4,6 @@ import com.footballay.core.domain.football.FootballRoot;
 import com.footballay.core.domain.football.constant.FixtureId;
 import com.footballay.core.domain.football.constant.LeagueId;
 import com.footballay.core.domain.football.constant.TeamId;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
@@ -14,19 +12,16 @@ import org.springframework.stereotype.Component;
 /**
  * mockApi 사용 시 초기 데이터를 추가하는 Runner 입니다.
  */
-@Slf4j
 @Component
-@RequiredArgsConstructor
 @Profile("mockapi")
 public class MockApiInitDataRunner implements ApplicationRunner {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MockApiInitDataRunner.class);
     private final FootballRoot footballRoot;
-
     private static final boolean WANT_TO_ADD_DATA = false;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        if(WANT_TO_ADD_DATA) {
+        if (WANT_TO_ADD_DATA) {
             addData();
         }
     }
@@ -34,7 +29,6 @@ public class MockApiInitDataRunner implements ApplicationRunner {
     private void addData() {
         // Save [ _StandingResponseData, _Team, _Player, _Fixture ] of Euro 2024
         cacheLeagueTeamPlayerFixtureOfEuro2024();
-
         // Save [ AvailableLeague, AvailableFixture ] of Euro 2024
         cacheAvailableLeagueAndAvailableFixtureOfEuro2024();
     }
@@ -58,8 +52,10 @@ public class MockApiInitDataRunner implements ApplicationRunner {
     }
 
     private void cacheAvailableFixture(long leagueId) {
-        if(leagueId == LeagueId.EURO)
-            footballRoot.addAvailableFixture(FixtureId.FIXTURE_EURO2024_1);
+        if (leagueId == LeagueId.EURO) footballRoot.addAvailableFixture(FixtureId.FIXTURE_EURO2024_1);
     }
 
+    public MockApiInitDataRunner(final FootballRoot footballRoot) {
+        this.footballRoot = footballRoot;
+    }
 }

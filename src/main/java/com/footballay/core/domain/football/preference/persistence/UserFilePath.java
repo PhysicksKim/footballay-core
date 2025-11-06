@@ -2,27 +2,17 @@ package com.footballay.core.domain.football.preference.persistence;
 
 import com.footballay.core.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.*;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Entity
 @Table(name = "user_file_paths")
 public class UserFilePath {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserFilePath.class);
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
     /**
      * 파일 경로의 도메인
      * <pre>
@@ -35,7 +25,6 @@ public class UserFilePath {
      */
     @Column(nullable = false)
     private String domain;
-
     /**
      * 파일 경로의 접두사
      * <pre>
@@ -49,12 +38,9 @@ public class UserFilePath {
      *     prefixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
      *     ex) prefix/path/include/slashes
      * </p>
-     *
      */
-    @Builder.Default
     @Column(nullable = false)
-    private String prefixPath = "";
-
+    private String prefixPath;
     /**
      * 파일 경로의 접미사
      * <pre>
@@ -68,12 +54,9 @@ public class UserFilePath {
      *     suffixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
      *     ex) suffix/path/include/slashes
      * </p>
-     *
      */
-    @Builder.Default
     @Column(nullable = false)
-    private String suffixPath = "";
-
+    private String suffixPath;
     /**
      * 사용자 구분을 위한 해시값. <br>
      * {유저, 카테고리} 조합으로 하나의 고유한 해시를 사용합니다. <br>
@@ -92,7 +75,6 @@ public class UserFilePath {
      */
     @Column(nullable = false, unique = true)
     private String userPathHash;
-
     /**
      * 사용자 경로의 카테고리 <br>
      * 같은 사용자일지라도 카테고리가 다르면 path 가 달라지므로 구분하고자 사용합니다. <br>
@@ -131,10 +113,8 @@ public class UserFilePath {
      */
     public String getFullPath() {
         StringBuilder fullPath = new StringBuilder();
-
         // Append domain
         fullPath.append(domain);
-
         // getPathWithoutDomain
         fullPath.append(getPathWithoutDomain());
         return fullPath.toString();
@@ -154,28 +134,23 @@ public class UserFilePath {
      */
     public String getPathWithoutDomain() {
         StringBuilder pathWithoutDomain = new StringBuilder();
-
         // Append '/' if prefixPath is not empty
         if (!prefixPath.isEmpty()) {
             pathWithoutDomain.append("/");
             pathWithoutDomain.append(prefixPath);
         }
-
         // Append '/' and userPathHash
         pathWithoutDomain.append("/");
         pathWithoutDomain.append(userPathHash);
-
         // Append '/' and suffixPath if not empty
         if (!suffixPath.isEmpty()) {
             pathWithoutDomain.append("/");
             pathWithoutDomain.append(suffixPath);
         }
-
         // Ensure the path ends with '/'
         if (!pathWithoutDomain.toString().endsWith("/")) {
             pathWithoutDomain.append("/");
         }
-
         return pathWithoutDomain.toString();
     }
 
@@ -216,5 +191,397 @@ public class UserFilePath {
             return path.substring(0, path.length() - 1);
         }
         return path;
+    }
+
+    private static String $default$prefixPath() {
+        return "";
+    }
+
+    private static String $default$suffixPath() {
+        return "";
+    }
+
+
+    public static class UserFilePathBuilder {
+        private Long id;
+        private User user;
+        private String domain;
+        private boolean prefixPath$set;
+        private String prefixPath$value;
+        private boolean suffixPath$set;
+        private String suffixPath$value;
+        private String userPathHash;
+        private UserPathCategory userPathCategory;
+
+        UserFilePathBuilder() {
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder id(final Long id) {
+            this.id = id;
+            return this;
+        }
+
+        /**
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder user(final User user) {
+            this.user = user;
+            return this;
+        }
+
+        /**
+         * 파일 경로의 도메인
+         * <pre>
+         *     ex) https://example.com
+         * </pre>
+         * <p>
+         * 도메인 마지막에 슬래쉬를 제거하고 저장합니다.
+         * ex) https://example.com/ -> https://example.com
+         * </p>
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder domain(final String domain) {
+            this.domain = domain;
+            return this;
+        }
+
+        /**
+         * 파일 경로의 접두사
+         * <pre>
+         * ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+         * </pre>
+         * <p>
+         *     prefixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+         *     ex) /prefixPath/ -> prefixPath
+         * </p>
+         * <p>
+         *     prefixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+         *     ex) prefix/path/include/slashes
+         * </p>
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder prefixPath(final String prefixPath) {
+            this.prefixPath$value = prefixPath;
+            prefixPath$set = true;
+            return this;
+        }
+
+        /**
+         * 파일 경로의 접미사
+         * <pre>
+         *     ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+         * </pre>
+         * <p>
+         *     suffixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+         *     ex) /suffixPath/ -> suffixPath
+         * </p>
+         * <p>
+         *     suffixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+         *     ex) suffix/path/include/slashes
+         * </p>
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder suffixPath(final String suffixPath) {
+            this.suffixPath$value = suffixPath;
+            suffixPath$set = true;
+            return this;
+        }
+
+        /**
+         * 사용자 구분을 위한 해시값. <br>
+         * {유저, 카테고리} 조합으로 하나의 고유한 해시를 사용합니다. <br>
+         * 같은 유저더라도 다른 카테고리를 사용할 경우 다른 해시값을 사용합니다. <br>
+         * <pre>
+         * 예시1. 아래의 case들은 모두 다른 userPathHash를 만듭니다.
+         * case1) user1 + category_themecolor
+         * case2) user1 + category_customphoto
+         * case3) user2 + category_themecolor
+         * </pre>
+         * <pre>
+         * 예시2. 아래의 case들은 같은 userPathHash를 사용해야 합니다.
+         * case1) user1 + category_customphoto (file1.png)
+         * case2) user1 + category_customphoto (file2.png)
+         * </pre>
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder userPathHash(final String userPathHash) {
+            this.userPathHash = userPathHash;
+            return this;
+        }
+
+        /**
+         * 사용자 경로의 카테고리 <br>
+         * 같은 사용자일지라도 카테고리가 다르면 path 가 달라지므로 구분하고자 사용합니다. <br>
+         * 카테고리가 다르면 prefixPath, suffixPath, userPathHash 가 다르게 저장됩니다. <br>
+         * @return {@code this}.
+         */
+        public UserFilePath.UserFilePathBuilder userPathCategory(final UserPathCategory userPathCategory) {
+            this.userPathCategory = userPathCategory;
+            return this;
+        }
+
+        public UserFilePath build() {
+            String prefixPath$value = this.prefixPath$value;
+            if (!this.prefixPath$set) prefixPath$value = UserFilePath.$default$prefixPath();
+            String suffixPath$value = this.suffixPath$value;
+            if (!this.suffixPath$set) suffixPath$value = UserFilePath.$default$suffixPath();
+            return new UserFilePath(this.id, this.user, this.domain, prefixPath$value, suffixPath$value, this.userPathHash, this.userPathCategory);
+        }
+
+        @java.lang.Override
+        public java.lang.String toString() {
+            return "UserFilePath.UserFilePathBuilder(id=" + this.id + ", user=" + this.user + ", domain=" + this.domain + ", prefixPath$value=" + this.prefixPath$value + ", suffixPath$value=" + this.suffixPath$value + ", userPathHash=" + this.userPathHash + ", userPathCategory=" + this.userPathCategory + ")";
+        }
+    }
+
+    public static UserFilePath.UserFilePathBuilder builder() {
+        return new UserFilePath.UserFilePathBuilder();
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    /**
+     * 파일 경로의 도메인
+     * <pre>
+     *     ex) https://example.com
+     * </pre>
+     * <p>
+     * 도메인 마지막에 슬래쉬를 제거하고 저장합니다.
+     * ex) https://example.com/ -> https://example.com
+     * </p>
+     */
+    public String getDomain() {
+        return this.domain;
+    }
+
+    /**
+     * 파일 경로의 접두사
+     * <pre>
+     * ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     prefixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /prefixPath/ -> prefixPath
+     * </p>
+     * <p>
+     *     prefixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) prefix/path/include/slashes
+     * </p>
+     */
+    public String getPrefixPath() {
+        return this.prefixPath;
+    }
+
+    /**
+     * 파일 경로의 접미사
+     * <pre>
+     *     ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     suffixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /suffixPath/ -> suffixPath
+     * </p>
+     * <p>
+     *     suffixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) suffix/path/include/slashes
+     * </p>
+     */
+    public String getSuffixPath() {
+        return this.suffixPath;
+    }
+
+    /**
+     * 사용자 구분을 위한 해시값. <br>
+     * {유저, 카테고리} 조합으로 하나의 고유한 해시를 사용합니다. <br>
+     * 같은 유저더라도 다른 카테고리를 사용할 경우 다른 해시값을 사용합니다. <br>
+     * <pre>
+     * 예시1. 아래의 case들은 모두 다른 userPathHash를 만듭니다.
+     * case1) user1 + category_themecolor
+     * case2) user1 + category_customphoto
+     * case3) user2 + category_themecolor
+     * </pre>
+     * <pre>
+     * 예시2. 아래의 case들은 같은 userPathHash를 사용해야 합니다.
+     * case1) user1 + category_customphoto (file1.png)
+     * case2) user1 + category_customphoto (file2.png)
+     * </pre>
+     */
+    public String getUserPathHash() {
+        return this.userPathHash;
+    }
+
+    /**
+     * 사용자 경로의 카테고리 <br>
+     * 같은 사용자일지라도 카테고리가 다르면 path 가 달라지므로 구분하고자 사용합니다. <br>
+     * 카테고리가 다르면 prefixPath, suffixPath, userPathHash 가 다르게 저장됩니다. <br>
+     */
+    public UserPathCategory getUserPathCategory() {
+        return this.userPathCategory;
+    }
+
+    public void setId(final Long id) {
+        this.id = id;
+    }
+
+    public void setUser(final User user) {
+        this.user = user;
+    }
+
+    /**
+     * 파일 경로의 도메인
+     * <pre>
+     *     ex) https://example.com
+     * </pre>
+     * <p>
+     * 도메인 마지막에 슬래쉬를 제거하고 저장합니다.
+     * ex) https://example.com/ -> https://example.com
+     * </p>
+     */
+    public void setDomain(final String domain) {
+        this.domain = domain;
+    }
+
+    /**
+     * 파일 경로의 접두사
+     * <pre>
+     * ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     prefixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /prefixPath/ -> prefixPath
+     * </p>
+     * <p>
+     *     prefixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) prefix/path/include/slashes
+     * </p>
+     */
+    public void setPrefixPath(final String prefixPath) {
+        this.prefixPath = prefixPath;
+    }
+
+    /**
+     * 파일 경로의 접미사
+     * <pre>
+     *     ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     suffixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /suffixPath/ -> suffixPath
+     * </p>
+     * <p>
+     *     suffixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) suffix/path/include/slashes
+     * </p>
+     */
+    public void setSuffixPath(final String suffixPath) {
+        this.suffixPath = suffixPath;
+    }
+
+    /**
+     * 사용자 구분을 위한 해시값. <br>
+     * {유저, 카테고리} 조합으로 하나의 고유한 해시를 사용합니다. <br>
+     * 같은 유저더라도 다른 카테고리를 사용할 경우 다른 해시값을 사용합니다. <br>
+     * <pre>
+     * 예시1. 아래의 case들은 모두 다른 userPathHash를 만듭니다.
+     * case1) user1 + category_themecolor
+     * case2) user1 + category_customphoto
+     * case3) user2 + category_themecolor
+     * </pre>
+     * <pre>
+     * 예시2. 아래의 case들은 같은 userPathHash를 사용해야 합니다.
+     * case1) user1 + category_customphoto (file1.png)
+     * case2) user1 + category_customphoto (file2.png)
+     * </pre>
+     */
+    public void setUserPathHash(final String userPathHash) {
+        this.userPathHash = userPathHash;
+    }
+
+    /**
+     * 사용자 경로의 카테고리 <br>
+     * 같은 사용자일지라도 카테고리가 다르면 path 가 달라지므로 구분하고자 사용합니다. <br>
+     * 카테고리가 다르면 prefixPath, suffixPath, userPathHash 가 다르게 저장됩니다. <br>
+     */
+    public void setUserPathCategory(final UserPathCategory userPathCategory) {
+        this.userPathCategory = userPathCategory;
+    }
+
+    public UserFilePath() {
+        this.prefixPath = UserFilePath.$default$prefixPath();
+        this.suffixPath = UserFilePath.$default$suffixPath();
+    }
+
+    /**
+     * Creates a new {@code UserFilePath} instance.
+     *
+     * @param id
+     * @param user
+     * @param domain 파일 경로의 도메인
+     * <pre>
+     *     ex) https://example.com
+     * </pre>
+     * <p>
+     * 도메인 마지막에 슬래쉬를 제거하고 저장합니다.
+     * ex) https://example.com/ -> https://example.com
+     * </p>
+     * @param prefixPath 파일 경로의 접두사
+     * <pre>
+     * ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     prefixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /prefixPath/ -> prefixPath
+     * </p>
+     * <p>
+     *     prefixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) prefix/path/include/slashes
+     * </p>
+     * @param suffixPath 파일 경로의 접미사
+     * <pre>
+     *     ex) {domain}/{prefixPath}/{userPathHash}/{suffixPath}/
+     * </pre>
+     * <p>
+     *     suffixPath의 앞 뒤 슬래시를 제거하고 저장합니다.
+     *     ex) /suffixPath/ -> suffixPath
+     * </p>
+     * <p>
+     *     suffixPath 는 여러 중간 슬래쉬를 포함할 수 있습니다.
+     *     ex) suffix/path/include/slashes
+     * </p>
+     * @param userPathHash 사용자 구분을 위한 해시값. <br>
+     * {유저, 카테고리} 조합으로 하나의 고유한 해시를 사용합니다. <br>
+     * 같은 유저더라도 다른 카테고리를 사용할 경우 다른 해시값을 사용합니다. <br>
+     * <pre>
+     * 예시1. 아래의 case들은 모두 다른 userPathHash를 만듭니다.
+     * case1) user1 + category_themecolor
+     * case2) user1 + category_customphoto
+     * case3) user2 + category_themecolor
+     * </pre>
+     * <pre>
+     * 예시2. 아래의 case들은 같은 userPathHash를 사용해야 합니다.
+     * case1) user1 + category_customphoto (file1.png)
+     * case2) user1 + category_customphoto (file2.png)
+     * </pre>
+     * @param userPathCategory 사용자 경로의 카테고리 <br>
+     * 같은 사용자일지라도 카테고리가 다르면 path 가 달라지므로 구분하고자 사용합니다. <br>
+     * 카테고리가 다르면 prefixPath, suffixPath, userPathHash 가 다르게 저장됩니다. <br>
+     */
+    public UserFilePath(final Long id, final User user, final String domain, final String prefixPath, final String suffixPath, final String userPathHash, final UserPathCategory userPathCategory) {
+        this.id = id;
+        this.user = user;
+        this.domain = domain;
+        this.prefixPath = prefixPath;
+        this.suffixPath = suffixPath;
+        this.userPathHash = userPathHash;
+        this.userPathCategory = userPathCategory;
     }
 }

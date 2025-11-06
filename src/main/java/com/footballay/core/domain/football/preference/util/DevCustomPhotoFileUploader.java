@@ -1,18 +1,15 @@
 package com.footballay.core.domain.football.preference.util;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Profile("!aws")
-@Slf4j
 @Component
 public class DevCustomPhotoFileUploader implements CustomPhotoFileUploader {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DevCustomPhotoFileUploader.class);
     static final List<String> mockFileList = new ArrayList<>();
 
     @Override

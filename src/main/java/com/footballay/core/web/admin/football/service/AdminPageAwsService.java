@@ -4,8 +4,6 @@ import com.footballay.core.config.AppEnvironmentVariable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -17,7 +15,6 @@ import software.amazon.awssdk.services.cloudfront.cookie.CookiesForCustomPolicy;
 import software.amazon.awssdk.services.cloudfront.model.CannedSignerRequest;
 import software.amazon.awssdk.services.cloudfront.model.CustomSignerRequest;
 import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,27 +26,20 @@ import java.util.stream.Collectors;
 /**
  * Admin 페이지 관련 CloudFront Signed URL / Cookie 발급 서비스
  */
-@Slf4j
-@RequiredArgsConstructor
 @Service
 public class AdminPageAwsService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminPageAwsService.class);
     private final AppEnvironmentVariable envVar;
-
     @Value("${aws.cloudfront.domain}")
     private String cloudfrontDomain;
-
     @Value("${aws.cloudfront.keyPairId}")
     private String keyPairId;
-
     @Value("${aws.cloudfront.privateKeyPath}")
     private Resource privateKeyResource;
-
     private final String ADMIN_INDEX_PATH = "/index.html";
     private final String ADMIN_RESOURCE_PATH = "/chuncity/admin";
-    private final int COOKIE_MAX_AGE_SEC = 2 * 3600 ;
+    private final int COOKIE_MAX_AGE_SEC = 2 * 3600;
     private final int STATIC_FILE_EXPIRATION_SEC = 60;
-
     private final CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
 
     /**
@@ -76,11 +66,9 @@ public class AdminPageAwsService {
     public void setCloudFrontSignedCookie(HttpServletResponse response) {
         try {
             final Instant expirationDate = Instant.now().plusSeconds(COOKIE_MAX_AGE_SEC);
-
-            CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain+"/*", expirationDate);
+            CookiesForCustomPolicy cookiesForCustomPolicy = createSignedCookies(cloudfrontDomain + "/*", expirationDate);
             Map<String, String> cookiesMap = cookiesToMap(cookiesForCustomPolicy);
-            setCookiesToHttpResponse(response, cookiesMap, envVar.getDomain(), COOKIE_MAX_AGE_SEC);
-
+            setCookiesToHttpResponse(response, cookiesMap, envVar.getFOOTBALLAY_DOMAIN(), COOKIE_MAX_AGE_SEC);
             log.info("issued and set CloudFront signed Cookies for admin page");
         } catch (IOException e) {
             log.error("Failed to load private key file", e);
@@ -113,10 +101,9 @@ public class AdminPageAwsService {
      */
     public String generateSignedUrlForUrl(String url) {
         try {
-            if(!url.startsWith("/")) {
+            if (!url.startsWith("/")) {
                 url = "/" + url;
             }
-
             Instant expirationDate = Instant.now().plusSeconds(STATIC_FILE_EXPIRATION_SEC);
             CannedSignerRequest cannedRequest = createCannedRequest(url, expirationDate);
             SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCannedPolicy(cannedRequest);
@@ -131,22 +118,12 @@ public class AdminPageAwsService {
     private CannedSignerRequest createCannedRequest(String url, Instant expirationDate) throws Exception {
         Path privateKeyPath = Paths.get(privateKeyResource.getFile().getPath());
         String resourceUrl = cloudfrontDomain + ADMIN_RESOURCE_PATH + url;
-        return CannedSignerRequest.builder()
-                .resourceUrl(resourceUrl)
-                .keyPairId(keyPairId)
-                .privateKey(privateKeyPath)
-                .expirationDate(expirationDate)
-                .build();
+        return CannedSignerRequest.builder().resourceUrl(resourceUrl).keyPairId(keyPairId).privateKey(privateKeyPath).expirationDate(expirationDate).build();
     }
 
     private CookiesForCustomPolicy createSignedCookies(String resourceUrl, Instant expirationDate) throws Exception {
         Path privateKeyPath = Paths.get(privateKeyResource.getFile().getPath());
-        CustomSignerRequest customPolicyRequest = CustomSignerRequest.builder()
-                .keyPairId(keyPairId)
-                .privateKey(privateKeyPath)
-                .resourceUrl(resourceUrl)
-                .expirationDate(expirationDate)
-                .build();
+        CustomSignerRequest customPolicyRequest = CustomSignerRequest.builder().keyPairId(keyPairId).privateKey(privateKeyPath).resourceUrl(resourceUrl).expirationDate(expirationDate).build();
         return cloudFrontUtilities.getCookiesForCustomPolicy(customPolicyRequest);
     }
 
@@ -163,48 +140,34 @@ public class AdminPageAwsService {
         String[] policies = cookiesForCustomPolicy.policyHeaderValue().split("=");
         String[] keyPairIds = cookiesForCustomPolicy.keyPairIdHeaderValue().split("=");
         String[] signatures = cookiesForCustomPolicy.signatureHeaderValue().split("=");
-        return Map.of(
-                policies[0], policies[1],
-                keyPairIds[0], keyPairIds[1],
-                signatures[0], signatures[1]
-        );
+        return Map.of(policies[0], policies[1], keyPairIds[0], keyPairIds[1], signatures[0], signatures[1]);
     }
 
     private static boolean isContainCloudfrontCookies(Map<String, String> cookieMap) {
-        return (cookieMap.containsKey("CloudFront-Policy") || cookieMap.containsKey("CloudFront-Expires"))
-                && cookieMap.containsKey("CloudFront-Signature")
-                && cookieMap.containsKey("CloudFront-Key-Pair-Id");
+        return (cookieMap.containsKey("CloudFront-Policy") || cookieMap.containsKey("CloudFront-Expires")) && cookieMap.containsKey("CloudFront-Signature") && cookieMap.containsKey("CloudFront-Key-Pair-Id");
     }
 
-    private static void setCookiesToHttpResponse(
-            HttpServletResponse response,
-            Map<String, String> cookiesMap,
-            String cookieDomain,
-            long maxAgeInSeconds
-    ) {
-        for(Map.Entry<String, String> cookieEntry : cookiesMap.entrySet()) {
+    private static void setCookiesToHttpResponse(HttpServletResponse response, Map<String, String> cookiesMap, String cookieDomain, long maxAgeInSeconds) {
+        for (Map.Entry<String, String> cookieEntry : cookiesMap.entrySet()) {
             ResponseCookie cookie = createCookieFrom(cookieEntry, cookieDomain, maxAgeInSeconds);
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }
     }
 
-    private static @NotNull ResponseCookie createCookieFrom(Map.Entry<String, String> cookieEntry, String cookieDomain, long maxAgeInSeconds) {
-        if(!cookieDomain.startsWith(".")) {
+    @NotNull
+    private static ResponseCookie createCookieFrom(Map.Entry<String, String> cookieEntry, String cookieDomain, long maxAgeInSeconds) {
+        if (!cookieDomain.startsWith(".")) {
             cookieDomain = "." + cookieDomain;
         }
-        return ResponseCookie.from(cookieEntry.getKey(), cookieEntry.getValue())
-                .domain(cookieDomain)
-                .path("/")
-                .secure(true)
-                .httpOnly(true)
-                .sameSite("None")
-                .maxAge(maxAgeInSeconds)
-                .build();
+        return ResponseCookie.from(cookieEntry.getKey(), cookieEntry.getValue()).domain(cookieDomain).path("/").secure(true).httpOnly(true).sameSite("None").maxAge(maxAgeInSeconds).build();
     }
 
-    private static @NotNull Map<String, String> collectCookies(HttpServletRequest request) {
-        return Arrays.stream(request.getCookies())
-                .collect(Collectors.toMap(Cookie::getName, Cookie::getValue));
+    @NotNull
+    private static Map<String, String> collectCookies(HttpServletRequest request) {
+        return Arrays.stream(request.getCookies()).collect(Collectors.toMap(Cookie::getName, Cookie::getValue));
     }
 
+    public AdminPageAwsService(final AppEnvironmentVariable envVar) {
+        this.envVar = envVar;
+    }
 }

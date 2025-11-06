@@ -11,29 +11,24 @@ import com.footballay.core.domain.football.repository.TeamRepository;
 import com.footballay.core.domain.football.repository.relations.LeagueTeamRepository;
 import com.footballay.core.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
-
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.*;
 import static com.footballay.core.domain.football.util.GeneratePlayersOfTeam.generatePlayersOfTeam;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 @Transactional
 @ActiveProfiles("mockapi")
 @SpringBootTest
 class FootballDataServiceTest {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballDataServiceTest.class);
     @Autowired
     private FootballDataService footballDataService;
-
     @Autowired
     private LeagueRepository leagueRepository;
     @Autowired
@@ -44,7 +39,6 @@ class FootballDataServiceTest {
     private PlayerRepository playerRepository;
     @Autowired
     private TeamPlayerRepository teamPlayerRepository;
-
     @Autowired
     private EntityManager em;
 
@@ -55,15 +49,12 @@ class FootballDataServiceTest {
         List<LeagueTeamFixture> ltfList = generateTwoOtherLeagues();
         League league1 = ltfList.get(0).league;
         League league2 = ltfList.get(1).league;
-
         leagueRepository.saveAll(List.of(league1, league2));
-
         // when
         List<League> leagues = footballDataService.getLeagues(2);
         List<League> leagues_OverSize = footballDataService.getLeagues(10);
         log.info("leagues :: {}", leagues);
         log.info("leagues_OverSize :: {}", leagues_OverSize);
-
         // then
         assertThat(leagues).hasSize(2);
         assertThat(leagues_OverSize).hasSize(2);
@@ -77,10 +68,8 @@ class FootballDataServiceTest {
         LeagueTeamFixture generate = generate();
         League league = generate.league;
         leagueRepository.save(league);
-
         // when
         League findLeague = footballDataService.findLeagueById(league.getLeagueId());
-
         // then
         assertThat(findLeague).isEqualTo(league);
     }
@@ -106,16 +95,12 @@ class FootballDataServiceTest {
         team4.setLeagueTeams(List.of(leagueTeam4));
         List<Team> teams = teamRepository.saveAll(List.of(team1, team2, team3, team4));
         leagueTeamRepository.saveAll(List.of(leagueTeam1, leagueTeam2, leagueTeam3, leagueTeam4));
-
         // when
         List<Team> getTeams = footballDataService.getTeamsByLeagueId(league.getLeagueId());
-
         // then
         assertThat(getTeams).hasSize(4);
-
         List<LeagueTeam> all = leagueTeamRepository.findAll();
         log.info("all :: {}", all);
-
         League findLeague = leagueRepository.findById(ltfList.get(0).league.getLeagueId()).get();
         List<LeagueTeam> leagueTeams = findLeague.getLeagueTeams();
         log.info("leagueTeams :: {}", leagueTeams);
@@ -128,29 +113,20 @@ class FootballDataServiceTest {
         // given
         LeagueTeamFixture generate = generate();
         Team savedTeam = teamRepository.save(generate.home);
-        List<Player> savedPlayers = playerRepository.saveAll(
-                generatePlayersOfTeam(savedTeam)
-        );
-        List<TeamPlayer> teamPlayerList = savedPlayers.stream()
-                .map(player -> player.toTeamPlayer(savedTeam))
-                .toList();
+        List<Player> savedPlayers = playerRepository.saveAll(generatePlayersOfTeam(savedTeam));
+        List<TeamPlayer> teamPlayerList = savedPlayers.stream().map(player -> player.toTeamPlayer(savedTeam)).toList();
         teamPlayerRepository.saveAll(teamPlayerList);
-
         em.flush();
         em.clear();
-
         Team team = teamRepository.findById(savedTeam.getId()).orElseThrow();
         List<TeamPlayer> teamPlayers = team.getTeamPlayers();
         log.info("teamPlayers :: {}", teamPlayers);
-
         // when
         List<Player> squad = footballDataService.getSquadOfTeam(savedTeam.getId());
         log.info("squad players : {}", squad.stream().map(Player::getName).toList());
-
         // then
         assertThat(squad).isNotEmpty();
         assertThat(squad.get(0).getId()).isNotNull();
         assertThat(squad.get(0).getName()).isNotNull();
     }
-
 }

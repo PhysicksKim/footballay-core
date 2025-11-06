@@ -1,16 +1,21 @@
 package com.footballay.core.websocket.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
-@Getter
-@ToString
-@AllArgsConstructor
-@NoArgsConstructor
 public class AutoRemoteReconnectRequestMessage {
-
     private String nickname;
 
+    public String getNickname() {
+        return this.nickname;
+    }
+
+    @java.lang.Override
+    public java.lang.String toString() {
+        return "AutoRemoteReconnectRequestMessage(nickname=" + this.getNickname() + ")";
+    }
+
+    public AutoRemoteReconnectRequestMessage(final String nickname) {
+        this.nickname = nickname;
+    }
+
+    public AutoRemoteReconnectRequestMessage() {
+    }
 }

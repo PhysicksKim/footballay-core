@@ -4,11 +4,8 @@ import com.footballay.core.websocket.domain.scoreboard.remote.autoremote.service
 import com.footballay.core.websocket.domain.scoreboard.remote.code.RemoteCode;
 import com.footballay.core.websocket.domain.scoreboard.remote.code.service.RemoteCodeService;
 import com.footballay.core.websocket.response.RemoteConnectResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
-
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +13,9 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-@Slf4j
-@RequiredArgsConstructor
 @Component
 public class ScoreBoardRemoteServiceImpl {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ScoreBoardRemoteServiceImpl.class);
     private final RemoteCodeService remoteCodeService;
     private final AutoRemoteService autoRemoteService;
 
@@ -81,10 +76,7 @@ public class ScoreBoardRemoteServiceImpl {
     }
 
     public List<String> getRemoteMembers(RemoteCode remoteCode) {
-        List<String> remoteMembers = remoteCodeService.getSubscribers(remoteCode.getRemoteCode())
-                .entrySet().stream()
-                .map(entry -> (String) entry.getValue())
-                .collect(Collectors.toList());
+        List<String> remoteMembers = remoteCodeService.getSubscribers(remoteCode.getRemoteCode()).entrySet().stream().map(entry -> (String) entry.getValue()).collect(Collectors.toList());
         log.info("remoteMembers : {}", remoteMembers);
         return remoteMembers;
     }
@@ -96,19 +88,15 @@ public class ScoreBoardRemoteServiceImpl {
      */
     public void exitUser(RemoteCode remoteCode, Principal principal) {
         boolean isEmpty = remoteCodeService.removeSubscriber(remoteCode, principal.getName());
-        if(isEmpty) {
+        if (isEmpty) {
             autoRemoteService.deactivateAutoGroupIfExist(remoteCode);
         }
     }
 
     public List<List<String>> getRemoteUserDetails(RemoteCode remoteCode) {
         Map<Object, Object> subscribers = remoteCodeService.getSubscribers(remoteCode.getRemoteCode());
-        List<String> keys = subscribers.keySet().stream()
-                .map(Object::toString)
-                .toList();
-        List<String> values = subscribers.values().stream()
-                .map(Object::toString)
-                .toList();
+        List<String> keys = subscribers.keySet().stream().map(Object::toString).toList();
+        List<String> values = subscribers.values().stream().map(Object::toString).toList();
         return List.of(keys, values);
     }
 
@@ -122,7 +110,7 @@ public class ScoreBoardRemoteServiceImpl {
         subscribers.keySet().forEach(key -> {
             String subscriber = (String) key;
             log.info("subscriber : {}", subscriber);
-            if(!subscriber.equals(remotePublisher.getName())) {
+            if (!subscriber.equals(remotePublisher.getName())) {
                 log.info("send to user : {}", subscriber);
                 sendMessageToSubscriber.accept(subscriber);
             } else {
@@ -139,5 +127,10 @@ public class ScoreBoardRemoteServiceImpl {
 
     public boolean isValidCode(RemoteCode remoteCode) {
         return remoteCodeService.isValidCode(remoteCode);
+    }
+
+    public ScoreBoardRemoteServiceImpl(final RemoteCodeService remoteCodeService, final AutoRemoteService autoRemoteService) {
+        this.remoteCodeService = remoteCodeService;
+        this.autoRemoteService = autoRemoteService;
     }
 }

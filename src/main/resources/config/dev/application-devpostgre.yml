@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/footballay_core?currentSchema=footballay_core
+    username: dev
+    password: dev1234
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 10
+      connection-timeout: 30000
+
+  jpa:
+    properties:
+      hibernate.default_schema: footballay_core

@@ -1,0 +1,113 @@
+{
+  "mappings": [
+    {
+      "name": "sync-current-leagues",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPath": "/api/v1/admin/apisports/leagues/sync"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "syncedCount": 1186,
+          "message": "현재 리그 동기화가 완료되었습니다"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "sync-teams-of-league",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/v1/admin/apisports/leagues/([0-9]+)/teams/sync"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "syncedCount": 20,
+          "message": "팀 동기화가 완료되었습니다"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "sync-players-of-team",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/v1/admin/apisports/teams/([0-9]+)/players/sync"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "syncedCount": 28,
+          "message": "선수 동기화가 완료되었습니다"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "sync-fixtures-of-league",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/v1/admin/apisports/leagues/([0-9]+)/fixtures/sync"
+      },
+      "response": {
+        "status": 200,
+        "body": "380",
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "name": "set-league-available",
+      "priority": 1,
+      "request": {
+        "method": "POST",
+        "urlPathPattern": "/api/v1/admin/apisports/leagues/([0-9]+)/available",
+        "queryParameters": {
+          "available": {
+            "matches": "(true|false)"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": "League availability updated successfully",
+        "headers": {
+          "Content-Type": "text/plain"
+        }
+      }
+    },
+    {
+      "name": "health-check",
+      "priority": 1,
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/v1/admin/apisports/health"
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "status": "UP",
+          "service": "AdminApiSportsService",
+          "timestamp": "{{now}}"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "transformers": ["response-template"]
+      }
+    }
+  ]
+}

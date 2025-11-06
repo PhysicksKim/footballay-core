@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  - job_name: 'footballay-actuator'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+        labels:
+          application: 'footballay'
+
+remote_write:
+  - url: https://prometheus-prod-49-prod-ap-northeast-0.grafana.net/api/prom/push
+    basic_auth:
+      username_file: /etc/prometheus/secrets/prom_user
+      password_file: /etc/prometheus/secrets/prom_password

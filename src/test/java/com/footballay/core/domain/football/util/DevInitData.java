@@ -4,21 +4,16 @@ import com.footballay.core.domain.football.FootballRoot;
 import com.footballay.core.domain.football.constant.FixtureId;
 import com.footballay.core.domain.football.constant.LeagueId;
 import com.footballay.core.domain.football.constant.TeamId;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class DevInitData {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DevInitData.class);
     private final FootballRoot footballRoot;
 
     public void addData() {
         // Save [ _StandingResponseData, _Team, _Player, _Fixture ] of Euro 2024
         cacheLeagueTeamPlayerFixtureOfEuro2024();
-
         // Save [ AvailableLeague, AvailableFixture ] of Euro 2024
         cacheAvailableLeagueAndAvailableFixtureOfEuro2024();
     }
@@ -42,8 +37,10 @@ public class DevInitData {
     }
 
     private void cacheAvailableFixture(long leagueId) {
-        if(leagueId == LeagueId.EURO)
-            footballRoot.addAvailableFixture(FixtureId.FIXTURE_EURO2024_1);
+        if (leagueId == LeagueId.EURO) footballRoot.addAvailableFixture(FixtureId.FIXTURE_EURO2024_1);
     }
 
+    public DevInitData(final FootballRoot footballRoot) {
+        this.footballRoot = footballRoot;
+    }
 }

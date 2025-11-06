@@ -8,11 +8,8 @@ import com.footballay.core.domain.football.repository.live.MatchLineupRepository
 import com.footballay.core.domain.football.repository.live.MatchPlayerRepository;
 import com.footballay.core.domain.football.repository.live.PlayerStatisticsRepository;
 import jakarta.validation.constraints.NotNull;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,12 +26,10 @@ import java.util.Optional;
  * @see ExpectedGoals
  * @see PlayerStatistics
  */
-@Slf4j
-@RequiredArgsConstructor
 @Service
 @Transactional
 public class FixtureDataIntegrityService {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FixtureDataIntegrityService.class);
     private final FixtureRepository fixtureRepository;
     private final MatchLineupRepository matchLineupRepository;
     private final MatchPlayerRepository matchPlayerRepository;
@@ -43,11 +38,10 @@ public class FixtureDataIntegrityService {
 
     public void cleanUpFixtureLiveData(long fixtureId) {
         Optional<Fixture> optionalFixture = fixtureRepository.findByIdWithAllAssociations(fixtureId);
-        if(optionalFixture.isEmpty()) {
+        if (optionalFixture.isEmpty()) {
             log.info("can not find fixture while cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
             return;
         }
-
         cleanUpFixtureLiveData(optionalFixture.get());
     }
 
@@ -55,71 +49,69 @@ public class FixtureDataIntegrityService {
      * @param fixture Fixture 연관 데이터를 모두 사용하므로 Fetch Join 으로 load 된 Fixture 가 아니면 N+1 이 발생할 수 있습니다.
      */
     public void cleanUpFixtureLiveData(@NotNull Fixture fixture) {
-        if(fixture == null) {
+        if (fixture == null) {
             log.warn("cleanUpFixtureLiveData :: fixture is null");
             return;
         }
-
         long fixtureId = fixture.getFixtureId();
         log.info("start cleanUpFixtureLiveData :: fixtureId={}", fixtureId);
-
         List<MatchLineup> lineups = fixture.getLineups();
         List<FixtureEvent> fixtureEvents = fixture.getEvents();
-
         removeEvents(fixtureEvents);
         removeLineups(lineups);
     }
 
     private void removeEvents(List<FixtureEvent> fixtureEvents) {
-        if(fixtureEvents == null || fixtureEvents.isEmpty()) {
+        if (fixtureEvents == null || fixtureEvents.isEmpty()) {
             return;
         }
-
         List<MatchPlayer> NotExistInLineupPlayers = new ArrayList<>();
         for (FixtureEvent fixtureEvent : fixtureEvents) {
             MatchPlayer eventPlayer = fixtureEvent.getPlayer();
             MatchPlayer eventAssist = fixtureEvent.getAssist();
-
-            if(eventPlayer != null && eventPlayer.getMatchLineup() == null) {
+            if (eventPlayer != null && eventPlayer.getMatchLineup() == null) {
                 NotExistInLineupPlayers.add(eventPlayer);
             }
-            if(eventAssist != null && eventAssist.getMatchLineup() == null) {
+            if (eventAssist != null && eventAssist.getMatchLineup() == null) {
                 NotExistInLineupPlayers.add(eventAssist);
             }
         }
-
         matchPlayerRepository.deleteAll(NotExistInLineupPlayers);
         fixtureEventRepository.deleteAll(fixtureEvents);
     }
 
     private void removeLineups(List<MatchLineup> lineups) {
-        if(lineups == null) {
+        if (lineups == null) {
             return;
         }
-
-        for(MatchLineup lineup : lineups) {
+        for (MatchLineup lineup : lineups) {
             removeMatchPlayerAndStatistics(lineup.getMatchPlayers());
         }
         matchLineupRepository.deleteAll(lineups);
     }
 
     private void removeMatchPlayerAndStatistics(List<MatchPlayer> matchPlayers) {
-        if(matchPlayers.isEmpty()) {
+        if (matchPlayers.isEmpty()) {
             return;
         }
-
         List<PlayerStatistics> statsList = new ArrayList<>();
-        for(MatchPlayer matchPlayer : matchPlayers) {
+        for (MatchPlayer matchPlayer : matchPlayers) {
             PlayerStatistics playerStatistics = matchPlayer.getPlayerStatistics();
-            if(playerStatistics != null) {
+            if (playerStatistics != null) {
                 statsList.add(playerStatistics);
             }
         }
-
-        if(!statsList.isEmpty()) {
+        if (!statsList.isEmpty()) {
             playerStatisticsRepository.deleteAll(statsList);
         }
         matchPlayerRepository.deleteAll(matchPlayers);
     }
 
+    public FixtureDataIntegrityService(final FixtureRepository fixtureRepository, final MatchLineupRepository matchLineupRepository, final MatchPlayerRepository matchPlayerRepository, final FixtureEventRepository fixtureEventRepository, final PlayerStatisticsRepository playerStatisticsRepository) {
+        this.fixtureRepository = fixtureRepository;
+        this.matchLineupRepository = matchLineupRepository;
+        this.matchPlayerRepository = matchPlayerRepository;
+        this.fixtureEventRepository = fixtureEventRepository;
+        this.playerStatisticsRepository = playerStatisticsRepository;
+    }
 }

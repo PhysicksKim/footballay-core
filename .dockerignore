@@ -1,0 +1,65 @@
+# ========================================
+# .dockerignore for Footballay Core
+# ========================================
+# Prevents unnecessary files from being copied into the Docker image
+# This reduces image size and build time, and prevents secrets from leaking
+# ========================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Gradle
+.gradle
+build
+out
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea
+*.iml
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local development
+local-config
+*.log
+logs
+
+# Live environment secrets (must be provided via /config-external volume mount)
+# These files exist locally for development but MUST NOT be included in Docker images
+src/main/resources/config/live/application-secret.yml
+src/main/resources/config/live/application-api.yml
+src/main/resources/config/live/application-aws.yml
+
+# Documentation (not needed in runtime image)
+*.md
+docs
+
+# CI/CD
+.github
+
+# Docker files (no need to copy these into the image)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Deployment scripts (these run on EC2, not in container)
+deploy*.sh
+
+# Test reports
+build/reports
+build/test-results
+!build/libs/*.jar
+
+# Temporary files
+tmp
+temp
+*.tmp

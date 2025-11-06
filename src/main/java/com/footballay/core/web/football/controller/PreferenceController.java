@@ -2,8 +2,6 @@ package com.footballay.core.web.football.controller;
 
 import com.footballay.core.web.football.request.PreferenceKeyRequest;
 import com.footballay.core.web.football.service.PreferenceWebService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -11,12 +9,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Slf4j
-@RequiredArgsConstructor
 @RequestMapping("/api/football/preferences")
 @Controller
 public class PreferenceController {
-
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PreferenceController.class);
     private final PreferenceWebService preferenceWebService;
 
     @PostMapping("/validate")
@@ -31,4 +27,7 @@ public class PreferenceController {
         }
     }
 
+    public PreferenceController(final PreferenceWebService preferenceWebService) {
+        this.preferenceWebService = preferenceWebService;
+    }
 }
