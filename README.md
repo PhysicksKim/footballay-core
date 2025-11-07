@@ -48,36 +48,90 @@
 
 ---
 
-# Dev Env Init
+# Dev Env Setup - 개발 환경 구축
 
-### 1. Docker-Compose up
+## 1. git clone and checkout develop branch
+
 ```bash
-cd ./src/main/resources/docker
+git clone https://github.com/PhysicksKim/footballay-core.git
+cd footballay-core
+git checkout develop
+```
+
+---
+
+## 2. Start Docker for Dev Database
+
+```bash
+cd ./docker/dev
 docker-compose up -d
 ```
 
-### 2. RDB : Quartz Scheme
-[🔗 Quartz SQL schemes](https://github.com/elventear/quartz-scheduler/tree/master/distribution/src/main/assembly/root/docs/dbTables)
+---
 
-### 3. RDB : Spring Security Remember-Me Scheme
-```sql
-create table persistent_logins (
-	username varchar(64) not null,
-	series varchar(64) primary key,
-	token varchar(64) not null,
-	last_used timestamp not null
-);
+## 3. Run Application with `dev` profile
+
+Activate the `dev` profile when running the application.
+> 실행시 `dev` 프로파일을 활성화 해주세요.
+
+### More about profiles:
+
+- `dev` : uses local Postgres DB (docker)
+- `devrealapi` : uses REAL football data provider(API-Sports) with local Postgres DB (should create `application-api.yml` file first, see below)
+- `live` : production secrets
+- `prod` : production basic config
+
+
+- `test` : uses in-memory H2 DB. only for test
+
+### Choose data provider profile
+- `api` : to use real data provider bean
+- `mockapi` : to use Mock data provider bean
+
+### profile example
+a. dev with Mock data provider `dev, mockapi`
+b. dev with REAL data provider `dev, devrealapi`
+(additional `application-api.yml` file is required, see below)
+
+---
+
+## 4. (optional) if you want to use REAL data provider
+
+If you want to use the real football data provider(API-Sports),
+please get an API Key and create `src/main/resources/application-api.yml` file as below.
+You can use free plan which allows 100 requests per day.
+> KR : 실제로 축구 데이터를 제공하는 서비스(API-Sports)를 사용하고자 하는 경우,
+> API Key를 발급받고 `src/main/resources/application-api.yml` 파일에 다음과 같이 입력해주세요.
+> 무료 플랜으로 매일 100 회 요청 가능합니다.
+
+### 1) get API key from [ApiSports](https://www.api-football.com/)
+
+Sign up and get your API key from [ApiSports](https://www.api-football.com/)
+> [ApiSports](https://www.api-football.com/) 에서 회원가입 후 API Key를 발급받아주세요.
+
+### 2) create `application-api.yml` and fill your API key
+
+**If your api key is `THIS_IS_MY_API_KEY`**
+
 ```
-[🔗 Spring Security docs - Security Database Schema](https://docs.spring.io/spring-security/reference/servlet/appendix/database-schema.html#_persistent_login_remember_me_schema)
-
-### 4. Add admin user and authority
-
-```sql
-INSERT INTO footballay_core.users(username,password,nickname,enabled,created_date, modified_date)
-    VALUES ('qwer','{noop}qwer','qwer',true,NOW(),NOW());
+footballay:
+  apisports:
+    scheme: https
+    url: v3.football.api-sports.io
+    headers:
+      x-rapidapi-key-name: x-rapidapi-key
+      x-rapidapi-key-value: THIS_IS_MY_API_KEY
 ```
 
-```sql
-INSERT INTO footballay_core.authorities (user_id,authority,created_date,modified_date)
-    VALUES (1,'ROLE_ADMIN',NOW(),NOW());
-```
+### 3) Active `api` profile when running the application
+
+
+---
+
+# 초기 정보
+
+### 개발 서버 관리자 계정
+
+- Username: `qwer`
+- Password: `qwer`
+- Role: `ROLE_ADMIN`
