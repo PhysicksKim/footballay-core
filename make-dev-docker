@@ -1,2 +1,0 @@
-#!/bin/bash
-docker build -t score-board-backend-dev -f docker/dev/Dockerfile .

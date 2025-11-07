@@ -72,7 +72,6 @@ local-config/
 .env
 
 lombok.config
-lombok.jar
 
 docs/**
 
