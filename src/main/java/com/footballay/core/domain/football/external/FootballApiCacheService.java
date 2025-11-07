@@ -8,6 +8,7 @@ import com.footballay.core.domain.football.persistence.Fixture;
 import com.footballay.core.domain.football.persistence.League;
 import com.footballay.core.domain.football.persistence.Player;
 import com.footballay.core.domain.football.persistence.Team;
+import com.footballay.core.domain.football.persistence.standings.Standing;
 import com.footballay.core.domain.football.persistence.apicache.ApiCacheType;
 import com.footballay.core.domain.football.persistence.live.LiveStatus;
 import com.footballay.core.domain.football.persistence.relations.LeagueTeam;
@@ -459,5 +460,13 @@ public class FootballApiCacheService {
         this.fixtureRepository = fixtureRepository;
         this.teamPlayerRepository = teamPlayerRepository;
         this.liveStatusRepository = liveStatusRepository;
+    }
+
+    /**
+     * @deprecated Standing feature will be reimplemented in Kotlin project migration
+     */
+    @Deprecated
+    public Standing cacheStandingOfLeague(Long leagueId) {
+        throw new UnsupportedOperationException("Standing feature will be reimplemented in Kotlin project migration");
     }
 }

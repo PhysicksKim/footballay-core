@@ -13,10 +13,11 @@ import com.footballay.core.domain.football.persistence.standings.Standing;
 import com.footballay.core.domain.football.repository.LeagueRepository;
 import com.footballay.core.domain.football.repository.TeamRepository;
 import com.footballay.core.domain.football.repository.standings.StandingsRepository;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -29,10 +30,12 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-@Slf4j
 @Transactional
 @SpringBootTest
+@Disabled("Standing feature will be reimplemented in Kotlin project migration")
 public class FootballApiCacheServiceStandingMockTest {
+
+    private static final Logger log = LoggerFactory.getLogger(FootballApiCacheServiceStandingMockTest.class);
 
     @Autowired
     private FootballApiCacheService footballApiCacheService;
@@ -115,7 +118,6 @@ public class FootballApiCacheServiceStandingMockTest {
         return new MockLeagueTeam(mockLeague, teams);
     }
 
-    @Getter
     private static class MockLeagueTeam {
         final League league;
         final Team[] teams;
@@ -123,6 +125,14 @@ public class FootballApiCacheServiceStandingMockTest {
         public MockLeagueTeam(League league, Team... teams) {
             this.league = league;
             this.teams = teams;
+        }
+
+        public League getLeague() {
+            return league;
+        }
+
+        public Team[] getTeams() {
+            return teams;
         }
     }
 }

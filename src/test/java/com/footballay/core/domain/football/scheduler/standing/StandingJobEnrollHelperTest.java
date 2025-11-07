@@ -2,9 +2,11 @@ package com.footballay.core.domain.football.scheduler.standing;
 
 import com.footballay.core.domain.football.scheduler.standing.StandingQuartzNames;
 import com.footballay.core.util.TestQuartzJobWaitUtil;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.quartz.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -12,9 +14,11 @@ import static com.footballay.core.util.TestQuartzJobWaitUtil.*;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
 @SpringBootTest
+@Disabled("Standing feature will be reimplemented in Kotlin project migration")
 class StandingJobEnrollHelperTest {
+
+    private static final Logger log = LoggerFactory.getLogger(StandingJobEnrollHelperTest.class);
 
     @Autowired
     private Scheduler scheduler;

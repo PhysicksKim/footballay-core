@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -15,31 +12,52 @@ import java.util.List;
 /**
  * 리그 순위를 제공합니다. <br>
  * 응답의 구조는 동일하지만 리그별로 group, description 가 어떻게 들어오는지 파악해야 해야합니다. <br>
- * 
+ *
  */
-@Getter
-@Setter
-@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StandingsResponse extends ApiFootballResponse {
+
+    private List<_LeagueStandingResponse> response;
 
     public _StandingResponseData getStandingData() {
         return response.get(0).getLeague();
     }
 
-    private List<_LeagueStandingResponse> response;
+    public List<_LeagueStandingResponse> getResponse() {
+        return response;
+    }
 
-    @Getter
-    @Setter
-    @ToString
+    public void setResponse(List<_LeagueStandingResponse> response) {
+        this.response = response;
+    }
+
+    @Override
+    public String toString() {
+        return "StandingsResponse{" +
+                "response=" + response +
+                '}';
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _LeagueStandingResponse {
         private _StandingResponseData league;
+
+        public _StandingResponseData getLeague() {
+            return league;
+        }
+
+        public void setLeague(_StandingResponseData league) {
+            this.league = league;
+        }
+
+        @Override
+        public String toString() {
+            return "_LeagueStandingResponse{" +
+                    "league=" + league +
+                    '}';
+        }
     }
 
-    @Getter
-    @Setter
-    @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _StandingResponseData {
         private int id;
@@ -63,11 +81,73 @@ public class StandingsResponse extends ApiFootballResponse {
         public List<_Standing> getStandings() {
             return standings.get(0);
         }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
+        public String getLogo() {
+            return logo;
+        }
+
+        public void setLogo(String logo) {
+            this.logo = logo;
+        }
+
+        public String getFlag() {
+            return flag;
+        }
+
+        public void setFlag(String flag) {
+            this.flag = flag;
+        }
+
+        public int getSeason() {
+            return season;
+        }
+
+        public void setSeason(int season) {
+            this.season = season;
+        }
+
+        public void setStandings(List<List<_Standing>> standings) {
+            this.standings = standings;
+        }
+
+        @Override
+        public String toString() {
+            return "_StandingResponseData{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", country='" + country + '\'' +
+                    ", logo='" + logo + '\'' +
+                    ", flag='" + flag + '\'' +
+                    ", season=" + season +
+                    ", standings=" + standings +
+                    '}';
+        }
     }
 
-    @Getter
-    @Setter
-    @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _Standing {
         private _Team team;
@@ -117,21 +197,158 @@ public class StandingsResponse extends ApiFootballResponse {
         public String getUpdateRawString() {
             return update;
         }
+
+        public _Team getTeam() {
+            return team;
+        }
+
+        public void setTeam(_Team team) {
+            this.team = team;
+        }
+
+        public int getRank() {
+            return rank;
+        }
+
+        public void setRank(int rank) {
+            this.rank = rank;
+        }
+
+        public int getPoints() {
+            return points;
+        }
+
+        public void setPoints(int points) {
+            this.points = points;
+        }
+
+        public int getGoalsDiff() {
+            return goalsDiff;
+        }
+
+        public void setGoalsDiff(int goalsDiff) {
+            this.goalsDiff = goalsDiff;
+        }
+
+        public String getGroup() {
+            return group;
+        }
+
+        public void setGroup(String group) {
+            this.group = group;
+        }
+
+        public String getForm() {
+            return form;
+        }
+
+        public void setForm(String form) {
+            this.form = form;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public _WinDrawLose getAll() {
+            return all;
+        }
+
+        public void setAll(_WinDrawLose all) {
+            this.all = all;
+        }
+
+        public _WinDrawLose getHome() {
+            return home;
+        }
+
+        public void setHome(_WinDrawLose home) {
+            this.home = home;
+        }
+
+        public _WinDrawLose getAway() {
+            return away;
+        }
+
+        public void setAway(_WinDrawLose away) {
+            this.away = away;
+        }
+
+        public void setUpdate(String update) {
+            this.update = update;
+        }
+
+        @Override
+        public String toString() {
+            return "_Standing{" +
+                    "team=" + team +
+                    ", rank=" + rank +
+                    ", points=" + points +
+                    ", goalsDiff=" + goalsDiff +
+                    ", group='" + group + '\'' +
+                    ", form='" + form + '\'' +
+                    ", status='" + status + '\'' +
+                    ", description='" + description + '\'' +
+                    ", all=" + all +
+                    ", home=" + home +
+                    ", away=" + away +
+                    ", update='" + update + '\'' +
+                    '}';
+        }
     }
 
-    @Getter
-    @Setter
-    @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _Team {
         private long id;
         private String name;
         private String logo;
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getLogo() {
+            return logo;
+        }
+
+        public void setLogo(String logo) {
+            this.logo = logo;
+        }
+
+        @Override
+        public String toString() {
+            return "_Team{" +
+                    "id=" + id +
+                    ", name='" + name + '\'' +
+                    ", logo='" + logo + '\'' +
+                    '}';
+        }
     }
 
-    @Getter
-    @Setter
-    @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _WinDrawLose {
         private int played;
@@ -139,11 +356,59 @@ public class StandingsResponse extends ApiFootballResponse {
         private int draw;
         private int lose;
         private _Goals goals;
+
+        public int getPlayed() {
+            return played;
+        }
+
+        public void setPlayed(int played) {
+            this.played = played;
+        }
+
+        public int getWin() {
+            return win;
+        }
+
+        public void setWin(int win) {
+            this.win = win;
+        }
+
+        public int getDraw() {
+            return draw;
+        }
+
+        public void setDraw(int draw) {
+            this.draw = draw;
+        }
+
+        public int getLose() {
+            return lose;
+        }
+
+        public void setLose(int lose) {
+            this.lose = lose;
+        }
+
+        public _Goals getGoals() {
+            return goals;
+        }
+
+        public void setGoals(_Goals goals) {
+            this.goals = goals;
+        }
+
+        @Override
+        public String toString() {
+            return "_WinDrawLose{" +
+                    "played=" + played +
+                    ", win=" + win +
+                    ", draw=" + draw +
+                    ", lose=" + lose +
+                    ", goals=" + goals +
+                    '}';
+        }
     }
 
-    @Getter
-    @Setter
-    @ToString
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class _Goals {
         /**
@@ -155,5 +420,29 @@ public class StandingsResponse extends ApiFootballResponse {
          * 실점
          */
         private int against;
+
+        public int getForGoals() {
+            return forGoals;
+        }
+
+        public void setForGoals(int forGoals) {
+            this.forGoals = forGoals;
+        }
+
+        public int getAgainst() {
+            return against;
+        }
+
+        public void setAgainst(int against) {
+            this.against = against;
+        }
+
+        @Override
+        public String toString() {
+            return "_Goals{" +
+                    "forGoals=" + forGoals +
+                    ", against=" + against +
+                    '}';
+        }
     }
 }

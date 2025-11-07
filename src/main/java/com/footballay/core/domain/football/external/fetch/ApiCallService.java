@@ -1,6 +1,7 @@
 package com.footballay.core.domain.football.external.fetch;
 
 import com.footballay.core.domain.football.external.fetch.response.*;
+import org.apache.commons.lang3.NotImplementedException;
 
 public interface ApiCallService {
 
@@ -24,5 +25,7 @@ public interface ApiCallService {
 
     PlayerInfoResponse playerSingle(long playerId, long leagueId, int season);
 
-    StandingsResponse standings(long leagueId, int season);
+    default StandingsResponse standings(long leagueId, int season) {
+        throw new NotImplementedException("Standings API is not supported");
+    }
 }

@@ -1,11 +1,9 @@
 package com.footballay.core.domain.football.scheduler.standing;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import org.quartz.*;
 import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor
 @Component
 public class StandingJobEnrollHelper {
 
@@ -13,12 +11,17 @@ public class StandingJobEnrollHelper {
 
     private final Scheduler scheduler;
 
+    public StandingJobEnrollHelper(Scheduler scheduler) {
+        this.scheduler = scheduler;
+    }
+
     @PostConstruct
     private void init() throws SchedulerException {
-        JobKey jobKey = JobKey.jobKey(StandingQuartzNames.JOB_NAME);
-        TriggerKey triggerKey = TriggerKey.triggerKey(StandingQuartzNames.TRIGGER_NAME);
-
-        scheduleStandingJobIfNotExist(jobKey, triggerKey);
+        // # 현재는 Standing 사용 안함
+        // JobKey jobKey = JobKey.jobKey(StandingQuartzNames.JOB_NAME);
+        // TriggerKey triggerKey = TriggerKey.triggerKey(StandingQuartzNames.TRIGGER_NAME);
+        //
+        // scheduleStandingJobIfNotExist(jobKey, triggerKey);
     }
 
     private void scheduleStandingJobIfNotExist(JobKey jobKey, TriggerKey triggerKey) throws SchedulerException {

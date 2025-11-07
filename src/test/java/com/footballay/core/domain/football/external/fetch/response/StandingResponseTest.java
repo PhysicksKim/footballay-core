@@ -1,5 +1,6 @@
 package com.footballay.core.domain.football.external.fetch.response;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Disabled("Standing feature will be reimplemented in Kotlin project migration")
 class StandingResponseTest {
 
     private static final Logger log = LoggerFactory.getLogger(StandingResponseTest.class);

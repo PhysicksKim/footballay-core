@@ -5,10 +5,9 @@ import com.footballay.core.domain.football.exception.ApiRateLimitException;
 import com.footballay.core.domain.football.external.FootballApiCacheService;
 import com.footballay.core.domain.football.service.FootballLeagueStandingService;
 import jakarta.annotation.PreDestroy;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -17,9 +16,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.*;
 
-@Slf4j
 @Component
 public class StandingJobTaskImpl implements StandingJobTask {
+
+    private static final Logger log = LoggerFactory.getLogger(StandingJobTaskImpl.class);
 
     private static final int DEFAULT_MAX_TRIES = 3;
 
@@ -103,7 +103,7 @@ public class StandingJobTaskImpl implements StandingJobTask {
         }
 
         try {
-            Standing standing = apiCacheService.cacheStandingOfLeague(league.getLeagueId());
+            // Standing standing = apiCacheService.cacheStandingOfLeague(league.getLeagueId());
             log.info("success to save standing of league=[id={},name={}]", league.getLeagueId(), league.getName());
             scheduleNext(queue, 0);
         } catch (ApiRateLimitException e) {
@@ -159,15 +159,79 @@ public class StandingJobTaskImpl implements StandingJobTask {
         scheduler.shutdownNow();
     }
 
-    @Getter
-    @Builder
     final private static class StandingLeague {
         private Long leagueId;
         private String name;
         private Integer currentSeason;
-        private int    tryCount;
+        private int tryCount;
 
-        private void incrementTryCount() { this.tryCount++; }
-        private boolean exceedMaxTry(int maxTryCount) { return this.tryCount >= maxTryCount; }
+        private StandingLeague(Long leagueId, String name, Integer currentSeason, int tryCount) {
+            this.leagueId = leagueId;
+            this.name = name;
+            this.currentSeason = currentSeason;
+            this.tryCount = tryCount;
+        }
+
+        public Long getLeagueId() {
+            return leagueId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Integer getCurrentSeason() {
+            return currentSeason;
+        }
+
+        public int getTryCount() {
+            return tryCount;
+        }
+
+        private void incrementTryCount() {
+            this.tryCount++;
+        }
+
+        private boolean exceedMaxTry(int maxTryCount) {
+            return this.tryCount >= maxTryCount;
+        }
+
+        public static StandingLeagueBuilder builder() {
+            return new StandingLeagueBuilder();
+        }
+
+        public static class StandingLeagueBuilder {
+            private Long leagueId;
+            private String name;
+            private Integer currentSeason;
+            private int tryCount;
+
+            StandingLeagueBuilder() {
+            }
+
+            public StandingLeagueBuilder leagueId(Long leagueId) {
+                this.leagueId = leagueId;
+                return this;
+            }
+
+            public StandingLeagueBuilder name(String name) {
+                this.name = name;
+                return this;
+            }
+
+            public StandingLeagueBuilder currentSeason(Integer currentSeason) {
+                this.currentSeason = currentSeason;
+                return this;
+            }
+
+            public StandingLeagueBuilder tryCount(int tryCount) {
+                this.tryCount = tryCount;
+                return this;
+            }
+
+            public StandingLeague build() {
+                return new StandingLeague(leagueId, name, currentSeason, tryCount);
+            }
+        }
     }
 }

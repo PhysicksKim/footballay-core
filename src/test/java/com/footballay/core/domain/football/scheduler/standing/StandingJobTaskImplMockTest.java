@@ -8,6 +8,7 @@ import com.footballay.core.domain.football.persistence.standings.Standing;
 import com.footballay.core.domain.football.service.FootballLeagueStandingService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +27,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@Disabled("Standing feature will be reimplemented in Kotlin project migration")
 class StandingJobTaskImplMockTest {
 
     StandingJobTaskImpl task;

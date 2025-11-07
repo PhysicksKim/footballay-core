@@ -1,16 +1,20 @@
 package com.footballay.core.domain.football.scheduler.standing;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-@Slf4j
-@RequiredArgsConstructor
 public class StandingJob implements Job {
 
+    private static final Logger log = LoggerFactory.getLogger(StandingJob.class);
+
     private final StandingJobTask standingJobTask;
+
+    public StandingJob(StandingJobTask standingJobTask) {
+        this.standingJobTask = standingJobTask;
+    }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {

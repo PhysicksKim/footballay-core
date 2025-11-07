@@ -3,13 +3,7 @@ package com.footballay.core.domain.football.persistence.standings;
 import com.footballay.core.domain.football.persistence.Team;
 import com.footballay.core.entity.BaseDateAuditEntity;
 import jakarta.persistence.*;
-import lombok.*;
 
-@Getter
-@Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 @Entity
 @Table(name = "standing_team")
 public class StandingTeam extends BaseDateAuditEntity {
@@ -81,4 +75,226 @@ public class StandingTeam extends BaseDateAuditEntity {
     })
     private StandingStats awayStats;
 
+    // Protected no-args constructor for JPA
+    protected StandingTeam() {
+    }
+
+    // Private all-args constructor for builder
+    private StandingTeam(Long id, Team team, Standing standing, int rank, int points, int goalsDiff,
+                         String groupName, String form, String description, String status,
+                         StandingStats allStats, StandingStats homeStats, StandingStats awayStats) {
+        this.id = id;
+        this.team = team;
+        this.standing = standing;
+        this.rank = rank;
+        this.points = points;
+        this.goalsDiff = goalsDiff;
+        this.groupName = groupName;
+        this.form = form;
+        this.description = description;
+        this.status = status;
+        this.allStats = allStats;
+        this.homeStats = homeStats;
+        this.awayStats = awayStats;
+    }
+
+    // Getters
+    public Long getId() {
+        return id;
+    }
+
+    public Team getTeam() {
+        return team;
+    }
+
+    public Standing getStanding() {
+        return standing;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public int getPoints() {
+        return points;
+    }
+
+    public int getGoalsDiff() {
+        return goalsDiff;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public String getForm() {
+        return form;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public StandingStats getAllStats() {
+        return allStats;
+    }
+
+    public StandingStats getHomeStats() {
+        return homeStats;
+    }
+
+    public StandingStats getAwayStats() {
+        return awayStats;
+    }
+
+    // Setters
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+
+    public void setStanding(Standing standing) {
+        this.standing = standing;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+
+    public void setGoalsDiff(int goalsDiff) {
+        this.goalsDiff = goalsDiff;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public void setForm(String form) {
+        this.form = form;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setAllStats(StandingStats allStats) {
+        this.allStats = allStats;
+    }
+
+    public void setHomeStats(StandingStats homeStats) {
+        this.homeStats = homeStats;
+    }
+
+    public void setAwayStats(StandingStats awayStats) {
+        this.awayStats = awayStats;
+    }
+
+    // Builder
+    public static StandingTeamBuilder builder() {
+        return new StandingTeamBuilder();
+    }
+
+    public static class StandingTeamBuilder {
+        private Long id;
+        private Team team;
+        private Standing standing;
+        private int rank;
+        private int points;
+        private int goalsDiff;
+        private String groupName;
+        private String form;
+        private String description;
+        private String status;
+        private StandingStats allStats;
+        private StandingStats homeStats;
+        private StandingStats awayStats;
+
+        StandingTeamBuilder() {
+        }
+
+        public StandingTeamBuilder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public StandingTeamBuilder team(Team team) {
+            this.team = team;
+            return this;
+        }
+
+        public StandingTeamBuilder standing(Standing standing) {
+            this.standing = standing;
+            return this;
+        }
+
+        public StandingTeamBuilder rank(int rank) {
+            this.rank = rank;
+            return this;
+        }
+
+        public StandingTeamBuilder points(int points) {
+            this.points = points;
+            return this;
+        }
+
+        public StandingTeamBuilder goalsDiff(int goalsDiff) {
+            this.goalsDiff = goalsDiff;
+            return this;
+        }
+
+        public StandingTeamBuilder groupName(String groupName) {
+            this.groupName = groupName;
+            return this;
+        }
+
+        public StandingTeamBuilder form(String form) {
+            this.form = form;
+            return this;
+        }
+
+        public StandingTeamBuilder description(String description) {
+            this.description = description;
+            return this;
+        }
+
+        public StandingTeamBuilder status(String status) {
+            this.status = status;
+            return this;
+        }
+
+        public StandingTeamBuilder allStats(StandingStats allStats) {
+            this.allStats = allStats;
+            return this;
+        }
+
+        public StandingTeamBuilder homeStats(StandingStats homeStats) {
+            this.homeStats = homeStats;
+            return this;
+        }
+
+        public StandingTeamBuilder awayStats(StandingStats awayStats) {
+            this.awayStats = awayStats;
+            return this;
+        }
+
+        public StandingTeam build() {
+            return new StandingTeam(id, team, standing, rank, points, goalsDiff, groupName,
+                    form, description, status, allStats, homeStats, awayStats);
+        }
+    }
 }
