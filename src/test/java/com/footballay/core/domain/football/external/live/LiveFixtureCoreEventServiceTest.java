@@ -33,7 +33,7 @@ import static com.footballay.core.domain.football.external.fetch.response.Fixtur
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles({"test","mockapi"})
 @SpringBootTest
 class LiveFixtureEventServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveFixtureEventServiceTest.class);

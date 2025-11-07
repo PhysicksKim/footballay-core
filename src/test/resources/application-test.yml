@@ -1,0 +1,98 @@
+# Footballay Core - Test Environment Configuration
+# 테스트 환경 설정 (H2 in-memory, Mock API)
+
+spring:
+  # H2 in-memory Database
+  datasource:
+    url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  # Security (테스트용)
+  security:
+    user:
+      name: admin
+      password: admin
+
+  # Quartz 비활성화 (테스트 속도 향상)
+  # quartz:
+  #   job-store-type: jdbc
+  #   jdbc:
+  #     initialize-schema: always
+
+  # Redis (로컬)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 1234
+
+# Server 설정
+server:
+  port: 8083
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: -wva9.ea7)}}
+    key-store-type: PKCS12
+    key-alias: myalias
+    enabled: true
+
+# 테스트 환경 CORS
+cors:
+  allowedorigins: 'http://localhost:8080,https://localhost:8080'
+
+# Logging
+logging:
+  level:
+    root: info
+
+# 테스트 환경 Security 키
+custom:
+  login:
+    remember-me-key: remember-me-key-only-for-dev
+
+# 세션 쿠키 설정
+cookies:
+  remember-me:
+    name: 'remember-me'
+    max-age: 1209600  # 2주 (단위: 초)
+  user-info:
+    name: 'user-info'
+    max-age: 1209600  # 2주 (단위: 초)
+
+# AWS Mock 값 (Bean 생성용)
+aws:
+  cloudfront:
+    domain: 'https://MOCKDOMAIN.com'
+    keyPairId: 'MOCKKEYPAIRID'
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
+  s3:
+    region: 'MOCKREGION'
+    accessKey: 'MOCKACCESS'
+    secretKey: 'MOCKSECRET'
+    bucket-name: 'MOCKBUCKETNAME'
+    public-domain: 'https://MOCOKS3DOMAIN.com'
+
+# Mock 경로 설정
+path:
+  football:
+    players:
+      photo:
+        prefix: 'chuncity/dev/players'
+        suffix: 'devphoto'
+
+# Mock API 설정
+footballay:
+  apisports:
+    url: https://v3.football.api-sports.io
+    headers:
+      x-rapidapi-host: v3.football.api-sports.io
+      x-rapidapi-key: __CENSOREDKEY__

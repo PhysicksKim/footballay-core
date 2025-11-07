@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
  * @author Footballay Core Team
  */
 @SpringBootTest
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("dev")
 @Transactional
 class AdminLeagueQueryWebServiceImplTest {
     val log = logger()

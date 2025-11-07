@@ -53,7 +53,39 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // 커스텀 핸들러 설정
         // .failureHandler(authenticationFailureHandler)
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource)).csrf(csrf -> csrf.csrfTokenRepository(csrfConfigurationSource()).csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()).ignoringRequestMatchers(ignoreExceptLoginPost())).authorizeHttpRequests(auth -> auth.requestMatchers("/admin/**").hasAnyRole("ADMIN").anyRequest().permitAll()).formLogin(form -> form.permitAll().failureUrl("/login?error").successHandler(authenticationSuccessHandler)).anonymous(Customizer.withDefaults()).logout(configure -> configure.logoutSuccessHandler(logoutSuccessHandler)).headers(headers -> headers.frameOptions(custom -> custom.sameOrigin())).sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS)).exceptionHandling(exception -> exception.accessDeniedHandler(accessDeniedHandler)).rememberMe(configurer -> configurer.key(REMEMBER_ME_KEY).tokenValiditySeconds(rememberMeMaxAge).rememberMeCookieName(rememberMeName).useSecureCookie(true).alwaysRemember(false).rememberMeParameter("remember-me").userDetailsService(userDetailsService).tokenRepository(tokenRepository));
+        http.cors(cors ->
+            cors.configurationSource(corsConfigurationSource))
+            .csrf(csrf ->
+                csrf.csrfTokenRepository(csrfConfigurationSource())
+                    .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                    .ignoringRequestMatchers(ignoreExceptLoginPost()))
+            .authorizeHttpRequests(auth ->
+                auth.requestMatchers("/admin/**")
+                    .hasAnyRole("ADMIN")
+                    .anyRequest().permitAll())
+            .formLogin(form ->
+                form.permitAll()
+                    .failureUrl("/login?error")
+                    .successHandler(authenticationSuccessHandler)
+                    .failureHandler(authenticationFailureHandler))
+            .anonymous(Customizer.withDefaults())
+            .logout(configure ->
+                configure.logoutSuccessHandler(logoutSuccessHandler))
+            .headers(headers ->
+                headers.frameOptions(custom -> custom.sameOrigin()))
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+            .exceptionHandling(exception ->
+                exception.accessDeniedHandler(accessDeniedHandler))
+            .rememberMe(configurer ->
+                configurer.key(REMEMBER_ME_KEY)
+                    .tokenValiditySeconds(rememberMeMaxAge)
+                    .rememberMeCookieName(rememberMeName)
+                    .useSecureCookie(true)
+                    .alwaysRemember(false)
+                    .rememberMeParameter("remember-me")
+                    .userDetailsService(userDetailsService)
+                    .tokenRepository(tokenRepository));
         return http.build();
     }
 

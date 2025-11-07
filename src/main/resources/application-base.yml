@@ -1,4 +1,0 @@
-spring:
-  config:
-    import:
-      - classpath:config/base/application-cookies.yml

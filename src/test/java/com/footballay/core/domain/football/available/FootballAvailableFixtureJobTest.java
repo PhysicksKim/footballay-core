@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
  * AvailableFixture 추가/제거 시 Job 이 제대로 추가/제거되는지 테스트
  */
 @SpringBootTest
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles({"test","mockapi"})
 @ExtendWith(QuartzConnectionResetListener.class)
 public class FootballAvailableFixtureJobTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballAvailableFixtureJobTest.class);

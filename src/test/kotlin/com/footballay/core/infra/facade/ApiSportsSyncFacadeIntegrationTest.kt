@@ -17,7 +17,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("test", "mockapi")
 @Transactional
 class ApiSportsSyncFacadeIntegrationTest {
     val log = logger()

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
 @SpringBootTest
-@ActiveProfiles({"api", "cookies"})
+@ActiveProfiles({"dev", "devrealapi", "api"})
 class ApiCallServiceImplTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiCallServiceImplTest.class);
     @Autowired

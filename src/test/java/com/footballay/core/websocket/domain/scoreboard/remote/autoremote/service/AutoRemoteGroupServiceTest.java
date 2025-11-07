@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 class AutoRemoteGroupServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AutoRemoteGroupServiceTest.class);

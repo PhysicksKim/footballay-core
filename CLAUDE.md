@@ -148,11 +148,14 @@ Need just current directory?
 ### Development
 
 ```bash
-# Run the application
-./gradlew bootRun
+# Run the application (default: dev profile with Mock API)
+./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# Run with specific profile (dev, mockapi, live, prod)
-./gradlew bootRun --args='--spring.profiles.active=dev,mockapi'
+# Run with real API
+./gradlew bootRun --args='--spring.profiles.active=dev,devrealapi'
+
+# Run without SSL (if needed for debugging)
+./gradlew bootRun --args='--spring.profiles.active=dev --server.ssl.enabled=false'
 
 # Build the project
 ./gradlew build
@@ -176,8 +179,8 @@ Need just current directory?
 # Run a specific test method
 ./gradlew test --tests "com.footballay.core.infra.facade.ApiSportsSyncFacadeIntegrationTest.완전한 통합 테스트 - 전체 동기화 워크플로우"
 
-# Run tests with profile
-./gradlew test -Dspring.profiles.active=dev,mockapi
+# Run tests with specific profile (optional, tests use appropriate profiles by default)
+./gradlew test -Dspring.profiles.active=dev
 ```
 
 ### Code Quality
@@ -369,14 +372,47 @@ interface MatchDataSyncer {
 
 ## Spring Profiles
 
-The application uses profile groups for environment configuration:
+The application uses a simplified profile structure with standard `application-XXX.yml` files:
 
--   **dev**: Development environment (includes `devbase`, `devpostgre`, `devaws`)
--   **mockapi**: Uses mock JSON data instead of real API calls (includes `mockpath`, `mockapi`)
--   **live**: Production with live API (includes `api`, `aws`, `secret`)
--   **prod**: Production environment (includes `prodbase`)
+### Profile Files
 
-Configuration files are organized in `src/main/resources/config/{profile}/`
+All configuration files are located in `src/main/resources/`:
+
+-   **application.yml** - Base configuration (common across all environments)
+-   **application-dev.yml** - Local development (PostgreSQL, Redis, Mock API, HTTPS)
+-   **application-devrealapi.yml** - Development with real API (overrides Mock API settings)
+-   **application-test.yml** - Test environment (H2 in-memory, Mock API)
+-   **application-prod.yml** - Production public configuration
+-   **application-live.yml** - Production secrets (imports external files)
+-   **application-api.yml** - API keys (gitignored)
+
+### Usage
+
+**Local Development (Mock API):**
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+
+**Development with Real API:**
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev,devrealapi'
+```
+
+**Disable SSL in Development (if needed):**
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev --server.ssl.enabled=false'
+```
+
+**Production:**
+```bash
+--spring.profiles.active=prod,live
+```
+
+### Test Profiles
+
+-   `@ActiveProfiles("dev")` - Integration tests with PostgreSQL + Mock API
+-   `@ActiveProfiles("test")` - Unit tests with H2 in-memory + Mock API
+-   `@ActiveProfiles("dev", "devrealapi")` - Tests with real API calls
 
 ## Technology Stack
 
@@ -417,14 +453,16 @@ Configuration files are organized in `src/main/resources/config/{profile}/`
 
 ### Testing Best Practices
 
--   Use mock profile for integration tests to avoid API rate limits
+-   Use `@ActiveProfiles("test")` for unit tests with H2 in-memory database
+-   Use `@ActiveProfiles("dev")` for integration tests with PostgreSQL + Mock API
+-   Use `@ActiveProfiles("dev", "devrealapi")` for tests requiring real API calls
 -   Always sync dependencies first: leagues → teams → players/fixtures
 -   Use `em.flush()` and `em.clear()` to ensure database state in tests
 -   Check both provider entities and core entities in assertions
 
 ## Common Pitfalls
 
-1. **Profile Configuration**: Ensure correct profiles are active. Dev requires database setup; mockapi bypasses real APIs.
+1. **Profile Configuration**: Ensure correct profiles are active. `dev` profile includes Mock API by default; use `dev,devrealapi` for real API calls.
 2. **Sync Order**: Always sync in correct order (leagues before teams, teams before fixtures).
 3. **Provider UIDs**: Match UIDs are prefixed with provider name (e.g., `apisports:1208021`).
 4. **Mock Data Limitations**: Mock data only supports specific leagues/teams (Premier League ID 39, Manchester City ID 50, etc.). See mock README for details.

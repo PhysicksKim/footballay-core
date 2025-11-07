@@ -43,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional
  * @since 1.0.0
  */
 @SpringBootTest
-@ActiveProfiles("dev", "mocks")
+@ActiveProfiles("dev")
 @Transactional
 class PlayerApiSportsWithCoreSyncerIntegrationTest {
     val log = logger()

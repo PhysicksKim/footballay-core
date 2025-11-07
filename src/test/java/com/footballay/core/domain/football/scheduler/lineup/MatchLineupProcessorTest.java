@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles("dev")
 @SpringBootTest
 class MatchLineupProcessorTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MatchLineupProcessorTest.class);

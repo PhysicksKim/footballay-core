@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
-@ActiveProfiles({ "dev", "api" })
+@ActiveProfiles({"dev", "devrealapi"})
 // @TestPropertySource(properties = "discord.debug-mode=true") // 실제로 알림을 보내고 싶다면 주석을 해제하세요
 class MatchDataAlertNotifierTest {
 

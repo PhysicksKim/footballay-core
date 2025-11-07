@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @Transactional
 @SpringBootTest
 class RemoteHostTokenServiceTest {

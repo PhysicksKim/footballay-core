@@ -22,8 +22,7 @@ public final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, Supplier<CsrfToken> csrfToken) {
         /*
-         * CSRF token 이 response body 에 쓰인다면 BREACH 공격 취약점이 발생하므로
-         * BREACH 공격을 방지하기 위해서 xor 방식을 사용해야 합니다.
+         * CSRF token BREACH 공격을 방지하기 위해서 xor 방식을 사용해야 합니다.
          */
         this.xor.handle(request, response, csrfToken);
         /*

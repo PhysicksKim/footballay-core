@@ -1,6 +1,131 @@
+# Footballay Core - Development Environment Configuration
+# 로컬 개발 환경 설정 (PostgreSQL, Redis, Mock API)
+
 spring:
-  config:
-    import:
-      - classpath:config/dev/application-devbase.yml
-      - classpath:config/dev/application-devpostgre.yml
-      - classpath:config/dev/application-devaws.yml
+  # JPA 설정
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: footballay_core
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  #    show-sql: true
+
+  # DevTools
+  devtools:
+    restart:
+      enabled: false
+
+  # PostgreSQL 로컬 도커 (docker/dev/docker-compose.yml)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/footballay_core?currentSchema=footballay_core
+    username: dev
+    password: dev1234
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 10
+      connection-timeout: 30000
+
+  # Redis 로컬 도커
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 1234
+
+  # Quartz Scheduler
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: FootballayScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: QRTZ_
+            isClustered: false
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+
+# Server 설정 (HTTPS with self-signed certificate)
+server:
+  port: 8083
+  ssl:
+    client-auth: none
+    key-store: classpath:keystore.p12
+    key-store-password: -wva9.ea7)}}
+    key-store-type: PKCS12
+    key-alias: scoreboarddev
+    enabled: true  # WSS 등 프론트 개발 위해 HTTPS 유지. 필요시 --server.ssl.enabled=false로 오버라이드
+
+  # Monitoring을 위한 Tomcat metrics 활성화
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 80
+
+# Monitoring - Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# Logging
+logging:
+  level:
+    root: info
+    org:
+      testcontainers: debug
+
+# 개발 환경에서 허용할 CORS 출처
+cors:
+  allowedorigins: "http://localhost:8080,http://localhost:1212,https://localhost:7777,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechune.com,https://gyechune.com,https://gyechunhoe.com,https://static.gyechunhoe.com"
+
+# 개발 환경 Security 키
+custom:
+  login:
+    remember-me-key: remember-me-key-only-for-dev
+
+# AWS Mock 값 (Bean 생성용)
+aws:
+  cloudfront:
+    domain: "https://static.gyechunhoe.com"
+    keyPairId: "MOCKKEYPAIRID"
+    privateKeyPath: classpath:MOCKPATHTHISISNOTREAL
+    publicKeyPath: classpath:MOCKPATHTHISISNOTREAL
+  s3:
+    accessKey: AMOCKACCESSKEYZ
+    secretKey: XAMOCKSECRETKEYZ
+    region: ap-northeast-2
+    bucket-name: MOCK-BUCKET-NAME
+    public-domain: "https://static.MOCKDOMAINqk20ejkt01ke03.com"
+
+# Mock API 설정 (기본값, devrealapi 프로파일로 오버라이드 가능)
+footballay:
+  apisports:
+    scheme: https
+    host: mock.api-sports.io
+    headers:
+      x-rapidapi-host-name: 'X-RapidAPI-Host'
+      x-rapidapi-host-value: 'mock.api-sports.io'
+      x-rapidapi-key-name: 'X-RapidAPI-Key'
+      x-rapidapi-key-value: 'mock-api-key'
+
+# Mock 경로 설정 (기본값, devrealapi 프로파일로 오버라이드 가능)
+path:
+  football:
+    players:
+      photo:
+        prefix: "chuncity/dev/players"
+        suffix: "devphoto"

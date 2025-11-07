@@ -1,7 +1,11 @@
+# Footballay Core - Production Secrets Configuration
+# 프로덕션 환경 시크릿 설정 (외부 파일에서 로드)
+# 사용법: --spring.profiles.active=prod,live
+
 spring:
-    config:
-        import:
-            - file:/config-external/application-api.yml
-            - file:/config-external/application-aws.yml
-            - file:/config-external/application-path.yml
-            - file:/config-external/application-secret.yml
+  config:
+    import:
+      - file:/config-external/application-api.yml
+      - file:/config-external/application-aws.yml
+      - file:/config-external/application-path.yml
+      - file:/config-external/application-secret.yml

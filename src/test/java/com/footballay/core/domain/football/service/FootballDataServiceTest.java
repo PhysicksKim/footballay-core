@@ -23,7 +23,7 @@ import static com.footballay.core.domain.football.util.GeneratePlayersOfTeam.gen
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 class FootballDataServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballDataServiceTest.class);

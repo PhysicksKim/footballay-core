@@ -8,9 +8,12 @@ import com.footballay.core.domain.user.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+
 import java.util.Arrays;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class UserRootTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserRootTest.class);

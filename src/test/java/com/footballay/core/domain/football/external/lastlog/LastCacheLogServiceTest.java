@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 class LastCacheLogServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LastCacheLogServiceTest.class);

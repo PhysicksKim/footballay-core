@@ -1,77 +1,67 @@
+# Footballay Core - Base Configuration
+# 모든 환경에서 공통으로 사용하는 기본 설정
+
 spring:
-    application:
-        name: footballay-core
-    profiles:
-        group:
-            apirefac:
-                - apirefacsecret
-            dev:
-                - devbase
-                - devpostgre
-                - devaws
-            prod:
-                - prodbase
-            live:
-                - api
-                - aws
-                - secret
-            devrealapi:
-                - mockpath
-                - api
-            mockapi:
-                - mockpath
-                - mockapi
-            standby:
-                - prodstandby
-    data:
-        redis:
-            repositories:
-                enabled: false
-    jackson:
-        time-zone: Asia/Seoul
-    web:
-        resources:
-            add-mappings: false
+  application:
+    name: footballay-core
+
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+  jackson:
+    time-zone: Asia/Seoul
+
+  web:
+    resources:
+      add-mappings: false
 
 # SpringDoc OpenAPI Configuration
 springdoc:
-    api-docs:
-        path: /v3/api-docs
-    swagger-ui:
-        path: /swagger-ui.html
-        operations-sorter: method
-        tags-sorter: alpha
-        display-request-duration: true
-        doc-expansion: none
-    show-actuator: false
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: false
 
 logging:
-    level:
-        root: INFO
-        org:
-            springframework: INFO
-            hibernate: INFO
+  level:
+    root: INFO
+    org:
+      springframework: INFO
+      hibernate: INFO
 
 # footballay.com 과 gyechunhoe.com 의 메인 페이지 구분시
 app:
-    # DEPRECATED: use app.domain instead
-    domain: 'gyechunhoe.com'
+  # DEPRECATED: use app.domain instead
+  domain: 'gyechunhoe.com'
 
-    footballay:
-        domain: 'footballay.com'
-        static:
-            domain: 'static.footballay.com'
-    gyechunhoe:
-        domain: 'gyechunhoe.com'
-        static:
-            domain: 'static.gyechunhoe.com'
-    gyechune:
-        domain: 'gyechune.com'
-        static:
-            domain: 'static.gyechune.com'
+  footballay:
+    domain: 'footballay.com'
+    static:
+      domain: 'static.footballay.com'
+  gyechunhoe:
+    domain: 'gyechunhoe.com'
+    static:
+      domain: 'static.gyechunhoe.com'
+  gyechune:
+    domain: 'gyechune.com'
+    static:
+      domain: 'static.gyechune.com'
 
 # Football Data Provider 설정
 footballay:
-    provider:
-        primary: apisports
-        secondary: sportmonks
+  provider:
+    primary: apisports
+    secondary: sportmonks
+
+# 세션 쿠키 설정
+cookies:
+  remember-me:
+    name: "remember-me"
+    max-age: 1209600 # 2주 (단위: 초)

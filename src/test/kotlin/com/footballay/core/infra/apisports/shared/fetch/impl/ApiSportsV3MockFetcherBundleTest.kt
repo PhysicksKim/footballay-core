@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test", "mockapi")
 @DisplayName("ApiSportsV3MockFetcher Bundle 구조 테스트")
 class ApiSportsV3MockFetcherBundleTest {
     private val log = logger()

@@ -36,7 +36,7 @@ import static org.mockito.Mockito.doNothing;
  * <h3>dev profile</h3>
  * dev profile 활성화 시, MockApiInitDataRunner 가 실행되어 개발용 데이터들이 삽입됩니다.
  */
-@ActiveProfiles({"mockapi", "dev"})
+@ActiveProfiles({"test","mockapi"})
 @SpringBootTest
 @Transactional
 class AdminFootballDataWebServiceTest {

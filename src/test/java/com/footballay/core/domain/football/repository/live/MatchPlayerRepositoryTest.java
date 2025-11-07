@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles({"test","mockapi"})
 @SpringBootTest
 @Transactional
 public class MatchPlayerRepositoryTest {

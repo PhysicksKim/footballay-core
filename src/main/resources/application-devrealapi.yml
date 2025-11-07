@@ -1,5 +1,23 @@
+# Footballay Core - Development with Real API Configuration
+# 개발 환경에서 실제 API를 사용하는 설정
+# 사용법: --spring.profiles.active=dev,devrealapi
+
+# 실제 API 설정으로 오버라이드
+footballay:
+  apisports:
+    scheme: https
+    host: v3.football.api-sports.io
+    # API 키는 application-api.yml에서 로드
+
+# 실제 경로 설정으로 오버라이드
+path:
+  football:
+    players:
+      photo:
+        prefix: "chuncity/prod/players"
+        suffix: ""
+
+# API 키 파일 import (optional: 파일이 없어도 시작 가능)
 spring:
   config:
-    import:
-      - classpath:config/mock/application-mockpath.yml
-      - classpath:config/live/application-api.yml
+    import: optional:classpath:application-api.yml

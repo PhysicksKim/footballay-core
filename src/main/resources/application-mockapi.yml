@@ -1,5 +1,0 @@
-spring:
-    config:
-        import:
-            - classpath:config/mock/application-mockpath.yml
-            - classpath:config/mock/application-mockapi.yml

@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import static org.mockito.Mockito.when;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 class AnonymousUserServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AnonymousUserServiceTest.class);

@@ -1,14 +1,22 @@
 package com.footballay.core.domain.football.external.fetch.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.footballay.core.domain.football.external.fetch.ApiError;
+import com.footballay.core.domain.football.external.fetch.FlexibleErrorDeserializer;
+
 import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ExternalApiStatusResponse {
     private String get;
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     private List<String> parameters;
-    private List<String> errors;
+    @JsonDeserialize(using = FlexibleErrorDeserializer.class)
+    private ApiError errors;
     private int results;
     private Map<String, Integer> paging;
     private Response response;
@@ -207,7 +215,7 @@ public class ExternalApiStatusResponse {
         return this.parameters;
     }
 
-    public List<String> getErrors() {
+    public ApiError getErrors() {
         return this.errors;
     }
 
@@ -235,7 +243,7 @@ public class ExternalApiStatusResponse {
         this.parameters = parameters;
     }
 
-    public void setErrors(final List<String> errors) {
+    public void setErrors(final ApiError errors) {
         this.errors = errors;
     }
 

@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles("dev")
 @SpringBootTest
 class SchedulerServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SchedulerServiceTest.class);

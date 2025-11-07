@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Transactional
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles({"test","mockapi"})
 @SpringBootTest
 class PlayerStatisticsServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PlayerStatisticsServiceTest.class);

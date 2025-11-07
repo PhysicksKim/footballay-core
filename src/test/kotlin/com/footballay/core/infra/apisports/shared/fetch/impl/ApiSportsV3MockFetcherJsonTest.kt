@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test", "mockapi")
 @DisplayName("ApiSportsV3MockFetcher JSON 파일 기반 테스트")
 class ApiSportsV3MockFetcherJsonTest {
     @Autowired

@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
-@ActiveProfiles("mockapi")
+@ActiveProfiles({"test","mockapi"})
 @SpringBootTest
 class MockApiCallServiceImplTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MockApiCallServiceImplTest.class);

@@ -27,7 +27,7 @@ import java.time.temporal.ChronoUnit
  * @author Footballay Core Team
  */
 @SpringBootTest
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("dev")
 @Transactional
 class FixtureCoreRepositoryTest {
     val log = logger()

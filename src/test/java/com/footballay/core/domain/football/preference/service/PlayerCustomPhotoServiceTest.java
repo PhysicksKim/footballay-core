@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 @Transactional
 class PlayerCustomPhotoServiceTest {

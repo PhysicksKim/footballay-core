@@ -23,7 +23,7 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("mockapi")
+@ActiveProfiles("test")
 @SpringBootTest
 class AdminFootballPreferenceServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminFootballPreferenceServiceTest.class);

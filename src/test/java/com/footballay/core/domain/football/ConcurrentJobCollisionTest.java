@@ -1,6 +1,5 @@
 package com.footballay.core.domain.football;
 
-import com.footballay.core.domain.football.FootballRoot;
 import com.footballay.core.domain.football.persistence.Fixture;
 import com.footballay.core.domain.football.persistence.League;
 import com.footballay.core.domain.football.persistence.Team;
@@ -20,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -28,6 +28,7 @@ import java.util.concurrent.*;
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.generate;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@ActiveProfiles("test")
 @SpringBootTest
 class ConcurrentJobCollisionTest {
 

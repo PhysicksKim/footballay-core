@@ -39,13 +39,13 @@ out/
 .vscode/
 
 ### secret keys ###
+# API keys and secrets (gitignored for security)
+src/main/resources/application-api.yml
+
+# External production secrets (mounted at runtime)
 **/application-secret.yml
 **/application-aws.yml
 **/application-path.yml
-**/application-api.yml
-**/application-apirefacsecret.yml
-src/main/resources/config/dev/application-apirefacsecret.yml
-!src/main/resources/config/dev/**
 
 ### Local Docker development configs (contains dummy secrets for testing)
 local-config/

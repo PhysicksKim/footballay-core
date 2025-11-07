@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional
 @SpringBootTest
-@ActiveProfiles({"dev", "mockapi"})
+@ActiveProfiles({"test","mockapi"})
 class FootballStreamDtoMapperTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FootballStreamDtoMapperTest.class);
     @Autowired

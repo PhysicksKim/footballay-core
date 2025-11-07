@@ -1,4 +1,66 @@
+# Footballay Core - Production Environment Configuration
+# 프로덕션 환경 공개 설정 (시크릿은 live 프로파일에)
+
 spring:
-  config:
-    import:
-      - classpath:config/prod/application-prodbase.yml
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  # Quartz Scheduler
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: FootballayScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+            tablePrefix: footballay_core.QRTZ_
+            isClustered: false
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 5
+
+  # Datasource (Supabase 최적화)
+  datasource:
+    hikari:
+      minimum-idle: 10
+      maximum-pool-size: 40
+      connection-timeout: 30000
+      data-source-properties:
+        prepareThreshold: 0  # Supabase transaction pooler 호환
+
+# Server 설정
+server:
+  error:
+    whitelabel:
+      enabled: false
+
+  # Monitoring을 위한 Tomcat metrics 활성화
+  tomcat:
+    mbeanregistry:
+      enabled: true
+    threads:
+      max: 200
+
+# Monitoring - Actuator
+management:
+  server:
+    port: 9001
+    address: 0.0.0.0  # Docker 컨테이너 환경: 모든 인터페이스에서 리슨
+
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+# 운영 환경에서 허용할 CORS 출처
+cors:
+  allowedorigins: "https://footballay.com,https://static.footballay.com,https://physickskim.github.io,https://gyechunhoe.com,https://static.gyechunhoe.com,https://gyechune.com,https://static.gyechune.com,chuncity://chuncity.app,footballay://footballay.app"
