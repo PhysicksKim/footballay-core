@@ -41,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional
  * - 향후 비즈니스 로직이 변경되어 이 연관관계가 필요해진다면, 그때 테스트도 함께 수정되어야 합니다.
  */
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @Transactional
 class FixtureApiSportsWithCoreSyncerIntegrationTest {
     val log = logger()

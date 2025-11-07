@@ -15,7 +15,7 @@ public class ApiCallServiceImpl implements ApiCallService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ApiCallServiceImpl.class);
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper objectMapper;
-    @Value("${footballay.apisports.headers.x-rapidapi-key}")
+    @Value("${footballay.apisports.headers.x-rapidapi-key-value:MOCK_KEY}")
     private String key;
 
     @Override

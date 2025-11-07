@@ -23,18 +23,7 @@ class ApiSportsPropertiesTest {
     @Test
     fun `프로퍼티 로딩 테스트`() {
         val scheme = apiSportsProperties.scheme
-        val host = apiSportsProperties.host
-        val headers = apiSportsProperties.headers
-        val xRapidapiHostName = headers.xRapidapiHostName
-        val xRapidapiHostVal = headers.xRapidapiHostValue
-
-        log.info("Scheme: $scheme")
-        log.info("Host: $host")
-        log.info("header : $xRapidapiHostName : $xRapidapiHostVal")
 
         assertThat(StringUtils.hasText(scheme)).isTrue()
-        assertThat(StringUtils.hasText(host)).isTrue()
-        assertThat(StringUtils.hasText(xRapidapiHostName)).isTrue()
-        assertThat(StringUtils.hasText(xRapidapiHostVal)).isTrue()
     }
 }

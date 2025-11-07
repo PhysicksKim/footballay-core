@@ -1,12 +1,17 @@
 package com.footballay.core.domain.football.external.fetch.response;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.footballay.core.domain.football.external.fetch.ApiError;
+import com.footballay.core.domain.football.external.fetch.FlexibleErrorDeserializer;
+
 import java.util.List;
 import java.util.Map;
 
 public abstract class ApiFootballResponse {
     private String get;
     private Map<String, String> parameters;
-    private List<String> errors;
+    @JsonDeserialize(using = FlexibleErrorDeserializer.class)
+    private ApiError errors;  // 여기만 바꾸면 됨!
     private int results;
     private Map<String, Integer> paging;
 
@@ -18,7 +23,7 @@ public abstract class ApiFootballResponse {
         return this.parameters;
     }
 
-    public List<String> getErrors() {
+    public ApiError getErrors() {
         return this.errors;
     }
 
@@ -38,7 +43,7 @@ public abstract class ApiFootballResponse {
         this.parameters = parameters;
     }
 
-    public void setErrors(final List<String> errors) {
+    public void setErrors(final ApiError errors) {
         this.errors = errors;
     }
 

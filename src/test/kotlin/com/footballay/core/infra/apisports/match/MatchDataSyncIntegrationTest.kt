@@ -44,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional
  * @author AI generated, physickskim
  */
 @SpringBootTest
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("test", "mockapi")
 @Transactional
 @DisplayName("Match 데이터 저장 전체 흐름 통합 테스트")
 class MatchDataSyncIntegrationTest {

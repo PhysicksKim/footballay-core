@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
-import kotlin.text.get
 
 /**
  * Implementation of [ApiSportsV3Fetcher] to fetch data from API Sports v3.
@@ -26,6 +25,9 @@ class ApiSportsV3FetchImpl(
     private val log = logger()
 
     override fun fetchStatus(): ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus> {
+        log.info("ApiSports v3 fetch properties: $properties")
+        log.info("ApiSports v3 fetch properties-key: ${properties.headers.xRapidapiKeyName} , ${properties.headers.xRapidapiKeyValue}")
+
         val uri: URI =
             ApiSportsUriBuilder()
                 .path(ApiSportsPaths.status)
@@ -33,7 +35,7 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("status", uri)
 
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Status")
     }
@@ -47,7 +49,7 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("leagues current", uri)
 
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsLeague.Current>>()
             ?: throw IllegalStateException("Response body is null of ApiSports League Current")
     }
@@ -65,7 +67,7 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("teams of league", uri)
 //
-//        // 먼저 raw response를 확인
+//        // raw response를 확인
 //        val rawResponse = restClient.get()
 //            .uri(uri)
 //            .header(properties.headers.xRapidapiHostName, properties.headers.xRapidapiHostValue)
@@ -75,7 +77,7 @@ class ApiSportsV3FetchImpl(
 //
 //        log.info("Raw response: $rawResponse")
 //
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsTeam.OfLeague>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Teams of League")
     }
@@ -89,7 +91,7 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("squad of team", uri)
 
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsPlayer.OfTeam>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Squad of Team")
     }
@@ -107,7 +109,7 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("fixtures of league", uri)
 
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.OfLeague>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Fixtures of League")
     }
@@ -121,16 +123,15 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("fixture single", uri)
 
-        return ApiSportsRestClientRequestBuild(uri)
+        return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.Single>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Fixture Single")
     }
 
-    private fun ApiSportsRestClientRequestBuild(uri: URI) =
+    private fun apiSportsRestClientRequestBuild(uri: URI) =
         restClient
             .get()
             .uri(uri)
-            .header(properties.headers.xRapidapiHostName, properties.headers.xRapidapiHostValue)
             .header(properties.headers.xRapidapiKeyName, properties.headers.xRapidapiKeyValue)
             .header("Accept", "application/json")
             .header("Accept-Encoding", "identity") // gzip 압축 방지
@@ -140,7 +141,7 @@ class ApiSportsV3FetchImpl(
         UriComponentsBuilder
             .newInstance()
             .scheme(properties.scheme)
-            .host(properties.host)
+            .host(properties.url)
 
     private fun logNameAndUri(
         reqName: String,
