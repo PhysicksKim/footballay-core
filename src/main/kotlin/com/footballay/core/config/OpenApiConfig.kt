@@ -46,8 +46,8 @@ class OpenApiConfig {
                     ),
             ).servers(
                 listOf(
-                    Server().url("http://localhost:8080").description("Development"),
-                    Server().url("https://api.footballay.com").description("Production"),
+                    Server().url("https://localhost:8080").description("Development"),
+                    Server().url("https://footballay.com").description("Production"),
                 ),
             ).components(
                 Components()
@@ -73,7 +73,20 @@ class OpenApiConfig {
             .builder()
             .group("admin")
             .displayName("Admin API")
-            .pathsToMatch("/api/v1/admin/**", "/api/admin/**")
+            .pathsToMatch("/api/v1/admin/**")
+            .build()
+
+    /**
+     * Legacy Admin API 그룹 (v0)
+     * - 기존 Admin API (v1 이전 버전)
+     */
+    @Bean
+    fun legacyAdminGroup(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("legacy-v0-admin")
+            .displayName("Legacy Admin API")
+            .pathsToMatch("/api/admin/**")
             .build()
 
     /**

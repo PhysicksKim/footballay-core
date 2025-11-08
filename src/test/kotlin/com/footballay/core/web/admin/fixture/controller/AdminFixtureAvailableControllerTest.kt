@@ -36,36 +36,36 @@ class AdminFixtureAvailableControllerTest {
     @WithMockUser(roles = ["ADMIN"])
     fun `Fixture를 Available로 설정 성공`() {
         // Given
-        val fixtureId = 1L
-        val fixtureUid = "fixture_uid_123"
+        val fixtureApiId = 1208021L
+        val fixtureUid = "apisports:1208021"
 
-        given(availableFixtureFacade.addAvailableFixture(fixtureId))
+        given(availableFixtureFacade.addAvailableFixture(fixtureApiId))
             .willReturn(DomainResult.Success(fixtureUid))
 
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isOk)
             .andExpect(content().string(fixtureUid))
 
-        verify(availableFixtureFacade).addAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).addAvailableFixture(fixtureApiId)
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `존재하지 않는 Fixture - 404 반환`() {
         // Given
-        val fixtureId = 999L
+        val fixtureApiId = 999999L
 
-        given(availableFixtureFacade.addAvailableFixture(fixtureId))
+        given(availableFixtureFacade.addAvailableFixture(fixtureApiId))
             .willReturn(
                 DomainResult.Fail(
                     DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = fixtureId.toString(),
+                        resource = "FIXTURE_API_SPORTS",
+                        id = fixtureApiId.toString(),
                     ),
                 ),
             )
@@ -73,28 +73,28 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isNotFound)
-            .andExpect(content().string("Fixture not found: $fixtureId"))
+            .andExpect(content().string("Fixture not found: $fixtureApiId"))
 
-        verify(availableFixtureFacade).addAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).addAvailableFixture(fixtureApiId)
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `Job 등록 실패 - 400 반환`() {
         // Given
-        val fixtureId = 1L
+        val fixtureApiId = 1208021L
 
-        given(availableFixtureFacade.addAvailableFixture(fixtureId))
+        given(availableFixtureFacade.addAvailableFixture(fixtureApiId))
             .willReturn(
                 DomainResult.Fail(
                     DomainFail.Validation.single(
                         code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
-                        message = "Failed to register PreMatchJob for fixture fixture_uid_123",
-                        field = "fixtureId",
+                        message = "Failed to register PreMatchJob for fixture apisports:1208021",
+                        field = "fixtureApiId",
                     ),
                 ),
             )
@@ -102,22 +102,22 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isBadRequest)
-            .andExpect(content().string("Validation error: Failed to register PreMatchJob for fixture fixture_uid_123"))
+            .andExpect(content().string("Validation error: Failed to register PreMatchJob for fixture apisports:1208021"))
 
-        verify(availableFixtureFacade).addAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).addAvailableFixture(fixtureApiId)
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `kickoff 시간이 미정인 경우 - 400 반환`() {
         // Given
-        val fixtureId = 1L
+        val fixtureApiId = 1208021L
 
-        given(availableFixtureFacade.addAvailableFixture(fixtureId))
+        given(availableFixtureFacade.addAvailableFixture(fixtureApiId))
             .willReturn(
                 DomainResult.Fail(
                     DomainFail.Validation.single(
@@ -131,49 +131,49 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isBadRequest)
             .andExpect(content().string("Validation error: 경기 시작 시간이 미정입니다. 킥오프 시간 확정 후 다시 시도해주세요."))
 
-        verify(availableFixtureFacade).addAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).addAvailableFixture(fixtureApiId)
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `Fixture를 Unavailable로 설정 성공`() {
         // Given
-        val fixtureId = 1L
-        val fixtureUid = "fixture_uid_123"
+        val fixtureApiId = 1208021L
+        val fixtureUid = "apisports:1208021"
 
-        given(availableFixtureFacade.removeAvailableFixture(fixtureId))
+        given(availableFixtureFacade.removeAvailableFixture(fixtureApiId))
             .willReturn(DomainResult.Success(fixtureUid))
 
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": false" + "}"),
             ).andExpect(status().isOk)
             .andExpect(content().string(fixtureUid))
 
-        verify(availableFixtureFacade).removeAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).removeAvailableFixture(fixtureApiId)
     }
 
     @Test
     @WithMockUser(roles = ["ADMIN"])
     fun `Unavailable 설정 시 존재하지 않는 Fixture - 404 반환`() {
         // Given
-        val fixtureId = 999L
+        val fixtureApiId = 999999L
 
-        given(availableFixtureFacade.removeAvailableFixture(fixtureId))
+        given(availableFixtureFacade.removeAvailableFixture(fixtureApiId))
             .willReturn(
                 DomainResult.Fail(
                     DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = fixtureId.toString(),
+                        resource = "FIXTURE_API_SPORTS",
+                        id = fixtureApiId.toString(),
                     ),
                 ),
             )
@@ -181,12 +181,12 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureId/available")
+                put("/api/v1/admin/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": false" + "}"),
             ).andExpect(status().isNotFound)
-            .andExpect(content().string("Fixture not found: $fixtureId"))
+            .andExpect(content().string("Fixture not found: $fixtureApiId"))
 
-        verify(availableFixtureFacade).removeAvailableFixture(fixtureId)
+        verify(availableFixtureFacade).removeAvailableFixture(fixtureApiId)
     }
 }

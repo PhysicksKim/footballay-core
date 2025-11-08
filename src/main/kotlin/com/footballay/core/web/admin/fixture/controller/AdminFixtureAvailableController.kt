@@ -26,8 +26,10 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwagRequestBody
  * - Fixture를 unavailable로 설정하여 실시간 Sync 비활성화
  *
  * **엔드포인트:**
- * - POST   /api/v1/admin/fixtures/{fixtureId}/available - Available 설정
- * - DELETE /api/v1/admin/fixtures/{fixtureId}/available - Available 해제
+ * - PUT /api/v1/admin/fixtures/{fixtureApiId}/available - Available 설정 (fixtureApiId = ApiSports Fixture ID)
+ *
+ * **파라미터:**
+ * - {fixtureApiId}: ApiSports Fixture ID (예: 1208021)
  */
 @Tag(
     name = "Admin - Fixture Management",
@@ -75,13 +77,13 @@ class AdminFixtureAvailableController(
             ),
             ApiResponse(
                 responseCode = "404",
-                description = "경기를 찾을 수 없음",
+                description = "경기를 찾을 수 없음 (ApiSports Fixture ID로 조회)",
                 content = [
                     Content(
                         examples = [
                             ExampleObject(
                                 name = "not found",
-                                value = "Fixture not found: 12345",
+                                value = "Fixture not found: 1208021",
                             ),
                         ],
                     ),
@@ -93,14 +95,14 @@ class AdminFixtureAvailableController(
             ),
         ],
     )
-    @PutMapping("/{fixtureId}/available")
+    @PutMapping("/{fixtureApiId}/available")
     fun setFixtureAvailable(
         @Parameter(
             description = "ApiSports Fixture ID",
             example = "1208021",
             required = true,
         )
-        @PathVariable fixtureId: Long,
+        @PathVariable fixtureApiId: Long,
         @SwagRequestBody(
             description = "available 토글 요청 바디",
             required = true,
@@ -122,12 +124,12 @@ class AdminFixtureAvailableController(
         @RequestBody request: AvailabilityToggleRequest,
     ): ResponseEntity<String> =
         if (request.available) {
-            when (val result = availableFixtureFacade.addAvailableFixture(fixtureId)) {
+            when (val result = availableFixtureFacade.addAvailableFixture(fixtureApiId)) {
                 is DomainResult.Success -> ResponseEntity.ok(result.value)
                 is DomainResult.Fail -> toErrorResponse(result.error)
             }
         } else {
-            when (val result = availableFixtureFacade.removeAvailableFixture(fixtureId)) {
+            when (val result = availableFixtureFacade.removeAvailableFixture(fixtureApiId)) {
                 is DomainResult.Success -> ResponseEntity.ok(result.value)
                 is DomainResult.Fail -> toErrorResponse(result.error)
             }
