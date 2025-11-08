@@ -9,7 +9,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @SpringBootTest
 class SecurityConfigTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecurityConfigTest.class);

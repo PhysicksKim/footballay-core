@@ -8,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 
 @SpringBootTest
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("test", "mockapi")
 class ApiSportsV3MockFetcherTest {
     @Autowired
     lateinit var mockFetcher: ApiSportsV3MockFetcher

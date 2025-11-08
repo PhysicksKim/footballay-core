@@ -3,6 +3,7 @@ package com.footballay.core.monitor.alert.manaer;
 import com.footballay.core.monitor.alert.duplicate.AlertDeduplicator;
 import com.footballay.core.monitor.alert.notify.AlertNotifier;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class MatchAlertManagerIntegrationTest {
 
     @Mock

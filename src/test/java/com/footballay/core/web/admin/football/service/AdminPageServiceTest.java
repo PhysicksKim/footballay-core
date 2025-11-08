@@ -14,7 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @SpringBootTest
 class AdminPageServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminPageServiceTest.class);

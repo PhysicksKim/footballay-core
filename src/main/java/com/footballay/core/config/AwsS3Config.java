@@ -9,16 +9,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * 더이상 AWS s3 를 사용하지 않습니다.
+ */
+@Deprecated(since = "0.1.0-20251108")
 @Configuration
 public class AwsS3Config {
 
-    @Value("${aws.s3.accessKey}")
+    @Value("${aws.s3.accessKey:DEPRECATED}")
     private String accessKey;
 
-    @Value("${aws.s3.secretKey}")
+    @Value("${aws.s3.secretKey:DEPRECATED}")
     private String secretKey;
 
-    @Value("${aws.s3.region}")
+    @Value("${aws.s3.region:DEPRECATED}")
     private String region;
 
     @Bean

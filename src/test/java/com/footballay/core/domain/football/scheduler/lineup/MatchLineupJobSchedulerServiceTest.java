@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @SpringBootTest
 class MatchLineupJobSchedulerServiceTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MatchLineupJobSchedulerServiceTest.class);

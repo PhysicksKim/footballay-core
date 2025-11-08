@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 public class LiveMatchJobTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveMatchJobTest.class);
     @Autowired

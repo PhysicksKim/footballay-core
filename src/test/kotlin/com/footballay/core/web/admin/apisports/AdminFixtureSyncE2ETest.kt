@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("dev", "mockapi")
+@ActiveProfiles("test", "mockapi")
 @Transactional
 class AdminFixtureSyncE2ETest {
     val log = logger()

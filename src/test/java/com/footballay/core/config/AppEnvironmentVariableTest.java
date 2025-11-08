@@ -8,7 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.StringUtils;
 import static org.assertj.core.api.Assertions.*;
 
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @SpringBootTest
 class AppEnvironmentVariableTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AppEnvironmentVariableTest.class);
