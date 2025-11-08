@@ -6,5 +6,3 @@
 spring:
     config:
         import: optional:classpath:application-api.yml
-    profiles:
-        active: api
