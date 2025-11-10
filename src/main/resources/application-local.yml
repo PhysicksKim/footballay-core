@@ -1,6 +1,6 @@
-# Footballay Core - Development Remote Server Configuration
-# 외부 접근 가능한 개발 서버 설정 (Cloudflare Tunnel, PostgreSQL, Redis, Mock API)
-# 사용법: ./gradlew bootRun --args='--spring.profiles.active=dev'
+# Footballay Core - Local Development Environment Configuration
+# 로컬 개발 전용 설정 (Vite dev server + Spring Boot)
+# 사용법: ./gradlew bootRun --args='--spring.profiles.active=local'
 
 spring:
   # JPA 설정
@@ -57,16 +57,11 @@ spring:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5
 
-# Server 설정 (HTTPS with self-signed certificate)
+# Server 설정 (HTTP - 로컬 개발용)
 server:
-  port: 8083
-#  ssl:
-#    client-auth: none
-#    key-store: classpath:keystore.p12
-#    key-store-password: -wva9.ea7)}}
-#    key-store-type: PKCS12
-#    key-alias: scoreboarddev
-#    enabled: true  # WSS 등 프론트 개발 위해 HTTPS 유지. 필요시 --server.ssl.enabled=false로 오버라이드
+  port: 8083  # 개발 환경 기본 포트
+  ssl:
+    enabled: false  # 로컬은 HTTP 사용
 
   # Monitoring을 위한 Tomcat metrics 활성화
   tomcat:
@@ -79,9 +74,9 @@ server:
     session:
       cookie:
         http-only: true
-        secure: true
-        same-site: none  # Cross-site 요청 지원 (localhost:5173 → api.dev.footballay.com)
-        domain: dev.footballay.com  # Dev 서브도메인 간 세션 공유
+        secure: false       # HTTP이므로 false
+        same-site: lax
+        # domain 미설정 → host-only (localhost)
 
 # Monitoring - Actuator
 management:
@@ -97,17 +92,15 @@ logging:
     org:
       testcontainers: debug
 
-# 개발 서버에서 허용할 CORS 출처
-# - Dev 서브도메인 (api.dev.footballay.com, admin.dev.footballay.com)
-# - 로컬 개발용 포트들 (로컬 프로필 없이 dev 프로필 직접 사용 시)
-# - 레거시 도메인들 (하위 호환성 유지)
+# 로컬 개발 환경 CORS 출처
+# Vite dev server(5173) → Spring Boot(8083) proxy 사용
 cors:
-  allowedorigins: "https://api.dev.footballay.com,https://admin.dev.footballay.com,http://localhost:5173,http://localhost:8080,http://localhost:1212,https://localhost:7777,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechune.com,https://gyechune.com,https://gyechunhoe.com,https://static.gyechunhoe.com"
+  allowedorigins: "http://localhost:5173,http://localhost:8083,http://localhost:8080,http://localhost:1212"
 
 # 개발 환경 Security 키
 custom:
   login:
-    remember-me-key: remember-me-key-only-for-dev
+    remember-me-key: remember-me-key-only-for-local
 
 # AWS Mock 값 (Bean 생성용)
 aws:
@@ -134,7 +127,7 @@ footballay:
       x-rapidapi-key-name: 'X-RapidAPI-Key'
       x-rapidapi-key-value: 'mock-api-key'
 
-# Mock 경로 설정 (기본값, devrealapi 프로파일로 오버라이드 가능)
+# Mock 경로 설정
 path:
   football:
     players:
@@ -142,6 +135,7 @@ path:
         prefix: "chuncity/dev/players"
         suffix: "devphoto"
 
-csrf:
-  cookie:
-    samesite: none
+
+# Footballay Core - Development Remote Server Configuration
+# 외부 접근 가능한 개발 서버 설정 (Cloudflare Tunnel, PostgreSQL, Redis, Mock API)
+# 사용법: ./gradlew bootRun --args='--spring.profiles.active=dev'

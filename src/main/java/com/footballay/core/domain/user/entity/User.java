@@ -6,6 +6,12 @@ import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * 회원 정보 엔티티
+ *
+ * "테이블 이름 단수형 사용 원칙"에 예외 케이스로 "Users"는 테이블 이름을 복수형을 사용합니다.
+ * H2 DB 예약어 "USER"와 충돌 방지를 위해 테이블 명을 "users"로 지정합니다.
+ */
 @Entity
 @Table(name = "users")
 public class User extends BaseDateAuditEntity {
