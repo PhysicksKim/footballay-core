@@ -148,14 +148,17 @@ Need just current directory?
 ### Development
 
 ```bash
-# Run the application (default: dev profile with Mock API)
+# Run the application - Local development (HTTP, Mock API)
+./gradlew bootRun --args='--spring.profiles.active=local'
+
+# Run with real API - Local
+./gradlew bootRun --args='--spring.profiles.active=local,devrealapi'
+
+# Run the application - Dev remote server (HTTPS via Cloudflare Tunnel)
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# Run with real API
+# Run with real API - Dev remote
 ./gradlew bootRun --args='--spring.profiles.active=dev,devrealapi'
-
-# Run without SSL (if needed for debugging)
-./gradlew bootRun --args='--spring.profiles.active=dev --server.ssl.enabled=false'
 
 # Build the project
 ./gradlew build
@@ -257,6 +260,63 @@ The codebase follows a multi-layered architecture with clear separation of conce
 -   Web controllers and REST endpoints
 -   `web.admin`: Admin web interface controllers
 -   `web.common`: Common web utilities and DTOs
+
+#### API Version Policy and Request Mapping
+
+The application uses a clear API versioning strategy for subdomain-based routing:
+
+**Legacy API (구버전)** - Direct `/api/*` paths:
+-   `/api/admin/football/*` - Admin football data management (Java)
+    -   AdminFootballCustomPhotoController - Player photo management
+    -   AdminFootballDataRestController - Leagues, teams, fixtures, players CRUD
+    -   AdminFootballCacheRestController - Cache management
+-   `/api/admin/*` - Admin user role management (Java)
+    -   AdminUserRoleController - User info and role management
+-   `/api/football/*` - Public football streaming API (Java)
+    -   FootballStreamDataController - Live match data, fixtures, leagues, teams
+-   `/api/scoreboard/*` - Scoreboard WebSocket API (Java)
+    -   ScoreBoardRemoteController - Remote control REST endpoints
+
+**Versioned API (신버전)** - `/api/v1/admin/*` paths:
+-   `/api/v1/admin/apisports/*` - ApiSports sync operations (Kotlin)
+    -   AdminApiSportsController - Leagues, teams, players, fixtures synchronization
+-   `/api/v1/admin/fixtures/*` - Fixture management (Kotlin)
+    -   AdminFixtureAvailableController - Fixture availability and job scheduling
+
+**Health Check Endpoints:**
+-   `/health` - Root domain health check (footballay.com)
+    -   Used by Docker HEALTHCHECK and deployment scripts
+    -   Lightweight check without external dependencies
+-   `/api/health` - API subdomain health check (api.footballay.com)
+    -   Status check for all API endpoints
+    -   Same response format as `/health`
+-   `/api/v1/admin/apisports/health` - ApiSports admin specific health check
+    -   Included in AdminApiSportsController
+
+**Subdomain Routing Summary:**
+```
+api.footballay.com (API subdomain)
+├── /api/football/*          → Public API
+├── /api/scoreboard/*        → Scoreboard API
+├── /api/admin/*             → Admin API (legacy)
+├── /api/v1/admin/*          → Admin API (versioned)
+└── /api/health              → API health check
+
+footballay.com (Root domain)
+├── /                        → Main page
+├── /scoreboard              → Scoreboard page
+├── /error                   → Error page
+├── /health                  → Root health check (Docker)
+├── /gyechune                → Gyechune multi-domain
+└── /gyechunhoe              → Gyechunhoe multi-domain
+
+admin.footballay.com (Admin subdomain)
+└── (Nginx serves admin SPA static files)
+    → API requests go to api.footballay.com/api/admin/*
+
+static.footballay.com (Static subdomain)
+└── (CDN serves static assets, not handled by Spring Boot)
+```
 
 **5. Configuration** (`core.config`)
 
@@ -372,35 +432,64 @@ interface MatchDataSyncer {
 
 ## Spring Profiles
 
-The application uses a simplified profile structure with standard `application-XXX.yml` files:
+The application uses a profile structure based on subdomain architecture with standard `application-XXX.yml` files:
 
 ### Profile Files
 
 All configuration files are located in `src/main/resources/`:
 
 -   **application.yml** - Base configuration (common across all environments)
--   **application-dev.yml** - Local development (PostgreSQL, Redis, Mock API, HTTPS)
+-   **application-local.yml** - Local development (Vite dev server + Spring Boot, HTTP, Mock API)
+-   **application-dev.yml** - Dev remote server (Cloudflare Tunnel, HTTPS, Mock API)
 -   **application-devrealapi.yml** - Development with real API (overrides Mock API settings)
 -   **application-test.yml** - Test environment (H2 in-memory, Mock API)
 -   **application-prod.yml** - Production public configuration
 -   **application-live.yml** - Production secrets (imports external files)
 -   **application-api.yml** - API keys (gitignored)
 
+### Subdomain-based Architecture
+
+The system is designed to separate API and Admin SPA via subdomains:
+
+**Local (localhost):**
+- Frontend: Vite dev server at `http://localhost:5173` (proxies `/api` to Spring Boot)
+- Backend: Spring Boot at `http://localhost:8083`
+- Session cookie: host-only (no domain), `secure: false`
+
+**Dev Remote (*.dev.footballay.com):**
+- API: `https://api.dev.footballay.com` → Spring Boot (API only)
+- Frontend: **Still using localhost Vite dev server** (`http://localhost:5173`)
+  - Each developer runs Vite locally and connects to shared dev API server
+  - Enables collaboration without running backend locally
+- Admin SPA serving from `admin.dev.footballay.com`: **Not planned yet**
+- Session cookie: `domain: .dev.footballay.com`, `secure: true`
+- Note: `static.dev.footballay.com` may be used for file upload testing, but not for admin SPA
+
+**Production (*.footballay.com):**
+- API: `https://api.footballay.com` → Spring Boot (API only)
+- Admin SPA: `https://admin.footballay.com` → Nginx → S3/CloudFront (static files)
+- Session cookie: `domain: .footballay.com`, `secure: true`
+
 ### Usage
 
 **Local Development (Mock API):**
 ```bash
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+**Local Development with Real API:**
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local,devrealapi'
+```
+
+**Dev Remote Server (Mock API):**
+```bash
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
-**Development with Real API:**
+**Dev Remote with Real API:**
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=dev,devrealapi'
-```
-
-**Disable SSL in Development (if needed):**
-```bash
-./gradlew bootRun --args='--spring.profiles.active=dev --server.ssl.enabled=false'
 ```
 
 **Production:**
@@ -410,9 +499,25 @@ All configuration files are located in `src/main/resources/`:
 
 ### Test Profiles
 
--   `@ActiveProfiles("dev")` - Integration tests with PostgreSQL + Mock API
+-   `@ActiveProfiles("local")` - Integration tests with PostgreSQL + Mock API (local environment)
 -   `@ActiveProfiles("test")` - Unit tests with H2 in-memory + Mock API
 -   `@ActiveProfiles("dev", "devrealapi")` - Tests with real API calls
+
+### Important Notes
+
+- **Admin SPA serving:** Spring Boot no longer serves admin static files. All static files are served by Nginx/CDN.
+- **CORS:** Each profile has subdomain-specific allowed origins configured.
+- **Session cookies:** Domain setting varies by environment to enable subdomain session sharing.
+- **Dev Server 환경별 쿠키 정책:**
+
+| 환경 | SameSite | Secure | Domain | 설명 |
+|------|----------|--------|--------|------|
+| **local** | Lax | false | (host-only) | 로컬 개발, Vite 프록시 사용 |
+| **dev** | **None** | true | .dev.footballay.com | **Cross-site 요청 지원** (localhost:5173 → api.dev.footballay.com) |
+| **prod** | Lax | true | .footballay.com | 프로덕션 배포 |
+
+- **Dev 환경에서 SameSite=None 사용 이유**: localhost Vite에서 dev server로의 cross-site 요청을 위해 필수. Cloudflare Access로 보호되며, Production DB와 분리된 환경이므로 보안 리스크 제한적.
+- **자세한 설정 가이드**: `docs/dev-server-localhost-vite-setup.md` 참조
 
 ## Technology Stack
 
@@ -462,11 +567,16 @@ All configuration files are located in `src/main/resources/`:
 
 ## Common Pitfalls
 
-1. **Profile Configuration**: Ensure correct profiles are active. `dev` profile includes Mock API by default; use `dev,devrealapi` for real API calls.
-2. **Sync Order**: Always sync in correct order (leagues before teams, teams before fixtures).
-3. **Provider UIDs**: Match UIDs are prefixed with provider name (e.g., `apisports:1208021`).
-4. **Mock Data Limitations**: Mock data only supports specific leagues/teams (Premier League ID 39, Manchester City ID 50, etc.). See mock README for details.
-5. **Transactional Tests**: Integration tests use `@Transactional` which rolls back changes after each test.
+1. **Profile Configuration**: Ensure correct profiles are active.
+   - Use `local` for local development (HTTP, localhost)
+   - Use `dev` for dev remote server (HTTPS, *.dev.footballay.com)
+   - Add `devrealapi` overlay for real API calls in both environments
+2. **Admin Static Files**: Spring Boot no longer serves admin static files. All admin pages must be accessed through Nginx/CDN or Vite dev server.
+3. **Sync Order**: Always sync in correct order (leagues before teams, teams before fixtures).
+4. **Provider UIDs**: Match UIDs are prefixed with provider name (e.g., `apisports:1208021`).
+5. **Mock Data Limitations**: Mock data only supports specific leagues/teams (Premier League ID 39, Manchester City ID 50, etc.). See mock README for details.
+6. **Transactional Tests**: Integration tests use `@Transactional` which rolls back changes after each test.
+7. **Session Cookies**: Domain settings differ by environment. Dev sessions won't work in prod and vice versa.
 
 ## WireMock Mock Server (프론트엔드 개발 지원)
 

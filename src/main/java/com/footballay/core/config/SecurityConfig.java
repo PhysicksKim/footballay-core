@@ -1,7 +1,6 @@
 package com.footballay.core.config;
 
 import com.footballay.core.config.security.handler.SpaCsrfTokenRequestHandler;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +22,6 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -36,6 +34,8 @@ public class SecurityConfig {
     private int rememberMeMaxAge;
     @Value("${cookies.remember-me.name}")
     private String rememberMeName;
+    @Value("${csrf.cookie.samesite:lax}")
+    private String csrfCookieSameSite;
     private final UserDetailsService userDetailsService;
     private final PersistentTokenRepository tokenRepository;
     private final AuthenticationFailureHandler authenticationFailureHandler;
@@ -108,12 +108,18 @@ public class SecurityConfig {
         repository.setCookieCustomizer(cookie -> {
             cookie.secure(true);
             cookie.httpOnly(false);
-            cookie.sameSite("Strict");
+            cookie.sameSite(csrfCookieSameSite);
         });
         return repository;
     }
 
-    public SecurityConfig(final UserDetailsService userDetailsService, final PersistentTokenRepository tokenRepository, final AuthenticationFailureHandler authenticationFailureHandler, final AuthenticationSuccessHandler authenticationSuccessHandler, final LogoutSuccessHandler logoutSuccessHandler, final AccessDeniedHandler accessDeniedHandler, final CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(final UserDetailsService userDetailsService,
+                          final PersistentTokenRepository tokenRepository,
+                          final AuthenticationFailureHandler authenticationFailureHandler,
+                          final AuthenticationSuccessHandler authenticationSuccessHandler,
+                          final LogoutSuccessHandler logoutSuccessHandler,
+                          final AccessDeniedHandler accessDeniedHandler,
+                          final CorsConfigurationSource corsConfigurationSource) {
         this.userDetailsService = userDetailsService;
         this.tokenRepository = tokenRepository;
         this.authenticationFailureHandler = authenticationFailureHandler;

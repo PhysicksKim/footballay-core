@@ -17,6 +17,9 @@ spring:
     resources:
       add-mappings: false
 
+server:
+  forward-headers-strategy: framework
+
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:
