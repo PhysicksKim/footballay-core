@@ -1,6 +1,8 @@
 package com.footballay.core.config;
 
 import com.footballay.core.config.security.handler.SpaCsrfTokenRequestHandler;
+import com.footballay.core.config.security.login.MainDomainLoginEntryPoint;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,19 +25,22 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import static org.slf4j.LoggerFactory.*;
+
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
-    @Value("${custom.login.remember-me-key}")
-    private String REMEMBER_ME_KEY;
-    @Value("${cookies.remember-me.max-age}")
-    private int rememberMeMaxAge;
-    @Value("${cookies.remember-me.name}")
-    private String rememberMeName;
-    @Value("${csrf.cookie.samesite:lax}")
-    private String csrfCookieSameSite;
+    private static final Logger log = getLogger(SecurityConfig.class);
+
+    private final boolean isLocal;
+
+    private final String rememberMeKey;
+    private final int rememberMeMaxAge;
+    private final String rememberMeName;
+    private final String csrfCookieSameSite;
+    private final String cookieDomain;
+
     private final UserDetailsService userDetailsService;
     private final PersistentTokenRepository tokenRepository;
     private final AuthenticationFailureHandler authenticationFailureHandler;
@@ -43,6 +48,7 @@ public class SecurityConfig {
     private final LogoutSuccessHandler logoutSuccessHandler;
     private final AccessDeniedHandler accessDeniedHandler;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final MainDomainLoginEntryPoint mainDomainLoginEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -65,7 +71,6 @@ public class SecurityConfig {
                     .anyRequest().permitAll())
             .formLogin(form ->
                 form.permitAll()
-                    .failureUrl("/login?error")
                     .successHandler(authenticationSuccessHandler)
                     .failureHandler(authenticationFailureHandler))
             .anonymous(Customizer.withDefaults())
@@ -76,16 +81,24 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
             .exceptionHandling(exception ->
-                exception.accessDeniedHandler(accessDeniedHandler))
-            .rememberMe(configurer ->
-                configurer.key(REMEMBER_ME_KEY)
-                    .tokenValiditySeconds(rememberMeMaxAge)
-                    .rememberMeCookieName(rememberMeName)
-                    .useSecureCookie(true)
-                    .alwaysRemember(false)
-                    .rememberMeParameter("remember-me")
-                    .userDetailsService(userDetailsService)
-                    .tokenRepository(tokenRepository));
+                exception
+                    .authenticationEntryPoint(mainDomainLoginEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler))
+            .rememberMe(configurer ->{
+                    configurer
+                            .key(rememberMeKey)
+                            .tokenValiditySeconds(rememberMeMaxAge)
+                            .rememberMeCookieName(rememberMeName)
+                            .useSecureCookie(!isLocal)          // 로컬에서는 secure=false
+                            .alwaysRemember(false)
+                            .rememberMeParameter("remember-me")
+                            .userDetailsService(userDetailsService)
+                            .tokenRepository(tokenRepository);
+                    // 로컬이 아닐 때만 도메인 설정
+                    if (!isLocal && cookieDomain != null && !cookieDomain.isBlank()) {
+                        configurer.rememberMeCookieDomain(cookieDomain);
+                    }
+                    });
         return http.build();
     }
 
@@ -105,21 +118,39 @@ public class SecurityConfig {
     private CsrfTokenRepository csrfConfigurationSource() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setCookiePath("/");
+
         repository.setCookieCustomizer(cookie -> {
-            cookie.secure(true);
             cookie.httpOnly(false);
             cookie.sameSite(csrfCookieSameSite);
+            cookie.secure(!isLocal);
+            // 로컬에서는 Domain 을 아예 설정하지 않음 (host-only cookie)
+            if (!isLocal && cookieDomain != null && !cookieDomain.isBlank()) {
+                cookie.domain(cookieDomain);
+            }
         });
+
         return repository;
     }
 
-    public SecurityConfig(final UserDetailsService userDetailsService,
-                          final PersistentTokenRepository tokenRepository,
-                          final AuthenticationFailureHandler authenticationFailureHandler,
-                          final AuthenticationSuccessHandler authenticationSuccessHandler,
-                          final LogoutSuccessHandler logoutSuccessHandler,
-                          final AccessDeniedHandler accessDeniedHandler,
-                          final CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(
+                @Value("${csrf.cookie.samesite:lax}") String csrfCookieSameSite,
+                @Value("${custom.cookie.domain:footballay.com}") String cookieDomain,
+                @Value("${custom.login.remember-me-key}") String rememberMeKey,
+                @Value("${cookies.remember-me.max-age}") int rememberMeMaxAge,
+                @Value("${cookies.remember-me.name}") String rememberMeName,
+                final UserDetailsService userDetailsService,
+                final PersistentTokenRepository tokenRepository,
+                final AuthenticationFailureHandler authenticationFailureHandler,
+                final AuthenticationSuccessHandler authenticationSuccessHandler,
+                final LogoutSuccessHandler logoutSuccessHandler,
+                final AccessDeniedHandler accessDeniedHandler,
+                final CorsConfigurationSource corsConfigurationSource,
+                final MainDomainLoginEntryPoint mainDomainLoginEntryPoint) {
+        this.csrfCookieSameSite = csrfCookieSameSite;
+        this.cookieDomain = cookieDomain;
+        this.rememberMeKey = rememberMeKey;
+        this.rememberMeMaxAge = rememberMeMaxAge;
+        this.rememberMeName = rememberMeName;
         this.userDetailsService = userDetailsService;
         this.tokenRepository = tokenRepository;
         this.authenticationFailureHandler = authenticationFailureHandler;
@@ -127,5 +158,8 @@ public class SecurityConfig {
         this.logoutSuccessHandler = logoutSuccessHandler;
         this.accessDeniedHandler = accessDeniedHandler;
         this.corsConfigurationSource = corsConfigurationSource;
+        this.mainDomainLoginEntryPoint = mainDomainLoginEntryPoint;
+
+        this.isLocal = "localhost".equalsIgnoreCase(cookieDomain);
     }
 }

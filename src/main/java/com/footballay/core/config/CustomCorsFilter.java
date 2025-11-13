@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+
+@Deprecated
 // @Order(1) // 높은 우선순위 설정
 // @Component
 public class CustomCorsFilter extends OncePerRequestFilter {
