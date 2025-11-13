@@ -1,7 +1,17 @@
 package com.footballay.core.web.admin.football.controller;
 
+import com.footballay.core.config.AppEnvironmentVariable;
+import com.footballay.core.web.admin.football.service.AdminPageAwsService;
+import com.footballay.core.web.admin.football.service.AdminPageService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Admin Controller
@@ -20,7 +30,26 @@ import org.springframework.stereotype.Controller;
 public class AdminController {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminController.class);
 
-    // Admin SPA 정적 파일 서빙 로직 제거됨 (2025-11-10)
-    // - Nginx가 subdomain 기반으로 정적 파일 직접 서빙
-    // - Spring Boot는 순수 API 서버 역할만 수행
+    private final AdminPageService adminPageService;
+    private final RestTemplate restTemplate;
+    private final String activeProfile;
+
+    @GetMapping({"/admin", "/admin/"})
+    public ResponseEntity<String> adminIndexPage(
+            Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        String adminPageUri = adminPageService.getAdminPageUri();
+        String html = restTemplate.getForObject(adminPageUri, String.class);
+        return ResponseEntity.ok().body(html);
+    }
+
+    public AdminController(
+            AdminPageService adminPageService,
+            RestTemplate restTemplate,
+            @Value("${spring.profiles.active:}") String activeProfile) {
+        this.adminPageService = adminPageService;
+        this.restTemplate = restTemplate;
+        this.activeProfile = activeProfile;
+    }
 }

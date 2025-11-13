@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+    <title>Footballay Login</title>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0b1e34;
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: #132c4c;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            width: 360px;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #d0d4da;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            margin-bottom: 18px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1e90ff;
+            color: white;
+            font-size: 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1b7fe0;
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.25);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #ffb8b8;
+            font-size: 14px;
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #cbd3dd;
+        }
+
+        .remember input {
+            margin-right: 8px;
+            transform: scale(1.15);
+        }
+
+        .info {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #c0c7d0;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>Login</h1>
+
+    <div th:if="${param.error}" class="error">
+        아이디 또는 비밀번호가 올바르지 않습니다.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <label for="username">아이디</label>
+        <input id="username" name="username" type="text" required/>
+
+        <label for="password">비밀번호</label>
+        <input id="password" name="password" type="password" required/>
+
+        <div class="remember">
+            <input type="checkbox" name="remember-me" id="remember-me"/>
+            <label for="remember-me" style="margin:0;">자동로그인</label>
+        </div>
+
+        <button type="submit">로그인</button>
+
+        <!-- after 파라미터 유지 -->
+        <input type="hidden" name="after" th:value="${param.after}" th:if="${param.after}" />
+    </form>
+
+    <div class="info">
+        Footballay Admin Access
+    </div>
+</div>
+</body>
+</html>

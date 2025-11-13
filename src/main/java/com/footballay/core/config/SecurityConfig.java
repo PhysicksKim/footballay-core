@@ -33,11 +33,13 @@ import static org.slf4j.LoggerFactory.*;
 public class SecurityConfig {
     private static final Logger log = getLogger(SecurityConfig.class);
 
-    private String rememberMeKey;
-    private int rememberMeMaxAge;
-    private String rememberMeName;
-    private String csrfCookieSameSite;
-    private String cookieDomain;
+    private final boolean isLocal;
+
+    private final String rememberMeKey;
+    private final int rememberMeMaxAge;
+    private final String rememberMeName;
+    private final String csrfCookieSameSite;
+    private final String cookieDomain;
 
     private final UserDetailsService userDetailsService;
     private final PersistentTokenRepository tokenRepository;
@@ -82,16 +84,21 @@ public class SecurityConfig {
                 exception
                     .authenticationEntryPoint(mainDomainLoginEntryPoint)
                     .accessDeniedHandler(accessDeniedHandler))
-            .rememberMe(configurer ->
-                configurer.key(rememberMeKey)
-                    .tokenValiditySeconds(rememberMeMaxAge)
-                    .rememberMeCookieName(rememberMeName)
-                    .useSecureCookie(true)
-                    .alwaysRemember(false)
-                    .rememberMeCookieDomain(cookieDomain)
-                    .rememberMeParameter("remember-me")
-                    .userDetailsService(userDetailsService)
-                    .tokenRepository(tokenRepository));
+            .rememberMe(configurer ->{
+                    configurer
+                            .key(rememberMeKey)
+                            .tokenValiditySeconds(rememberMeMaxAge)
+                            .rememberMeCookieName(rememberMeName)
+                            .useSecureCookie(!isLocal)          // 로컬에서는 secure=false
+                            .alwaysRemember(false)
+                            .rememberMeParameter("remember-me")
+                            .userDetailsService(userDetailsService)
+                            .tokenRepository(tokenRepository);
+                    // 로컬이 아닐 때만 도메인 설정
+                    if (!isLocal && cookieDomain != null && !cookieDomain.isBlank()) {
+                        configurer.rememberMeCookieDomain(cookieDomain);
+                    }
+                    });
         return http.build();
     }
 
@@ -111,12 +118,17 @@ public class SecurityConfig {
     private CsrfTokenRepository csrfConfigurationSource() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setCookiePath("/");
+
         repository.setCookieCustomizer(cookie -> {
-            cookie.secure(true);
             cookie.httpOnly(false);
             cookie.sameSite(csrfCookieSameSite);
-            cookie.domain(cookieDomain);
+            cookie.secure(!isLocal);
+            // 로컬에서는 Domain 을 아예 설정하지 않음 (host-only cookie)
+            if (!isLocal && cookieDomain != null && !cookieDomain.isBlank()) {
+                cookie.domain(cookieDomain);
+            }
         });
+
         return repository;
     }
 
@@ -147,5 +159,7 @@ public class SecurityConfig {
         this.accessDeniedHandler = accessDeniedHandler;
         this.corsConfigurationSource = corsConfigurationSource;
         this.mainDomainLoginEntryPoint = mainDomainLoginEntryPoint;
+
+        this.isLocal = "localhost".equalsIgnoreCase(cookieDomain);
     }
 }
