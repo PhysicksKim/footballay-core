@@ -106,7 +106,11 @@ cors:
 
 # 개발 환경 Security 키
 custom:
+  cookie:
+    domain: "dev.footballay.com"
   login:
+    main-domain-enabled: false
+    base-url: "https://dev.footballay.com/login"
     remember-me-key: remember-me-key-only-for-dev
 
 # AWS Mock 값 (Bean 생성용)

@@ -97,9 +97,12 @@ logging:
 cors:
   allowedorigins: "http://localhost:5173,http://localhost:8083,http://localhost:8080,http://localhost:1212"
 
-# 개발 환경 Security 키
 custom:
+  cookie:
+    domain: "localhost"
   login:
+    main-domain-enabled: false
+    base-url: "https://localhost:8083/login"
     remember-me-key: remember-me-key-only-for-local
 
 # AWS Mock 값 (Bean 생성용)
@@ -134,8 +137,3 @@ path:
       photo:
         prefix: "chuncity/dev/players"
         suffix: "devphoto"
-
-
-# Footballay Core - Development Remote Server Configuration
-# 외부 접근 가능한 개발 서버 설정 (Cloudflare Tunnel, PostgreSQL, Redis, Mock API)
-# 사용법: ./gradlew bootRun --args='--spring.profiles.active=dev'
