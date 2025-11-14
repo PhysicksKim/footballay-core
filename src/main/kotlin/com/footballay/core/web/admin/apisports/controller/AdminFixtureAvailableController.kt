@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.fixture.controller
+package com.footballay.core.web.admin.apisports.controller
 
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.facade.AvailableFixtureFacade
@@ -26,16 +26,16 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwagRequestBody
  * - Fixture를 unavailable로 설정하여 실시간 Sync 비활성화
  *
  * **엔드포인트:**
- * - PUT /api/v1/admin/fixtures/{fixtureApiId}/available - Available 설정 (fixtureApiId = ApiSports Fixture ID)
+ * - PUT /api/v1/admin/apisports/fixtures/{fixtureApiId}/available - Available 설정 (fixtureApiId = ApiSports Fixture ID)
  *
  * **파라미터:**
  * - {fixtureApiId}: ApiSports Fixture ID (예: 1208021)
  */
 @Tag(
-    name = "Admin - Fixture Management",
+    name = "Admin - ApiSports Fixture Management",
     description =
         "Fixture Available 및 Match Data Sync Job 관리 API. \n" +
-            "Job 등록 프로세스: 1) POST /available - PreMatchJob + LiveMatchJob 등록 (경기 1시간 전부터 시작), " +
+            "Job 등록 프로세스: 1) PUT /available - PreMatchJob + LiveMatchJob 등록 (경기 1시간 전부터 시작), " +
             "2) PreMatchJob - 라인업 데이터 수집, " +
             "3) LiveMatchJob - 실시간 매치 데이터 polling, " +
             "4) PostMatchJob - 경기 종료 후 자동 등록, 최종 통계 수집. 전제조건: 경기의 kickoff time이 반드시 설정되어 있어야 합니다.",
@@ -43,7 +43,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwagRequestBody
 @SecurityRequirement(name = "cookieAuth")
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
-@RequestMapping("/api/v1/admin/fixtures")
+@RequestMapping("/api/v1/admin/apisports/fixtures")
 class AdminFixtureAvailableController(
     private val availableFixtureFacade: AvailableFixtureFacade,
 ) {

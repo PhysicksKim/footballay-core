@@ -47,4 +47,27 @@ interface TeamApiSportsRepository : JpaRepository<TeamApiSports, Long> {
         @Param("teamApiSportsIds") teamApiSportsIds: List<Long>,
         @Param("teamApiIds") teamApiIds: List<Long>,
     ): List<TeamApiSports>
+
+    /**
+     * LeagueApiSports apiId로 해당 리그의 TeamApiSports 목록 조회
+     *
+     * LeagueApiSports → LeagueCore → LeagueTeamCore → TeamCore → TeamApiSports 순서로 조인하여 조회합니다.
+     * Admin frontend에서 리그별 팀 목록을 조회할 때 사용됩니다.
+     *
+     * @param leagueApiId LeagueApiSports의 apiId
+     * @return 해당 리그에 속한 TeamApiSports 목록 (TeamCore와 함께 fetch)
+     */
+    @Query(
+        """
+        SELECT DISTINCT tas FROM TeamApiSports tas
+        LEFT JOIN FETCH tas.teamCore tc
+        JOIN LeagueTeamCore ltc ON ltc.team = tc
+        JOIN ltc.league lc
+        JOIN LeagueApiSports las ON las.leagueCore = lc
+        WHERE las.apiId = :leagueApiId
+    """,
+    )
+    fun findAllByLeagueApiSportsApiId(
+        @Param("leagueApiId") leagueApiId: Long,
+    ): List<TeamApiSports>
 }

@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.fixture.controller
+package com.footballay.core.web.admin.apisports.controller
 
 import com.footballay.core.TestSecurityConfig
 import com.footballay.core.common.result.DomainFail
@@ -45,7 +45,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isOk)
@@ -73,7 +73,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isNotFound)
@@ -102,7 +102,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isBadRequest)
@@ -131,7 +131,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": true" + "}"),
             ).andExpect(status().isBadRequest)
@@ -153,7 +153,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": false" + "}"),
             ).andExpect(status().isOk)
@@ -181,7 +181,7 @@ class AdminFixtureAvailableControllerTest {
         // When & Then
         mockMvc
             .perform(
-                put("/api/v1/admin/fixtures/$fixtureApiId/available")
+                put("/api/v1/admin/apisports/fixtures/$fixtureApiId/available")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("{" + "\"available\": false" + "}"),
             ).andExpect(status().isNotFound)

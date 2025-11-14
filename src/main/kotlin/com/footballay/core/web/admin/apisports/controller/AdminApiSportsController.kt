@@ -47,6 +47,7 @@ class AdminApiSportsController(
     private val adminApiSportsWebService: AdminApiSportsWebService,
     private val adminLeagueQueryWebService: AdminLeagueQueryWebService,
     private val adminFixtureQueryWebService: AdminFixtureQueryWebService,
+    private val adminApiSportsQueryWebService: com.footballay.core.web.admin.apisports.service.AdminApiSportsQueryWebService,
 ) {
     /**
      * API 상태 확인용 헬스체크 엔드포인트
@@ -409,6 +410,136 @@ class AdminApiSportsController(
             is DomainResult.Success -> ResponseEntity.ok(result.value)
             is DomainResult.Fail -> toErrorResponse(result.error)
         }
+
+    /**
+     * 리그별 팀 목록 조회
+     *
+     * GET /api/v1/admin/apisports/leagues/{leagueApiId}/teams
+     *
+     * @param leagueApiId ApiSports League ID
+     */
+    @Operation(
+        summary = "리그별 팀 목록 조회",
+        description =
+            "ApiSports League ID로 해당 리그의 팀 목록을 조회합니다. " +
+                "Teams sync 후 결과 확인 또는 Players sync 전 팀 선택에 사용됩니다. " +
+                "각 팀의 ApiSports 상세 정보(창단 연도, 로고 등)가 details 필드에 포함됩니다.",
+        operationId = "getTeamsByLeague",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = com.footballay.core.web.admin.apisports.dto.TeamAdminResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "teams",
+                                value =
+                                    """[
+                                        {
+                                            "teamApiId": 50,
+                                            "teamCoreId": 123,
+                                            "uid": "apisports:50",
+                                            "name": "Manchester City",
+                                            "code": "MCI",
+                                            "country": "England",
+                                            "details": {
+                                                "founded": 1880,
+                                                "national": false,
+                                                "logo": "https://..."
+                                            },
+                                            "detailsType": "ApiSports"
+                                        }
+                                    ]""",
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/leagues/{leagueApiId}/teams")
+    fun getTeamsByLeague(
+        @Parameter(
+            description = "ApiSports League ID",
+            example = "39",
+            required = true,
+        )
+        @PathVariable leagueApiId: Long,
+    ): ResponseEntity<List<com.footballay.core.web.admin.apisports.dto.TeamAdminResponse>> {
+        val teams = adminApiSportsQueryWebService.findTeamsByLeagueApiId(leagueApiId)
+        return ResponseEntity.ok(teams)
+    }
+
+    /**
+     * 팀별 선수 목록 조회
+     *
+     * GET /api/v1/admin/apisports/teams/{teamApiId}/players
+     *
+     * @param teamApiId ApiSports Team ID
+     */
+    @Operation(
+        summary = "팀별 선수 목록 조회",
+        description =
+            "ApiSports Team ID로 해당 팀의 선수 목록을 조회합니다. " +
+                "Players sync 후 결과 확인 및 선수 데이터 검증에 사용됩니다. " +
+                "각 선수의 ApiSports 상세 정보(나이, 국적, 신장, 체중, 사진 등)가 details 필드에 포함됩니다.",
+        operationId = "getPlayersByTeam",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+                content = [
+                    Content(
+                        schema = Schema(implementation = com.footballay.core.web.admin.apisports.dto.PlayerAdminResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "players",
+                                value =
+                                    """[
+                                        {
+                                            "playerApiId": 1234,
+                                            "playerCoreId": 456,
+                                            "uid": "apisports:1234",
+                                            "name": "Kevin De Bruyne",
+                                            "firstname": "Kevin",
+                                            "lastname": "De Bruyne",
+                                            "position": "Midfielder",
+                                            "number": 17,
+                                            "details": {
+                                                "age": 32,
+                                                "nationality": "Belgium",
+                                                "height": "181 cm",
+                                                "weight": "68 kg",
+                                                "photo": "https://..."
+                                            },
+                                            "detailsType": "ApiSports"
+                                        }
+                                    ]""",
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    @GetMapping("/teams/{teamApiId}/players")
+    fun getPlayersByTeam(
+        @Parameter(
+            description = "ApiSports Team ID",
+            example = "50",
+            required = true,
+        )
+        @PathVariable teamApiId: Long,
+    ): ResponseEntity<List<com.footballay.core.web.admin.apisports.dto.PlayerAdminResponse>> {
+        val players = adminApiSportsQueryWebService.findPlayersByTeamApiId(teamApiId)
+        return ResponseEntity.ok(players)
+    }
 
     private fun <T> toErrorResponse(error: DomainFail): ResponseEntity<T> {
         val status =

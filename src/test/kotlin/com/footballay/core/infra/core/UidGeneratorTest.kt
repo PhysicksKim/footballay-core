@@ -23,5 +23,4 @@ class UidGeneratorTest {
         log.info("Generated UID: $uid")
         assert(uidGenerator.isValidUid(uid)) { "Generated UID is not valid" }
     }
-
 }

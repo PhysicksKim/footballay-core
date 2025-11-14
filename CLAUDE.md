@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## AI Guidance
 
+-   별도의 지시가 없다면 반드시 한국어를 사용해서 질문 답변 해주세요. 
 -   Ignore GEMINI.md and GEMINI-\*.md files
 -   To save main context space, for code searches, inspections, troubleshooting or analysis, use code-searcher subagent where appropriate - giving the subagent full context background for the task(s) you assign it.
 -   After receiving tool results, carefully reflect on their quality and determine optimal next steps before proceeding. Use your thinking to plan and iterate based on this new information, and then take the best next action.
