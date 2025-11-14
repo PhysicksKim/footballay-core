@@ -1,6 +1,6 @@
-package com.footballay.core.web.admin.fixture.service
+package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.web.admin.fixture.dto.FixtureSummaryDto
+import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import java.time.Instant
 
 interface AdminFixtureQueryWebService {

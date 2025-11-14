@@ -1,7 +1,7 @@
-package com.footballay.core.web.admin.fixture.mapper
+package com.footballay.core.web.admin.apisports.mapper
 
-import com.footballay.core.domain.fixture.model.FixtureModel
-import com.footballay.core.web.admin.fixture.dto.FixtureSummaryDto
+import com.footballay.core.domain.model.FixtureModel
+import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 
 object FixtureWebMapper {
     fun toSummaryDto(model: FixtureModel): FixtureSummaryDto =

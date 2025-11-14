@@ -1,6 +1,6 @@
 package com.footballay.core.web.admin.apisports.dto
 
-import com.footballay.core.domain.admin.apisports.model.ProviderDetails
+import com.footballay.core.domain.model.ProviderDetails
 import io.swagger.v3.oas.annotations.media.Schema
 
 /**

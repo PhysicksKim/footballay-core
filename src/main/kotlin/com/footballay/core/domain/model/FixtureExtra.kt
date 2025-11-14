@@ -1,4 +1,4 @@
-package com.footballay.core.domain.fixture.model
+package com.footballay.core.domain.model
 
 sealed interface FixtureExtra
 

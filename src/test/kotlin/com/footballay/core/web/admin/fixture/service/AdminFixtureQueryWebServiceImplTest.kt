@@ -8,6 +8,7 @@ import com.footballay.core.infra.persistence.core.repository.FixtureCoreReposito
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.logger
+import com.footballay.core.web.admin.apisports.service.AdminFixtureQueryWebService
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import org.assertj.core.api.Assertions.assertThat

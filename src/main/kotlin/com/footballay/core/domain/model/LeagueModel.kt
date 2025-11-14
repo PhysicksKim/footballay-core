@@ -1,4 +1,4 @@
-package com.footballay.core.domain.league.model
+package com.footballay.core.domain.model
 
 sealed interface LeagueExtra
 

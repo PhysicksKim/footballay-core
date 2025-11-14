@@ -1,13 +1,13 @@
-package com.footballay.core.web.admin.fixture.service
+package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.domain.fixture.model.FixtureModel
-import com.footballay.core.domain.fixture.model.Score
-import com.footballay.core.domain.fixture.model.TeamSide
+import com.footballay.core.domain.model.FixtureModel
+import com.footballay.core.domain.model.Score
+import com.footballay.core.domain.model.TeamSide
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.web.admin.common.util.DateQueryResolver
-import com.footballay.core.web.admin.fixture.dto.FixtureSummaryDto
-import com.footballay.core.web.admin.fixture.mapper.FixtureWebMapper
+import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
+import com.footballay.core.web.admin.apisports.mapper.FixtureWebMapper
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

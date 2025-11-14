@@ -1,8 +1,8 @@
-package com.footballay.core.web.admin.league.service
+package com.footballay.core.web.admin.apisports.service
 
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
-import com.footballay.core.web.admin.league.dto.AvailableLeagueDto
-import com.footballay.core.web.admin.league.mapper.LeagueWebMapper
+import com.footballay.core.web.admin.apisports.dto.AvailableLeagueDto
+import com.footballay.core.web.admin.apisports.mapper.LeagueWebMapper
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 

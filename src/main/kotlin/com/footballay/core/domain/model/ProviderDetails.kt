@@ -1,4 +1,4 @@
-package com.footballay.core.domain.admin.apisports.model
+package com.footballay.core.domain.model
 
 /**
  * Provider별 상세 정보를 담는 공통 인터페이스

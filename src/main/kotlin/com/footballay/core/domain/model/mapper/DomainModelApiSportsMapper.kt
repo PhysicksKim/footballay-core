@@ -1,9 +1,9 @@
-package com.footballay.core.domain.admin.apisports.mapper
+package com.footballay.core.domain.model.mapper
 
-import com.footballay.core.domain.admin.apisports.model.ApiSportsPlayerDetails
-import com.footballay.core.domain.admin.apisports.model.ApiSportsTeamDetails
-import com.footballay.core.domain.admin.apisports.model.PlayerModel
-import com.footballay.core.domain.admin.apisports.model.TeamModel
+import com.footballay.core.domain.model.ApiSportsPlayerDetails
+import com.footballay.core.domain.model.ApiSportsTeamDetails
+import com.footballay.core.domain.model.PlayerModel
+import com.footballay.core.domain.model.TeamModel
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import org.springframework.stereotype.Component
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component
  * Facade에서 변환 로직을 분리하여 단일 책임 원칙을 준수합니다.
  */
 @Component
-class DomainModelMapper {
+class DomainModelApiSportsMapper {
     /**
      * TeamApiSports Entity를 TeamModel로 변환
      *

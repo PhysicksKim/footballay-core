@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.fixture.dto
+package com.footballay.core.web.admin.apisports.dto
 
 data class FixtureSummaryDto(
     val uid: String,

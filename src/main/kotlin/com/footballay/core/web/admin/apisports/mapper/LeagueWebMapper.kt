@@ -1,6 +1,6 @@
-package com.footballay.core.web.admin.league.mapper
+package com.footballay.core.web.admin.apisports.mapper
 
-import com.footballay.core.web.admin.league.dto.AvailableLeagueDto
+import com.footballay.core.web.admin.apisports.dto.AvailableLeagueDto
 
 object LeagueWebMapper {
     fun toAvailableDto(

@@ -1,4 +1,4 @@
-package com.footballay.core.domain.admin.apisports.model
+package com.footballay.core.domain.model
 
 /**
  * 선수 도메인 모델

@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.league.dto
+package com.footballay.core.web.admin.apisports.dto
 
 data class AvailableLeagueDto(
     val leagueId: Long,

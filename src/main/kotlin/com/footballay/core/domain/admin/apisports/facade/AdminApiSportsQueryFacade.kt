@@ -2,9 +2,9 @@ package com.footballay.core.domain.admin.apisports.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.domain.admin.apisports.mapper.DomainModelMapper
-import com.footballay.core.domain.admin.apisports.model.PlayerModel
-import com.footballay.core.domain.admin.apisports.model.TeamModel
+import com.footballay.core.domain.model.mapper.DomainModelApiSportsMapper
+import com.footballay.core.domain.model.PlayerModel
+import com.footballay.core.domain.model.TeamModel
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import org.springframework.stereotype.Component
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class AdminApiSportsQueryFacade(
     private val teamApiSportsRepository: TeamApiSportsRepository,
     private val playerApiSportsRepository: PlayerApiSportsRepository,
-    private val domainModelMapper: DomainModelMapper,
+    private val domainModelApiSportsMapper: DomainModelApiSportsMapper,
 ) {
     /**
      * LeagueApiSports apiId로 해당 리그의 팀 목록 조회
@@ -36,7 +36,7 @@ class AdminApiSportsQueryFacade(
     fun findTeamsByLeagueApiId(leagueApiId: Long): DomainResult<List<TeamModel>, DomainFail> {
         val teamApiSportsList = teamApiSportsRepository.findAllByLeagueApiSportsApiId(leagueApiId)
 
-        val teams = teamApiSportsList.map { domainModelMapper.toTeamModel(it) }
+        val teams = teamApiSportsList.map { domainModelApiSportsMapper.toTeamModel(it) }
 
         return DomainResult.Success(teams)
     }
@@ -54,7 +54,7 @@ class AdminApiSportsQueryFacade(
     fun findPlayersByTeamApiId(teamApiId: Long): DomainResult<List<PlayerModel>, DomainFail> {
         val playerApiSportsList = playerApiSportsRepository.findAllByTeamApiSportsApiId(teamApiId)
 
-        val players = playerApiSportsList.map { domainModelMapper.toPlayerModel(it) }
+        val players = playerApiSportsList.map { domainModelApiSportsMapper.toPlayerModel(it) }
 
         return DomainResult.Success(players)
     }
