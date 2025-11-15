@@ -26,3 +26,16 @@ sealed class DomainResult<out S : Any, out F : DomainFail> {
             is Fail -> this.error
         }
 }
+
+/**
+ * 성공시 Transform 적용, 실패시 기존 Fail 유지
+ *
+ * 성능 검증되지 않음
+ */
+inline fun <S : Any, F : DomainFail, R : Any> DomainResult<S, F>.map(
+    transform: (S) -> R,
+): DomainResult<R, F> =
+    when (this) {
+        is DomainResult.Success -> DomainResult.Success(transform(this.value))
+        is DomainResult.Fail -> DomainResult.Fail(this.error)
+    }

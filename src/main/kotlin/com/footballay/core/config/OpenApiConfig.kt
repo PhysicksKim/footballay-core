@@ -27,18 +27,11 @@ class OpenApiConfig {
                     .version("1.0.0")
                     .description(
                         """
-                        Live football match data API with real-time synchronization.
-
-                        **Features:**
-                        - Real-time match data streaming
-                        - Admin fixture and league management
-                        - Match Data Sync Job management (Pre/Live/Post Match)
-                        - Data synchronization with ApiSports
-                        - Custom player photo preferences
+                        라이브 축구 경기 스탯 앱 풋볼레이 Footballay 입니다. 
 
                         **Admin Access:**
-                        Most admin endpoints require authentication with ADMIN role.
-                        Login at /login first, then use Swagger UI with the same browser session.
+                        관리자 로그인을 위해서는 먼저 /login 엔드포인트를 통해 인증을 받아야 합니다.  
+                        자세한 로그인 방법은 Admin Page Repository 코드를 참고하세요.  
                         """.trimIndent(),
                     ).contact(
                         Contact()
@@ -46,7 +39,7 @@ class OpenApiConfig {
                     ),
             ).servers(
                 listOf(
-                    Server().url("https://localhost:8080").description("Development"),
+                    Server().url("https://localhost:8083").description("Development"),
                     Server().url("https://footballay.com").description("Production"),
                 ),
             ).components(

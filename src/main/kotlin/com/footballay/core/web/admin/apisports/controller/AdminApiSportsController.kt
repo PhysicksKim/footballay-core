@@ -1,7 +1,6 @@
 package com.footballay.core.web.admin.apisports.controller
 
-import com.footballay.core.common.result.DomainFail
-import com.footballay.core.common.result.DomainResult
+import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
@@ -16,7 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import com.footballay.core.web.admin.apisports.dto.AvailableLeagueDto
@@ -26,7 +24,11 @@ import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import com.footballay.core.web.admin.apisports.dto.PlayerAdminResponse
 import com.footballay.core.web.admin.apisports.dto.TeamAdminResponse
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsQueryWebService
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Positive
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.validation.annotation.Validated
 import java.time.Instant
 
 @Tag(
@@ -41,6 +43,7 @@ import java.time.Instant
             "주의사항: 동기화는 순차적으로 진행되어야 하며, ApiSports API 호출 제한을 고려해야 합니다.",
 )
 @SecurityRequirement(name = "cookieAuth")
+@Validated
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/apisports")
@@ -114,61 +117,83 @@ class AdminApiSportsController(
     @Operation(summary = "현재 시즌 리그 동기화", description = OP_SYNC_LEAGUES)
     @ApiResponses(
         ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = LeaguesSyncResultDto::class))]),
-        ApiResponse(responseCode = "400", description = "동기화 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "요청 값이 유효하지 않음",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PostMapping("/leagues/sync")
     fun syncCurrentLeagues(): ResponseEntity<LeaguesSyncResultDto> =
-        when (val result = adminApiSportsWebService.syncCurrentLeagues()) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
+        adminApiSportsWebService
+            .syncCurrentLeagues()
+            .toResponseEntity()
 
     @Operation(summary = "리그의 팀 동기화", description = OP_SYNC_TEAMS)
     @ApiResponses(
         ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = TeamsSyncResultDto::class))]),
         ApiResponse(responseCode = "404", description = "리그를 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "동기화 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "요청 값이 유효하지 않음",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PostMapping("/leagues/{leagueId}/teams/sync")
     fun syncTeamsOfLeague(
-        @Parameter(description = "ApiSports 리그 ID", example = "39") @PathVariable leagueId: Long,
-        @RequestBody(required = false) body: LeagueSeasonRequest?,
-    ): ResponseEntity<TeamsSyncResultDto> {
-        val season = body?.season
-        val result = adminApiSportsWebService.syncTeamsOfLeague(leagueId, season)
-        return when (result) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
-    }
+        @Parameter(description = "ApiSports 리그 ID", example = "39")
+        @PathVariable
+        @Positive
+        leagueId: Long,
+        @RequestBody(required = false)
+        @Valid
+        body: LeagueSeasonRequest?,
+    ): ResponseEntity<TeamsSyncResultDto> =
+        adminApiSportsWebService
+            .syncTeamsOfLeague(leagueId, body?.season)
+            .toResponseEntity()
 
     @Operation(summary = "팀의 선수 동기화", description = OP_SYNC_PLAYERS)
     @ApiResponses(
         ApiResponse(responseCode = "200", content = [Content(schema = Schema(implementation = PlayersSyncResultDto::class))]),
         ApiResponse(responseCode = "404", description = "팀을 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "동기화 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "요청 값이 유효하지 않음",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PostMapping("/teams/{teamId}/players/sync")
     fun syncPlayersOfTeam(
-        @Parameter(description = "ApiSports 팀 ID", example = "50") @PathVariable teamId: Long,
+        @Parameter(description = "ApiSports 팀 ID", example = "50")
+        @PathVariable
+        @Positive
+        teamId: Long,
     ): ResponseEntity<PlayersSyncResultDto> =
-        when (val result = adminApiSportsWebService.syncPlayersOfTeam(teamId)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
+        adminApiSportsWebService
+            .syncPlayersOfTeam(teamId)
+            .toResponseEntity()
 
     @Operation(summary = "가용 리그 목록 조회")
     @ApiResponse(responseCode = "200")
     @GetMapping("/leagues/available")
     fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> = ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
 
-    @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준")
+    @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준. mode 기본값 exact")
     @ApiResponse(responseCode = "200")
     @GetMapping("/leagues/{leagueId}/fixtures")
     fun getLeagueFixtures(
-        @Parameter(description = "LeagueCore ID", example = "1") @PathVariable leagueId: Long,
-        @Parameter(description = "ISO-8601 UTC") @RequestParam(required = false) at: String?,
-        @Parameter(description = "nearest | exact") @RequestParam(required = false, defaultValue = "exact") mode: String,
+        @Parameter(description = "LeagueCore ID", example = "1")
+        @PathVariable
+        @Positive
+        leagueId: Long,
+        @Parameter(description = "ISO-8601 UTC")
+        @RequestParam(required = false)
+        at: String?,
+        @Parameter(description = "nearest | exact")
+        @RequestParam(required = false, defaultValue = "exact")
+        @Pattern(regexp = "exact|nearest")
+        mode: String,
     ): ResponseEntity<List<FixtureSummaryDto>> {
         val atInstant =
             try {
@@ -183,32 +208,46 @@ class AdminApiSportsController(
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "동기화된 경기 수 반환"),
         ApiResponse(responseCode = "404", description = "리그를 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "동기화 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "요청 값이 유효하지 않음",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PostMapping("/leagues/{leagueId}/fixtures/sync")
     fun syncFixturesOfLeague(
-        @Parameter(description = "ApiSports 리그 ID", example = "39") @PathVariable leagueId: Long,
+        @Parameter(description = "ApiSports 리그 ID", example = "39")
+        @PathVariable
+        @Positive
+        leagueId: Long,
     ): ResponseEntity<Int> =
-        when (val result = adminApiSportsWebService.syncFixturesOfLeague(leagueId)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
+        adminApiSportsWebService
+            .syncFixturesOfLeague(leagueId)
+            .toResponseEntity()
 
     @Operation(summary = "리그 available 설정", description = OP_SET_LEAGUE_AVAILABLE)
     @ApiResponses(
         ApiResponse(responseCode = "200"),
         ApiResponse(responseCode = "404", description = "리그를 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "요청 값이 유효하지 않음",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PutMapping("/leagues/{leagueId}/available")
     fun setLeagueAvailable(
-        @Parameter(description = "ApiSports League ID", example = "39") @PathVariable leagueId: Long,
-        @RequestBody request: AvailabilityToggleRequest,
+        @Parameter(description = "ApiSports League ID", example = "39")
+        @PathVariable
+        @Positive
+        leagueId: Long,
+        @RequestBody
+        @Valid
+        request: AvailabilityToggleRequest,
     ): ResponseEntity<String> =
-        when (val result = adminApiSportsWebService.setLeagueAvailable(leagueId, request.available)) {
-            is DomainResult.Success -> ResponseEntity.ok(result.value)
-            is DomainResult.Fail -> toErrorResponse(result.error)
-        }
+        adminApiSportsWebService
+            .setLeagueAvailable(leagueId, request.available)
+            .toResponseEntity()
 
     @Operation(summary = "리그별 팀 목록 조회", description = OP_GET_TEAMS_BY_LEAGUE)
     @ApiResponse(responseCode = "200")
@@ -223,13 +262,4 @@ class AdminApiSportsController(
     fun getPlayersByTeam(
         @Parameter(description = "ApiSports Team ID", example = "50") @PathVariable teamApiId: Long,
     ): ResponseEntity<List<PlayerAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findPlayersByTeamApiId(teamApiId))
-
-    private fun <T> toErrorResponse(error: DomainFail): ResponseEntity<T> {
-        val status =
-            when (error) {
-                is DomainFail.Validation -> HttpStatus.BAD_REQUEST
-                is DomainFail.NotFound -> HttpStatus.NOT_FOUND
-            }
-        return ResponseEntity.status(status).build()
-    }
 }

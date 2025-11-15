@@ -1,7 +1,7 @@
 package com.footballay.core.common.result
 
 /**
- * 공통 실패 타입(초기 2종)
+ * 공통 실패 타입
  */
 sealed interface DomainFail {
     data class Validation(

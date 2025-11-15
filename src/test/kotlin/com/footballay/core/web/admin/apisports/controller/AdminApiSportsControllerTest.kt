@@ -1,15 +1,22 @@
 package com.footballay.core.web.admin.apisports.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.TestSecurityConfig
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
+import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
+import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
+import com.footballay.core.web.admin.apisports.service.AdminApiSportsQueryWebService
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
+import com.footballay.core.web.admin.apisports.service.AdminFixtureQueryWebService
+import com.footballay.core.web.admin.apisports.service.AdminLeagueQueryWebService
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.`when`
+import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.context.annotation.Import
@@ -25,195 +32,124 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
-@Disabled("AdminApiSportsWebService 구현 후 활성화 필요")
 @WebMvcTest(AdminApiSportsController::class)
 @Import(TestSecurityConfig::class)
-class AdminApiSportsControllerTest {
+class AdminApiSportsControllerTest(
+    @Autowired private val objectMapper: ObjectMapper,
+) {
     @Autowired
     private lateinit var context: WebApplicationContext
 
     @MockitoBean
     private lateinit var adminApiSportsWebService: AdminApiSportsWebService
 
-    private lateinit var mvc: MockMvc
+    @MockitoBean
+    private lateinit var adminLeagueQueryWebService: AdminLeagueQueryWebService
+
+    @MockitoBean
+    private lateinit var adminFixtureQueryWebService: AdminFixtureQueryWebService
+
+    @MockitoBean
+    private lateinit var adminApiSportsQueryWebService: AdminApiSportsQueryWebService
+
+    private lateinit var mockMvc: MockMvc
 
     val log = logger()
 
     @BeforeEach
     fun setup() {
-        mvc =
+        mockMvc =
             MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply<DefaultMockMvcBuilder>(springSecurity())
                 .build()
     }
 
-    @Test
     @WithMockUser(roles = ["ADMIN"])
-    fun `컨트롤러 헬스 테스트 엔드포인트가 정상 동작한다`() {
-        mvc
-            .get("/api/v1/admin/apisports/test")
-            .andExpect {
-                status { isOk() }
-                content { contentTypeCompatibleWith(MediaType.TEXT_PLAIN) }
-            }
-    }
-
     @Test
-    @WithMockUser(roles = ["ADMIN"])
-    fun `현재 시즌 리그 동기화가 성공한다`() {
-        // Given
-        val mockResult = LeaguesSyncResultDto(syncedCount = 20)
-        `when`(adminApiSportsWebService.syncCurrentLeagues())
-            .thenReturn(DomainResult.Success(mockResult))
+    @DisplayName("syncCurrentLeagues - DomainResult.Success이면 200과 DTO를 반환한다")
+    fun syncCurrentLeagues_success() {
+        // given
+        val dto =
+            LeaguesSyncResultDto(
+                syncedCount = 10,
+                message = "현재 시즌 리그 10 개가 동기화되었습니다",
+            )
+        given(adminApiSportsWebService.syncCurrentLeagues())
+            .willReturn(DomainResult.Success(dto))
 
-        // When & Then
-        mvc
+        // when & then
+        mockMvc
             .post("/api/v1/admin/apisports/leagues/sync") {
                 contentType = MediaType.APPLICATION_JSON
             }.andExpect {
                 status { isOk() }
-                content { contentType(MediaType.APPLICATION_JSON) }
+                jsonPath("$.syncedCount") { value(10) }
+                jsonPath("$.message") { value("현재 시즌 리그 10 개가 동기화되었습니다") }
             }
     }
 
-    @Test
     @WithMockUser(roles = ["ADMIN"])
-    fun `특정 리그의 Fixture 동기화가 성공한다`() {
-        // Given
-        val leagueId = 39L
-        val syncedCount = 380
-        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
-            .thenReturn(DomainResult.Success(syncedCount))
-
-        // When & Then
-        mvc
-            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
-                contentType = MediaType.APPLICATION_JSON
-            }.andExpect {
-                status { isOk() }
-                content {
-                    contentType(MediaType.APPLICATION_JSON)
-                    jsonPath("$") { value(syncedCount) }
-                }
-            }
-    }
-
     @Test
-    @WithMockUser(roles = ["ADMIN"])
-    fun `존재하지 않는 리그로 Fixture 동기화 시 404를 반환한다`() {
-        // Given
-        val leagueId = 99999L
-        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
-            .thenReturn(
-                DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "LEAGUE",
-                        id = leagueId.toString(),
-                    ),
-                ),
-            )
+    @DisplayName("syncTeamsOfLeague - leagueId가 음수이면 Bean Validation이 400 + WEB_VALIDATION_ERROR를 반환한다")
+    fun syncTeamsOfLeague_negativeLeagueId_returns400() {
+        val body = LeagueSeasonRequest(season = 2024)
 
-        // When & Then
-        mvc
-            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
+        mockMvc
+            .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", -1L) {
                 contentType = MediaType.APPLICATION_JSON
-            }.andExpect {
-                status { isNotFound() }
-            }
-    }
-
-    @Test
-    @WithMockUser(roles = ["ADMIN"])
-    fun `리그의 현재 시즌이 설정되지 않은 경우 400을 반환한다`() {
-        // Given
-        val leagueId = 39L
-        `when`(adminApiSportsWebService.syncFixturesOfLeague(leagueId))
-            .thenReturn(
-                DomainResult.Fail(
-                    DomainFail.Validation.single(
-                        code = "CURRENT_SEASON_NOT_SET",
-                        message = "Current season is not set for league",
-                        field = "season",
-                    ),
-                ),
-            )
-
-        // When & Then
-        mvc
-            .post("/api/v1/admin/apisports/leagues/$leagueId/fixtures/sync") {
-                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(body)
             }.andExpect {
                 status { isBadRequest() }
+                jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
+                jsonPath("$.errors") { isArray() }
             }
     }
 
-    @Test
     @WithMockUser(roles = ["ADMIN"])
-    fun `리그를 Available로 설정 성공`() {
-        // Given
-        val leagueId = 39L
-        val leagueUid = "league_uid_123"
-        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, true))
-            .thenReturn(DomainResult.Success(leagueUid))
-
-        // When & Then
-        mvc
-            .put("/api/v1/admin/apisports/leagues/$leagueId/available") {
-                contentType = MediaType.APPLICATION_JSON
-                content = "{" + "\"available\": true" + "}"
+    @Test
+    @DisplayName("getLeagueFixtures - mode가 허용값이 아니면 400 + WEB_VALIDATION_ERROR를 반환한다")
+    fun getLeagueFixtures_invalidMode_returns400() {
+        mockMvc
+            .get("/api/v1/admin/apisports/leagues/{leagueId}/fixtures", 1L) {
+                param("mode", "something-else") // exact|nearest 아님
             }.andExpect {
-                status { isOk() }
-                content {
-                    string(leagueUid)
-                }
+                status { isBadRequest() }
+                jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
+                jsonPath("$.errors") { isArray() }
             }
     }
 
-    @Test
     @WithMockUser(roles = ["ADMIN"])
-    fun `리그를 Unavailable로 설정 성공`() {
-        // Given
+    @Test
+    @DisplayName("syncTeamsOfLeague - 정상 입력이면 200과 TeamsSyncResultDto를 반환한다")
+    fun syncTeamsOfLeague_success() {
+        // given
         val leagueId = 39L
-        val leagueUid = "league_uid_123"
-        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, false))
-            .thenReturn(DomainResult.Success(leagueUid))
-
-        // When & Then
-        mvc
-            .put("/api/v1/admin/apisports/leagues/$leagueId/available") {
-                contentType = MediaType.APPLICATION_JSON
-                content = "{" + "\"available\": false" + "}"
-            }.andExpect {
-                status { isOk() }
-                content {
-                    string(leagueUid)
-                }
-            }
-    }
-
-    @Test
-    @WithMockUser(roles = ["ADMIN"])
-    fun `존재하지 않는 리그로 Available 설정 시 404를 반환한다`() {
-        // Given
-        val leagueId = 99999L
-        `when`(adminApiSportsWebService.setLeagueAvailable(leagueId, true))
-            .thenReturn(
-                DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "LEAGUE_CORE",
-                        id = leagueId.toString(),
-                    ),
-                ),
+        val dto =
+            TeamsSyncResultDto(
+                syncedCount = 20,
+                leagueApiId = leagueId,
+                season = 2024,
+                message = "리그(39)의 팀 20 개가 동기화되었습니다",
             )
 
-        // When & Then
-        mvc
-            .put("/api/v1/admin/apisports/leagues/$leagueId/available") {
+        given(adminApiSportsWebService.syncTeamsOfLeague(leagueId, 2024))
+            .willReturn(DomainResult.Success(dto))
+
+        val body = LeagueSeasonRequest(season = 2024)
+        val json = objectMapper.writeValueAsString(body)
+
+        // when & then
+        mockMvc
+            .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", leagueId) {
                 contentType = MediaType.APPLICATION_JSON
-                content = "{" + "\"available\": true" + "}"
+                content = json
             }.andExpect {
-                status { isNotFound() }
+                status { isOk() }
+                jsonPath("$.syncedCount") { value(20) }
+                jsonPath("$.leagueApiId") { value(39) }
+                jsonPath("$.season") { value(2024) }
             }
     }
 }

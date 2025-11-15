@@ -1,16 +1,22 @@
 package com.footballay.core.web.admin.apisports.controller
 
-import com.footballay.core.common.result.DomainResult
-import com.footballay.core.infra.facade.AvailableFixtureFacade
+import com.footballay.core.common.result.toResponseEntity
+import com.footballay.core.web.admin.apisports.dto.ToggleAvailableResponse
+import com.footballay.core.web.admin.apisports.service.AdminFixtureAvailableWebService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Positive
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 
 @Tag(
@@ -23,11 +29,12 @@ import org.springframework.web.bind.annotation.*
             "4) PostMatchJob - 경기 종료 후 자동 등록, 최종 통계 수집. 전제조건: 경기의 kickoff time이 반드시 설정되어 있어야 합니다.",
 )
 @SecurityRequirement(name = "cookieAuth")
+@Validated
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/apisports/fixtures")
 class AdminFixtureAvailableController(
-    private val availableFixtureFacade: AvailableFixtureFacade,
+    private val adminFixtureAvailableWebService: AdminFixtureAvailableWebService,
 ) {
     companion object {
         private const val OP_SET_FIXTURE_AVAILABLE =
@@ -38,32 +45,29 @@ class AdminFixtureAvailableController(
 
     @Operation(summary = "경기 available 설정", description = OP_SET_FIXTURE_AVAILABLE)
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "대상 경기의 UID 반환"),
+        ApiResponse(
+            responseCode = "200",
+            description = "대상 경기의 UID 및 available 상태 반환",
+            content = [Content(schema = Schema(implementation = ToggleAvailableResponse::class))],
+        ),
         ApiResponse(responseCode = "404", description = "경기를 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "유효성 검증 실패"),
+        ApiResponse(
+            responseCode = "400",
+            description = "유효성 검증 실패 (Bean Validation)",
+            content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
+        ),
     )
     @PutMapping("/{fixtureApiId}/available")
     fun setFixtureAvailable(
-        @Parameter(description = "ApiSports Fixture ID", example = "1208021") @PathVariable fixtureApiId: Long,
-        @RequestBody request: AvailabilityToggleRequest,
-    ): ResponseEntity<String> =
-        if (request.available) {
-            when (val result = availableFixtureFacade.addAvailableFixture(fixtureApiId)) {
-                is DomainResult.Success -> ResponseEntity.ok(result.value)
-                is DomainResult.Fail -> toErrorResponse(result.error)
-            }
-        } else {
-            when (val result = availableFixtureFacade.removeAvailableFixture(fixtureApiId)) {
-                is DomainResult.Success -> ResponseEntity.ok(result.value)
-                is DomainResult.Fail -> toErrorResponse(result.error)
-            }
-        }
-
-    private fun toErrorResponse(error: com.footballay.core.common.result.DomainFail): ResponseEntity<String> =
-        when (error) {
-            is com.footballay.core.common.result.DomainFail.NotFound ->
-                ResponseEntity.status(404).body("Fixture not found: ${error.id}")
-            is com.footballay.core.common.result.DomainFail.Validation ->
-                ResponseEntity.status(400).body("Validation error: ${error.errors.joinToString { it.message }}")
-        }
+        @Parameter(description = "ApiSports Fixture ID", example = "1208021")
+        @PathVariable
+        @Positive
+        fixtureApiId: Long,
+        @RequestBody
+        @Valid
+        request: AvailabilityToggleRequest,
+    ): ResponseEntity<ToggleAvailableResponse> =
+        adminFixtureAvailableWebService
+            .setFixtureAvailable(fixtureApiId, request.available)
+            .toResponseEntity()
 }

@@ -2,6 +2,7 @@ package com.footballay.core.web.admin.apisports.service
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.common.result.map
 import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.facade.AvailableLeagueFacade
 import com.footballay.core.logger
@@ -16,7 +17,7 @@ class AdminApiSportsWebService(
     private val apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade,
     private val availableLeagueFacade: AvailableLeagueFacade,
 ) {
-    val log = logger()
+    private val log = logger()
 
     /**
      * 현재 시즌의 모든 리그를 동기화합니다.
@@ -24,20 +25,16 @@ class AdminApiSportsWebService(
     @PreAuthorize("hasRole('ADMIN')")
     fun syncCurrentLeagues(): DomainResult<LeaguesSyncResultDto, DomainFail> {
         log.info("Starting current leagues sync request")
-        val result = apiSportsBackboneSyncFacade.syncCurrentLeagues()
-        return when (result) {
-            is DomainResult.Success -> {
-                val count = result.value
+
+        return apiSportsBackboneSyncFacade
+            .syncCurrentLeagues()
+            .map { count ->
                 log.info("Successfully synced $count leagues")
-                DomainResult.Success(
-                    LeaguesSyncResultDto(
-                        syncedCount = count,
-                        message = "현재 시즌 리그 $count 개가 동기화되었습니다",
-                    ),
+                LeaguesSyncResultDto(
+                    syncedCount = count,
+                    message = "현재 시즌 리그 $count 개가 동기화되었습니다",
                 )
             }
-            is DomainResult.Fail -> DomainResult.Fail(result.error)
-        }
     }
 
     /**
@@ -52,26 +49,22 @@ class AdminApiSportsWebService(
         season: Int?,
     ): DomainResult<TeamsSyncResultDto, DomainFail> {
         log.info("Starting teams sync request for leagueApiId=$leagueApiId, season=$season")
+
         val result =
             if (season != null) {
                 apiSportsBackboneSyncFacade.syncTeamsOfLeague(leagueApiId, season)
             } else {
                 apiSportsBackboneSyncFacade.syncTeamsOfLeagueWithCurrentSeason(leagueApiId)
             }
-        return when (result) {
-            is DomainResult.Success -> {
-                val count = result.value
-                log.info("Successfully synced $count teams for league $leagueApiId")
-                DomainResult.Success(
-                    TeamsSyncResultDto(
-                        syncedCount = count,
-                        leagueApiId = leagueApiId,
-                        season = season,
-                        message = "리그($leagueApiId)의 팀 $count 개가 동기화되었습니다",
-                    ),
-                )
-            }
-            is DomainResult.Fail -> DomainResult.Fail(result.error)
+
+        return result.map { count ->
+            log.info("Successfully synced $count teams for league $leagueApiId")
+            TeamsSyncResultDto(
+                syncedCount = count,
+                leagueApiId = leagueApiId,
+                season = season,
+                message = "리그($leagueApiId)의 팀 $count 개가 동기화되었습니다",
+            )
         }
     }
 
@@ -83,26 +76,22 @@ class AdminApiSportsWebService(
     @PreAuthorize("hasRole('ADMIN')")
     fun syncPlayersOfTeam(teamApiId: Long): DomainResult<PlayersSyncResultDto, DomainFail> {
         log.info("Starting players sync request for teamApiId=$teamApiId")
-        val result = apiSportsBackboneSyncFacade.syncPlayersOfTeam(teamApiId)
-        return when (result) {
-            is DomainResult.Success -> {
-                val count = result.value
+
+        return apiSportsBackboneSyncFacade
+            .syncPlayersOfTeam(teamApiId)
+            .map { count ->
                 log.info("Successfully synced $count players for team $teamApiId")
-                DomainResult.Success(
-                    PlayersSyncResultDto(
-                        syncedCount = count,
-                        teamApiId = teamApiId,
-                        message =
-                            if (count > 0) {
-                                "팀($teamApiId)의 선수 $count 명이 동기화되었습니다"
-                            } else {
-                                "팀($teamApiId)에 대한 선수 정보를 찾을 수 없습니다"
-                            },
-                    ),
+                PlayersSyncResultDto(
+                    syncedCount = count,
+                    teamApiId = teamApiId,
+                    message =
+                        if (count > 0) {
+                            "팀($teamApiId)의 선수 $count 명이 동기화되었습니다"
+                        } else {
+                            "팀($teamApiId)에 대한 선수 정보를 찾을 수 없습니다"
+                        },
                 )
             }
-            is DomainResult.Fail -> DomainResult.Fail(result.error)
-        }
     }
 
     /**
@@ -113,11 +102,7 @@ class AdminApiSportsWebService(
     @PreAuthorize("hasRole('ADMIN')")
     fun syncFixturesOfLeague(leagueApiId: Long): DomainResult<Int, DomainFail> {
         log.info("Starting fixtures sync request for leagueId=$leagueApiId")
-        val result = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueApiId)
-        return when (result) {
-            is DomainResult.Success -> DomainResult.Success(result.value)
-            is DomainResult.Fail -> DomainResult.Fail(result.error)
-        }
+        return apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueApiId)
     }
 
     /**
