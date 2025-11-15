@@ -2,7 +2,6 @@ package com.footballay.core.web.admin.apisports.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.TestSecurityConfig
-import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
@@ -15,7 +14,6 @@ import com.footballay.core.web.admin.apisports.service.AdminLeagueQueryWebServic
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito.`when`
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -27,7 +25,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.put
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext

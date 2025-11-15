@@ -9,12 +9,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy
 import java.time.Instant
 
 @Entity
-// @Table(
-//    name = "fixture_apisports",
-//    indexes = [
-//        Index(name = "idx_fixture_apisports_core_id", columnList = "fixture_core_id"),
-//    ],
-// )
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 data class FixtureApiSports(
     @Id

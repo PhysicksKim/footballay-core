@@ -92,15 +92,97 @@ interface FixtureApiSportsRepository : JpaRepository<FixtureApiSports, Long> {
 
     @Query(
         """
-        SELECT f FROM FixtureApiSports f 
+        SELECT f FROM FixtureApiSports f
         LEFT JOIN FETCH f.awayTeam at
-        LEFT JOIN FETCH at.teamStatistics 
-        LEFT JOIN FETCH at.players ap 
-        LEFT JOIN FETCH ap.playerApiSports apas 
-        LEFT JOIN FETCH at.teamApiSports tas 
-        LEFT JOIN FETCH ap.statistics aps 
+        LEFT JOIN FETCH at.teamStatistics
+        LEFT JOIN FETCH at.players ap
+        LEFT JOIN FETCH ap.playerApiSports apas
+        LEFT JOIN FETCH at.teamApiSports tas
+        LEFT JOIN FETCH ap.statistics aps
         WHERE f.apiId = :fixtureApiId
     """,
     )
     fun findFixtureAwayTeamLineupAndStats(fixtureApiId: Long): FixtureApiSports?
+
+    /**
+     * UID 기반 경기 이벤트 조회
+     */
+    @Query(
+        """
+        SELECT f FROM FixtureApiSports f
+        JOIN FETCH f.core c
+        JOIN FETCH f.season s
+        LEFT JOIN FETCH f.venue v
+        LEFT JOIN FETCH f.events e
+        LEFT JOIN FETCH e.matchTeam em
+        LEFT JOIN FETCH e.player ep
+        LEFT JOIN FETCH e.assist ea
+        WHERE c.uid = :fixtureUid
+    """,
+    )
+    fun findEventsByFixtureUid(fixtureUid: String): FixtureApiSports?
+
+    /**
+     * UID 기반 홈팀 라인업 및 통계 조회
+     */
+    @Query(
+        """
+        SELECT f FROM FixtureApiSports f
+        LEFT JOIN FETCH f.homeTeam ht
+        LEFT JOIN FETCH ht.teamStatistics
+        LEFT JOIN FETCH ht.players hp
+        LEFT JOIN FETCH hp.playerApiSports hpas
+        LEFT JOIN FETCH ht.teamApiSports tas
+        LEFT JOIN FETCH hp.statistics hps
+        WHERE f.core.uid = :fixtureUid
+    """,
+    )
+    fun findFixtureHomeTeamLineupAndStatsByUid(fixtureUid: String): FixtureApiSports?
+
+    /**
+     * UID 기반 원정팀 라인업 및 통계 조회
+     */
+    @Query(
+        """
+        SELECT f FROM FixtureApiSports f
+        LEFT JOIN FETCH f.awayTeam at
+        LEFT JOIN FETCH at.teamStatistics
+        LEFT JOIN FETCH at.players ap
+        LEFT JOIN FETCH ap.playerApiSports apas
+        LEFT JOIN FETCH at.teamApiSports tas
+        LEFT JOIN FETCH ap.statistics aps
+        WHERE f.core.uid = :fixtureUid
+    """,
+    )
+    fun findFixtureAwayTeamLineupAndStatsByUid(fixtureUid: String): FixtureApiSports?
+
+    /**
+     * UID 기반 홈팀 라인업 전용 조회 (통계 제외 - 가벼운 쿼리)
+     */
+    @Query(
+        """
+        SELECT f FROM FixtureApiSports f
+        LEFT JOIN FETCH f.homeTeam ht
+        LEFT JOIN FETCH ht.players hp
+        LEFT JOIN FETCH hp.playerApiSports hpas
+        LEFT JOIN FETCH ht.teamApiSports tas
+        WHERE f.core.uid = :fixtureUid
+    """,
+    )
+    fun findFixtureHomeTeamLineupByUid(fixtureUid: String): FixtureApiSports?
+
+    /**
+     * UID 기반 원정팀 라인업 전용 조회 (통계 제외 - 가벼운 쿼리)
+     */
+    @Query(
+        """
+        SELECT f FROM FixtureApiSports f
+        LEFT JOIN FETCH f.awayTeam at
+        LEFT JOIN FETCH at.players ap
+        LEFT JOIN FETCH ap.playerApiSports apas
+        LEFT JOIN FETCH at.teamApiSports tas
+        WHERE f.core.uid = :fixtureUid
+    """,
+    )
+    fun findFixtureAwayTeamLineupByUid(fixtureUid: String): FixtureApiSports?
 }

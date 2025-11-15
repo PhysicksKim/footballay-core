@@ -40,4 +40,20 @@ interface ApiSportsMatchEventRepository : JpaRepository<ApiSportsMatchEvent, Lon
         @Param("fixture") fixture: FixtureApiSports,
         @Param("sequence") sequence: Int,
     ): List<ApiSportsMatchEvent>
+
+    /**
+     * UID 기반으로 특정 경기의 모든 이벤트를 sequence 순으로 조회합니다.
+     */
+    @Query(
+        """
+        SELECT e FROM ApiSportsMatchEvent e
+        JOIN e.fixtureApi f
+        JOIN f.core c
+        WHERE c.uid = :fixtureUid
+        ORDER BY e.sequence ASC
+    """,
+    )
+    fun findByFixtureUidOrderBySequenceAsc(
+        @Param("fixtureUid") fixtureUid: String,
+    ): List<ApiSportsMatchEvent>
 }
