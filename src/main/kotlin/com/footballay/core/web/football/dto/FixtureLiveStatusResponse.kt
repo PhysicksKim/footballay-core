@@ -6,7 +6,7 @@ package com.footballay.core.web.football.dto
  * @param fixtureUid Fixture UID
  * @param liveStatus 라이브 상태 정보 (스코어, 경기 시간, 진행 상태)
  */
-data class FixtureLiveStatusDto(
+data class FixtureLiveStatusResponse(
     val fixtureUid: String,
     val liveStatus: LiveStatus,
 ) {

@@ -1,13 +1,11 @@
-package com.footballay.core.web.football.dto
+package com.footballay.core.domain.model.match
 
 /**
- * 경기 통계 응답 DTO
+ * 경기 통계 도메인 모델
  *
- * @param fixture 경기 기본 정보
- * @param home 홈팀 통계 (팀 + 선수별 통계)
- * @param away 원정팀 통계 (팀 + 선수별 통계)
+ * Query Service → Web Layer 전달용 도메인 모델
  */
-data class FixtureStatisticsDto(
+data class FixtureStatisticsModel(
     val fixture: FixtureBasic,
     val home: TeamWithStatistics,
     val away: TeamWithStatistics,

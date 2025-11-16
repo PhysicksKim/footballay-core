@@ -2,8 +2,9 @@ package com.footballay.core.infra.query
 
 import com.footballay.core.MatchConfig
 import com.footballay.core.MatchEntityGenerator
+import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
  *
  * **테스트 목적:**
  * - UID 기반 조회 동작 검증
+ * - DomainResult 반환 검증
  * - Repository query method 정상 작동 확인
  * - 실제 DB 연동 흐름 검증
  *
@@ -27,9 +29,9 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("test")
 @Import(MatchEntityGenerator::class)
 @Transactional
-class MatchDataQueryServiceTest {
+class MatchDataQueryServiceImplTest {
     @Autowired
-    private lateinit var queryService: MatchDataQueryService
+    private lateinit var queryService: MatchDataQueryServiceImpl
 
     @Autowired
     private lateinit var entityGenerator: MatchEntityGenerator
@@ -44,11 +46,11 @@ class MatchDataQueryServiceTest {
         val result = queryService.getFixtureInfo(fixtureUid)
 
         // Then
-        assertThat(result).isNotNull
-        assertThat(result.core?.uid).isEqualTo(fixtureUid)
-        assertThat(result.referee).isEqualTo("Michael Oliver")
-        assertThat(result.season).isNotNull
-        assertThat(result.season?.leagueApiSports?.name).isEqualTo("Test Premier League")
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.fixtureUid).isEqualTo(fixtureUid)
+        assertThat(model.referee).isEqualTo("Michael Oliver")
+        assertThat(model.league.name).isEqualTo("Test Premier League")
     }
 
     @Test
@@ -61,10 +63,10 @@ class MatchDataQueryServiceTest {
         val result = queryService.getFixtureLiveStatus(fixtureUid)
 
         // Then
-        assertThat(result).isNotNull
-        assertThat(result.core?.uid).isEqualTo(fixtureUid)
-        assertThat(result.status?.shortStatus).isEqualTo("NS")
-        assertThat(result.score).isNotNull
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.fixtureUid).isEqualTo(fixtureUid)
+        assertThat(model.liveStatus.shortStatus).isEqualTo("NS")
     }
 
     @Test
@@ -77,9 +79,11 @@ class MatchDataQueryServiceTest {
         val result = queryService.getFixtureEvents(fixtureUid)
 
         // Then
-        assertThat(result).isNotEmpty // MatchEntityGenerator가 이벤트 생성
-        assertThat(result[0].eventType).isEqualTo("goal")
-        assertThat(result[0].elapsedTime).isEqualTo(25)
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.events).isNotEmpty // MatchEntityGenerator가 이벤트 생성
+        assertThat(model.events[0].type).isEqualTo("goal")
+        assertThat(model.events[0].elapsed).isEqualTo(25)
     }
 
     @Test
@@ -89,15 +93,14 @@ class MatchDataQueryServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val (homeResult, awayResult) = queryService.getFixtureLineup(fixtureUid)
+        val result = queryService.getFixtureLineup(fixtureUid)
 
         // Then
-        assertThat(homeResult).isNotNull
-        assertThat(homeResult?.homeTeam?.formation).isEqualTo("4-3-3")
-        assertThat(homeResult?.homeTeam?.players).isNotEmpty
-
-        assertThat(awayResult).isNotNull
-        assertThat(awayResult?.awayTeam?.formation).isEqualTo("4-2-3-1")
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.lineup.home.formation).isEqualTo("4-3-3")
+        assertThat(model.lineup.home.players).isNotEmpty
+        assertThat(model.lineup.away.formation).isEqualTo("4-2-3-1")
     }
 
     @Test
@@ -107,27 +110,28 @@ class MatchDataQueryServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val (homeResult, awayResult) = queryService.getFixtureStatistics(fixtureUid)
+        val result = queryService.getFixtureStatistics(fixtureUid)
 
         // Then
-        assertThat(homeResult).isNotNull
-        assertThat(homeResult?.homeTeam?.teamStatistics).isNotNull
-        assertThat(homeResult?.homeTeam?.teamStatistics?.shotsOnGoal).isEqualTo(5)
-        assertThat(homeResult?.homeTeam?.teamStatistics?.ballPossession).isEqualTo("55%")
-
-        assertThat(awayResult).isNotNull
-        assertThat(awayResult?.awayTeam?.teamStatistics).isNotNull
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.home.teamStatistics.shotsOnGoal).isEqualTo(5)
+        assertThat(model.home.teamStatistics.ballPossession).isEqualTo(55)
     }
 
     @Test
-    fun `getFixtureInfo - 존재하지 않는 UID 예외 발생`() {
+    fun `getFixtureInfo - 존재하지 않는 UID DomainFail 반환`() {
         // Given
         val invalidUid = "apisports:999999999"
 
-        // When & Then
-        assertThatThrownBy { queryService.getFixtureInfo(invalidUid) }
-            .isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessageContaining("not found")
+        // When
+        val result = queryService.getFixtureInfo(invalidUid)
+
+        // Then
+        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
+        val error = (result as DomainResult.Fail).error
+        assertThat(error).isInstanceOf(DomainFail.NotFound::class.java)
+        assertThat((error as DomainFail.NotFound).id).isEqualTo(invalidUid)
     }
 
     @Test
@@ -141,6 +145,8 @@ class MatchDataQueryServiceTest {
         val result = queryService.getFixtureEvents(fixtureUid)
 
         // Then
-        assertThat(result).isEmpty()
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val model = (result as DomainResult.Success).value
+        assertThat(model.events).isEmpty()
     }
 }

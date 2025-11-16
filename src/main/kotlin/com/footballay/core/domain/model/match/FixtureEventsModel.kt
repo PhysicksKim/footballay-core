@@ -1,12 +1,11 @@
-package com.footballay.core.web.football.dto
+package com.footballay.core.domain.model.match
 
 /**
- * 경기 이벤트 목록 응답 DTO
+ * 경기 이벤트 도메인 모델
  *
- * @param fixtureUid Fixture UID
- * @param events 경기 이벤트 목록 (골, 카드, 교체 등)
+ * Query Service → Web Layer 전달용 도메인 모델
  */
-data class FixtureEventsDto(
+data class FixtureEventsModel(
     val fixtureUid: String,
     val events: List<EventInfo>,
 ) {
@@ -17,8 +16,8 @@ data class FixtureEventsDto(
         val team: TeamInfo,
         val player: PlayerInfo?,
         val assist: PlayerInfo?,
-        val type: String, // Goal, Card, subst, Var
-        val detail: String, // Yellow Card, Red Card, Substitution 1, 2, 3, etc.
+        val type: String,
+        val detail: String,
         val comments: String?,
     )
 

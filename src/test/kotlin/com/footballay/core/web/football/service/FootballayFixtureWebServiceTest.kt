@@ -104,11 +104,26 @@ class FootballayFixtureWebServiceTest {
         // Then
         assertThat(response.success).isTrue()
         assertThat(response.data).isNotNull
-        assertThat(response.data!!.lineup.home.teamName).isEqualTo("Manchester United")
-        assertThat(response.data!!.lineup.home.formation).isEqualTo("4-3-3")
-        assertThat(response.data!!.lineup.home.players).isNotEmpty
-        assertThat(response.data!!.lineup.away.teamName).isEqualTo("Arsenal")
-        assertThat(response.data!!.lineup.away.formation).isEqualTo("4-2-3-1")
+        assertThat(
+            response.data!!
+                .lineup.home.teamName,
+        ).isEqualTo("Manchester United")
+        assertThat(
+            response.data!!
+                .lineup.home.formation,
+        ).isEqualTo("4-3-3")
+        assertThat(
+            response.data!!
+                .lineup.home.players,
+        ).isNotEmpty
+        assertThat(
+            response.data!!
+                .lineup.away.teamName,
+        ).isEqualTo("Arsenal")
+        assertThat(
+            response.data!!
+                .lineup.away.formation,
+        ).isEqualTo("4-2-3-1")
     }
 
     @Test
@@ -124,9 +139,18 @@ class FootballayFixtureWebServiceTest {
         assertThat(response.success).isTrue()
         assertThat(response.data).isNotNull
         assertThat(response.data!!.fixture.uid).isEqualTo(fixtureUid)
-        assertThat(response.data!!.home.teamStatistics.shotsOnGoal).isEqualTo(5)
-        assertThat(response.data!!.home.teamStatistics.ballPossession).isEqualTo(55)
-        assertThat(response.data!!.away.teamStatistics.shotsOnGoal).isEqualTo(5)
+        assertThat(
+            response.data!!
+                .home.teamStatistics.shotsOnGoal,
+        ).isEqualTo(5)
+        assertThat(
+            response.data!!
+                .home.teamStatistics.ballPossession,
+        ).isEqualTo(55)
+        assertThat(
+            response.data!!
+                .away.teamStatistics.shotsOnGoal,
+        ).isEqualTo(5)
     }
 
     @Test

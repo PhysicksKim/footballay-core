@@ -1,14 +1,11 @@
-package com.footballay.core.web.football.dto
+package com.footballay.core.domain.model.match
 
 /**
- * 경기 라인업 정보 응답 DTO
+ * 경기 라인업 도메인 모델
  *
- * 라인업이 아직 저장되지 않았다면 빈 라인업이 제공됩니다.
- *
- * @param fixtureUid Fixture UID
- * @param lineup 홈/원정 라인업 정보
+ * Query Service → Web Layer 전달용 도메인 모델
  */
-data class FixtureLineupDto(
+data class FixtureLineupModel(
     val fixtureUid: String,
     val lineup: Lineup,
 ) {

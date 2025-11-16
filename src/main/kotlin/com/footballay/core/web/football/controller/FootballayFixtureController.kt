@@ -1,10 +1,19 @@
 package com.footballay.core.web.football.controller
 
+import com.footballay.core.common.result.toResponseEntity
+import com.footballay.core.logger
 import com.footballay.core.web.football.dto.*
 import com.footballay.core.web.football.service.FootballayFixtureWebService
-import com.footballay.core.logger
-import com.footballay.core.web.common.dto.ApiResponseV2
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.constraints.NotBlank
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 
 /**
@@ -12,23 +21,18 @@ import org.springframework.web.bind.annotation.*
  *
  * UID 기반 라이브 매치 데이터 조회 API를 제공합니다.
  *
- * **API 버전:** v1
- * **Base Path:** /api/v1/footballay/fixtures
+ * API 버전: v1
+ * Base Path: /api/v1/footballay/fixtures
  *
- * **엔드포인트:**
- * - GET /{uid}/info - 경기 기본 정보
- * - GET /{uid}/live-status - 라이브 상태 (스코어, 시간)
- * - GET /{uid}/events - 경기 이벤트 (골, 카드, 교체)
- * - GET /{uid}/lineup - 라인업 및 선수 정보
- * - GET /{uid}/statistics - 팀/선수 통계
- *
- * **응답 구조:**
- * - `{ success: boolean, data: T, error: ErrorDetail }`
- *
- * **특징:**
- * - Path variable로 fixtureUid 받음
- * - Kotlin 기반 API with ApiResponseV2
+ * 응답 구조:
+ * - 성공: 각 DTO(FixtureInfoResponse 등)를 그대로 반환
+ * - 실패: 공통 DomainResult → ResponseEntity 매핑(@ControllerAdvice / toResponseEntity)에 따름
  */
+@Tag(
+    name = "Footballay - Fixtures",
+    description = "UID 기반 경기 정보 / 라이브 상태 / 이벤트 / 라인업 / 통계를 조회하는 퍼블릭 API",
+)
+@Validated
 @RestController
 @RequestMapping("/api/v1/footballay/fixtures")
 class FootballayFixtureController(
@@ -36,73 +40,112 @@ class FootballayFixtureController(
 ) {
     private val log = logger()
 
-    /**
-     * 경기 기본 정보 조회
-     *
-     * @param uid Fixture UID (e.g., "apisports:1208021")
-     * @return 경기 기본 정보 (리그, 팀, 날짜, 심판 등)
-     */
+    @Operation(
+        summary = "경기 기본 정보 조회",
+        description = "리그, 홈/원정 팀, 킥오프 시간, 경기장 등 기본 정보를 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "정상 조회",
+            content = [Content(schema = Schema(implementation = FixtureInfoResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+        ApiResponse(responseCode = "400", description = "잘못된 UID 형식"),
+    )
     @GetMapping("/{uid}/info")
     fun getFixtureInfo(
-        @PathVariable uid: String,
-    ): ResponseEntity<ApiResponseV2<FixtureInfoDto>> {
+        @Parameter(description = "Fixture UID (예: apisports:1208021)")
+        @PathVariable
+        @NotBlank uid: String,
+    ): ResponseEntity<FixtureInfoResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/info", uid)
-        return ResponseEntity.ok(webService.getFixtureInfo(uid))
+        return webService
+            .getFixtureInfo(uid)
+            .toResponseEntity()
     }
 
-    /**
-     * 경기 라이브 상태 조회
-     *
-     * @param uid Fixture UID
-     * @return 라이브 상태 (스코어, 경기 시간, 진행 상태)
-     */
+    @Operation(
+        summary = "경기 라이브 상태 조회",
+        description = "스코어, 경기 시간, 진행 상태(전반, 후반, 종료 등)를 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            content = [Content(schema = Schema(implementation = FixtureLiveStatusResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+    )
     @GetMapping("/{uid}/live-status")
     fun getFixtureLiveStatus(
-        @PathVariable uid: String,
-    ): ResponseEntity<ApiResponseV2<FixtureLiveStatusDto>> {
+        @PathVariable @NotBlank uid: String,
+    ): ResponseEntity<FixtureLiveStatusResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/live-status", uid)
-        return ResponseEntity.ok(webService.getFixtureLiveStatus(uid))
+        return webService
+            .getFixtureLiveStatus(uid)
+            .toResponseEntity()
     }
 
-    /**
-     * 경기 이벤트 조회
-     *
-     * @param uid Fixture UID
-     * @return 경기 이벤트 목록 (골, 카드, 교체 등)
-     */
+    @Operation(
+        summary = "경기 이벤트 조회",
+        description = "골, 카드, 교체 등 이벤트 타임라인을 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            content = [Content(schema = Schema(implementation = FixtureEventsResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+    )
     @GetMapping("/{uid}/events")
     fun getFixtureEvents(
-        @PathVariable uid: String,
-    ): ResponseEntity<ApiResponseV2<FixtureEventsDto>> {
+        @PathVariable @NotBlank uid: String,
+    ): ResponseEntity<FixtureEventsResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/events", uid)
-        return ResponseEntity.ok(webService.getFixtureEvents(uid))
+        return webService
+            .getFixtureEvents(uid)
+            .toResponseEntity()
     }
 
-    /**
-     * 경기 라인업 조회
-     *
-     * @param uid Fixture UID
-     * @return 라인업 정보 (홈/원정 선발/교체 선수)
-     */
+    @Operation(
+        summary = "경기 라인업 조회",
+        description = "홈/원정 선발/교체 선수 라인업 정보를 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            content = [Content(schema = Schema(implementation = FixtureLineupResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+    )
     @GetMapping("/{uid}/lineup")
     fun getFixtureLineup(
-        @PathVariable uid: String,
-    ): ResponseEntity<ApiResponseV2<FixtureLineupDto>> {
+        @PathVariable @NotBlank uid: String,
+    ): ResponseEntity<FixtureLineupResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/lineup", uid)
-        return ResponseEntity.ok(webService.getFixtureLineup(uid))
+        return webService
+            .getFixtureLineup(uid)
+            .toResponseEntity()
     }
 
-    /**
-     * 경기 통계 조회
-     *
-     * @param uid Fixture UID
-     * @return 경기 통계 (팀/선수별 통계)
-     */
+    @Operation(
+        summary = "경기 통계 조회",
+        description = "팀/선수별 경기 통계를 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            content = [Content(schema = Schema(implementation = FixtureStatisticsResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+    )
     @GetMapping("/{uid}/statistics")
     fun getFixtureStatistics(
-        @PathVariable uid: String,
-    ): ResponseEntity<ApiResponseV2<FixtureStatisticsDto>> {
+        @PathVariable @NotBlank uid: String,
+    ): ResponseEntity<FixtureStatisticsResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/statistics", uid)
-        return ResponseEntity.ok(webService.getFixtureStatistics(uid))
+        return webService
+            .getFixtureStatistics(uid)
+            .toResponseEntity()
     }
 }

@@ -133,8 +133,6 @@ public class FootballStreamDataController {
         return ResponseEntity.ok(footballStreamWebService.getFixtureLineup(requestUrl, preferenceKey, fixtureId));
     }
 
-    // Jmeter Test 를 위해서 임시로 cache 처리를 추가했었으며, 주석처리로 비활성화 해 둔 상태입니다.
-    // 임시로 만든 캐싱 서비스이므로, 실제로 cache 도입이 필요하면 apiResponse 부터 재설계가 필요합니다.
     @GetMapping("/fixtures/statistics")
     public ResponseEntity<?> fixturesStatistics(@RequestParam long fixtureId, @RequestParam(required = false) String preferenceKey) {
         final String requestUrl = "/api/football/fixtures/statistics";

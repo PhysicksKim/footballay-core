@@ -10,7 +10,7 @@ package com.footballay.core.web.football.dto
  * @param home 홈팀 정보
  * @param away 원정팀 정보
  */
-data class FixtureInfoDto(
+data class FixtureInfoResponse(
     val fixtureUid: String,
     val referee: String?,
     val date: String,
