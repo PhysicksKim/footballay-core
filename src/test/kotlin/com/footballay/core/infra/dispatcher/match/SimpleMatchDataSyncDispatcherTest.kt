@@ -1,6 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
-import com.footballay.core.infra.MatchSyncOrchestrator
+import com.footballay.core.infra.match.MatchSyncOrchestrator
 import com.footballay.core.infra.scheduler.JobSchedulerService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

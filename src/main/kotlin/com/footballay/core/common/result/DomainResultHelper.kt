@@ -13,6 +13,7 @@ fun DomainFail.toHttpStatus(): HttpStatus =
     when (this) {
         is DomainFail.Validation -> HttpStatus.BAD_REQUEST
         is DomainFail.NotFound -> HttpStatus.NOT_FOUND
+        is DomainFail.Unknown -> HttpStatus.INTERNAL_SERVER_ERROR
     }
 
 /**

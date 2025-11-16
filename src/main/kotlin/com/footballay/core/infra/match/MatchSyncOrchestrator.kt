@@ -1,4 +1,4 @@
-package com.footballay.core.infra
+package com.footballay.core.infra.match
 
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 
@@ -12,11 +12,11 @@ import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
  * **핵심 책임:**
  * - 해당 구현체가 Fixture Uid Match Data Sync를 지원하는지 판단
  * - Match data sync 작업 수행 및 결과 반환
- * - [MatchDataSyncResult] 는
+ * - [com.footballay.core.infra.dispatcher.match.MatchDataSyncResult] 는
  *
  * **결과 반환 유의사항**
- * [MatchSyncOrchestrator] 는 동기화 작업 후 반드시 [MatchDataSyncResult] 를 반환해야 합니다.
- * [MatchDataSyncResult] 는 다양한 호출자가 다음 동작(추가 폴링 or 종료)을 결정하는 데 사용됩니다.
+ * [MatchSyncOrchestrator] 는 동기화 작업 후 반드시 [com.footballay.core.infra.dispatcher.match.MatchDataSyncResult] 를 반환해야 합니다.
+ * [com.footballay.core.infra.dispatcher.match.MatchDataSyncResult] 는 다양한 호출자가 다음 동작(추가 폴링 or 종료)을 결정하는 데 사용됩니다.
  * 따라서 단순히 저장 성공 응답이 아니라 경기 상태 정보와 같은 구체적인 정보도 포함합니다.
  *
  * **동작 흐름:**
@@ -25,11 +25,13 @@ import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
  * 3. Provider API에서 데이터 조회 및 동기화
  * 4. `MatchDataSyncResult` 반환
  *
- * @see MatchDataSyncResult
+ * @see com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
  */
 interface MatchSyncOrchestrator {
     /**
      * 해당 fixture Match Sync가 지원되는지 여부를 판단합니다.
+     *
+     * 주의 : Available 여부와 무관하게, 해당 구현체가 Uid를 처리할 수 있을지에 대해서 판단합니다.
      *
      * @param uid 경기 고유 식별자 (FixtureCore.uid)
      * @return 지원 여부

@@ -26,4 +26,8 @@ sealed interface DomainFail {
         val resource: String,
         val id: String,
     ) : DomainFail
+
+    data class Unknown(
+        val message: String,
+    ) : DomainFail
 }

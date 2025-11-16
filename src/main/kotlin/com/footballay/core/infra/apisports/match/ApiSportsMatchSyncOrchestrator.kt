@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match
 
-import com.footballay.core.infra.MatchSyncOrchestrator
+import com.footballay.core.infra.match.MatchSyncOrchestrator
 import com.footballay.core.infra.apisports.FixtureApiSportsQueryService
 import com.footballay.core.infra.apisports.backbone.extractor.ApiSportsFixturePlayerCollector
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
@@ -12,7 +12,7 @@ import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import org.springframework.stereotype.Component
 
 /**
- * ApiSports 기반 라이브 매치 데이터 동기화 오케스트레이터
+ * ApiSports만 사용하는 라이브 매치 데이터 동기화 오케스트레이터
  *
  * FixtureCore의 uid를 받아 ApiSports API로부터 라이브 매치 데이터를 조회하고 동기화합니다.
  *
@@ -39,13 +39,17 @@ class ApiSportsMatchSyncOrchestrator(
     override fun isSupport(uid: String): Boolean = true
 
     override fun syncMatchData(uid: String): MatchDataSyncResult {
-        val apiId = extractApiIdFromUid(uid)
-        val response = fetcher.fetchFixtureSingle(apiId)
+        try {
+            val apiId = extractApiIdFromUid(uid)
+            val response = fetcher.fetchFixtureSingle(apiId)
 
-        syncPlayersBeforeMatchSync(response)
+            syncPlayersBeforeMatchSync(response)
 
-        val fullMatchSyncDto = FullMatchSyncDto.of(response)
-        return matchSyncService.syncFixtureMatchEntities(fullMatchSyncDto)
+            val fullMatchSyncDto = FullMatchSyncDto.of(response)
+            return matchSyncService.syncFixtureMatchEntities(fullMatchSyncDto)
+        } catch (e: Exception) {
+            return MatchDataSyncResult.Error("ApiSports Match Sync Error: ${e.message}", null)
+        }
     }
 
     private fun syncPlayersBeforeMatchSync(response: ApiSportsFixtureSingle) {

@@ -27,7 +27,7 @@ sealed class MatchDataSyncResult {
      */
     data class PreMatch(
         val lineupCached: Boolean,
-        val kickoffTime: OffsetDateTime?,
+        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
         val shouldTerminatePreMatchJob: Boolean,
     ) : MatchDataSyncResult()
 
@@ -43,7 +43,7 @@ sealed class MatchDataSyncResult {
      * @property statusShort 경기 상태 축약 코드 (NS, 1H, HT, 2H, FT 등)
      */
     data class Live(
-        val kickoffTime: OffsetDateTime?,
+        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
         val isMatchFinished: Boolean,
         val elapsedMin: Int?,
         val statusShort: String,
@@ -60,7 +60,7 @@ sealed class MatchDataSyncResult {
      * @property minutesSinceFinish 경기 종료 후 경과 시간 (분)
      */
     data class PostMatch(
-        val kickoffTime: OffsetDateTime?,
+        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
         val shouldStopPolling: Boolean,
         val minutesSinceFinish: Long,
     ) : MatchDataSyncResult()
@@ -76,7 +76,7 @@ sealed class MatchDataSyncResult {
      */
     data class Error(
         val message: String,
-        val kickoffTime: OffsetDateTime?,
+        val kickoffTime: OffsetDateTime?, // TODO: 필요 없는 필드인지 검토
     ) : MatchDataSyncResult()
 
     companion object {
