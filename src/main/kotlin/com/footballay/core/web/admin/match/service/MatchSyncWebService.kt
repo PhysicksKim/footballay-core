@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.common.service
+package com.footballay.core.web.admin.match.service
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult

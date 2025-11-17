@@ -29,14 +29,16 @@ object MatchPlayerKeyGenerator {
         apiId: Long?,
         name: String,
     ): String {
-        log.info("apiId: {}, name: {}", apiId, name)
         require(!name.isBlank()) { "선수 이름은 필수입니다. name: $name" }
 
-        return if (apiId != null) {
-            generateKeyById(apiId)
-        } else {
-            generateKeyByName(name)
-        }
+        val uid =
+            if (apiId != null) {
+                generateKeyById(apiId)
+            } else {
+                generateKeyByName(name)
+            }
+        log.info("apiId: {}, name: {}, uid: {}", apiId, name, uid)
+        return uid
     }
 
     /**

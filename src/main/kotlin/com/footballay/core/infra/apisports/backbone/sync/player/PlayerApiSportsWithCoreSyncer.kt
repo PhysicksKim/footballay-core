@@ -11,6 +11,7 @@ import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.logger
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
+import org.springframework.util.StringUtils
 
 /**
  * ApiSports 선수 데이터를 Core 시스템과 동기화하는 핵심 구현체
@@ -50,6 +51,8 @@ class PlayerApiSportsWithCoreSyncer(
     private val teamPlayerCoreSyncService: TeamPlayerCoreSyncService,
 ) : PlayerApiSportsSyncer {
     private val log = logger()
+
+    private fun formatApiSportsPlayerPhoto(apiId: Long) = "https://media.api-sports.io/football/players/$apiId.png"
 
     @Transactional
     override fun syncPlayersOfTeam(
@@ -285,18 +288,7 @@ class PlayerApiSportsWithCoreSyncer(
             val playerCore = playerCoreMap[dto.apiId]
             if (playerCore != null && dto.apiId != null) {
                 val newPlayerApiSports =
-                    PlayerApiSports(
-                        playerCore = playerCore,
-                        apiId = dto.apiId,
-                        name = dto.name,
-                        firstname = dto.firstname,
-                        lastname = dto.lastname,
-                        age = dto.age,
-                        nationality = dto.nationality,
-                        number = dto.number,
-                        position = dto.position,
-                        photo = dto.photo,
-                    )
+                    createApiSportsPlayerEntity(playerCore, dto)
                 allPlayerApiSports[dto.apiId] = newPlayerApiSports
             }
         }
@@ -322,16 +314,7 @@ class PlayerApiSportsWithCoreSyncer(
         allPlayerApiSports.values.forEach { playerApiSports ->
             val dto = playerDtosMap[playerApiSports.apiId]
             if (dto != null && !playerApiSports.preventUpdate) {
-                playerApiSports.apply {
-                    name = dto.name
-                    firstname = dto.firstname
-                    lastname = dto.lastname
-                    age = dto.age
-                    nationality = dto.nationality
-                    number = dto.number
-                    position = dto.position
-                    photo = dto.photo
-                }
+                updatePlayerApiSports(playerApiSports, dto)
             }
         }
     }
@@ -405,16 +388,7 @@ class PlayerApiSportsWithCoreSyncer(
         dto: PlayerApiSportsCreateDto,
     ): PlayerApiSports {
         // 기본 정보 업데이트
-        playerApiSports.apply {
-            name = dto.name
-            firstname = dto.firstname
-            lastname = dto.lastname
-            age = dto.age
-            nationality = dto.nationality
-            number = dto.number
-            position = dto.position
-            photo = dto.photo
-        }
+        updatePlayerApiSports(playerApiSports, dto)
 
         // PlayerCore가 없는 비정상 케이스 처리
         if (playerApiSports.playerCore == null) {
@@ -443,6 +417,18 @@ class PlayerApiSportsWithCoreSyncer(
         }
 
         // 3. PlayerApiSports 생성 및 연관관계 설정
+        return createApiSportsPlayerEntity(savedPlayerCore, dto)
+    }
+
+    /**
+     * 영속 상태의 [PlayerCore]가 주어져야 합니다.
+     */
+    private fun createApiSportsPlayerEntity(
+        savedPlayerCore: PlayerCore,
+        dto: PlayerApiSportsCreateDto,
+    ): PlayerApiSports {
+        val photoUrl = photoUrlStrategy(dto)
+
         return PlayerApiSports(
             playerCore = savedPlayerCore,
             apiId = dto.apiId,
@@ -453,9 +439,34 @@ class PlayerApiSportsWithCoreSyncer(
             nationality = dto.nationality,
             number = dto.number,
             position = dto.position,
-            photo = dto.photo,
+            photo = photoUrl,
         )
     }
+
+    private fun updatePlayerApiSports(
+        playerApiSports: PlayerApiSports,
+        dto: PlayerApiSportsCreateDto,
+    ) {
+        val photoUrl = photoUrlStrategy(dto)
+
+        playerApiSports.apply {
+            name = dto.name
+            firstname = dto.firstname
+            lastname = dto.lastname
+            age = dto.age
+            nationality = dto.nationality
+            number = dto.number
+            position = dto.position
+            photo = photoUrl
+        }
+    }
+
+    private fun photoUrlStrategy(dto: PlayerApiSportsCreateDto): String =
+        if (StringUtils.hasText(dto.photo)) {
+            dto.photo!!
+        } else {
+            formatApiSportsPlayerPhoto(dto.apiId!!)
+        }
 
     /**
      * PlayerCore 엔티티 생성

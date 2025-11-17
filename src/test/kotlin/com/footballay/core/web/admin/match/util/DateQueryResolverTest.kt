@@ -1,5 +1,6 @@
-package com.footballay.core.web.admin.common.util
+package com.footballay.core.web.admin.match.util
 
+import com.footballay.core.web.util.DateQueryResolver
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Clock

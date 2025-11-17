@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.common.dto
+package com.footballay.core.web.admin.apisports.dto
 
 import jakarta.validation.constraints.NotNull
 

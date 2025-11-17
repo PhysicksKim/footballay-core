@@ -1,4 +1,4 @@
-package com.footballay.core.web.admin.common.util
+package com.footballay.core.web.util
 
 import java.time.*
 

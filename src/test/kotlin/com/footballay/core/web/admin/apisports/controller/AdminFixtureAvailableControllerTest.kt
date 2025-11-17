@@ -5,7 +5,7 @@ import com.footballay.core.TestSecurityConfig
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.web.admin.apisports.dto.ToggleAvailableResponse
 import com.footballay.core.web.admin.apisports.service.AdminFixtureAvailableWebService
-import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
+import com.footballay.core.web.admin.apisports.dto.AvailabilityToggleRequest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given

@@ -55,7 +55,7 @@ class FootballayFixtureController(
     )
     @GetMapping("/{uid}/info")
     fun getFixtureInfo(
-        @Parameter(description = "Fixture UID (예: apisports:1208021)")
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureInfoResponse> {
@@ -78,7 +78,9 @@ class FootballayFixtureController(
     )
     @GetMapping("/{uid}/live-status")
     fun getFixtureLiveStatus(
-        @PathVariable @NotBlank uid: String,
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
+        @PathVariable
+        @NotBlank uid: String,
     ): ResponseEntity<FixtureLiveStatusResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/live-status", uid)
         return webService
@@ -99,7 +101,9 @@ class FootballayFixtureController(
     )
     @GetMapping("/{uid}/events")
     fun getFixtureEvents(
-        @PathVariable @NotBlank uid: String,
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
+        @PathVariable
+        @NotBlank uid: String,
     ): ResponseEntity<FixtureEventsResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/events", uid)
         return webService
@@ -120,7 +124,9 @@ class FootballayFixtureController(
     )
     @GetMapping("/{uid}/lineup")
     fun getFixtureLineup(
-        @PathVariable @NotBlank uid: String,
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
+        @PathVariable
+        @NotBlank uid: String,
     ): ResponseEntity<FixtureLineupResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/lineup", uid)
         return webService
@@ -141,7 +147,9 @@ class FootballayFixtureController(
     )
     @GetMapping("/{uid}/statistics")
     fun getFixtureStatistics(
-        @PathVariable @NotBlank uid: String,
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
+        @PathVariable
+        @NotBlank uid: String,
     ): ResponseEntity<FixtureStatisticsResponse> {
         log.info("GET /api/v1/footballay/fixtures/{}/statistics", uid)
         return webService

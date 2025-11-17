@@ -5,7 +5,7 @@ import com.footballay.core.domain.model.Score
 import com.footballay.core.domain.model.TeamSide
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.web.admin.common.util.DateQueryResolver
+import com.footballay.core.web.util.DateQueryResolver
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import com.footballay.core.web.admin.apisports.mapper.FixtureWebMapper
 import org.springframework.security.access.prepost.PreAuthorize

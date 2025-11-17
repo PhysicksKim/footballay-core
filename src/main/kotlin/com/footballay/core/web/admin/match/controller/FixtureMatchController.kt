@@ -1,34 +1,25 @@
-package com.footballay.core.web.admin.common.controller
+package com.footballay.core.web.admin.match.controller
 
 import com.footballay.core.common.result.toResponseEntity
-import com.footballay.core.web.admin.apisports.controller.ValidationErrorResponse
-import com.footballay.core.web.admin.apisports.dto.ToggleAvailableResponse
-import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
-import com.footballay.core.web.admin.common.service.MatchSyncWebService
+import com.footballay.core.web.admin.match.service.MatchSyncWebService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
-import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.Positive
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 웹 요청으로 MatchSync 관련 기능을 처리하는 컨트롤러
+ *
  */
-
 @Tag(
     name = "Admin - Fixture Match Management",
     description = "UID 기반 경기 매치 데이터 동기화 관리 API",
@@ -54,7 +45,7 @@ class FixtureMatchController(
         ApiResponse(responseCode = "400", description = "유효성 검증 실패 (Bean Validation)"),
         ApiResponse(responseCode = "404", description = "경기를 찾을 수 없거나 저장할 수 없는 경기"),
     )
-    @PutMapping("/{fixtureUid}/available")
+    @PostMapping("/{fixtureUid}/match/sync")
     fun setFixtureAvailable(
         @Parameter(description = "Fixture UID", example = "dp4tqrssmv7fid8v")
         @PathVariable

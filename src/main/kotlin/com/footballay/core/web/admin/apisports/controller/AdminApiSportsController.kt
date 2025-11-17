@@ -6,7 +6,7 @@ import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
-import com.footballay.core.web.admin.common.dto.AvailabilityToggleRequest
+import com.footballay.core.web.admin.apisports.dto.AvailabilityToggleRequest
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
