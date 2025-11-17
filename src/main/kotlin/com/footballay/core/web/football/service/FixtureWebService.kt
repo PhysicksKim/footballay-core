@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 @Transactional(readOnly = true)
-class FootballayFixtureWebService(
+class FixtureWebService(
     private val matchDataQueryService: MatchDataQueryService,
     private val matchDataMapper: MatchDataMapper,
 ) {

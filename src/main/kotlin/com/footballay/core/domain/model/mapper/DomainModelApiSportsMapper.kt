@@ -29,7 +29,7 @@ class DomainModelApiSportsMapper {
         return TeamModel(
             teamApiId = teamApiSports.apiId ?: throw IllegalStateException("TeamApiSports apiId is null"),
             teamCoreId = teamCore?.id,
-            uid = teamCore?.uid ?: "apisports:${teamApiSports.apiId}",
+            uid = teamCore?.uid!!, // TODO : 진짜로 teamCore null일때는??
             name = teamApiSports.name ?: "Unknown Team",
             code = teamApiSports.code,
             country = teamApiSports.country,
@@ -56,7 +56,7 @@ class DomainModelApiSportsMapper {
         return PlayerModel(
             playerApiId = playerApiSports.apiId ?: throw IllegalStateException("PlayerApiSports apiId is null"),
             playerCoreId = playerCore?.id,
-            uid = playerCore?.uid ?: "apisports:${playerApiSports.apiId}",
+            uid = playerCore?.uid!!, // TODO : 진짜로 playerCore null일때는??
             name = playerApiSports.name ?: "Unknown Player",
             firstname = playerApiSports.firstname,
             lastname = playerApiSports.lastname,

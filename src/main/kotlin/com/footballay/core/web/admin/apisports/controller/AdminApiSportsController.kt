@@ -139,18 +139,18 @@ class AdminApiSportsController(
             content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
         ),
     )
-    @PostMapping("/leagues/{leagueId}/teams/sync")
+    @PostMapping("/leagues/{leagueApiId}/teams/sync")
     fun syncTeamsOfLeague(
         @Parameter(description = "ApiSports 리그 ID", example = "39")
         @PathVariable
         @Positive
-        leagueId: Long,
+        leagueApiId: Long,
         @RequestBody(required = false)
         @Valid
         body: LeagueSeasonRequest?,
     ): ResponseEntity<TeamsSyncResultDto> =
         adminApiSportsWebService
-            .syncTeamsOfLeague(leagueId, body?.season)
+            .syncTeamsOfLeague(leagueApiId, body?.season)
             .toResponseEntity()
 
     @Operation(summary = "팀의 선수 동기화", description = OP_SYNC_PLAYERS)
@@ -163,15 +163,15 @@ class AdminApiSportsController(
             content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
         ),
     )
-    @PostMapping("/teams/{teamId}/players/sync")
+    @PostMapping("/teams/{teamApiId}/players/sync")
     fun syncPlayersOfTeam(
         @Parameter(description = "ApiSports 팀 ID", example = "50")
         @PathVariable
         @Positive
-        teamId: Long,
+        teamApiId: Long,
     ): ResponseEntity<PlayersSyncResultDto> =
         adminApiSportsWebService
-            .syncPlayersOfTeam(teamId)
+            .syncPlayersOfTeam(teamApiId)
             .toResponseEntity()
 
     @Operation(summary = "가용 리그 목록 조회")
@@ -181,12 +181,12 @@ class AdminApiSportsController(
 
     @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준. mode 기본값 exact")
     @ApiResponse(responseCode = "200")
-    @GetMapping("/leagues/{leagueId}/fixtures")
+    @GetMapping("/leagues/{leagueApiId}/fixtures")
     fun getLeagueFixtures(
-        @Parameter(description = "LeagueCore ID", example = "1")
+        @Parameter(description = "ApiSports League ID", example = "39")
         @PathVariable
         @Positive
-        leagueId: Long,
+        leagueApiId: Long,
         @Parameter(description = "ISO-8601 UTC")
         @RequestParam(required = false)
         at: String?,
@@ -201,7 +201,7 @@ class AdminApiSportsController(
             } catch (_: Exception) {
                 null
             }
-        return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueId, atInstant, mode))
+        return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueApiId, atInstant, mode))
     }
 
     @Operation(summary = "리그의 경기 일정 동기화", description = OP_SYNC_FIXTURES)
@@ -214,15 +214,15 @@ class AdminApiSportsController(
             content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
         ),
     )
-    @PostMapping("/leagues/{leagueId}/fixtures/sync")
+    @PostMapping("/leagues/{leagueApiId}/fixtures/sync")
     fun syncFixturesOfLeague(
-        @Parameter(description = "ApiSports 리그 ID", example = "39")
+        @Parameter(description = "ApiSports League ID", example = "39")
         @PathVariable
         @Positive
-        leagueId: Long,
+        leagueApiId: Long,
     ): ResponseEntity<Int> =
         adminApiSportsWebService
-            .syncFixturesOfLeague(leagueId)
+            .syncFixturesOfLeague(leagueApiId)
             .toResponseEntity()
 
     @Operation(summary = "리그 available 설정", description = OP_SET_LEAGUE_AVAILABLE)
@@ -235,25 +235,27 @@ class AdminApiSportsController(
             content = [Content(schema = Schema(implementation = ValidationErrorResponse::class))],
         ),
     )
-    @PutMapping("/leagues/{leagueId}/available")
+    @PutMapping("/leagues/{leagueApiId}/available")
     fun setLeagueAvailable(
         @Parameter(description = "ApiSports League ID", example = "39")
         @PathVariable
         @Positive
-        leagueId: Long,
+        leagueApiId: Long,
         @RequestBody
         @Valid
         request: AvailabilityToggleRequest,
     ): ResponseEntity<String> =
         adminApiSportsWebService
-            .setLeagueAvailable(leagueId, request.available)
+            .setLeagueAvailable(leagueApiId, request.available)
             .toResponseEntity()
 
     @Operation(summary = "리그별 팀 목록 조회", description = OP_GET_TEAMS_BY_LEAGUE)
     @ApiResponse(responseCode = "200")
     @GetMapping("/leagues/{leagueApiId}/teams")
     fun getTeamsByLeague(
-        @Parameter(description = "ApiSports League ID", example = "39") @PathVariable leagueApiId: Long,
+        @Parameter(description = "ApiSports League ID", example = "39")
+        @PathVariable
+        leagueApiId: Long,
     ): ResponseEntity<List<TeamAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findTeamsByLeagueApiId(leagueApiId))
 
     @Operation(summary = "팀별 선수 목록 조회", description = OP_GET_PLAYERS_BY_TEAM)

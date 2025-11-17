@@ -108,7 +108,7 @@ class AdminApiSportsControllerTest(
     @DisplayName("getLeagueFixtures - mode가 허용값이 아니면 400 + WEB_VALIDATION_ERROR를 반환한다")
     fun getLeagueFixtures_invalidMode_returns400() {
         mockMvc
-            .get("/api/v1/admin/apisports/leagues/{leagueId}/fixtures", 1L) {
+            .get("/api/v1/admin/apisports/leagues/{leagueApiId}/fixtures", 39L) {
                 param("mode", "something-else") // exact|nearest 아님
             }.andExpect {
                 status { isBadRequest() }

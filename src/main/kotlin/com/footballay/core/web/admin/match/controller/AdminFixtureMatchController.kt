@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/fixtures")
-class FixtureMatchController(
+class AdminFixtureMatchController(
     private val matchSyncWebService: MatchSyncWebService,
 ) {
     companion object {

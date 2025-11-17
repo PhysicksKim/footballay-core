@@ -45,7 +45,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `PreMatch shouldTerminatePreMatchJob=true 시 PreMatchJob만 삭제 (LiveMatchJob 추가 안함)`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0005"
         val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
         val jobContext = JobContext(JobContext.JobPhase.PRE_MATCH, jobKey)
 
@@ -72,7 +72,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `PreMatch shouldTerminatePreMatchJob=false 시 Job 유지`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0006"
         val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
         val jobContext = JobContext(JobContext.JobPhase.PRE_MATCH, jobKey)
 
@@ -98,7 +98,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `Live isMatchFinished=true 시 PostMatchJob으로 전환`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0007"
         val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
         val jobContext = JobContext(JobContext.JobPhase.LIVE_MATCH, jobKey)
 
@@ -127,7 +127,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `Live isMatchFinished=false 시 Job 유지`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0008"
         val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
         val jobContext = JobContext(JobContext.JobPhase.LIVE_MATCH, jobKey)
 
@@ -154,7 +154,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `PostMatch shouldStopPolling=true 시 Job 삭제`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0009"
         val jobKey = JobKey.jobKey("post-match-$fixtureUid", "post-match")
         val jobContext = JobContext(JobContext.JobPhase.POST_MATCH, jobKey)
 
@@ -180,7 +180,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `PostMatch shouldStopPolling=false 시 Job 유지`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0010"
         val jobKey = JobKey.jobKey("post-match-$fixtureUid", "post-match")
         val jobContext = JobContext(JobContext.JobPhase.POST_MATCH, jobKey)
 
@@ -205,7 +205,7 @@ class SimpleMatchDataSyncDispatcherTest {
     @Test
     fun `Error 발생 시 Job은 계속 실행 (전환 없음)`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testfixture0011"
         val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
         val jobContext = JobContext(JobContext.JobPhase.PRE_MATCH, jobKey)
 

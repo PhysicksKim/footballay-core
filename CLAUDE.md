@@ -574,7 +574,7 @@ The system is designed to separate API and Admin SPA via subdomains:
    - Add `devrealapi` overlay for real API calls in both environments
 2. **Admin Static Files**: Spring Boot no longer serves admin static files. All admin pages must be accessed through Nginx/CDN or Vite dev server.
 3. **Sync Order**: Always sync in correct order (leagues before teams, teams before fixtures).
-4. **Provider UIDs**: Match UIDs are prefixed with provider name (e.g., `apisports:1208021`).
+4. **UID Generation**: All entity UIDs (fixtures, leagues, teams, players, etc.) are randomly generated 16-character strings containing only lowercase letters and numbers, created by `SimpleUidGenerator`. Example: `"a1b2c3d4e5f6g7h8"`. They are NOT prefixed with provider names.
 5. **Mock Data Limitations**: Mock data only supports specific leagues/teams (Premier League ID 39, Manchester City ID 50, etc.). See mock README for details.
 6. **Transactional Tests**: Integration tests use `@Transactional` which rolls back changes after each test.
 7. **Session Cookies**: Domain settings differ by environment. Dev sessions won't work in prod and vice versa.

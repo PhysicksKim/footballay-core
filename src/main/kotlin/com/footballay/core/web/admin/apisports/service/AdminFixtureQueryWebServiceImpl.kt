@@ -5,6 +5,7 @@ import com.footballay.core.domain.model.Score
 import com.footballay.core.domain.model.TeamSide
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.web.util.DateQueryResolver
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import com.footballay.core.web.admin.apisports.mapper.FixtureWebMapper
@@ -20,13 +21,14 @@ import java.time.temporal.ChronoUnit
  *
  * **주의**
  * 이 서비스는 Admin 전용 단순 조회이므로 Facade 없이 곧장 Repository를 호출합니다
- * 비즈니스 로직이 복잡하게 추가된다면 Facade 내부로 옮기고 분리하세요
+ * 비즈니스 로직이 복잡하게 추가된다면 Domain Facade 내부로 옮기고 분리하세요
  */
 @Service
 class AdminFixtureQueryWebServiceImpl(
     private val fixtureCoreRepository: FixtureCoreRepository,
+    private val leagueApiSportsRepository: LeagueApiSportsRepository,
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock = Clock.systemUTC(), // 기본 Clock 을 못찾으면
 ) : AdminFixtureQueryWebService {
     /**
      * 리그의 Fixture 요약 정보를 조회합니다
@@ -40,7 +42,7 @@ class AdminFixtureQueryWebServiceImpl(
      * - at 날짜에 Fixture가 존재하지 않으면 이후 날짜 중 가장 가까운 날짜의 Fixture들을 반환합니다
      * - 이후 날짜에 Fixture가 존재하지 않으면 빈 리스트를 반환합니다
      *
-     * @param leagueId 리그 ID
+     * @param leagueApiId ApiSports 리그 ID
      * @param at 기준 시각. null일 경우 서버 현재 시각 사용. 날짜 단위로 처리됨
      * @param mode "exact" | "nearest"
      * @return FixtureSummaryDto 리스트
@@ -48,16 +50,22 @@ class AdminFixtureQueryWebServiceImpl(
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     override fun findFixturesByLeague(
-        leagueId: Long,
+        leagueApiId: Long,
         at: Instant?,
         mode: String,
     ): List<FixtureSummaryDto> {
         val targetInstant = at ?: Instant.now(clock)
 
+        // leagueApiId → LeagueApiSports.LeagueCore.uid
+        val leagueApiSports =
+            leagueApiSportsRepository.findByApiId(leagueApiId)
+                ?: return emptyList()
+        val leagueUid = leagueApiSports.leagueCore?.uid ?: return emptyList()
+
         val fixtures =
             when (mode) {
-                "exact" -> findFixturesOnExactDate(leagueId, targetInstant)
-                "nearest" -> findFixturesOnNearestDate(leagueId, targetInstant)
+                "exact" -> findFixturesOnExactDate(leagueUid, targetInstant)
+                "nearest" -> findFixturesOnNearestDate(leagueUid, targetInstant)
                 else -> emptyList()
             }
 
@@ -73,17 +81,17 @@ class AdminFixtureQueryWebServiceImpl(
      * - 2025-05-10일에 Fixture가 존재하면 해당 날짜의 모든 Fixture들을 반환
      * - 2025-05-10일에 Fixture가 존재하지 않으면 빈 리스트 반환
      *
-     * @param leagueId 리그 ID
+     * @param leagueUid 리그 UID
      * @param at 기준 시각. 날짜만 사용됨
      * @return FixtureCore 리스트
      */
     private fun findFixturesOnExactDate(
-        leagueId: Long,
+        leagueUid: String,
         at: Instant,
     ): List<FixtureCore> {
         val (start, end) = DateQueryResolver.resolveExactRangeAt(at, clock)
         return fixtureCoreRepository
-            .findFixturesInKickoffRange(leagueId, start, end)
+            .findFixturesByLeagueUidInKickoffRange(leagueUid, start, end)
     }
 
     /**
@@ -96,17 +104,17 @@ class AdminFixtureQueryWebServiceImpl(
      *
      * 최적화: 단일 쿼리로 가장 가까운 날짜의 모든 Fixture를 조회합니다
      *
-     * @param leagueId 리그 ID
+     * @param leagueUid 리그 UID
      * @param from 기준 시각. 날짜만 사용됨
      * @return FixtureCore 리스트
      */
     private fun findFixturesOnNearestDate(
-        leagueId: Long,
+        leagueUid: String,
         from: Instant,
     ): List<FixtureCore> {
         // 가장 가까운 kickoff 시각을 찾기
         val nearestKickoff =
-            fixtureCoreRepository.findMinKickoffAfter(leagueId, from)
+            fixtureCoreRepository.findMinKickoffAfterByLeagueUid(leagueUid, from)
                 ?: return emptyList()
 
         // 해당 날짜의 시작과 끝(exclusive) 계산 (UTC 기준)
@@ -114,8 +122,8 @@ class AdminFixtureQueryWebServiceImpl(
         val dayEnd = dayStart.plus(1, ChronoUnit.DAYS)
 
         // 해당 날짜 범위의 모든 fixture 조회
-        return fixtureCoreRepository.findFixturesInKickoffRange(
-            leagueId = leagueId,
+        return fixtureCoreRepository.findFixturesByLeagueUidInKickoffRange(
+            leagueUid = leagueUid,
             startInclusive = dayStart,
             endExclusive = dayEnd,
         )

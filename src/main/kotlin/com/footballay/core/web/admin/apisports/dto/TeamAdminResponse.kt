@@ -16,7 +16,7 @@ data class TeamAdminResponse(
     val teamApiId: Long,
     @Schema(description = "TeamCore ID (nullable)", example = "123")
     val teamCoreId: Long?,
-    @Schema(description = "팀 UID", example = "apisports:50")
+    @Schema(description = "팀 UID", example = "df31ldpheo58;e")
     val uid: String,
     @Schema(description = "팀 이름", example = "Manchester City")
     val name: String,

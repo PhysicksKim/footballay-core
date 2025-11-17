@@ -35,7 +35,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `PreMatchJob 추가 성공`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000001"
         val startTime = OffsetDateTime.now().plusHours(1)
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
@@ -52,7 +52,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `이미 존재하는 PreMatchJob은 삭제 후 재등록`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000002"
         val startTime = OffsetDateTime.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(true)
@@ -71,7 +71,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `LiveMatchJob 추가 성공`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000003"
         val startTime = Instant.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
@@ -88,7 +88,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `PostMatchJob 추가 성공`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000004"
         val startTime = Instant.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
@@ -105,7 +105,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `Job 삭제 성공`() {
         // Given
-        val jobKey = JobKey.jobKey("pre-match-apisports:12345", "pre-match")
+        val jobKey = JobKey.jobKey("pre-match-testjob000000005", "pre-match")
         given(scheduler.deleteJob(jobKey)).willReturn(true)
 
         // When
@@ -119,7 +119,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `Fixture의 모든 Job 삭제 (Pre+Live+Post)`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000006"
         given(scheduler.deleteJob(any(JobKey::class.java))).willReturn(true)
 
         // When
@@ -133,7 +133,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `Job 존재 여부 확인`() {
         // Given
-        val jobKey = JobKey.jobKey("pre-match-apisports:12345", "pre-match")
+        val jobKey = JobKey.jobKey("pre-match-testjob000000007", "pre-match")
         given(scheduler.checkExists(jobKey)).willReturn(true)
 
         // When
@@ -147,7 +147,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `Scheduler 예외 발생 시 false 반환 - PreMatchJob 추가`() {
         // Given
-        val fixtureUid = "apisports:12345"
+        val fixtureUid = "testjob000000008"
         val startTime = java.time.OffsetDateTime.now()
         given(scheduler.checkExists(any(JobKey::class.java))).willThrow(RuntimeException("Scheduler error"))
 
@@ -161,7 +161,7 @@ class JobSchedulerServiceTest {
     @Test
     fun `존재하지 않는 Job 삭제 시 false 반환`() {
         // Given
-        val jobKey = JobKey.jobKey("pre-match-apisports:99999", "pre-match")
+        val jobKey = JobKey.jobKey("pre-match-invalidjob001", "pre-match")
         given(scheduler.deleteJob(jobKey)).willReturn(false)
 
         // When

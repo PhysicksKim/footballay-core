@@ -3,7 +3,7 @@ package com.footballay.core.web.football.dto
 /**
  * 경기 기본 정보 응답 DTO
  *
- * @param fixtureUid Fixture UID (provider-prefixed, e.g., "apisports:1208021")
+ * @param fixtureUid Fixture UID
  * @param referee 심판 이름
  * @param date 경기 일시 (ISO 8601 format)
  * @param league 리그 정보

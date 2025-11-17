@@ -3,7 +3,7 @@ package com.footballay.core.web.football.controller
 import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.logger
 import com.footballay.core.web.football.dto.*
-import com.footballay.core.web.football.service.FootballayFixtureWebService
+import com.footballay.core.web.football.service.FixtureWebService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -17,26 +17,26 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 
 /**
- * Footballay Fixture Public API Controller
+ * Football Fixture Public API Controller
  *
  * UID 기반 라이브 매치 데이터 조회 API를 제공합니다.
  *
  * API 버전: v1
- * Base Path: /api/v1/footballay/fixtures
+ * Base Path: /api/v1/football/fixtures
  *
  * 응답 구조:
  * - 성공: 각 DTO(FixtureInfoResponse 등)를 그대로 반환
  * - 실패: 공통 DomainResult → ResponseEntity 매핑(@ControllerAdvice / toResponseEntity)에 따름
  */
 @Tag(
-    name = "Footballay - Fixtures",
+    name = "Football - Fixtures",
     description = "UID 기반 경기 정보 / 라이브 상태 / 이벤트 / 라인업 / 통계를 조회하는 퍼블릭 API",
 )
 @Validated
 @RestController
-@RequestMapping("/api/v1/footballay/fixtures")
-class FootballayFixtureController(
-    private val webService: FootballayFixtureWebService,
+@RequestMapping("/api/v1/football/fixtures")
+class FixtureMatchController(
+    private val webService: FixtureWebService,
 ) {
     private val log = logger()
 
@@ -59,7 +59,7 @@ class FootballayFixtureController(
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureInfoResponse> {
-        log.info("GET /api/v1/footballay/fixtures/{}/info", uid)
+        log.info("GET /api/v1/football/fixtures/{}/info", uid)
         return webService
             .getFixtureInfo(uid)
             .toResponseEntity()
@@ -76,13 +76,13 @@ class FootballayFixtureController(
         ),
         ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
     )
-    @GetMapping("/{uid}/live-status")
+    @GetMapping("/{uid}/status")
     fun getFixtureLiveStatus(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureLiveStatusResponse> {
-        log.info("GET /api/v1/footballay/fixtures/{}/live-status", uid)
+        log.info("GET /api/v1/football/fixtures/{}/status", uid)
         return webService
             .getFixtureLiveStatus(uid)
             .toResponseEntity()
@@ -105,7 +105,7 @@ class FootballayFixtureController(
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureEventsResponse> {
-        log.info("GET /api/v1/footballay/fixtures/{}/events", uid)
+        log.info("GET /api/v1/football/fixtures/{}/events", uid)
         return webService
             .getFixtureEvents(uid)
             .toResponseEntity()
@@ -128,7 +128,7 @@ class FootballayFixtureController(
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureLineupResponse> {
-        log.info("GET /api/v1/footballay/fixtures/{}/lineup", uid)
+        log.info("GET /api/v1/football/fixtures/{}/lineup", uid)
         return webService
             .getFixtureLineup(uid)
             .toResponseEntity()
@@ -151,7 +151,7 @@ class FootballayFixtureController(
         @PathVariable
         @NotBlank uid: String,
     ): ResponseEntity<FixtureStatisticsResponse> {
-        log.info("GET /api/v1/footballay/fixtures/{}/statistics", uid)
+        log.info("GET /api/v1/football/fixtures/{}/statistics", uid)
         return webService
             .getFixtureStatistics(uid)
             .toResponseEntity()

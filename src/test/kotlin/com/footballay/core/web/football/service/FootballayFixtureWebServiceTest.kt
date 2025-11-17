@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class FootballayFixtureWebServiceTest {
     @Autowired
-    private lateinit var webService: FootballayFixtureWebService
+    private lateinit var webService: FixtureWebService
 
     @Autowired
     private lateinit var entityGenerator: MatchEntityGenerator
@@ -156,7 +156,7 @@ class FootballayFixtureWebServiceTest {
     @Test
     fun `getFixtureInfo - 존재하지 않는 UID 실패 응답`() {
         // Given
-        val invalidUid = "apisports:999999999"
+        val invalidUid = "invaliduid99999"
 
         // When
         val response = webService.getFixtureInfo(invalidUid)
@@ -172,7 +172,7 @@ class FootballayFixtureWebServiceTest {
     @Test
     fun `getFixtureLiveStatus - 존재하지 않는 UID 실패 응답`() {
         // Given
-        val invalidUid = "apisports:999999999"
+        val invalidUid = "invaliduid99999"
 
         // When
         val response = webService.getFixtureLiveStatus(invalidUid)
@@ -188,7 +188,7 @@ class FootballayFixtureWebServiceTest {
     @Test
     fun `getFixtureEvents - 존재하지 않는 UID 실패 응답`() {
         // Given
-        val invalidUid = "apisports:999999999"
+        val invalidUid = "invaliduid99999"
 
         // When
         val response = webService.getFixtureEvents(invalidUid)

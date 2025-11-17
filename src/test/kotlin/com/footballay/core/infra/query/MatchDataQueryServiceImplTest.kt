@@ -122,7 +122,7 @@ class MatchDataQueryServiceImplTest {
     @Test
     fun `getFixtureInfo - 존재하지 않는 UID DomainFail 반환`() {
         // Given
-        val invalidUid = "apisports:999999999"
+        val invalidUid = "invaliduid99999"
 
         // When
         val result = queryService.getFixtureInfo(invalidUid)

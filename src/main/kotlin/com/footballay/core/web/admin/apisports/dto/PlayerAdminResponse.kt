@@ -16,7 +16,7 @@ data class PlayerAdminResponse(
     val playerApiId: Long,
     @Schema(description = "PlayerCore ID (nullable)", example = "456")
     val playerCoreId: Long?,
-    @Schema(description = "선수 UID", example = "apisports:1234")
+    @Schema(description = "선수 UID", example = "wtkkw140wk4oe")
     val uid: String,
     @Schema(description = "선수 이름", example = "Kevin De Bruyne")
     val name: String,

@@ -26,7 +26,7 @@ class MatchDataMapperTest {
         // Given: Domain Model
         val model =
             FixtureInfoModel(
-                fixtureUid = "apisports:1208021",
+                fixtureUid = "testfixture0001",
                 referee = "Michael Oliver",
                 date = "2025-01-15 20:00",
                 league =
@@ -56,7 +56,7 @@ class MatchDataMapperTest {
         val dto = mapper.toFixtureInfoResponse(model)
 
         // Then
-        assertThat(dto.fixtureUid).isEqualTo("apisports:1208021")
+        assertThat(dto.fixtureUid).isEqualTo("testfixture0001")
         assertThat(dto.referee).isEqualTo("Michael Oliver")
         assertThat(dto.league.name).isEqualTo("Premier League")
         assertThat(dto.home.name).isEqualTo("Manchester City")
@@ -68,7 +68,7 @@ class MatchDataMapperTest {
         // Given: Domain Model
         val model =
             FixtureLiveStatusModel(
-                fixtureUid = "apisports:123",
+                fixtureUid = "testfixture0002",
                 liveStatus =
                     FixtureLiveStatusModel.LiveStatus(
                         elapsed = 45,
@@ -86,7 +86,7 @@ class MatchDataMapperTest {
         val dto = mapper.toFixtureLiveStatusResponse(model)
 
         // Then
-        assertThat(dto.fixtureUid).isEqualTo("apisports:123")
+        assertThat(dto.fixtureUid).isEqualTo("testfixture0002")
         assertThat(dto.liveStatus.elapsed).isEqualTo(45)
         assertThat(dto.liveStatus.shortStatus).isEqualTo("1H")
         assertThat(dto.liveStatus.score.home).isEqualTo(2)
@@ -98,7 +98,7 @@ class MatchDataMapperTest {
         // Given: Empty events
         val model =
             FixtureEventsModel(
-                fixtureUid = "apisports:123",
+                fixtureUid = "testfixture0003",
                 events = emptyList(),
             )
 
@@ -106,7 +106,7 @@ class MatchDataMapperTest {
         val dto = mapper.toFixtureEventsResponse(model)
 
         // Then
-        assertThat(dto.fixtureUid).isEqualTo("apisports:123")
+        assertThat(dto.fixtureUid).isEqualTo("testfixture0003")
         assertThat(dto.events).isEmpty()
     }
 
@@ -115,7 +115,7 @@ class MatchDataMapperTest {
         // Given: Empty lineup
         val model =
             FixtureLineupModel(
-                fixtureUid = "apisports:123",
+                fixtureUid = "testfixture0004",
                 lineup =
                     FixtureLineupModel.Lineup(
                         home =
@@ -143,7 +143,7 @@ class MatchDataMapperTest {
         val dto = mapper.toFixtureLineupResponse(model)
 
         // Then
-        assertThat(dto.fixtureUid).isEqualTo("apisports:123")
+        assertThat(dto.fixtureUid).isEqualTo("testfixture0004")
         assertThat(dto.lineup.home.teamName).isEmpty()
         assertThat(dto.lineup.away.teamName).isEmpty()
     }
