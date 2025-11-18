@@ -5,10 +5,10 @@ import com.footballay.core.infra.apisports.match.sync.MatchSyncConstants.KICKOFF
 import com.footballay.core.infra.apisports.match.sync.MatchSyncConstants.POST_MATCH_POLLING_CUTOFF_MINUTES
 import com.footballay.core.infra.apisports.match.sync.base.MatchBaseDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
 import com.footballay.core.infra.apisports.match.sync.event.MatchEventDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.lineup.MatchLineupDtoExtractor
-import com.footballay.core.infra.apisports.match.sync.persist.MatchEntitySyncService
+import com.footballay.core.infra.apisports.match.sync.persist.MatchEntityPersistManager
 import com.footballay.core.infra.apisports.match.sync.playerstat.MatchPlayerStatDtoExtractor
 import com.footballay.core.infra.apisports.match.sync.teamstat.MatchTeamStatDtoExtractor
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
@@ -20,10 +20,12 @@ import java.time.OffsetDateTime
 /**
  * ApiSports Match Data Sync Facade implementation
  *
+ * JPA 엔티티 저장과 계획을 분리하기 위해서 Facade 에서 이미 계획을 세우고, 세워진 계획을 엔티티 저장 서비스에 위임합니다.
+ *
  * Match Data 전체를 담은 [FullMatchSyncDto] 를 각각 Match 엔티티에 알맞게 추려냅니다.
  * [MatchPlayerContext] 는 FullDto 에 등장한 선수들을 추려내서 관리하는 역할을 합니다.
- * 엔티티 저장 책임은 [MatchEntitySyncService] 에게 위임하며
- * 추려낸 Dto 들과 [MatchPlayerContext] 를 전달합니다.
+ * 엔티티 저장 책임은 [MatchEntityPersistManager] 에게 위임하며
+ * 추려낸 Plan(DTO) 들과 [MatchPlayerContext] 를 전달합니다.
  *
  * ### MatchPlayerDto 추출 중요성
  * ApiSports 는 불안정한 데이터 제공으로 인해 선수 아이디가 누락되는 경우가 빈번합니다.
@@ -34,18 +36,20 @@ import java.time.OffsetDateTime
  * 즉, id=null 선수는 Lineup,Event,Statistics 모두 다 이름이 다르게 나올 수 있으며,
  * 경험적으로 statistics 에서 이름이 다르게 나올 확률이 높습니다.
  *
- * @see MatchEntitySyncService
+ * @see MatchEntityPersistManager
  * @see MatchPlayerContext
  * @see FullMatchSyncDto
  */
 @Service
 class ApiSportsMatchEntitySyncFacadeImpl(
+    // DTO 추출기들 - Plan 생성 책임
     private val baseDtoExtractor: MatchBaseDtoExtractor,
     private val lineupDtoExtractor: MatchLineupDtoExtractor,
     private val eventDtoExtractor: MatchEventDtoExtractor,
     private val teamStatExtractor: MatchTeamStatDtoExtractor,
     private val playerStatExtractor: MatchPlayerStatDtoExtractor,
-    private val matchEntitySyncService: MatchEntitySyncService,
+    // 엔티티 저장 관리자 - Plan to Entity 책임
+    private val matchEntityPersistManager: MatchEntityPersistManager,
 ) : ApiSportsMatchEntitySyncFacade {
     private val log = logger()
 
@@ -69,7 +73,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
 
             // 엔티티 동기화 (트랜잭션)
             val syncResult =
-                matchEntitySyncService.syncMatchEntities(
+                matchEntityPersistManager.syncMatchEntities(
                     fixtureApiId = fixtureApiId,
                     baseDto = baseDto,
                     lineupDto = lineupDto,
@@ -109,7 +113,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
      */
     private fun determineMatchDataSyncResult(
         dto: FullMatchSyncDto,
-        lineupDto: LineupSyncDto,
+        lineupDto: MatchLineupPlanDto,
     ): MatchDataSyncResult {
         val statusShort = dto.fixture.status.short
         val kickoffTime = dto.fixture.date

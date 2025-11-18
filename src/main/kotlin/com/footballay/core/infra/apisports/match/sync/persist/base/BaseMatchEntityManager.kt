@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional
  * 5. 변경사항 저장
  */
 @Component
-class BaseMatchEntitySyncer(
+class BaseMatchEntityManager(
     private val matchTeamRepository: ApiSportsMatchTeamRepository,
     private val teamApiSportsRepository: TeamApiSportsRepository,
 ) {
@@ -159,7 +159,7 @@ class BaseMatchEntitySyncer(
         } else {
             // 새로운 MatchTeam 생성
             log.info("Creating new MatchTeam for {} team: {}", if (isHome) "home" else "away", teamDto.apiId)
-            createMatchTeam(teamDto)
+            createAndSaveMatchTeam(teamDto)
         }
     }
 
@@ -186,7 +186,7 @@ class BaseMatchEntitySyncer(
     /**
      * 새로운 MatchTeam 엔티티를 생성합니다.
      */
-    private fun createMatchTeam(teamDto: FixtureApiSportsDto.BaseTeamDto): ApiSportsMatchTeam {
+    private fun createAndSaveMatchTeam(teamDto: FixtureApiSportsDto.BaseTeamDto): ApiSportsMatchTeam {
         // 팀 정보 조회
         val teamApiSports =
             teamApiSportsRepository.findByApiId(teamDto.apiId)

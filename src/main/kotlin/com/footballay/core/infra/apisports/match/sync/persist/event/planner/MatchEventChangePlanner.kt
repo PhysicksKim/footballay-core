@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.match.sync.persist.event.planner
 
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
@@ -86,7 +86,7 @@ object MatchEventChangePlanner {
      * @return 데이터베이스 변경 작업 명세서
      */
     fun planChanges(
-        eventDto: MatchEventSyncDto,
+        eventDto: MatchEventPlanDto,
         entityEvents: Map<Int, ApiSportsMatchEvent>,
         fixtureApi: FixtureApiSports,
         homeTeam: ApiSportsMatchTeam?,

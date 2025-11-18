@@ -22,16 +22,17 @@ data class FixtureEventsModel(
     )
 
     data class TeamInfo(
-        val teamId: Long,
+        val teamId: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
         val koreanName: String?,
+        val teamUid: String,
     )
 
     data class PlayerInfo(
-        val playerId: Long?,
+        val playerId: Long? = null, // Deprecated: PK 노출 방지
         val name: String?,
         val koreanName: String?,
         val number: Int?,
-        val tempId: String?,
+        val matchPlayerUid: String?,
     )
 }

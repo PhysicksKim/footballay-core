@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.event.manager
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.apisports.match.sync.persist.event.planner.MatchEventChangePlanner
 import com.footballay.core.infra.apisports.match.sync.persist.event.planner.MatchEventChangeSet
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
@@ -43,7 +43,7 @@ class MatchEventManager(
      */
     @Transactional
     fun processMatchEvents(
-        eventDto: MatchEventSyncDto,
+        eventDto: MatchEventPlanDto,
         entityBundle: MatchEntityBundle,
     ): MatchEventProcessResult {
         log.info("Starting MatchEvent processing - Events: {}", eventDto.events.size)

@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.teamstat.manager
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatisticsDto
-import com.footballay.core.infra.apisports.match.sync.dto.TeamStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatPlanDto
 import com.footballay.core.infra.apisports.match.sync.persist.teamstat.result.TeamStatsProcessResult
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeamStatistics
@@ -38,7 +38,7 @@ class TeamStatsManager(
      */
     @Transactional
     fun processTeamStats(
-        teamStatDto: TeamStatSyncDto,
+        teamStatDto: MatchTeamStatPlanDto,
         entityBundle: MatchEntityBundle,
     ): TeamStatsProcessResult {
         log.info(

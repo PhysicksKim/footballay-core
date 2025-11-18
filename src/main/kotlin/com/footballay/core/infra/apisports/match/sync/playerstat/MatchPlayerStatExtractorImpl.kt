@@ -4,7 +4,7 @@ import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component
  * - 통계 전용 선수 생성 (드물지만 가능)
  */
 @Component
-class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
+class MatchPlayerStatExtractorImpl : MatchPlayerStatDtoExtractor {
     companion object {
         private const val DEFAULT_SUBSTITUTE_VALUE = true
     }
@@ -27,10 +27,10 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
     override fun extractPlayerStats(
         dto: FullMatchSyncDto,
         context: MatchPlayerContext,
-    ): PlayerStatSyncDto {
+    ): MatchPlayerStatPlanDto {
         if (dto.players.isEmpty()) {
             log.info("Not exist player statistics for match: {}", dto.fixture.id)
-            return PlayerStatSyncDto.Companion.empty()
+            return MatchPlayerStatPlanDto.Companion.empty()
         }
 
         val homeId = dto.teams.home.id
@@ -41,7 +41,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
                     "Home ID: $homeId found=${homeId == null}, Away ID: $awayId found=${awayId == null}",
             )
 
-            return PlayerStatSyncDto.Companion.empty()
+            return MatchPlayerStatPlanDto.Companion.empty()
         }
 
         val homePlayerStatList = dto.players.find { it.team.id == homeId }
@@ -52,7 +52,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
                 "Both Home and Away player statistics not found for match: ${dto.fixture.id}\n" +
                     "Home ID: $homeId, Away ID: $awayId",
             )
-            return PlayerStatSyncDto.Companion.empty()
+            return MatchPlayerStatPlanDto.Companion.empty()
         }
 
         val homePlayerStats =
@@ -68,7 +68,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
                 emptyList()
             }
 
-        return PlayerStatSyncDto(
+        return MatchPlayerStatPlanDto(
             homePlayerStatList = homePlayerStats,
             awayPlayerStatList = awayPlayerStats,
         )
@@ -77,7 +77,7 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
     private fun processPlayerStatistics(
         playerStatList: FullMatchSyncDto.PlayerStatisticsDto,
         context: MatchPlayerContext,
-    ): List<PlayerStatSyncDto.PlayerStatSyncItemDto> {
+    ): List<MatchPlayerStatPlanDto.PlayerStatSyncItemDto> {
         val teamApiId =
             playerStatList.team.id ?: run {
                 log.error("Team ID is null in player statistics")
@@ -150,8 +150,8 @@ class PlayerStatSyncer : MatchPlayerStatDtoExtractor {
     private fun createPlayerStatDto(
         player: FullMatchSyncDto.PlayerStatisticsDto.PlayerDetailDto.PlayerDetailInfoDto,
         statistics: FullMatchSyncDto.PlayerStatisticsDto.PlayerDetailDto.StatDetailDto?,
-    ): PlayerStatSyncDto.PlayerStatSyncItemDto =
-        PlayerStatSyncDto.PlayerStatSyncItemDto(
+    ): MatchPlayerStatPlanDto.PlayerStatSyncItemDto =
+        MatchPlayerStatPlanDto.PlayerStatSyncItemDto(
             playerApiId = player.id,
             name = player.name!!,
             // Games statistics

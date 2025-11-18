@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.match.sync.persist.playerstat.collector
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.dto.PlayerStatsDto
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.logger
@@ -43,7 +43,7 @@ object PlayerStatsDtoCollector {
      * @return 수집된 PlayerStatsDto 목록
      */
     fun collectFrom(
-        playerStatDto: PlayerStatSyncDto,
+        playerStatDto: MatchPlayerStatPlanDto,
         matchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): List<PlayerStatsDto> {
         val collectedStats = mutableListOf<PlayerStatsDto>()
@@ -91,7 +91,7 @@ object PlayerStatsDtoCollector {
      * @return 처리된 PlayerStatsDto 목록
      */
     private fun processTeamPlayerStats(
-        teamPlayerStats: List<PlayerStatSyncDto.PlayerStatSyncItemDto>,
+        teamPlayerStats: List<MatchPlayerStatPlanDto.PlayerStatSyncItemDto>,
         matchPlayers: Map<String, ApiSportsMatchPlayer>,
         teamName: String,
     ): List<PlayerStatsDto> {

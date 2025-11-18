@@ -17,10 +17,11 @@ data class FixtureStatisticsModel(
     )
 
     data class TeamInfo(
-        val id: Long,
+        val id: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
         val koreanName: String?,
         val logo: String?,
+        val teamUid: String,
     )
 
     data class XG(
@@ -50,13 +51,13 @@ data class FixtureStatisticsModel(
     )
 
     data class PlayerInfoBasic(
-        val id: Long?,
+        val id: Long? = null, // Deprecated: PK 노출 방지
         val name: String?,
         val koreanName: String?,
         val photo: String?,
         val position: String?,
         val number: Int?,
-        val tempId: String?,
+        val matchPlayerUid: String?,
     )
 
     data class PlayerStatistics(

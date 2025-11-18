@@ -2,8 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.playerstat.manage
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
-import com.footballay.core.infra.apisports.match.sync.persist.playerstat.manager.PlayerStatsManager
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayerStatistics
@@ -124,7 +123,7 @@ class PlayerStatsManagerTest {
     @DisplayName("기존 PlayerStats를 삭제합니다")
     fun `processPlayerStats_should_delete_existing_player_stats`() {
         // given
-        val playerStatDto = PlayerStatSyncDto(emptyList(), emptyList()) // 빈 통계
+        val playerStatDto = MatchPlayerStatPlanDto(emptyList(), emptyList()) // 빈 통계
         val mockMatchPlayer = createMockMatchPlayer(apiId = 123L, name = "Test Player")
         val existingStats = createMockPlayerStats(mockMatchPlayer)
 
@@ -284,11 +283,11 @@ class PlayerStatsManagerTest {
             penaltySaved = 0,
         )
 
-    private fun createMockPlayerStatDto(): PlayerStatSyncDto =
-        PlayerStatSyncDto(
+    private fun createMockPlayerStatDto(): MatchPlayerStatPlanDto =
+        MatchPlayerStatPlanDto(
             homePlayerStatList =
                 listOf(
-                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                    MatchPlayerStatPlanDto.PlayerStatSyncItemDto(
                         playerApiId = 123L,
                         name = "Test Player",
                         minutesPlayed = 90,
@@ -299,11 +298,11 @@ class PlayerStatsManagerTest {
             awayPlayerStatList = emptyList(),
         )
 
-    private fun createMockPlayerStatDtoForBatch(): PlayerStatSyncDto =
-        PlayerStatSyncDto(
+    private fun createMockPlayerStatDtoForBatch(): MatchPlayerStatPlanDto =
+        MatchPlayerStatPlanDto(
             homePlayerStatList =
                 (1..5).map { i ->
-                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                    MatchPlayerStatPlanDto.PlayerStatSyncItemDto(
                         playerApiId = i.toLong(),
                         name = "Test Player $i",
                         minutesPlayed = 90,
@@ -314,11 +313,11 @@ class PlayerStatsManagerTest {
             awayPlayerStatList = emptyList(),
         )
 
-    private fun createMockPlayerStatDtoWithNullId(): PlayerStatSyncDto =
-        PlayerStatSyncDto(
+    private fun createMockPlayerStatDtoWithNullId(): MatchPlayerStatPlanDto =
+        MatchPlayerStatPlanDto(
             homePlayerStatList =
                 listOf(
-                    PlayerStatSyncDto.PlayerStatSyncItemDto(
+                    MatchPlayerStatPlanDto.PlayerStatSyncItemDto(
                         playerApiId = null, // ID null
                         name = "Null ID Player",
                         minutesPlayed = 90,

@@ -63,24 +63,84 @@ object MatchPlayerChangePlanner {
         homeTeam: ApiSportsMatchTeam?,
         awayTeam: ApiSportsMatchTeam?,
     ): MatchPlayerChangeSet {
+        log.info(
+            "Starting change planning - DTOs: {}, Entities: {}",
+            dtoPlayers.size,
+            entityPlayers.size,
+        )
+
+        // Step 1: 키 기반 정확 매칭
+        val exactMatches = mutableMapOf<String, MatchedPair>()
+        val unmatchedDtos = dtoPlayers.toMutableMap()
+        val unmatchedEntities = entityPlayers.toMutableMap()
+
+        dtoPlayers.forEach { (dtoKey, dto) ->
+            if (entityPlayers.containsKey(dtoKey)) {
+                exactMatches[dtoKey] = MatchedPair(dto, entityPlayers[dtoKey]!!)
+                unmatchedDtos.remove(dtoKey)
+                unmatchedEntities.remove(dtoKey)
+                log.debug("Exact match found: key={}, name={}", dtoKey, dto.name)
+            }
+        }
+
+        log.info("Exact matches: {}", exactMatches.size)
+
+        // Step 2: Name 기반 Fallback 매칭 (apiId 불일치 시)
+        val fallbackMatches = mutableMapOf<String, MatchedPair>()
+        val nameToEntityMap = unmatchedEntities.values.associateBy { it.name!! }
+
+        unmatchedDtos.entries.toList().forEach { (dtoKey, dto) ->
+            val matchedEntity = nameToEntityMap[dto.name]
+            if (matchedEntity != null) {
+                fallbackMatches[dtoKey] = MatchedPair(dto, matchedEntity)
+                unmatchedDtos.remove(dtoKey)
+                unmatchedEntities.remove(
+                    MatchPlayerKeyGenerator.generateMatchPlayerKey(
+                        matchedEntity.playerApiSports?.apiId,
+                        matchedEntity.name!!,
+                    ),
+                )
+                log.warn(
+                    "Fallback match by name: dto_key={}, entity_apiId={}, name={}",
+                    dtoKey,
+                    matchedEntity.playerApiSports?.apiId,
+                    dto.name,
+                )
+            }
+        }
+
+        log.info("Fallback matches: {}", fallbackMatches.size)
+
+        // Step 3: 변경 작업 계획
+        val allMatches = exactMatches + fallbackMatches
+
         val toCreate =
             buildNewEntities(
-                dtoPlayers.filter { !entityPlayers.containsKey(it.key) }.values,
+                unmatchedDtos.values,
                 uidGenerator,
                 homeTeam,
                 awayTeam,
             )
 
-        val toUpdate =
-            buildUpdatedEntities(
-                dtoPlayers
-                    .filter { entityPlayers.containsKey(it.key) }
-                    .mapValues { (key, dto) ->
-                        MatchedPair(dto, entityPlayers[key]!!)
-                    },
-            )
+        val toUpdate = buildUpdatedEntities(allMatches)
 
-        val toDelete = entityPlayers.filter { !dtoPlayers.containsKey(it.key) }.values.toList()
+        val toDelete = unmatchedEntities.values.toList()
+
+        // Step 4: 안전장치 - 의심스러운 대량 삭제 감지
+        val totalEntities = entityPlayers.size
+        val deleteRatio = if (totalEntities > 0) toDelete.size.toDouble() / totalEntities else 0.0
+        if (deleteRatio > 0.5 && totalEntities >= 10) {
+            log.error(
+                "⚠️ SUSPICIOUS MASS DELETION DETECTED! Deleting {}/{} players ({}%). " +
+                    "This might indicate apiId mismatch or data corruption. " +
+                    "Please verify before proceeding.",
+                toDelete.size,
+                totalEntities,
+                String.format("%.1f", deleteRatio * 100),
+            )
+            log.error("Unmatched DTO keys: {}", unmatchedDtos.keys.take(10))
+            log.error("Unmatched Entity keys: {}", unmatchedEntities.keys.take(10))
+        }
 
         val changeSet =
             MatchPlayerChangeSet(
@@ -134,10 +194,11 @@ object MatchPlayerChangePlanner {
         }
 
     /**
-     * 매칭된 쌍에서 변경사항이 있는 엔티티만 업데이트 목록에 추가합니다.
+     * 매칭된 쌍의 엔티티를 반환합니다.
+     * 변경사항이 있으면 업데이트하고, 없으면 그대로 유지합니다.
      */
     private fun buildUpdatedEntities(matched: Map<String, MatchedPair>): List<ApiSportsMatchPlayer> =
-        matched.values.mapNotNull { pair ->
+        matched.values.map { pair ->
             if (hasFieldChanges(pair.entity, pair.dto)) {
                 // 직접 필드 업데이트
                 pair.entity
@@ -151,8 +212,9 @@ object MatchPlayerChangePlanner {
                         log.debug("Planned update: {}", pair.dto.name)
                     }
             } else {
-                log.debug("No changes detected: {}", pair.dto.name)
-                null
+                // 변경사항 없어도 엔티티 유지
+                log.debug("No changes detected, keeping entity: {}", pair.dto.name)
+                pair.entity
             }
         }
 

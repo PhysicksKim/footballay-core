@@ -1,8 +1,7 @@
 package com.footballay.core.infra.apisports.match.sync.persist.event.planner
 
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
-import com.footballay.core.infra.apisports.match.sync.persist.event.planner.MatchEventChangePlanner
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
@@ -65,7 +64,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_새로운_이벤트는_생성_계획에_포함된다`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1, playerMpKey = "mp_id_123"),
@@ -113,7 +112,7 @@ class MatchEventChangePlannerTest {
         // given
         val existingEvent = createMockMatchEvent(sequence = 1, elapsedTime = 10)
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1, elapsedTime = 15), // 변경됨
@@ -155,7 +154,7 @@ class MatchEventChangePlannerTest {
         // given
         val existingEvent = createMockMatchEvent(sequence = 1, elapsedTime = 10)
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1, elapsedTime = 10), // 동일
@@ -194,7 +193,7 @@ class MatchEventChangePlannerTest {
         val existingEvent1 = createMockMatchEvent(sequence = 1)
         val existingEvent2 = createMockMatchEvent(sequence = 2)
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1), // sequence 2는 DTO에 없음
@@ -236,7 +235,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_player_assist_필드가_올바르게_연결된다`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(
@@ -280,7 +279,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_null_키는_null_필드로_설정된다`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(
@@ -321,7 +320,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_존재하지_않는_키는_null로_처리된다`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(
@@ -362,7 +361,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_duplicate_sequences_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1),
@@ -399,7 +398,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_missing_sequences_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -436,7 +435,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_non_zero_start_sequence_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1), // 0이 아닌 시작점
@@ -473,7 +472,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_different_start_points_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -518,7 +517,7 @@ class MatchEventChangePlannerTest {
         existingEvent3.eventType = "TYPE_OLD" // update 가 일어나도록 하기 위함
 
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -563,7 +562,7 @@ class MatchEventChangePlannerTest {
     fun `planChanges_empty_entities_should_create_all_events`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -601,7 +600,7 @@ class MatchEventChangePlannerTest {
     @DisplayName("빈 DTO에서 모든 엔티티를 삭제할 수 있습니다")
     fun `planChanges_empty_dto_should_delete_all_entities`() {
         // given
-        val eventDto = MatchEventSyncDto(events = emptyList())
+        val eventDto = MatchEventPlanDto(events = emptyList())
         val existingEvent1 = createMockMatchEvent(sequence = 0)
         val existingEvent2 = createMockMatchEvent(sequence = 1)
         val entityEvents =

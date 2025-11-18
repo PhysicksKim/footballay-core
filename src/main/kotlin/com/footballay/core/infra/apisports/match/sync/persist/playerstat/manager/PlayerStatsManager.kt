@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.playerstat.manage
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.collector.PlayerStatsDtoCollector
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.dto.PlayerStatsDto
 import com.footballay.core.infra.apisports.match.sync.persist.playerstat.planner.PlayerStatsChangePlanner
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional
  * 4. EntityBundle 업데이트
  *
  * **제약사항:**
- * - MatchPlayer는 Phase 3에서 이미 영속화됨
+ * - MatchPlayer는 이미 영속화됨
  * - EntityBundle에서만 MatchPlayer 조회 (Repository 금지)
  * - MatchPlayer와 1:1 관계 보장
  */
@@ -46,7 +46,7 @@ class PlayerStatsManager(
      */
     @Transactional
     fun processPlayerStats(
-        playerStatDto: PlayerStatSyncDto,
+        playerStatDto: MatchPlayerStatPlanDto,
         entityBundle: MatchEntityBundle,
     ): PlayerStatsProcessResult {
         log.info(

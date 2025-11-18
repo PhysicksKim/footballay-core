@@ -2,7 +2,6 @@ package com.footballay.core.infra.apisports.match.sync.lineup
 
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
-import com.footballay.core.infra.apisports.match.sync.lineup.LineupSyncer
 import com.footballay.core.logger
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -14,12 +13,12 @@ import java.time.ZoneOffset
 class LineupSyncerTest {
     val log = logger()
 
-    private lateinit var lineupSyncer: LineupSyncer
+    private lateinit var matchLineupExtractorImpl: MatchLineupExtractorImpl
     private lateinit var context: MatchPlayerContext
 
     @BeforeEach
     fun setUp() {
-        lineupSyncer = LineupSyncer()
+        matchLineupExtractorImpl = MatchLineupExtractorImpl()
         context = MatchPlayerContext()
     }
 
@@ -30,7 +29,7 @@ class LineupSyncerTest {
         val dto = createNormalLineupDto()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -62,7 +61,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullTeamIds()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -76,7 +75,7 @@ class LineupSyncerTest {
         val dto = createDtoWithEmptyLineups()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -90,7 +89,7 @@ class LineupSyncerTest {
         val dto = createDtoWithMismatchedTeams()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertTrue(result.isEmpty())
@@ -104,7 +103,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerNames()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -120,7 +119,7 @@ class LineupSyncerTest {
         val dto = createDtoWithEmptyPlayerNames()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -136,7 +135,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerIds()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -163,7 +162,7 @@ class LineupSyncerTest {
         val dto = createDtoWithNullPlayerPositions()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -183,7 +182,7 @@ class LineupSyncerTest {
         val dto = createDtoWithAbnormalPlayerCounts()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())
@@ -199,7 +198,7 @@ class LineupSyncerTest {
         val dto = createDtoWithAllMissingPlayerInfo()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertTrue(result.home!!.startMpKeys.isEmpty())
@@ -216,7 +215,7 @@ class LineupSyncerTest {
         val dto = createDtoWithDuplicatePlayerNames()
 
         // when
-        val result = lineupSyncer.extractLineup(dto, context)
+        val result = matchLineupExtractorImpl.extractLineup(dto, context)
 
         // then
         assertFalse(result.isEmpty())

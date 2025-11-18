@@ -204,24 +204,27 @@ class MatchDataQueryServiceImpl(
             date = dateStr,
             league =
                 FixtureInfoModel.LeagueInfo(
-                    id = leagueCore.id ?: 0L,
+                    id = 0L, // Deprecated: PK 노출 방지
                     name = league.name,
                     koreanName = null,
                     logo = league.logo,
+                    leagueUid = leagueCore.uid,
                 ),
             home =
                 FixtureInfoModel.TeamInfo(
-                    id = homeTeamCore.id ?: 0L,
+                    id = 0L, // Deprecated: PK 노출 방지
                     name = homeTeamCore.name,
                     koreanName = null,
                     logo = homeTeamCore.teamApiSports?.logo,
+                    teamUid = homeTeamCore.uid,
                 ),
             away =
                 FixtureInfoModel.TeamInfo(
-                    id = awayTeamCore.id ?: 0L,
+                    id = 0L, // Deprecated: PK 노출 방지
                     name = awayTeamCore.name,
                     koreanName = null,
                     logo = awayTeamCore.teamApiSports?.logo,
+                    teamUid = awayTeamCore.uid,
                 ),
         )
     }
@@ -267,9 +270,10 @@ class MatchDataQueryServiceImpl(
             extraTime = event.extraTime,
             team =
                 FixtureEventsModel.TeamInfo(
-                    teamId = teamCore?.id ?: 0L,
+                    teamId = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
                     koreanName = null,
+                    teamUid = teamCore?.uid ?: "",
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
@@ -284,11 +288,11 @@ class MatchDataQueryServiceImpl(
         val playerCore = playerApiSports?.playerCore
 
         return FixtureEventsModel.PlayerInfo(
-            playerId = playerCore?.id,
+            playerId = null, // Deprecated: PK 노출 방지
             name = matchPlayer.name ?: playerCore?.name,
             koreanName = null,
             number = matchPlayer.number,
-            tempId = matchPlayer.matchPlayerUid,
+            matchPlayerUid = matchPlayer.matchPlayerUid,
         )
     }
 
@@ -323,12 +327,13 @@ class MatchDataQueryServiceImpl(
         val substitutes = allPlayers.filter { it.substitute }.map { toLineupPlayer(it) }
 
         return FixtureLineupModel.StartLineup(
-            teamId = teamCore?.id ?: 0L,
+            teamId = 0L, // Deprecated: PK 노출 방지
             teamName = teamCore?.name ?: "",
             teamKoreanName = null,
             formation = matchTeam.formation,
             players = startXI,
             substitutes = substitutes,
+            teamUid = teamCore?.uid ?: "",
         )
     }
 
@@ -337,7 +342,7 @@ class MatchDataQueryServiceImpl(
         val playerCore = playerApiSports?.playerCore
 
         return FixtureLineupModel.LineupPlayer(
-            id = playerCore?.id ?: 0L,
+            id = 0L, // Deprecated: PK 노출 방지
             name = matchPlayer.name ?: playerCore?.name ?: "",
             koreanName = null,
             number = matchPlayer.number,
@@ -345,7 +350,7 @@ class MatchDataQueryServiceImpl(
             position = matchPlayer.position,
             grid = matchPlayer.grid,
             substitute = matchPlayer.substitute,
-            tempId = matchPlayer.matchPlayerUid,
+            matchPlayerUid = matchPlayer.matchPlayerUid,
         )
     }
 
@@ -357,6 +362,7 @@ class MatchDataQueryServiceImpl(
             formation = null,
             players = emptyList(),
             substitutes = emptyList(),
+            teamUid = "",
         )
 
     private fun toFixtureStatisticsModel(
@@ -391,10 +397,11 @@ class MatchDataQueryServiceImpl(
         return FixtureStatisticsModel.TeamWithStatistics(
             team =
                 FixtureStatisticsModel.TeamInfo(
-                    id = teamCore?.id ?: 0L,
+                    id = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
                     koreanName = null,
                     logo = teamApiSports?.logo,
+                    teamUid = teamCore?.uid ?: "",
                 ),
             teamStatistics =
                 FixtureStatisticsModel.TeamStatistics(
@@ -436,13 +443,13 @@ class MatchDataQueryServiceImpl(
         return FixtureStatisticsModel.PlayerWithStatistics(
             player =
                 FixtureStatisticsModel.PlayerInfoBasic(
-                    id = playerCore?.id,
+                    id = null, // Deprecated: PK 노출 방지
                     name = matchPlayer.name ?: playerCore?.name,
                     koreanName = null,
                     photo = playerApiSports?.photo,
                     position = matchPlayer.position,
                     number = matchPlayer.number,
-                    tempId = matchPlayer.matchPlayerUid,
+                    matchPlayerUid = matchPlayer.matchPlayerUid,
                 ),
             statistics =
                 FixtureStatisticsModel.PlayerStatistics(
@@ -485,6 +492,7 @@ class MatchDataQueryServiceImpl(
                     name = "",
                     koreanName = null,
                     logo = null,
+                    teamUid = "",
                 ),
             teamStatistics =
                 FixtureStatisticsModel.TeamStatistics(

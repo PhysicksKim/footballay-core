@@ -2,10 +2,10 @@ package com.footballay.core.infra.apisports.match.sync.persist
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.TeamStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatPlanDto
 import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEntitySyncResult
 
 /**
@@ -15,7 +15,7 @@ import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEnti
  *
  * 추출된 DTO 를 바탕으로 엔티티를 create, update, delete 합니다.
  */
-interface MatchEntitySyncService {
+interface MatchEntityPersistManager {
     /**
      * 매치 엔티티들을 동기화합니다.
      * [MatchPlayerContext] 는 dto 들에서 등장한 선수들로 올바르게 채워져 있어야 합니다.
@@ -32,10 +32,10 @@ interface MatchEntitySyncService {
     fun syncMatchEntities(
         fixtureApiId: Long,
         baseDto: FixtureApiSportsDto,
-        lineupDto: LineupSyncDto,
-        eventDto: MatchEventSyncDto,
-        teamStatDto: TeamStatSyncDto,
-        playerStatDto: PlayerStatSyncDto,
+        lineupDto: MatchLineupPlanDto,
+        eventDto: MatchEventPlanDto,
+        teamStatDto: MatchTeamStatPlanDto,
+        playerStatDto: MatchPlayerStatPlanDto,
         playerContext: MatchPlayerContext,
     ): MatchEntitySyncResult
 }

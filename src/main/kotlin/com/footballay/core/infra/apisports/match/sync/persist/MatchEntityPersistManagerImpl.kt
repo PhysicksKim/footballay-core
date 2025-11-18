@@ -3,12 +3,12 @@ package com.footballay.core.infra.apisports.match.sync.persist
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.TeamStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatPlanDto
 import com.footballay.core.infra.apisports.match.sync.loader.MatchDataLoader
-import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntitySyncer
+import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntityManager
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventProcessResult
 import com.footballay.core.infra.apisports.match.sync.persist.player.manager.MatchPlayerManager
@@ -43,24 +43,24 @@ import org.springframework.transaction.annotation.Transactional
  *
  */
 @Service
-class MatchEntitySyncServiceImpl(
+class MatchEntityPersistManagerImpl(
     private val matchDataLoader: MatchDataLoader,
-    private val baseMatchEntitySyncer: BaseMatchEntitySyncer,
+    private val baseMatchEntityManager: BaseMatchEntityManager,
     private val matchPlayerManager: MatchPlayerManager,
     private val matchEventManager: MatchEventManager,
     private val playerStatsManager: PlayerStatsManager,
     private val teamStatsManager: TeamStatsManager,
-) : MatchEntitySyncService {
+) : MatchEntityPersistManager {
     private val log = logger()
 
     @Transactional
     override fun syncMatchEntities(
         fixtureApiId: Long,
         baseDto: FixtureApiSportsDto,
-        lineupDto: LineupSyncDto,
-        eventDto: MatchEventSyncDto,
-        teamStatDto: TeamStatSyncDto,
-        playerStatDto: PlayerStatSyncDto,
+        lineupDto: MatchLineupPlanDto,
+        eventDto: MatchEventPlanDto,
+        teamStatDto: MatchTeamStatPlanDto,
+        playerStatDto: MatchPlayerStatPlanDto,
         playerContext: MatchPlayerContext,
     ): MatchEntitySyncResult {
         log.info("Starting entity sync for fixture: {}", fixtureApiId)
@@ -79,7 +79,7 @@ class MatchEntitySyncServiceImpl(
 
         // 2. Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
         try {
-            val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+            val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
             if (!result.success) {
                 log.error("Base entity sync failed: {}", result.errorMessage)

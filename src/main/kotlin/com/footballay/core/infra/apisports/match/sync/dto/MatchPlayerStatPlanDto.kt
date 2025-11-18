@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync.dto
 
-data class PlayerStatSyncDto(
+data class MatchPlayerStatPlanDto(
     val homePlayerStatList: List<PlayerStatSyncItemDto>,
     val awayPlayerStatList: List<PlayerStatSyncItemDto>,
 ) {
@@ -54,6 +54,6 @@ data class PlayerStatSyncDto(
     )
 
     companion object {
-        fun empty(): PlayerStatSyncDto = PlayerStatSyncDto(emptyList(), emptyList())
+        fun empty(): MatchPlayerStatPlanDto = MatchPlayerStatPlanDto(emptyList(), emptyList())
     }
 }

@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.dto
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
 
-data class LineupSyncDto(
+data class MatchLineupPlanDto(
     val home: Lineup?,
     val away: Lineup?,
 ) {
@@ -66,6 +66,6 @@ data class LineupSyncDto(
     }
 
     companion object {
-        val EMPTY = LineupSyncDto(null, null)
+        val EMPTY = MatchLineupPlanDto(null, null)
     }
 }

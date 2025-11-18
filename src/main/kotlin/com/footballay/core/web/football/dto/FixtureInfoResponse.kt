@@ -19,16 +19,14 @@ data class FixtureInfoResponse(
     val away: TeamInfo,
 ) {
     data class LeagueInfo(
-        val id: Long,
+        val leagueUid: String,
         val name: String,
-        val koreanName: String?,
         val logo: String?,
     )
 
     data class TeamInfo(
-        val id: Long,
+        val teamUid: String,
         val name: String,
-        val koreanName: String?,
         val logo: String?,
     )
 }

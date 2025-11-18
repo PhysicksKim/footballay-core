@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
  * - ApiSportsMatchTeam (home/away) 초기화
  */
 @Component
-class BaseMatchSyncer : MatchBaseDtoExtractor {
+class MatchBaseExtractorImpl : MatchBaseDtoExtractor {
     private val log = logger()
 
     override fun extractBaseMatch(dto: FullMatchSyncDto): FixtureApiSportsDto {

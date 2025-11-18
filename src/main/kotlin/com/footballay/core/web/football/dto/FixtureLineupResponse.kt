@@ -18,23 +18,19 @@ data class FixtureLineupResponse(
     )
 
     data class StartLineup(
-        val teamId: Long,
+        val teamUid: String,
         val teamName: String,
-        val teamKoreanName: String?,
         val formation: String?,
         val players: List<LineupPlayer>,
         val substitutes: List<LineupPlayer>,
     )
 
     data class LineupPlayer(
-        val id: Long,
+        val matchPlayerUid: String,
         val name: String,
-        val koreanName: String?,
         val number: Int?,
         val photo: String?,
         val position: String?,
         val grid: String?,
-        val substitute: Boolean,
-        val tempId: String?,
     )
 }

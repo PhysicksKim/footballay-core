@@ -2,8 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.event.manager
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
-import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
@@ -48,7 +47,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_should_process_events_successfully`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -79,7 +78,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_duplicate_sequences_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -108,7 +107,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_missing_sequences_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -135,7 +134,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_non_zero_start_sequence_should_log_warning`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 1), // 0이 아닌 시작점
@@ -162,7 +161,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_should_create_empty_events_on_save_failure`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 0),
@@ -193,7 +192,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_should_sort_events_by_sequence`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events =
                     listOf(
                         createMockEventDto(sequence = 2),
@@ -228,7 +227,7 @@ class MatchEventManagerTest {
         val existingEvent = createMockMatchEvent(sequence = 0)
         entityBundle.allEvents = listOf(existingEvent)
 
-        val eventDto = MatchEventSyncDto(events = emptyList()) // 모든 이벤트 삭제
+        val eventDto = MatchEventPlanDto(events = emptyList()) // 모든 이벤트 삭제
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } returns emptyList()
 
         // when
@@ -247,7 +246,7 @@ class MatchEventManagerTest {
     fun `processMatchEvents_should_propagate_exceptions`() {
         // given
         val eventDto =
-            MatchEventSyncDto(
+            MatchEventPlanDto(
                 events = listOf(createMockEventDto(sequence = 0)),
             )
         every { matchEventRepository.saveAll(any<List<ApiSportsMatchEvent>>()) } throws

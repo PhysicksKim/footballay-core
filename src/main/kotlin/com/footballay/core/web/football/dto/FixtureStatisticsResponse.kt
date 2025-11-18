@@ -19,9 +19,8 @@ data class FixtureStatisticsResponse(
     )
 
     data class TeamInfo(
-        val id: Long,
+        val teamUid: String,
         val name: String,
-        val koreanName: String?,
         val logo: String?,
     )
 
@@ -51,14 +50,12 @@ data class FixtureStatisticsResponse(
         val xg: List<XG>,
     )
 
-    data class PlayerInfoBasic(
-        val id: Long?,
-        val name: String?,
-        val koreanName: String?,
+    data class PlayerInfo(
+        val matchPlayerUid: String,
+        val name: String,
         val photo: String?,
         val position: String?,
         val number: Int?,
-        val tempId: String?,
     )
 
     data class PlayerStatistics(
@@ -92,7 +89,7 @@ data class FixtureStatisticsResponse(
     )
 
     data class PlayerWithStatistics(
-        val player: PlayerInfoBasic,
+        val player: PlayerInfo,
         val statistics: PlayerStatistics,
     )
 

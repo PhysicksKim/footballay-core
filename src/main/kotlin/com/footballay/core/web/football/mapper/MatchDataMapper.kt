@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component
  * **책임:**
  * - Domain Model을 Web Response DTO로 변환
  * - null 안전성 보장
+ * - 클라이언트 API 계약에 맞는 형식으로 변환
  */
 @Component
 class MatchDataMapper {
@@ -26,23 +27,20 @@ class MatchDataMapper {
             date = model.date,
             league =
                 FixtureInfoResponse.LeagueInfo(
-                    id = model.league.id,
+                    leagueUid = model.league.leagueUid,
                     name = model.league.name,
-                    koreanName = model.league.koreanName,
                     logo = model.league.logo,
                 ),
             home =
                 FixtureInfoResponse.TeamInfo(
-                    id = model.home.id,
+                    teamUid = model.home.teamUid,
                     name = model.home.name,
-                    koreanName = model.home.koreanName,
                     logo = model.home.logo,
                 ),
             away =
                 FixtureInfoResponse.TeamInfo(
-                    id = model.away.id,
+                    teamUid = model.away.teamUid,
                     name = model.away.name,
-                    koreanName = model.away.koreanName,
                     logo = model.away.logo,
                 ),
         )
@@ -82,9 +80,8 @@ class MatchDataMapper {
             extraTime = event.extraTime,
             team =
                 FixtureEventsResponse.TeamInfo(
-                    teamId = event.team.teamId,
+                    teamUid = event.team.teamUid,
                     name = event.team.name,
-                    koreanName = event.team.koreanName,
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
@@ -95,11 +92,9 @@ class MatchDataMapper {
 
     private fun toPlayerInfo(player: FixtureEventsModel.PlayerInfo): FixtureEventsResponse.PlayerInfo =
         FixtureEventsResponse.PlayerInfo(
-            playerId = player.playerId,
-            name = player.name,
-            koreanName = player.koreanName,
+            matchPlayerUid = player.matchPlayerUid ?: "",
+            name = player.name ?: "",
             number = player.number,
-            tempId = player.tempId,
         )
 
     /**
@@ -117,9 +112,8 @@ class MatchDataMapper {
 
     private fun toStartLineup(lineup: FixtureLineupModel.StartLineup): FixtureLineupResponse.StartLineup =
         FixtureLineupResponse.StartLineup(
-            teamId = lineup.teamId,
+            teamUid = lineup.teamUid,
             teamName = lineup.teamName,
-            teamKoreanName = lineup.teamKoreanName,
             formation = lineup.formation,
             players = lineup.players.map { toLineupPlayer(it) },
             substitutes = lineup.substitutes.map { toLineupPlayer(it) },
@@ -127,15 +121,12 @@ class MatchDataMapper {
 
     private fun toLineupPlayer(player: FixtureLineupModel.LineupPlayer): FixtureLineupResponse.LineupPlayer =
         FixtureLineupResponse.LineupPlayer(
-            id = player.id,
+            matchPlayerUid = player.matchPlayerUid,
             name = player.name,
-            koreanName = player.koreanName,
             number = player.number,
             photo = player.photo,
             position = player.position,
             grid = player.grid,
-            substitute = player.substitute,
-            tempId = player.tempId,
         )
 
     /**
@@ -157,9 +148,8 @@ class MatchDataMapper {
         FixtureStatisticsResponse.TeamWithStatistics(
             team =
                 FixtureStatisticsResponse.TeamInfo(
-                    id = team.team.id,
+                    teamUid = team.team.teamUid,
                     name = team.team.name,
-                    koreanName = team.team.koreanName,
                     logo = team.team.logo,
                 ),
             teamStatistics = toTeamStatistics(team.teamStatistics),
@@ -197,14 +187,12 @@ class MatchDataMapper {
     private fun toPlayerWithStatistics(player: FixtureStatisticsModel.PlayerWithStatistics): FixtureStatisticsResponse.PlayerWithStatistics =
         FixtureStatisticsResponse.PlayerWithStatistics(
             player =
-                FixtureStatisticsResponse.PlayerInfoBasic(
-                    id = player.player.id,
-                    name = player.player.name,
-                    koreanName = player.player.koreanName,
+                FixtureStatisticsResponse.PlayerInfo(
+                    matchPlayerUid = player.player.matchPlayerUid ?: "",
+                    name = player.player.name ?: "",
                     photo = player.player.photo,
                     position = player.player.position,
                     number = player.player.number,
-                    tempId = player.player.tempId,
                 ),
             statistics = toPlayerStatistics(player.statistics),
         )

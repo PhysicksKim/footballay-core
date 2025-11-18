@@ -3,14 +3,14 @@ package com.footballay.core.infra.apisports.match.sync.persist
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
-import com.footballay.core.infra.apisports.match.sync.dto.PlayerStatSyncDto
-import com.footballay.core.infra.apisports.match.sync.dto.TeamStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerStatPlanDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatPlanDto
 import com.footballay.core.infra.apisports.match.sync.loader.MatchDataLoader
-import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntitySyncer
+import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntityManager
 import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchSyncResult
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.sync.persist.event.manager.MatchEventProcessResult
@@ -33,9 +33,9 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.*
 
 class MatchEntitySyncServiceImplTest {
-    private lateinit var matchEntitySyncService: MatchEntitySyncServiceImpl
+    private lateinit var matchEntitySyncService: MatchEntityPersistManagerImpl
     private lateinit var matchDataLoader: MatchDataLoader
-    private lateinit var baseMatchEntitySyncer: BaseMatchEntitySyncer
+    private lateinit var baseMatchEntityManager: BaseMatchEntityManager
     private lateinit var matchPlayerManager: MatchPlayerManager
     private lateinit var matchEventManager: MatchEventManager
     private lateinit var playerStatsManager: PlayerStatsManager
@@ -44,16 +44,16 @@ class MatchEntitySyncServiceImplTest {
     @BeforeEach
     fun setUp() {
         matchDataLoader = mock()
-        baseMatchEntitySyncer = mock()
+        baseMatchEntityManager = mock()
         matchPlayerManager = mock()
         matchEventManager = mock()
         playerStatsManager = mock()
         teamStatsManager = mock()
 
         matchEntitySyncService =
-            MatchEntitySyncServiceImpl(
+            MatchEntityPersistManagerImpl(
                 matchDataLoader,
-                baseMatchEntitySyncer,
+                baseMatchEntityManager,
                 matchPlayerManager,
                 matchEventManager,
                 playerStatsManager,
@@ -83,7 +83,7 @@ class MatchEntitySyncServiceImplTest {
         // Mock 설정
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
-            baseMatchEntitySyncer.syncBaseEntities(
+            baseMatchEntityManager.syncBaseEntities(
                 eq(fixtureApiId),
                 any(),
                 any(),
@@ -164,7 +164,7 @@ class MatchEntitySyncServiceImplTest {
         verify(playerStatsManager).processPlayerStats(any(), any())
         verify(teamStatsManager).processTeamStats(any(), any())
         verify(matchDataLoader).loadContext(eq(fixtureApiId), any(), any())
-        verify(baseMatchEntitySyncer).syncBaseEntities(eq(fixtureApiId), any(), any())
+        verify(baseMatchEntityManager).syncBaseEntities(eq(fixtureApiId), any(), any())
     }
 
     @Test
@@ -182,7 +182,7 @@ class MatchEntitySyncServiceImplTest {
         // Mock 설정 - MatchPlayerManager에서 예외 발생
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
-            baseMatchEntitySyncer.syncBaseEntities(
+            baseMatchEntityManager.syncBaseEntities(
                 eq(fixtureApiId),
                 any(),
                 any(),
@@ -229,7 +229,7 @@ class MatchEntitySyncServiceImplTest {
         // Mock 설정 - Base 엔티티 동기화 실패
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
-            baseMatchEntitySyncer.syncBaseEntities(
+            baseMatchEntityManager.syncBaseEntities(
                 eq(fixtureApiId),
                 any(),
                 any(),
@@ -277,7 +277,7 @@ class MatchEntitySyncServiceImplTest {
         // Mock 설정
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
-            baseMatchEntitySyncer.syncBaseEntities(
+            baseMatchEntityManager.syncBaseEntities(
                 eq(fixtureApiId),
                 any(),
                 any(),
@@ -374,7 +374,7 @@ class MatchEntitySyncServiceImplTest {
         // Mock 설정
         whenever(matchDataLoader.loadContext(eq(fixtureApiId), any(), any())).then { }
         whenever(
-            baseMatchEntitySyncer.syncBaseEntities(
+            baseMatchEntityManager.syncBaseEntities(
                 eq(fixtureApiId),
                 any(),
                 any(),
@@ -481,34 +481,34 @@ class MatchEntitySyncServiceImplTest {
                 ),
         )
 
-    private fun createMockLineupDto(): LineupSyncDto =
-        LineupSyncDto(
+    private fun createMockLineupDto(): MatchLineupPlanDto =
+        MatchLineupPlanDto(
             home =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 1L,
                     teamName = "Home Team",
                     teamLogo = "home_logo.png",
-                    playerColor = LineupSyncDto.Color("red", "white", "red"),
-                    goalkeeperColor = LineupSyncDto.Color("blue", "white", "blue"),
+                    playerColor = MatchLineupPlanDto.Color("red", "white", "red"),
+                    goalkeeperColor = MatchLineupPlanDto.Color("blue", "white", "blue"),
                     formation = "4-3-3",
                     startMpKeys = listOf("mp_id_1", "mp_id_2"),
                     subMpKeys = listOf("mp_id_3", "mp_id_4"),
                 ),
             away =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 2L,
                     teamName = "Away Team",
                     teamLogo = "away_logo.png",
-                    playerColor = LineupSyncDto.Color("green", "white", "green"),
-                    goalkeeperColor = LineupSyncDto.Color("yellow", "black", "yellow"),
+                    playerColor = MatchLineupPlanDto.Color("green", "white", "green"),
+                    goalkeeperColor = MatchLineupPlanDto.Color("yellow", "black", "yellow"),
                     formation = "4-4-2",
                     startMpKeys = listOf("mp_id_5", "mp_id_6"),
                     subMpKeys = listOf("mp_id_7", "mp_id_8"),
                 ),
         )
 
-    private fun createMockEventDto(): MatchEventSyncDto =
-        MatchEventSyncDto(
+    private fun createMockEventDto(): MatchEventPlanDto =
+        MatchEventPlanDto(
             events =
                 listOf(
                     MatchEventDto(
@@ -525,14 +525,14 @@ class MatchEntitySyncServiceImplTest {
                 ),
         )
 
-    private fun createMockTeamStatDto(): TeamStatSyncDto =
-        TeamStatSyncDto(
+    private fun createMockTeamStatDto(): MatchTeamStatPlanDto =
+        MatchTeamStatPlanDto(
             homeStats = null,
             awayStats = null,
         )
 
-    private fun createMockPlayerStatDto(): PlayerStatSyncDto =
-        PlayerStatSyncDto(
+    private fun createMockPlayerStatDto(): MatchPlayerStatPlanDto =
+        MatchPlayerStatPlanDto(
             homePlayerStatList = emptyList(),
             awayPlayerStatList = emptyList(),
         )

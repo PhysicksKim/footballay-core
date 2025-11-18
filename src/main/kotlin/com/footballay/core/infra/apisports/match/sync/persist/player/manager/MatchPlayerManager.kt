@@ -3,7 +3,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.player.manager
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.infra.apisports.match.sync.persist.player.collector.MatchPlayerDtoCollector
 import com.footballay.core.infra.apisports.match.sync.persist.player.planner.MatchPlayerChangePlanner
@@ -42,7 +42,7 @@ class MatchPlayerManager(
     @Transactional
     fun processMatchTeamAndPlayers(
         playerContext: MatchPlayerContext,
-        lineupDto: LineupSyncDto,
+        lineupDto: MatchLineupPlanDto,
         entityBundle: MatchEntityBundle,
     ): MatchPlayerProcessResult {
         log.info(
@@ -101,7 +101,28 @@ class MatchPlayerManager(
             // EntityBundle 에 MatchPlayer 업데이트
             val savedPlayersMap =
                 savedPlayers.associate { player ->
-                    val key = MatchPlayerKeyGenerator.generateMatchPlayerKey(player.playerApiSports?.apiId, player.name)
+                    // collectedDtos에서 이 선수의 원본 DTO를 찾아서 apiId 확보
+                    val matchingDto =
+                        collectedDtos.values.find { dto ->
+                            dto.name == player.name &&
+                                dto.teamApiId == player.matchTeam?.teamApiSports?.apiId
+                        }
+
+                    // DTO의 apiId를 우선 사용, 없으면 playerApiSports.apiId 사용
+                    val apiIdForKey = matchingDto?.apiId ?: player.playerApiSports?.apiId
+
+                    val key = MatchPlayerKeyGenerator.generateMatchPlayerKey(apiIdForKey, player.name)
+
+                    // 디버깅 로그 추가
+                    if (apiIdForKey == null) {
+                        log.warn(
+                            "Player has no apiId: name={}, matchPlayerUid={}, playerApiSportsId={}",
+                            player.name,
+                            player.matchPlayerUid,
+                            player.playerApiSports?.id,
+                        )
+                    }
+
                     key to player
                 }
             entityBundle.allMatchPlayers = savedPlayersMap
@@ -125,7 +146,7 @@ class MatchPlayerManager(
      */
     private fun enhancePlayersWithLineup(
         players: List<ApiSportsMatchPlayer>,
-        lineupDto: LineupSyncDto,
+        lineupDto: MatchLineupPlanDto,
         collectedDtos: Map<String, MatchPlayerDto>,
         entityBundle: MatchEntityBundle,
     ): List<ApiSportsMatchPlayer> {
@@ -137,13 +158,15 @@ class MatchPlayerManager(
         log.info("Enhancing {} players with lineup information", players.size)
 
         return players.map { player ->
-            // DTO에서 해당 선수 찾기
-            val dto =
-                collectedDtos.values.find { dto ->
+            // collectedDtos에서 해당 선수 찾기 (키도 함께 가져오기)
+            val matchingEntry =
+                collectedDtos.entries.find { (_, dto) ->
                     dto.name == player.name && dto.teamApiId != null
                 }
 
-            if (dto != null) {
+            if (matchingEntry != null) {
+                val (playerKey, dto) = matchingEntry // 이미 계산된 키 재사용!
+
                 // 팀별 Lineup 정보 찾기
                 val teamLineup =
                     when (dto.teamApiId) {
@@ -153,8 +176,7 @@ class MatchPlayerManager(
                     }
 
                 if (teamLineup != null) {
-                    // 선발/후보 구분
-                    val playerKey = MatchPlayerKeyGenerator.generateMatchPlayerKey(dto.apiId, dto.name)
+                    // 선발/후보 구분 (키 재계산 불필요 - 이미 Map의 키로 존재)
                     val isStarter = teamLineup.startMpKeys.contains(playerKey)
                     val isSubstitute = teamLineup.subMpKeys.contains(playerKey)
 
@@ -180,7 +202,7 @@ class MatchPlayerManager(
      * MatchTeam의 formation과 color를 업데이트합니다.
      */
     private fun updateMatchTeamsWithLineup(
-        lineupDto: LineupSyncDto,
+        lineupDto: MatchLineupPlanDto,
         entityBundle: MatchEntityBundle,
     ) {
         if (lineupDto.isEmpty()) {
@@ -212,7 +234,7 @@ class MatchPlayerManager(
     }
 
     /** Color DTO를 엔티티로 변환 */
-    private fun convertToUniformColor(color: LineupSyncDto.Color?): UniformColor? =
+    private fun convertToUniformColor(color: MatchLineupPlanDto.Color?): UniformColor? =
         color?.let {
             UniformColor(
                 primary = it.primary,

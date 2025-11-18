@@ -2,7 +2,6 @@ package com.footballay.core.infra.apisports.match.sync.persist.base
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.dto.FixtureApiSportsDto
-import com.footballay.core.infra.apisports.match.sync.persist.base.BaseMatchEntitySyncer
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
@@ -39,12 +38,12 @@ class BaseMatchEntitySyncerTest {
     @Mock
     private lateinit var teamApiSportsRepository: TeamApiSportsRepository
 
-    private lateinit var baseMatchEntitySyncer: BaseMatchEntitySyncer
+    private lateinit var baseMatchEntityManager: BaseMatchEntityManager
 
     @BeforeEach
     fun setUp() {
-        baseMatchEntitySyncer =
-            BaseMatchEntitySyncer(
+        baseMatchEntityManager =
+            BaseMatchEntityManager(
                 matchTeamRepository = matchTeamRepository,
                 teamApiSportsRepository = teamApiSportsRepository,
             )
@@ -69,7 +68,7 @@ class BaseMatchEntitySyncerTest {
         `when`(matchTeamRepository.save(any())).thenAnswer { it.arguments[0] }
 
         // When
-        val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
         // Then
         assert(result.success)
@@ -102,7 +101,7 @@ class BaseMatchEntitySyncerTest {
         val entityBundle = MatchEntityBundle.createEmpty() // fixture가 null
 
         // When
-        val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
         // Then
         assert(!result.success)
@@ -128,7 +127,7 @@ class BaseMatchEntitySyncerTest {
         `when`(teamApiSportsRepository.findByApiId(33L)).thenReturn(null)
 
         // When & Then
-        val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
         assert(!result.success)
         assert(result.errorMessage?.contains("TeamApiSports not found") == true)
@@ -156,7 +155,7 @@ class BaseMatchEntitySyncerTest {
         `when`(matchTeamRepository.save(any())).thenAnswer { it.arguments[0] }
 
         // When
-        val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
         // Then
         assert(result.success)
@@ -182,7 +181,7 @@ class BaseMatchEntitySyncerTest {
             }
 
         // When
-        val result = baseMatchEntitySyncer.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
 
         // Then
         assert(result.success)

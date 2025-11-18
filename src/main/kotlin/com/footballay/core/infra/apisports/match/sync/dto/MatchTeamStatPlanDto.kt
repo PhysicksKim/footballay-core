@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.match.sync.dto
 
-data class TeamStatSyncDto(
+data class MatchTeamStatPlanDto(
     /**
      * 팀 통계가 아직 주어지지 않은 경우 null
      */
@@ -14,6 +14,6 @@ data class TeamStatSyncDto(
         /**
          * 빈 팀 통계 DTO를 생성합니다.
          */
-        fun empty(): TeamStatSyncDto = TeamStatSyncDto()
+        fun empty(): MatchTeamStatPlanDto = MatchTeamStatPlanDto()
     }
 }

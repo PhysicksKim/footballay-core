@@ -14,16 +14,18 @@ data class FixtureInfoModel(
     val away: TeamInfo,
 ) {
     data class LeagueInfo(
-        val id: Long,
+        val id: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
         val koreanName: String?,
         val logo: String?,
+        val leagueUid: String,
     )
 
     data class TeamInfo(
-        val id: Long,
+        val id: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
         val koreanName: String?,
         val logo: String?,
+        val teamUid: String,
     )
 }

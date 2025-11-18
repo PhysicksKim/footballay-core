@@ -15,16 +15,17 @@ data class FixtureLineupModel(
     )
 
     data class StartLineup(
-        val teamId: Long,
+        val teamId: Long = 0, // Deprecated: PK 노출 방지
         val teamName: String,
         val teamKoreanName: String?,
         val formation: String?,
         val players: List<LineupPlayer>,
         val substitutes: List<LineupPlayer>,
+        val teamUid: String,
     )
 
     data class LineupPlayer(
-        val id: Long,
+        val id: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
         val koreanName: String?,
         val number: Int?,
@@ -32,6 +33,6 @@ data class FixtureLineupModel(
         val position: String?,
         val grid: String?,
         val substitute: Boolean,
-        val tempId: String?,
+        val matchPlayerUid: String,
     )
 }

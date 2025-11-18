@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.teamstat
 
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatisticsDto
-import com.footballay.core.infra.apisports.match.sync.dto.TeamStatSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchTeamStatPlanDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 
@@ -15,17 +15,17 @@ import org.springframework.stereotype.Component
  * - 현재 시점의 xG 값만 포함 (시계열 처리는 엔티티 저장 시 처리)
  */
 @Component
-class TeamStatSyncer : MatchTeamStatDtoExtractor {
+class MatchTeamStatExtractorImpl : MatchTeamStatDtoExtractor {
     private val log = logger()
 
-    override fun extractTeamStats(dto: FullMatchSyncDto): TeamStatSyncDto {
+    override fun extractTeamStats(dto: FullMatchSyncDto): MatchTeamStatPlanDto {
         log.info("Starting team stats sync for fixture: {}", dto.fixture.id)
 
         // 통계 데이터 개수 검증 - 0개(정상: 아직 집계 안됨) 또는 2개(정상: 양팀 통계)만 허용
         when (dto.statistics.size) {
             0 -> {
                 log.debug("No statistics available yet for fixture: {}", dto.fixture.id)
-                return TeamStatSyncDto.Companion.empty()
+                return MatchTeamStatPlanDto.Companion.empty()
             }
             2 -> {
                 // 정상 케이스 - 계속 진행
@@ -35,7 +35,7 @@ class TeamStatSyncer : MatchTeamStatDtoExtractor {
                     "Expected 0 or 2 team statistics but got ${dto.statistics.size} for fixture: ${dto.fixture.id}. " +
                         "This may indicate incomplete data aggregation or data corruption.",
                 )
-                return TeamStatSyncDto.Companion.empty()
+                return MatchTeamStatPlanDto.Companion.empty()
             }
         }
 
@@ -46,10 +46,10 @@ class TeamStatSyncer : MatchTeamStatDtoExtractor {
             log.warn(
                 "home/away team 아이디에 일치하는 통계 팀을 찾을 수 없습니다. fixtureApiId=${dto.fixture.id}, Home:${homeStats?.team}, Away:${awayStats?.team}",
             )
-            return TeamStatSyncDto.Companion.empty()
+            return MatchTeamStatPlanDto.Companion.empty()
         }
 
-        return TeamStatSyncDto(
+        return MatchTeamStatPlanDto(
             homeStats = extractTeamStatistics(homeStats, dto.fixture.status.elapsed),
             awayStats = extractTeamStatistics(awayStats, dto.fixture.status.elapsed),
         )

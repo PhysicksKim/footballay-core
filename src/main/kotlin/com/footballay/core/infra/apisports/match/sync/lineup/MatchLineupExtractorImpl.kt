@@ -3,7 +3,7 @@ package com.footballay.core.infra.apisports.match.sync.lineup
 import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
@@ -17,30 +17,30 @@ import org.springframework.stereotype.Component
  * - 새로운 선수는 자동으로 Context에 추가
  */
 @Component
-class LineupSyncer : MatchLineupDtoExtractor {
+class MatchLineupExtractorImpl : MatchLineupDtoExtractor {
     private val log = logger()
 
     override fun extractLineup(
         dto: FullMatchSyncDto,
         context: MatchPlayerContext,
-    ): LineupSyncDto {
+    ): MatchLineupPlanDto {
         val homeId = dto.teams.home.id
         val awayId = dto.teams.away.id
 
         if (homeId == null || awayId == null) {
             log.info("홈 또는 어웨이 팀 ID가 비어 있습니다. 홈: {}, 어웨이: {}", homeId, awayId)
-            return LineupSyncDto.EMPTY
+            return MatchLineupPlanDto.EMPTY
         }
         if (dto.lineups.isEmpty()) {
             log.info("라인업 정보가 비어 있습니다. 홈: {}, 어웨이: {}", homeId, awayId)
-            return LineupSyncDto.EMPTY
+            return MatchLineupPlanDto.EMPTY
         }
 
         val homeLineupDto = dto.lineups.find { it.team.id == homeId }
         val awayLineupDto = dto.lineups.find { it.team.id == awayId }
         if (homeLineupDto == null || awayLineupDto == null) {
             log.warn("라인업에서 home away 팀을 매칭할 수 없습니다. 홈: {}, 어웨이: {}", homeId, awayId)
-            return LineupSyncDto.Companion.EMPTY
+            return MatchLineupPlanDto.Companion.EMPTY
         }
 
         val homeStartMpMap = createLineupMpMap(homeLineupDto, homeId, substitute = false)
@@ -60,7 +60,7 @@ class LineupSyncer : MatchLineupDtoExtractor {
         val homeLineupSyncDto = toLineupSyncDto(homeLineupDto, homeStartMpMap, homeSubMpMap)
         val awayLineupSyncDto = toLineupSyncDto(awayLineupDto, awayStartMpMap, awaySubMpMap)
 
-        return LineupSyncDto(
+        return MatchLineupPlanDto(
             home = homeLineupSyncDto,
             away = awayLineupSyncDto,
         )
@@ -70,13 +70,13 @@ class LineupSyncer : MatchLineupDtoExtractor {
         lineupDto: FullMatchSyncDto.LineupDto,
         startMpMap: Map<String, MatchPlayerDto>,
         subMpMap: Map<String, MatchPlayerDto>,
-    ): LineupSyncDto.Lineup =
-        LineupSyncDto.Lineup(
+    ): MatchLineupPlanDto.Lineup =
+        MatchLineupPlanDto.Lineup(
             teamApiId = lineupDto.team.id,
             teamName = lineupDto.team.name,
             teamLogo = lineupDto.team.logo,
             playerColor =
-                LineupSyncDto.Color(
+                MatchLineupPlanDto.Color(
                     primary =
                         lineupDto.team.colors
                             ?.player
@@ -91,7 +91,7 @@ class LineupSyncer : MatchLineupDtoExtractor {
                             ?.border,
                 ),
             goalkeeperColor =
-                LineupSyncDto.Color(
+                MatchLineupPlanDto.Color(
                     primary =
                         lineupDto.team.colors
                             ?.goalkeeper

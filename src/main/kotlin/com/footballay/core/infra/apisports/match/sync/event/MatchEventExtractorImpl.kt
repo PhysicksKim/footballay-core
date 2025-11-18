@@ -5,7 +5,7 @@ import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto.LineupDto
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerKeyGenerator
 import com.footballay.core.infra.apisports.match.sync.dto.MatchEventDto
-import com.footballay.core.infra.apisports.match.sync.dto.MatchEventSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchEventPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
@@ -21,11 +21,11 @@ import org.springframework.stereotype.Component
  *
  */
 @Component
-class EventSyncer : MatchEventDtoExtractor {
+class MatchEventExtractorImpl : MatchEventDtoExtractor {
     private val log = logger()
 
     /*
-    이벤트에서는 뭘 조심해야할까?
+    이벤트에서는 뭘 조심해야하는가?
     일단 이벤트에서는 2개의 MatchPlayer 대응되는 필드가 있는데 event.player와 event.assist가 MatchPlayer 대응 필드에 해당한다.
     다만 이 경우 Goal 의 경우 명확하지만 Card, Subst 의 경우 매우 복잡해지는게 문제다.
     특히 Subst 의 경우 player 가 교체 선수일 수도 있고, assist 가 교체 선수일 수도 있다.
@@ -41,18 +41,18 @@ class EventSyncer : MatchEventDtoExtractor {
     override fun extractEvents(
         dto: FullMatchSyncDto,
         context: MatchPlayerContext,
-    ): MatchEventSyncDto {
+    ): MatchEventPlanDto {
         if (dto.events.isEmpty()) {
             log.info("이벤트 데이터가 비어 있습니다.")
-            return MatchEventSyncDto()
+            return MatchEventPlanDto()
         }
 
         try {
             // 1. sub in/out 시뮬레이션을 위한 라인업 선발/후보 정보 추출
             val lineupForSubstSimulation = extractLineupInfo(dto)
             if (!validateLineupInfo(lineupForSubstSimulation)) {
-                log.info("lineup 정보가 존재하지 않아 match event 저장을 건너뜁니다")
-                return MatchEventSyncDto()
+                log.info("lineup 정보가 존재하지 않아 match event 계획을 건너뜁니다")
+                return MatchEventPlanDto()
             }
 
             // 2. 이벤트를 순서대로 처리하면서 subst in/out 정규화
@@ -64,11 +64,11 @@ class EventSyncer : MatchEventDtoExtractor {
             // 4. Context에 이벤트 전용 선수 추가 (라인업에 없는 선수)
             addEventOnlyPlayers(normalizedEvents, context)
 
-            log.info("이벤트 동기화 완료: {}개 이벤트 처리", eventDtos.size)
-            return MatchEventSyncDto(events = eventDtos)
+            log.info("이벤트 계획 완료: {}개 이벤트 처리", eventDtos.size)
+            return MatchEventPlanDto(events = eventDtos)
         } catch (e: Exception) {
-            log.error("이벤트 동기화 중 오류 발생: {}", e.message, e)
-            return MatchEventSyncDto()
+            log.error("이벤트 계획 중 오류 발생: {}", e.message, e)
+            return MatchEventPlanDto()
         }
     }
 

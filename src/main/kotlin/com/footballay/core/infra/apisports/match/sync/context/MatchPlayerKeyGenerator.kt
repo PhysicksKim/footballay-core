@@ -31,14 +31,11 @@ object MatchPlayerKeyGenerator {
     ): String {
         require(!name.isBlank()) { "선수 이름은 필수입니다. name: $name" }
 
-        val uid =
-            if (apiId != null) {
-                generateKeyById(apiId)
-            } else {
-                generateKeyByName(name)
-            }
-        log.info("apiId: {}, name: {}, uid: {}", apiId, name, uid)
-        return uid
+        return if (apiId != null) {
+            generateKeyById(apiId)
+        } else {
+            generateKeyByName(name)
+        }
     }
 
     /**

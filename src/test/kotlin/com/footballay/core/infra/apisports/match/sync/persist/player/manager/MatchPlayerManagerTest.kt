@@ -2,7 +2,7 @@ package com.footballay.core.infra.apisports.match.sync.persist.player.manager
 
 import com.footballay.core.infra.apisports.match.sync.context.MatchEntityBundle
 import com.footballay.core.infra.apisports.match.sync.context.MatchPlayerContext
-import com.footballay.core.infra.apisports.match.sync.dto.LineupSyncDto
+import com.footballay.core.infra.apisports.match.sync.dto.MatchLineupPlanDto
 import com.footballay.core.infra.apisports.match.sync.dto.MatchPlayerDto
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
@@ -70,7 +70,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_123")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -125,7 +125,7 @@ class MatchPlayerManagerTest {
         }
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.updatedCount).isEqualTo(1)
@@ -159,7 +159,7 @@ class MatchPlayerManagerTest {
         doNothing().whenever(matchPlayerRepository).deleteAll(any<List<ApiSportsMatchPlayer>>())
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.deletedCount).isEqualTo(1)
@@ -306,7 +306,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_bulk")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(100)
@@ -342,7 +342,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_33")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -394,7 +394,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_complex")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(3)
@@ -427,7 +427,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_name_only")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -459,7 +459,7 @@ class MatchPlayerManagerTest {
         whenever(uidGenerator.generateUid()).thenReturn("mp_entity_bundle")
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(1)
@@ -480,7 +480,7 @@ class MatchPlayerManagerTest {
         val entityBundle = MatchEntityBundle.createEmpty()
 
         // when
-        val result = matchPlayerManager.processMatchTeamAndPlayers(context, LineupSyncDto.EMPTY, entityBundle)
+        val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
         assertThat(result.createdCount).isEqualTo(0)
@@ -529,52 +529,52 @@ class MatchPlayerManagerTest {
             matchTeam = null,
         )
 
-    private fun createMockLineupDto(): LineupSyncDto =
-        LineupSyncDto(
+    private fun createMockLineupDto(): MatchLineupPlanDto =
+        MatchLineupPlanDto(
             home =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 1L,
                     teamName = "Home Team",
                     teamLogo = "home_logo.png",
-                    playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
-                    goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
+                    playerColor = MatchLineupPlanDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
+                    goalkeeperColor = MatchLineupPlanDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
                     formation = "4-3-3",
                     startMpKeys = listOf("mp_id_123"),
                     subMpKeys = emptyList(),
                 ),
             away =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 2L,
                     teamName = "Away Team",
                     teamLogo = "away_logo.png",
-                    playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
-                    goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
+                    playerColor = MatchLineupPlanDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
+                    goalkeeperColor = MatchLineupPlanDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
                     formation = "4-4-2",
                     startMpKeys = emptyList(),
                     subMpKeys = emptyList(),
                 ),
         )
 
-    private fun createMockLineupDtoWithFormationAndColor(): LineupSyncDto =
-        LineupSyncDto(
+    private fun createMockLineupDtoWithFormationAndColor(): MatchLineupPlanDto =
+        MatchLineupPlanDto(
             home =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 1L,
                     teamName = "Home Team",
                     teamLogo = "home_logo.png",
-                    playerColor = LineupSyncDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
-                    goalkeeperColor = LineupSyncDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
+                    playerColor = MatchLineupPlanDto.Color(primary = "#FF0000", number = "#FFFFFF", border = "#000000"),
+                    goalkeeperColor = MatchLineupPlanDto.Color(primary = "#0000FF", number = "#FFFFFF", border = "#000000"),
                     formation = "3-5-2",
                     startMpKeys = listOf("mp_id_123"),
                     subMpKeys = emptyList(),
                 ),
             away =
-                LineupSyncDto.Lineup(
+                MatchLineupPlanDto.Lineup(
                     teamApiId = 2L,
                     teamName = "Away Team",
                     teamLogo = "away_logo.png",
-                    playerColor = LineupSyncDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
-                    goalkeeperColor = LineupSyncDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
+                    playerColor = MatchLineupPlanDto.Color(primary = "#00FF00", number = "#000000", border = "#FFFFFF"),
+                    goalkeeperColor = MatchLineupPlanDto.Color(primary = "#FFFF00", number = "#000000", border = "#FFFFFF"),
                     formation = "4-3-3",
                     startMpKeys = emptyList(),
                     subMpKeys = emptyList(),

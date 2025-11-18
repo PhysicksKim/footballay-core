@@ -23,16 +23,13 @@ data class FixtureEventsResponse(
     )
 
     data class TeamInfo(
-        val teamId: Long,
+        val teamUid: String,
         val name: String,
-        val koreanName: String?,
     )
 
     data class PlayerInfo(
-        val playerId: Long?,
-        val name: String?,
-        val koreanName: String?,
+        val matchPlayerUid: String,
+        val name: String,
         val number: Int?,
-        val tempId: String?,
     )
 }

@@ -44,7 +44,7 @@ class ApiSportsMatchEvent(
     @Column(name = "extra_time")
     var extraTime: Int? = null, // 추가 시간
     @Column(name = "event_type")
-    var eventType: String, // 이벤트 타입 (Goal, Card, Subst, VAR)
+    var eventType: String, // 이벤트 타입 (Goal, Card, Subst, VAR, ETC)
     @Column(name = "detail")
     var detail: String? = null, // 이벤트 상세 정보
     @Column(name = "comments")
