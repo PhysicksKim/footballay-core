@@ -4,9 +4,6 @@ import com.footballay.core.infra.match.MatchSyncOrchestrator
 import com.footballay.core.infra.apisports.FixtureApiSportsQueryService
 import com.footballay.core.infra.apisports.backbone.extractor.ApiSportsFixturePlayerCollector
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
-import com.footballay.core.infra.apisports.match.dto.FullMatchSyncDto
-import com.footballay.core.infra.apisports.match.sync.ApiSportsFixtureSingle
-import com.footballay.core.infra.apisports.match.sync.ApiSportsMatchEntitySyncFacade
 import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import org.springframework.stereotype.Component

@@ -1,7 +1,7 @@
 package com.footballay.core.infra.apisports.backbone.extractor
 
 import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
-import com.footballay.core.infra.apisports.match.sync.ApiSportsFixtureSingle
+import com.footballay.core.infra.apisports.match.ApiSportsFixtureSingle
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
