@@ -31,6 +31,7 @@ data class FixtureCore(
      *
      * **Note**: kickoff time이 변경된다면, Data Provider의 match data polling 작업을 확인하고 수정 필요
      */
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     var kickoff: Instant?,
     /**
      * 경기 상태 (예: Not Started, Full Time, First Half, Half Time, Second Half 등)

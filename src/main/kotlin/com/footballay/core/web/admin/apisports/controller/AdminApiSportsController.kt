@@ -29,7 +29,7 @@ import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Positive
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 
@@ -181,7 +181,7 @@ class AdminApiSportsController(
     @GetMapping("/leagues/available")
     fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> = ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
 
-    @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준. mode 기본값 exact. timezone으로 날짜 계산 기준 지정 가능 (IANA format, default: UTC)")
+    @Operation(summary = "리그별 픽스처 조회", description = "date(YYYY-MM-DD) 기준으로 exact/nearest 조회. date 미지정 시 서버 현재 날짜 기준. mode 기본값 exact. timezone으로 날짜 계산 기준 지정 가능 (IANA format, default: UTC)")
     @ApiResponse(responseCode = "200")
     @GetMapping("/leagues/{leagueApiId}/fixtures")
     fun getLeagueFixtures(
@@ -189,9 +189,9 @@ class AdminApiSportsController(
         @PathVariable
         @Positive
         leagueApiId: Long,
-        @Parameter(description = "ISO-8601 UTC", example = "2025-03-05T10:00:00Z")
+        @Parameter(description = "날짜 (YYYY-MM-DD), 미지정 시 서버 현재 날짜", example = "2025-12-25")
         @RequestParam(required = false)
-        at: String?,
+        date: String?,
         @Parameter(description = "nearest | exact")
         @RequestParam(required = false, defaultValue = "exact")
         @Pattern(regexp = "exact|nearest")
@@ -200,18 +200,19 @@ class AdminApiSportsController(
         @RequestParam(required = false, defaultValue = "UTC")
         timezone: String,
     ): ResponseEntity<List<FixtureSummaryDto>> {
-        val atInstant =
-            try {
-                at?.let { Instant.parse(it) }
-            } catch (_: Exception) {
-                null
-            }
         val zoneId =
             try {
                 ZoneId.of(timezone)
             } catch (_: Exception) {
                 ZoneOffset.UTC
             }
+        val localDate =
+            try {
+                date?.let { LocalDate.parse(it) }
+            } catch (_: Exception) {
+                null
+            }
+        val atInstant = localDate?.atStartOfDay(zoneId)?.toInstant()
         return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueApiId, atInstant, mode, zoneId))
     }
 

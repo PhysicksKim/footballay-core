@@ -27,6 +27,7 @@ data class FixtureApiSports(
      * API 응답에서 받은 OffsetDateTime(시간대 정보 포함)을 Instant로 변환하여 저장하므로,
      * 데이터베이스에는 UTC 기준 시간이 저장됩니다.
      */
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     var date: Instant? = null,
     var round: String? = null,
     /**

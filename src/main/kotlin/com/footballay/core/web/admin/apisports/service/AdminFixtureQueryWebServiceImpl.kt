@@ -15,8 +15,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 
 /**
  * 관리자용 Fixture 조회 서비스 구현체
