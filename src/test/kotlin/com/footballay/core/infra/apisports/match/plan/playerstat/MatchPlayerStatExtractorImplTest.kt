@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.MockitoAnnotations
 import java.time.OffsetDateTime
 
-class PlayerStatSyncerTest {
+class MatchPlayerStatExtractorImplTest {
     private lateinit var matchPlayerStatExtractorImpl: MatchPlayerStatExtractorImpl
     private lateinit var context: MatchPlayerContext
 

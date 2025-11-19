@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class EventSyncerTest {
+class MatchEventExtractorImplTest {
     val log = logger()
 
     private lateinit var matchEventExtractorImpl: MatchEventExtractorImpl
@@ -607,8 +607,6 @@ class EventSyncerTest {
         )
     }
 
-    // 개별 이벤트 생성 메서드들
-
     private fun createGoalEvent(): FullMatchSyncDto.EventDto =
         FullMatchSyncDto.EventDto(
             time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 23, extra = null),
@@ -641,8 +639,6 @@ class EventSyncerTest {
             detail = "Yellow Card",
             comments = "Foul play",
         )
-
-    // 공통 테스트 데이터 생성 메서드들
 
     private fun createNormalFixture(): FullMatchSyncDto.FixtureDto =
         FullMatchSyncDto.FixtureDto(
@@ -776,6 +772,344 @@ class EventSyncerTest {
             formation = formation,
             startXI = startXI,
             substitutes = substitutes,
+        )
+    }
+
+    @Test
+    @DisplayName("패널티 실축 시 type을 ETC로 변경한다")
+    fun `should change type to ETC for missed penalty`() {
+        // given
+        val dto = createDtoWithMissedPenalty()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(1, result.events.size)
+
+        val event = result.events[0]
+        assertEquals("ETC", event.eventType) // Goal이 아닌 ETC
+        assertEquals("Missed Penalty", event.detail)
+        assertEquals("${MatchPlayerKeyGenerator.ID_PREFIX}10001", event.playerMpKey)
+    }
+
+    @Test
+    @DisplayName("Own Goal 이벤트의 팀을 상대 팀(득점 획득 팀)으로 변경한다")
+    fun `should change team to opponent for own goal`() {
+        // given
+        val dto = createDtoWithOwnGoal()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(1, result.events.size)
+
+        val event = result.events[0]
+        assertEquals("Goal", event.eventType)
+        assertEquals("Own Goal", event.detail)
+        // 홈팀 선수(100L)가 Own Goal을 넣었으므로 teamApiId는 어웨이팀(200L)이어야 함
+        assertEquals(200L, event.teamApiId)
+    }
+
+    @Test
+    @DisplayName("Substitution에서 player와 assist가 모두 완전히 null인 경우 UNKNOWN으로 처리한다")
+    fun `should change type to UNKNOWN for substitution with both null players`() {
+        // given
+        val dto = createDtoWithSubstBothNull()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(1, result.events.size)
+
+        val event = result.events[0]
+        assertEquals("UNKNOWN", event.eventType) // subst가 아닌 UNKNOWN
+        assertEquals("Substitution 1", event.detail)
+        assertNull(event.playerMpKey)
+        assertNull(event.assistMpKey)
+    }
+
+    @Test
+    @DisplayName("이벤트 정렬: elapsed 시간 순서대로 정렬된다")
+    fun `should sort events by elapsed time`() {
+        // given
+        val dto = createDtoWithEventsInWrongOrder()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(3, result.events.size)
+
+        // elapsed 기준으로 정렬되어야 함
+        assertEquals(10, result.events[0].elapsedTime)
+        assertEquals(20, result.events[1].elapsedTime)
+        assertEquals(30, result.events[2].elapsedTime)
+
+        // sequence는 0부터 순차적으로 재할당되어야 함
+        assertEquals(0, result.events[0].sequence)
+        assertEquals(1, result.events[1].sequence)
+        assertEquals(2, result.events[2].sequence)
+    }
+
+    @Test
+    @DisplayName("이벤트 정렬: elapsed가 같으면 extraTime 순서대로 정렬된다")
+    fun `should sort events by extraTime when elapsed is same`() {
+        // given
+        val dto = createDtoWithSameElapsedDifferentExtraTime()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(3, result.events.size)
+
+        // elapsed가 45로 동일하므로 extraTime 기준으로 정렬
+        assertEquals(45, result.events[0].elapsedTime)
+        assertEquals(null, result.events[0].extraTime) // null은 0으로 간주
+        assertEquals(45, result.events[1].elapsedTime)
+        assertEquals(2, result.events[1].extraTime)
+        assertEquals(45, result.events[2].elapsedTime)
+        assertEquals(5, result.events[2].extraTime)
+    }
+
+    @Test
+    @DisplayName("이벤트 정렬: elapsed와 extraTime이 같고 팀도 같으면 Substitution 번호 순서대로 정렬된다")
+    fun `should sort events by substitution number when elapsed, extraTime and team are same`() {
+        // given
+        val dto = createDtoWithSameTimeTeamDifferentSubstNumber()
+
+        // when
+        val result = matchEventExtractorImpl.extractEvents(dto, context)
+
+        // then
+        assertEquals(3, result.events.size)
+
+        // elapsed=56, extraTime=null, team=100L로 모두 동일하므로 Substitution 번호 순서대로 정렬
+        assertEquals("Substitution 1", result.events[0].detail)
+        assertEquals("Substitution 2", result.events[1].detail)
+        assertEquals("Substitution 3", result.events[2].detail)
+    }
+
+    // 새로운 테스트 데이터 생성 메서드들
+
+    private fun createDtoWithMissedPenalty(): FullMatchSyncDto {
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 13, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
+                    type = "Goal",
+                    detail = "Missed Penalty",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 0, away = 0),
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
+        )
+    }
+
+    private fun createDtoWithOwnGoal(): FullMatchSyncDto {
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 25, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"), // 홈팀
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 홈팀 선수
+                    assist = null,
+                    type = "Goal",
+                    detail = "Own Goal",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 0, away = 1), // 어웨이팀이 득점
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
+        )
+    }
+
+    private fun createDtoWithSubstBothNull(): FullMatchSyncDto {
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 70, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = null, // 완전히 null
+                    assist = null, // 완전히 null
+                    type = "subst",
+                    detail = "Substitution 1",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 0, away = 0),
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
+        )
+    }
+
+    private fun createDtoWithEventsInWrongOrder(): FullMatchSyncDto {
+        val events =
+            listOf(
+                // 역순으로 배치
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 30, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10003L, name = "Player 3"),
+                    assist = null,
+                    type = "card",
+                    detail = "Yellow Card",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 10, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
+                    type = "goal",
+                    detail = "Normal Goal",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 20, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
+                    assist = null,
+                    type = "card",
+                    detail = "Yellow Card",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 1, away = 0),
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
+        )
+    }
+
+    private fun createDtoWithSameElapsedDifferentExtraTime(): FullMatchSyncDto {
+        val events =
+            listOf(
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 5),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10003L, name = "Player 3"),
+                    assist = null,
+                    type = "card",
+                    detail = "Yellow Card",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = null), // null은 0으로 간주
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
+                    type = "goal",
+                    detail = "Normal Goal",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 45, extra = 2),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    type = "subst",
+                    detail = "Substitution 1",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 1, away = 0),
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
+        )
+    }
+
+    private fun createDtoWithSameTimeTeamDifferentSubstNumber(): FullMatchSyncDto {
+        val events =
+            listOf(
+                // 역순으로 배치
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 56, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10014L, name = "Sub Player 14"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10003L, name = "Player 3"),
+                    type = "subst",
+                    detail = "Substitution 3",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 56, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10012L, name = "Sub Player 12"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"),
+                    type = "subst",
+                    detail = "Substitution 1",
+                    comments = null,
+                ),
+                FullMatchSyncDto.EventDto(
+                    time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 56, extra = null),
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"),
+                    player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10013L, name = "Sub Player 13"),
+                    assist = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10002L, name = "Player 2"),
+                    type = "subst",
+                    detail = "Substitution 2",
+                    comments = null,
+                ),
+            )
+
+        return FullMatchSyncDto(
+            fixture = createNormalFixture(),
+            league = createNormalLeague(),
+            teams = createNormalTeams(),
+            goals = FullMatchSyncDto.GoalsDto(home = 0, away = 0),
+            score = createNormalScore(),
+            events = events,
+            lineups = createNormalLineups(),
+            statistics = emptyList(),
+            players = emptyList(),
         )
     }
 }

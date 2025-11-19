@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.match.plan.persist.player.collector
+package com.footballay.core.infra.apisports.match.persist.player.collector
 
 import com.footballay.core.infra.apisports.match.plan.context.MatchPlayerContext
 import com.footballay.core.infra.apisports.match.plan.dto.MatchPlayerDto

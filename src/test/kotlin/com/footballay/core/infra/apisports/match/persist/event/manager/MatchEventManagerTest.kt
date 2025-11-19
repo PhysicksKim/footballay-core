@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.match.plan.persist.event.manager
+package com.footballay.core.infra.apisports.match.persist.event.manager
 
 import com.footballay.core.infra.apisports.match.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.plan.context.MatchEntityBundle

@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.match.plan.persist.player.planner
+package com.footballay.core.infra.apisports.match.persist.player.planner
 
 import com.footballay.core.infra.apisports.match.plan.dto.MatchPlayerDto
 import com.footballay.core.infra.apisports.match.persist.player.planner.MatchPlayerChangePlanner

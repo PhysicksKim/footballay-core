@@ -11,25 +11,97 @@ import com.footballay.core.logger
 import org.springframework.stereotype.Component
 
 /**
- * 이벤트 데이터를 동기화합니다.
+ * ApiSports Raw Response를 규칙에 따라 정리된 MatchEventPlanDto로 변환합니다.
  *
- * 책임:
- * - Event 데이터 처리 (골, 카드, 교체 등)
- * - Context를 통한 선수 매칭
- * - 새로운 이벤트 전용 선수 생성
- * - Subst 이벤트의 player/assist 정규화 (player=subin, assist=subout)
+ * ## 처리 흐름
+ * ```
+ * FullMatchSyncDto (raw response)
+ * [1] 라인업 정보 추출 및 검증
+ * [2] Substitution 이벤트 정규화 (player=sub-in, assist=sub-out)
+ * [3] 이벤트 타입 및 팀 필드 조정
+ * [4] 이벤트 정렬 및 sequence 재할당
+ * [5] Event-only 선수 추가 (라인업에 없는 선수)
+ * MatchEventPlanDto (정리된 plan)
+ * ```
  *
+ * ## 예외 처리 및 변환 규칙
+ *
+ * ### 1. 조기 종료 조건 (빈 MatchEventPlanDto 반환)
+ * - `dto.events`가 비어있는 경우
+ * - 홈/어웨이 팀 ID가 null인 경우
+ * - 라인업 정보가 없는 경우 (선발 또는 후보 선수가 비어있음)
+ * - 처리 중 예외 발생 시 (로그 기록 후 빈 결과 반환)
+ *
+ * ### 2. Substitution 정규화 (normalizeSubstEvent)
+ * **문제**: ApiSports는 Subst 이벤트에서 player/assist 필드가 누가 sub-in/out인지 일관성 없이 제공
+ * - 같은 경기 내에서도 이벤트별로 달라질 수 있음
+ * - 경기 중 API 응답이 업데이트되면서 순서가 바뀔 수 있음
+ *
+ * **해결책**: 라인업 시뮬레이션
+ * 1. 시작 라인업(선발 11명, 후보 선수) 정보 추출
+ * 2. 이벤트를 순서대로 처리하며 현재 필드 상태 추적
+ * 3. player가 후보 && assist가 선발 → 정상 (player=sub-in, assist=sub-out)
+ * 4. player가 선발 && assist가 후보 → 역순 (필드 교체하여 정규화)
+ * 5. 둘 다 후보 또는 둘 다 선발 → 비정상 (경고 로그, 원본 유지)
+ * 6. 교체 후 필드 상태 업데이트 (연속 교체 지원: sub-in 선수가 다시 sub-out 가능)
+ *
+ * ### 3. 이벤트 타입 조정 (toMatchEventDto)
+ *
+ * #### 3.1 패널티 실축 → ETC
+ * - 조건: `type="Goal"` && `detail="Missed Penalty"`
+ * - 변환: `eventType="ETC"`
+ * - 이유: 골이 아닌 골 기회이므로 별도 분류.
+ * - 추가설명: 이 이벤트는 경기 중에는 등장하지만 경기 후에는 제거됨
+ *
+ * #### 3.2 Own Goal → 상대 팀으로 득점 기록
+ * - 조건: `type="Goal"` && `detail="Own Goal"`
+ * - 변환: `teamApiId`를 상대 팀으로 교체
+ *   - 홈팀 선수가 Own Goal → 어웨이팀(득점 획득 팀) ID로 변경
+ *   - 어웨이팀 선수가 Own Goal → 홈팀 ID로 변경
+ * - 예외: 팀 ID가 홈/어웨이와 일치하지 않으면 경고 로그 + 원본 유지
+ *
+ * #### 3.3 Substitution null → UNKNOWN
+ * - 조건: `type="subst"` && `player.id=null` && `player.name=null` && `assist.id=null` && `assist.name=null`
+ * - 변환: `eventType="UNKNOWN"`
+ * - 주의: id만 null이고 name이 있는 경우는 정상 처리 (이름으로 매칭 가능)
+ *
+ * ### 4. 이벤트 정렬 및 Sequence 재할당 (createMatchEventDtos)
+ * **문제**: ApiSports 응답 순서가 시간 순서와 일치하지 않을 수 있음
+ *
+ * **정렬 우선순위**:
+ * 1. `elapsedTime` (ASC) - 경기 시간
+ * 2. `extraTime` (ASC, null → 0으로 간주) - 추가 시간
+ * 3. `teamApiId` (ASC) - 같은 시간대 이벤트는 팀별로 그룹핑
+ * 4. Substitution 번호 (ASC) - detail에서 "Substitution N" 숫자 추출
+ *    - 예: "Substitution 1" → 1, "Substitution 2" → 2
+ *    - Substitution이 아니면 0 (정렬 영향 없음)
+ *    - 숫자 없으면 Int.MAX_VALUE (뒤로 밀림)
+ *
+ * **Sequence 재할당**:
+ * - 정렬 후 0부터 순차적으로 재할당 (연속성 보장)
+ * - 원본 API 응답 순서는 무시됨
+ *
+ * ### 5. Event-only 선수 추가 (addEventOnlyPlayers)
+ * **문제**: 일부 선수가 라인업에 없지만 이벤트에만 등장 (예: Coach Card Event, 긴급 유스 콜업으로 Data Provider가 처음 보는 선수)
+ *
+ * **처리**:
+ * - 이벤트의 player/assist가 Context(lineupMpDtoMap, eventMpDtoMap)에 없으면 추가
+ * - `substitute=true`, `nonLineupPlayer=true`로 표시
+ * - 선수 ID는 event에서 가져오되, name이 null이면 추가하지 않음 (매칭 불가)
+ *
+ * ## 주요 데이터 구조
+ * - **LineupInfo**: 홈/어웨이 팀의 선발/후보 선수 맵 (Substitution 시뮬레이션용)
+ * - **MatchPlayerContext**: 전체 선수 정보 (라인업 + 이벤트 전용)
+ * - **MatchEventDto**: 정리된 이벤트 DTO (sequence, type, team, players 등)
+ *
+ * ## 에러 처리 전략
+ * - 치명적 오류 (팀 ID null, 라인업 없음) → 빈 결과 반환
+ * - 데이터 이상 (비정상 subst, Own Goal 팀 불일치) → 경고 로그 + 원본 유지
+ * - 예외 발생 → catch하여 로그 기록 후 빈 결과 반환
  */
 @Component
 class MatchEventExtractorImpl : MatchEventDtoExtractor {
     private val log = logger()
-
-    /*
-    이벤트에서는 뭘 조심해야하는가?
-    일단 이벤트에서는 2개의 MatchPlayer 대응되는 필드가 있는데 event.player와 event.assist가 MatchPlayer 대응 필드에 해당한다.
-    다만 이 경우 Goal 의 경우 명확하지만 Card, Subst 의 경우 매우 복잡해지는게 문제다.
-    특히 Subst 의 경우 player 가 교체 선수일 수도 있고, assist 가 교체 선수일 수도 있다.
-     */
 
     /**
      * ApiSports 의 데이터 문제로 인해, Subst Event 에서 player/assist 필드 중 어떤 필드가 Sub in/out 인지 경기마다 달라집니다.
@@ -59,7 +131,7 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
             val normalizedEvents = createNormalizedEvents(dto, lineupForSubstSimulation)
 
             // 3. 정규화된 이벤트를 MatchEventDto로 변환
-            val eventDtos = createMatchEventDtos(normalizedEvents)
+            val eventDtos = createMatchEventDtos(normalizedEvents, lineupForSubstSimulation)
 
             // 4. Context에 이벤트 전용 선수 추가 (라인업에 없는 선수)
             addEventOnlyPlayers(normalizedEvents, context)
@@ -72,10 +144,52 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
         }
     }
 
-    private fun createMatchEventDtos(normalizedEvents: List<FullMatchSyncDto.EventDto>): List<MatchEventDto> =
-        normalizedEvents.mapIndexed { index, event ->
-            toMatchEventDto(event, index) // sequence는 0부터 시작
+    private fun createMatchEventDtos(
+        normalizedEvents: List<FullMatchSyncDto.EventDto>,
+        lineupInfo: LineupInfo,
+    ): List<MatchEventDto> {
+        // 먼저 DTO로 변환 (sequence는 임시로 원본 인덱스 사용)
+        val unsortedDtos =
+            normalizedEvents.mapIndexed { index, event ->
+                toMatchEventDto(event, index, lineupInfo)
+            }
+
+        // 정렬 로직
+        // 1. elapsedTime (ASC)
+        // 2. extraTime (ASC, null을 0으로 간주)
+        // 3. teamApiId (ASC) - 같은 시간대, 같은 팀 이벤트 그룹핑
+        // 4. Substitution인 경우 detail에서 "Substitution N" 숫자 추출하여 정렬
+        val sortedDtos =
+            unsortedDtos.sortedWith(
+                compareBy(
+                    { it.elapsedTime },
+                    { it.extraTime ?: 0 },
+                    { it.teamApiId ?: Long.MAX_VALUE },
+                    { extractSubstitutionNumber(it) },
+                ),
+            )
+
+        // sequence를 0부터 순차적으로 재할당
+        return sortedDtos.mapIndexed { index, dto ->
+            dto.copy(sequence = index)
         }
+    }
+
+    /**
+     * Substitution 이벤트의 detail에서 숫자를 추출합니다.
+     * 예: "Substitution 1" -> 1, "Substitution 2" -> 2
+     * Substitution이 아니거나 숫자를 찾을 수 없는 경우 Int.MAX_VALUE 반환 (정렬 시 뒤로 밀림)
+     */
+    private fun extractSubstitutionNumber(dto: MatchEventDto): Int {
+        if (dto.eventType.lowercase() != "subst") {
+            return 0 // Substitution이 아닌 경우 0 반환 (정렬에 영향 없음)
+        }
+
+        val detail = dto.detail ?: return Int.MAX_VALUE
+        val regex = """Substitution\s+(\d+)""".toRegex(RegexOption.IGNORE_CASE)
+        val matchResult = regex.find(detail)
+        return matchResult?.groupValues?.get(1)?.toIntOrNull() ?: Int.MAX_VALUE
+    }
 
     private fun createNormalizedEvents(
         dto: FullMatchSyncDto,
@@ -233,19 +347,64 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
 
     /**
      * 이벤트를 MatchEventDto로 변환합니다.
+     *
+     * 특수 케이스 처리:
+     * 1. 패널티 실축: type="Goal", detail="Missed Penalty" → type="ETC"
+     * 2. Own Goal: type="Goal", detail="Own Goal" → teamApiId를 상대 팀으로 변경
+     * 3. Substitution null: player와 assist가 모두 완전히 null → type="UNKNOWN"
      */
     private fun toMatchEventDto(
         event: FullMatchSyncDto.EventDto,
         sequence: Int,
-    ): MatchEventDto =
-        MatchEventDto(
+        lineupInfo: LineupInfo,
+    ): MatchEventDto {
+        // 1. 패널티 실축 처리
+        val adjustedType =
+            if (event.type.equals("Goal", ignoreCase = true) &&
+                event.detail?.equals("Missed Penalty", ignoreCase = true) == true
+            ) {
+                "ETC"
+            } else if (event.type.equals("subst", ignoreCase = true)) {
+                // 3. Substitution null 처리
+                val playerIsNull = event.player?.id == null && event.player?.name == null
+                val assistIsNull = event.assist?.id == null && event.assist?.name == null
+                if (playerIsNull && assistIsNull) {
+                    log.warn("Substitution 이벤트에서 player와 assist가 모두 null입니다. UNKNOWN으로 처리: {}", event)
+                    "UNKNOWN"
+                } else {
+                    event.type
+                }
+            } else {
+                event.type
+            }
+
+        // 2. Own Goal 팀 변경
+        val adjustedTeamApiId =
+            if (event.type.equals("Goal", ignoreCase = true) &&
+                event.detail?.equals("Own Goal", ignoreCase = true) == true
+            ) {
+                // Own Goal인 경우 상대 팀으로 변경
+                val currentTeamId = event.team.id
+                when (currentTeamId) {
+                    lineupInfo.homeTeamId -> lineupInfo.awayTeamId
+                    lineupInfo.awayTeamId -> lineupInfo.homeTeamId
+                    else -> {
+                        log.warn("Own Goal 이벤트의 팀 ID가 홈/어웨이 팀 ID와 일치하지 않습니다: currentTeamId={}, homeTeamId={}, awayTeamId={}", currentTeamId, lineupInfo.homeTeamId, lineupInfo.awayTeamId)
+                        event.team.id
+                    }
+                }
+            } else {
+                event.team.id
+            }
+
+        return MatchEventDto(
             sequence = sequence,
             elapsedTime = event.time.elapsed,
             extraTime = event.time.extra,
-            eventType = event.type,
+            eventType = adjustedType,
             detail = event.detail,
             comments = event.comments,
-            teamApiId = event.team.id,
+            teamApiId = adjustedTeamApiId,
             playerMpKey =
                 if (event.player?.name != null) {
                     MatchPlayerKeyGenerator.generateMatchPlayerKey(
@@ -265,6 +424,7 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
                     null
                 },
         )
+    }
 
     /**
      * 라인업에 없는 이벤트 전용 선수를 Context에 추가합니다.

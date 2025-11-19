@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.match.plan.persist.event.planner
+package com.footballay.core.infra.apisports.match.persist.event.planner
 
 import com.footballay.core.infra.apisports.match.persist.event.planner.MatchEventChangeSet
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchEvent

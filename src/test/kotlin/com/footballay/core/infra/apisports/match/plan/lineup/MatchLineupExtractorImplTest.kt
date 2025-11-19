@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 
-class LineupSyncerTest {
+class MatchLineupExtractorImplTest {
     val log = logger()
 
     private lateinit var matchLineupExtractorImpl: MatchLineupExtractorImpl

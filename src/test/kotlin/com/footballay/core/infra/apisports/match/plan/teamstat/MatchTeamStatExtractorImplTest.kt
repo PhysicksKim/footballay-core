@@ -8,7 +8,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import kotlin.test.assertNull
 
-class TeamStatSyncerTest {
+class MatchTeamStatExtractorImplTest {
     private lateinit var matchTeamStatExtractorImpl: MatchTeamStatExtractorImpl
 
     @BeforeEach

@@ -68,9 +68,9 @@ class AdminLeagueQueryWebServiceImplTest {
         // Then
         assertThat(result).hasSize(2)
         assertThat(result.map { it.name }).containsExactlyInAnyOrder("Premier League", "La Liga")
-        assertThat(result.map { it.leagueApiId }).containsExactlyInAnyOrder(39L, 140L)
+        assertThat(result.map { it.uid }).containsExactlyInAnyOrder("test_league_1", "test_league_2")
 
-        log.info("Available leagues: ${result.map { "${it.name}(${it.leagueApiId})" }}")
+        log.info("Available leagues: ${result.map { "${it.name}(${it.uid})" }}")
     }
 
     @WithMockUser(roles = ["ADMIN"])

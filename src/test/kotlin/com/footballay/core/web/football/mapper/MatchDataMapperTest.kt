@@ -35,6 +35,7 @@ class MatchDataMapperTest {
                         name = "Premier League",
                         koreanName = null,
                         logo = "https://logo.png",
+                        leagueUid = "premier-league-2024",
                     ),
                 home =
                     FixtureInfoModel.TeamInfo(
@@ -42,6 +43,7 @@ class MatchDataMapperTest {
                         name = "Manchester City",
                         koreanName = null,
                         logo = "https://city-logo.png",
+                        teamUid = "team-city-50",
                     ),
                 away =
                     FixtureInfoModel.TeamInfo(
@@ -49,6 +51,7 @@ class MatchDataMapperTest {
                         name = "Liverpool",
                         koreanName = null,
                         logo = "https://liverpool-logo.png",
+                        teamUid = "team-liverpool-51",
                     ),
             )
 
@@ -126,6 +129,7 @@ class MatchDataMapperTest {
                                 formation = null,
                                 players = emptyList(),
                                 substitutes = emptyList(),
+                                teamUid = "",
                             ),
                         away =
                             FixtureLineupModel.StartLineup(
@@ -135,6 +139,7 @@ class MatchDataMapperTest {
                                 formation = null,
                                 players = emptyList(),
                                 substitutes = emptyList(),
+                                teamUid = "",
                             ),
                     ),
             )
