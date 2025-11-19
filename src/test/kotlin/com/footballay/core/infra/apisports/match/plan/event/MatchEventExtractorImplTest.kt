@@ -644,7 +644,6 @@ class MatchEventExtractorImplTest {
         FullMatchSyncDto.FixtureDto(
             id = 12345L,
             referee = "Mike Dean",
-            timezone = "Europe/London",
             date = OffsetDateTime.of(2024, 1, 15, 20, 0, 0, 0, ZoneOffset.UTC),
             timestamp = 1705334400L,
             periods = FullMatchSyncDto.FixtureDto.PeriodsDto(first = 1705334400L, second = 1705338000L),
@@ -656,6 +655,7 @@ class MatchEventExtractorImplTest {
                     elapsed = 90,
                     extra = null,
                 ),
+            timezone = "UTC",
         )
 
     private fun createNormalLeague(): FullMatchSyncDto.LeagueDto =

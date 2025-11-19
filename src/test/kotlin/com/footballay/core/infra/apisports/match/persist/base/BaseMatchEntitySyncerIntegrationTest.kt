@@ -261,7 +261,6 @@ class BaseMatchEntitySyncerIntegrationTest {
         FixtureApiSportsDto(
             apiId = fixtureApiId,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam =
@@ -284,7 +283,6 @@ class BaseMatchEntitySyncerIntegrationTest {
         FixtureApiSportsDto(
             apiId = fixtureApiId,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam =
@@ -301,7 +299,6 @@ class BaseMatchEntitySyncerIntegrationTest {
         FixtureApiSportsDto(
             apiId = fixtureApiId,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             score =
@@ -337,7 +334,6 @@ class BaseMatchEntitySyncerIntegrationTest {
         FixtureApiSportsDto(
             apiId = fixtureApiId,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             status =

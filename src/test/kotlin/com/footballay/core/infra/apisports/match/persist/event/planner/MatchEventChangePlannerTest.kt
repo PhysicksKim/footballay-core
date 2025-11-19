@@ -95,7 +95,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(2)
-        assertThat(result.updateCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deleteCount).isEqualTo(0)
 
         // 생성된 엔티티 검증
@@ -141,10 +141,10 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(0)
-        assertThat(result.updateCount).isEqualTo(1)
+        assertThat(result.retainedCount).isEqualTo(1)
         assertThat(result.deleteCount).isEqualTo(0)
 
-        val updatedEvent = result.toUpdate[0]
+        val updatedEvent = result.toRetain[0]
         assertThat(updatedEvent.sequence).isEqualTo(1)
         assertThat(updatedEvent.elapsedTime).isEqualTo(15)
     }
@@ -183,7 +183,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(0)
-        assertThat(result.updateCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deleteCount).isEqualTo(0)
     }
 
@@ -226,7 +226,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(0)
-        assertThat(result.updateCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deleteCount).isEqualTo(1)
         assertThat(result.toDelete[0].sequence).isEqualTo(2)
     }
@@ -504,7 +504,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(1) // sequence 0은 새로 생성
-        assertThat(result.updateCount).isEqualTo(1) // sequence 1은 업데이트
+        assertThat(result.retainedCount).isEqualTo(1) // sequence 1은 업데이트
     }
 
     @Test
@@ -553,7 +553,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(1) // sequence 3만 새로 생성
-        assertThat(result.updateCount).isEqualTo(2) // sequence 0, 2는 업데이트
+        assertThat(result.retainedCount).isEqualTo(2) // sequence 0, 2는 업데이트
         assertThat(result.deleteCount).isEqualTo(1) // sequence 1만 삭제
         assertThat(result.toDelete[0].sequence).isEqualTo(1)
     }
@@ -593,7 +593,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(3)
-        assertThat(result.updateCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deleteCount).isEqualTo(0)
     }
 
@@ -630,7 +630,7 @@ class MatchEventChangePlannerTest {
 
         // then
         assertThat(result.createCount).isEqualTo(0)
-        assertThat(result.updateCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deleteCount).isEqualTo(2)
     }
 
@@ -734,7 +734,6 @@ class MatchEventChangePlannerTest {
         FixtureApiSports(
             apiId = 1L,
             referee = null,
-            timezone = "UTC",
             date = null,
             round = null,
             status = null,

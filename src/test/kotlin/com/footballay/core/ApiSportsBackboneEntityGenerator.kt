@@ -203,7 +203,6 @@ class ApiSportsBackboneEntityGenerator(
                     core = null, // Core는 별도로 생성하지 않음
                     apiId = fixtureConfig.apiId,
                     referee = fixtureConfig.referee,
-                    timezone = "UTC",
                     date = fixtureConfig.kickoffTime,
                     round = fixtureConfig.round,
                     status =

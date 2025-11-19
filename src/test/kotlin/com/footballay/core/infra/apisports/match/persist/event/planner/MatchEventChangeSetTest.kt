@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
  * MatchEventChangeSet의 편의 메서드들과 기능들을 테스트합니다.
  *
  * **테스트 대상:**
- * - 편의 메서드들 (totalCount, createCount, updateCount, deleteCount)
+ * - 편의 메서드들 (totalCount, createCount, retainedCount, deleteCount)
  * - hasChanges() 메서드
  * - empty() 팩토리 메서드
  */
@@ -31,7 +31,7 @@ class MatchEventChangeSetTest {
         // when & then
         assertThat(changeSet.totalCount).isEqualTo(6) // 2 + 1 + 3
         assertThat(changeSet.createCount).isEqualTo(2)
-        assertThat(changeSet.updateCount).isEqualTo(1)
+        assertThat(changeSet.retainedCount).isEqualTo(1)
         assertThat(changeSet.deleteCount).isEqualTo(3)
     }
 
@@ -44,7 +44,7 @@ class MatchEventChangeSetTest {
         // when & then
         assertThat(changeSet.totalCount).isEqualTo(0)
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(0)
+        assertThat(changeSet.retainedCount).isEqualTo(0)
         assertThat(changeSet.deleteCount).isEqualTo(0)
     }
 
@@ -55,7 +55,7 @@ class MatchEventChangeSetTest {
         val changeSet =
             MatchEventChangeSet(
                 toCreate = listOf(createMockEvent(0)),
-                toUpdate = emptyList(),
+                toRetain = emptyList(),
                 toDelete = emptyList(),
             )
 
@@ -81,7 +81,7 @@ class MatchEventChangeSetTest {
 
         // then
         assertThat(changeSet.toCreate).isEmpty()
-        assertThat(changeSet.toUpdate).isEmpty()
+        assertThat(changeSet.toRetain).isEmpty()
         assertThat(changeSet.toDelete).isEmpty()
         assertThat(changeSet.hasChanges()).isFalse()
     }
@@ -93,7 +93,7 @@ class MatchEventChangeSetTest {
         val createOnly =
             MatchEventChangeSet(
                 toCreate = listOf(createMockEvent(0)),
-                toUpdate = emptyList(),
+                toRetain = emptyList(),
                 toDelete = emptyList(),
             )
 
@@ -101,7 +101,7 @@ class MatchEventChangeSetTest {
         val updateOnly =
             MatchEventChangeSet(
                 toCreate = emptyList(),
-                toUpdate = listOf(createMockEvent(1)),
+                toRetain = listOf(createMockEvent(1)),
                 toDelete = emptyList(),
             )
 
@@ -109,7 +109,7 @@ class MatchEventChangeSetTest {
         val deleteOnly =
             MatchEventChangeSet(
                 toCreate = emptyList(),
-                toUpdate = emptyList(),
+                toRetain = emptyList(),
                 toDelete = listOf(createMockEvent(2)),
             )
 

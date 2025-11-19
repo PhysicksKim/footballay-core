@@ -13,7 +13,7 @@ import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import java.time.Duration
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * ApiSports Match Data Sync Facade implementation
@@ -82,7 +82,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 )
 
             log.info(
-                "Match sync completed - Created: ${syncResult.createdCount}, Updated: ${syncResult.updatedCount}, Deleted: ${syncResult.deletedCount}",
+                "Match sync completed - Created: ${syncResult.createdCount}, Retained: ${syncResult.retainedCount}, Deleted: ${syncResult.deletedCount}",
             )
 
             // 경기 상태에 따른 상세 Result 반환
@@ -91,7 +91,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
             log.error("Failed to sync match data for fixture: {}", fixtureApiId, e)
             return MatchDataSyncResult.Error(
                 message = "Match data sync failed: ${e.message}",
-                kickoffTime = dto.fixture.date,
+                kickoffTime = dto.fixture.date?.toInstant(),
             )
         }
     }
@@ -114,7 +114,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
         lineupDto: MatchLineupPlanDto,
     ): MatchDataSyncResult {
         val statusShort = dto.fixture.status.short
-        val kickoffTime = dto.fixture.date
+        val kickoffTime = dto.fixture.date?.toInstant()
         val elapsedMin = dto.fixture.status.elapsed
 
         return when {
@@ -192,11 +192,11 @@ class ApiSportsMatchEntitySyncFacadeImpl(
      * @return 킥오프까지 minutes 이내이면 true
      */
     private fun isKickoffWithinMinutes(
-        kickoffTime: OffsetDateTime?,
+        kickoffTime: Instant?,
         minutes: Long,
     ): Boolean {
         if (kickoffTime == null) return false
-        val now = OffsetDateTime.now()
+        val now = Instant.now()
         val minutesUntilKickoff = Duration.between(now, kickoffTime).toMinutes()
         return minutesUntilKickoff <= minutes
     }
@@ -205,15 +205,15 @@ class ApiSportsMatchEntitySyncFacadeImpl(
      * 경기 종료 후 경과 시간 계산 (분 단위)
      */
     private fun calculateMinutesSinceFinish(
-        kickoffTime: OffsetDateTime?,
+        kickoffTime: Instant?,
         elapsedMin: Int?,
     ): Long {
         if (kickoffTime == null || elapsedMin == null) {
             return 0L
         }
 
-        val now = OffsetDateTime.now()
-        val matchEndTime = kickoffTime.plusMinutes(elapsedMin.toLong())
+        val now = Instant.now()
+        val matchEndTime = kickoffTime.plusSeconds(elapsedMin.toLong() * 60)
         return Duration.between(matchEndTime, now).toMinutes().coerceAtLeast(0)
     }
 

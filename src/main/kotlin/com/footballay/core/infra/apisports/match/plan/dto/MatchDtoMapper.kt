@@ -25,7 +25,6 @@ class MatchDtoMapper {
         FixtureApiSportsDto(
             apiId = fixture.apiId,
             referee = fixture.referee,
-            timezone = fixture.timezone,
             date = fixture.date,
             round = fixture.round,
             venue = fixture.venue?.let { toVenueDto(it) },

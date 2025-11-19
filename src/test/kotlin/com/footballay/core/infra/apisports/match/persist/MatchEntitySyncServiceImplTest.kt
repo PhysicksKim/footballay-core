@@ -100,7 +100,7 @@ class MatchEntitySyncServiceImplTest {
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedPlayers = savedPlayers,
             ),
@@ -109,7 +109,7 @@ class MatchEntitySyncServiceImplTest {
             MatchEventProcessResult(
                 totalEvents = 1,
                 createdCount = 1,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedEvents = listOf(createMockMatchEvent()),
             ),
@@ -123,7 +123,7 @@ class MatchEntitySyncServiceImplTest {
             PlayerStatsProcessResult(
                 totalStats = 2,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedStats = savedPlayerStats,
             ),
@@ -133,7 +133,7 @@ class MatchEntitySyncServiceImplTest {
                 hasHome = true,
                 hasAway = true,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 homeTeamStat = null,
                 awayTeamStat = null,
             ),
@@ -154,7 +154,7 @@ class MatchEntitySyncServiceImplTest {
         // then
         assertThat(result.success).isTrue()
         assertThat(result.createdCount).isEqualTo(7) // 2 players + 1 event + 2 playerStats + 2 teamStats
-        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.playerChanges.created).isEqualTo(2)
         assertThat(result.eventChanges.created).isEqualTo(1)
@@ -294,7 +294,7 @@ class MatchEntitySyncServiceImplTest {
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedPlayers =
                     listOf(
@@ -307,7 +307,7 @@ class MatchEntitySyncServiceImplTest {
             MatchEventProcessResult(
                 totalEvents = 1,
                 createdCount = 1,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedEvents = listOf(createMockMatchEvent()),
             ),
@@ -316,7 +316,7 @@ class MatchEntitySyncServiceImplTest {
             PlayerStatsProcessResult(
                 totalStats = 2,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedStats = savedPlayerStats,
             ),
@@ -326,7 +326,7 @@ class MatchEntitySyncServiceImplTest {
                 hasHome = true,
                 hasAway = true,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 homeTeamStat = null,
                 awayTeamStat = null,
             ),
@@ -347,7 +347,7 @@ class MatchEntitySyncServiceImplTest {
         // then
         assertThat(result.success).isTrue()
         assertThat(result.createdCount).isEqualTo(7) // 2 players + 1 event + 2 playerStats + 2 teamStats
-        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.playerChanges.created).isEqualTo(2)
         assertThat(result.eventChanges.created).isEqualTo(1)
@@ -391,7 +391,7 @@ class MatchEntitySyncServiceImplTest {
             MatchPlayerProcessResult(
                 totalPlayers = 2,
                 createdCount = 2,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedPlayers =
                     listOf(
@@ -404,7 +404,7 @@ class MatchEntitySyncServiceImplTest {
             MatchEventProcessResult(
                 totalEvents = 1,
                 createdCount = 1,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 savedEvents = listOf(createMockMatchEvent()),
             ),
@@ -436,7 +436,6 @@ class MatchEntitySyncServiceImplTest {
         FixtureApiSportsDto(
             apiId = 12345L,
             referee = "Test Referee",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Round 1",
             status =
@@ -566,7 +565,6 @@ class MatchEntitySyncServiceImplTest {
         return FixtureApiSports(
             apiId = 12345L,
             referee = "Test Referee",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Round 1",
             status = null,

@@ -64,9 +64,9 @@ class MatchEventManager(
                     entityBundle.allMatchPlayers,
                 )
             log.info(
-                "event change plan - Create: {}, Update: {}, Delete: {}",
+                "event change plan - Create: {}, Retain: {}, Delete: {}",
                 eventChangeSet.createCount,
-                eventChangeSet.updateCount,
+                eventChangeSet.retainedCount,
                 eventChangeSet.deleteCount,
             )
 
@@ -81,7 +81,7 @@ class MatchEventManager(
             return MatchEventProcessResult(
                 totalEvents = sortedEvents.size,
                 createdCount = eventChangeSet.createCount,
-                updatedCount = eventChangeSet.updateCount,
+                retainedCount = eventChangeSet.retainedCount,
                 deletedCount = eventChangeSet.deleteCount,
                 savedEvents = sortedEvents,
             )
@@ -127,9 +127,9 @@ class MatchEventManager(
                 log.info("Deleted {} MatchEvents", changeSet.toDelete.size)
             }
 
-            // 2. 생성 및 업데이트 처리 - 새로운 이벤트 생성과 기존 이벤트 수정을 배치로 처리
-            if (changeSet.toCreate.isNotEmpty() || changeSet.toUpdate.isNotEmpty()) {
-                val eventsToSave = changeSet.toCreate + changeSet.toUpdate
+            // 2. 생성 및 유지 처리 - 새로운 이벤트 생성과 기존 이벤트 유지를 배치로 처리
+            if (changeSet.toCreate.isNotEmpty() || changeSet.toRetain.isNotEmpty()) {
+                val eventsToSave = changeSet.toCreate + changeSet.toRetain
                 val savedEvents = matchEventRepository.saveAll(eventsToSave)
                 allEvents.addAll(savedEvents)
                 log.info("Saved {} MatchEvents", savedEvents.size)
@@ -137,7 +137,7 @@ class MatchEventManager(
         } catch (e: Exception) {
             log.error("Error during event persistence, creating empty events for failed ones", e)
             // 실패한 이벤트들을 빈 이벤트로 대체 - 다른 이벤트에 영향 없도록 격리
-            val failedEvents = changeSet.toCreate + changeSet.toUpdate
+            val failedEvents = changeSet.toCreate + changeSet.toRetain
             val emptyEvents = createEmptyEventsForFailed(failedEvents)
             allEvents.addAll(emptyEvents)
         }
@@ -167,7 +167,7 @@ class MatchEventManager(
 data class MatchEventProcessResult(
     val totalEvents: Int,
     val createdCount: Int,
-    val updatedCount: Int,
+    val retainedCount: Int,
     val deletedCount: Int,
     val savedEvents: List<ApiSportsMatchEvent>,
 )

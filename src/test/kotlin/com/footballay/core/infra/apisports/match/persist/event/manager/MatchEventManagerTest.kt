@@ -68,7 +68,7 @@ class MatchEventManagerTest {
         // then
         assertThat(result.totalEvents).isEqualTo(2)
         assertThat(result.createdCount).isEqualTo(2)
-        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.savedEvents).isEqualTo(savedEvents.sortedBy { it.sequence })
         assertThat(entityBundle.allEvents).isEqualTo(savedEvents.sortedBy { it.sequence })
@@ -238,7 +238,7 @@ class MatchEventManagerTest {
         verify { matchEventRepository.deleteAll(any<List<ApiSportsMatchEvent>>()) }
         assertThat(result.totalEvents).isEqualTo(0)
         assertThat(result.createdCount).isEqualTo(0)
-        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(1)
     }
 

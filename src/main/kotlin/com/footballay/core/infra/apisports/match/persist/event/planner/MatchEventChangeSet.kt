@@ -9,7 +9,7 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  *
  * **구성 요소:**
  * - **toCreate**: 새로 생성할 Event 엔티티들 (sequence 순으로 정렬됨)
- * - **toUpdate**: 기존 Event 엔티티에서 변경할 것들 (sequence 순으로 정렬됨)
+ * - **toRetain**: DTO와 매칭되어 유지될 Event 엔티티들 (변경 여부와 무관, sequence 순으로 정렬됨)
  * - **toDelete**: 삭제할 Event 엔티티들 (sequence 순으로 정렬됨)
  *
  * **사용 목적:**
@@ -28,17 +28,17 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  */
 data class MatchEventChangeSet(
     val toCreate: List<ApiSportsMatchEvent>,
-    val toUpdate: List<ApiSportsMatchEvent>,
+    val toRetain: List<ApiSportsMatchEvent>,
     val toDelete: List<ApiSportsMatchEvent>,
 ) {
     /**
      * 전체 변경 작업 개수
      *
-     * 생성, 수정, 삭제 작업의 총 개수를 반환합니다.
+     * 생성, 유지, 삭제 작업의 총 개수를 반환합니다.
      *
      * @return 전체 변경 작업 개수
      */
-    val totalCount: Int get() = toCreate.size + toUpdate.size + toDelete.size
+    val totalCount: Int get() = toCreate.size + toRetain.size + toDelete.size
 
     /**
      * 생성할 Event 개수
@@ -50,13 +50,13 @@ data class MatchEventChangeSet(
     val createCount: Int get() = toCreate.size
 
     /**
-     * 수정할 Event 개수
+     * 유지할 Event 개수
      *
-     * 기존 Event 엔티티에서 수정할 개수를 반환합니다.
+     * DTO와 매칭되어 유지될 Event 엔티티 개수를 반환합니다 (변경 여부와 무관).
      *
-     * @return 수정할 Event 개수
+     * @return 유지할 Event 개수
      */
-    val updateCount: Int get() = toUpdate.size
+    val retainedCount: Int get() = toRetain.size
 
     /**
      * 삭제할 Event 개수
@@ -87,7 +87,7 @@ data class MatchEventChangeSet(
         fun empty(): MatchEventChangeSet =
             MatchEventChangeSet(
                 toCreate = emptyList(),
-                toUpdate = emptyList(),
+                toRetain = emptyList(),
                 toDelete = emptyList(),
             )
     }

@@ -10,13 +10,13 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  * **특징:**
  * - PlayerStats와 달리 복잡한 ChangeSet 불필요
  * - Home/Away 2개만 처리하므로 간단한 구조
- * - 생성/업데이트 여부만 추적
+ * - 생성/유지 여부만 추적 (변경 여부와 무관)
  */
 data class TeamStatsProcessResult(
     val hasHome: Boolean,
     val hasAway: Boolean,
     val createdCount: Int,
-    val updatedCount: Int,
+    val retainedCount: Int,
     val homeTeamStat: ApiSportsMatchTeamStatistics?,
     val awayTeamStat: ApiSportsMatchTeamStatistics?,
 ) {
@@ -29,7 +29,7 @@ data class TeamStatsProcessResult(
                 hasHome = false,
                 hasAway = false,
                 createdCount = 0,
-                updatedCount = 0,
+                retainedCount = 0,
                 homeTeamStat = null,
                 awayTeamStat = null,
             )

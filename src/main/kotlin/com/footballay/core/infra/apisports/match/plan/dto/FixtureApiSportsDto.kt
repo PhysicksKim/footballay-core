@@ -5,7 +5,6 @@ import java.time.Instant
 data class FixtureApiSportsDto(
     val apiId: Long,
     val referee: String?,
-    val timezone: String?,
     val date: Instant?,
     val round: String?,
     val status: StatusDto? = null,

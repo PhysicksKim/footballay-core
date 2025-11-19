@@ -64,7 +64,6 @@ class FixtureApiSportsFactory(
             venue = venue,
             season = season,
             referee = dto.referee,
-            timezone = dto.timezone,
             date = parseInstant(dto.date),
             round = dto.round,
             status = fixtureDataMapper.mapStatusToApi(dto.status),
@@ -115,7 +114,6 @@ class FixtureApiSportsFactory(
             this.venue = venue
             this.season = season
             this.referee = dto.referee
-            this.timezone = dto.timezone
             this.date = parseInstant(dto.date)
             this.round = dto.round
             this.status = fixtureDataMapper.mapStatusToApi(dto.status)

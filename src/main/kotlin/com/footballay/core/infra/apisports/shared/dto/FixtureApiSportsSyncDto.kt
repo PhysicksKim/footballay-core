@@ -3,7 +3,6 @@ package com.footballay.core.infra.apisports.shared.dto
 data class FixtureApiSportsSyncDto(
     var apiId: Long? = null,
     var referee: String? = null,
-    var timezone: String? = null,
     var date: String? = null,
     var timestamp: Long? = null,
     var round: String? = null,

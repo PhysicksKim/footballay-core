@@ -1,6 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * Match 동기화 결과를 나타내는 sealed class
@@ -27,7 +27,7 @@ sealed class MatchDataSyncResult {
      */
     data class PreMatch(
         val lineupCached: Boolean,
-        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
+        val kickoffTime: Instant?,
         val shouldTerminatePreMatchJob: Boolean,
     ) : MatchDataSyncResult()
 
@@ -43,7 +43,7 @@ sealed class MatchDataSyncResult {
      * @property statusShort 경기 상태 축약 코드 (NS, 1H, HT, 2H, FT 등)
      */
     data class Live(
-        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
+        val kickoffTime: Instant?,
         val isMatchFinished: Boolean,
         val elapsedMin: Int?,
         val statusShort: String,
@@ -60,7 +60,7 @@ sealed class MatchDataSyncResult {
      * @property minutesSinceFinish 경기 종료 후 경과 시간 (분)
      */
     data class PostMatch(
-        val kickoffTime: OffsetDateTime?, // TODO : Instant로 변경 검토
+        val kickoffTime: Instant?,
         val shouldStopPolling: Boolean,
         val minutesSinceFinish: Long,
     ) : MatchDataSyncResult()
@@ -76,7 +76,7 @@ sealed class MatchDataSyncResult {
      */
     data class Error(
         val message: String,
-        val kickoffTime: OffsetDateTime?, // TODO: 필요 없는 필드인지 검토
+        val kickoffTime: Instant?,
     ) : MatchDataSyncResult()
 
     companion object {
@@ -85,7 +85,7 @@ sealed class MatchDataSyncResult {
          * @deprecated Use PostMatch instead
          */
         @Deprecated("Use PostMatch for more detailed result", ReplaceWith("PostMatch"))
-        fun finished(kickoffTime: OffsetDateTime?): Live =
+        fun finished(kickoffTime: Instant?): Live =
             Live(
                 kickoffTime = kickoffTime,
                 isMatchFinished = true,
@@ -98,7 +98,7 @@ sealed class MatchDataSyncResult {
          * @deprecated Use Live or PreMatch instead
          */
         @Deprecated("Use Live or PreMatch for more detailed result", ReplaceWith("Live"))
-        fun ongoing(kickoffTime: OffsetDateTime?): Live =
+        fun ongoing(kickoffTime: Instant?): Live =
             Live(
                 kickoffTime = kickoffTime,
                 isMatchFinished = false,

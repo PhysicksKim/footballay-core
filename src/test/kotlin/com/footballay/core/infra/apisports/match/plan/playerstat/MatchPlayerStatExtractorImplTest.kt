@@ -418,12 +418,12 @@ class MatchPlayerStatExtractorImplTest {
                 FullMatchSyncDto.FixtureDto(
                     id = 1L,
                     referee = "Test Referee",
-                    timezone = "UTC",
                     date = OffsetDateTime.now(),
                     timestamp = 1234567890L,
                     periods = FullMatchSyncDto.FixtureDto.PeriodsDto(1234567890L, 1234567890L),
                     venue = FullMatchSyncDto.FixtureDto.VenueDto(1L, "Test Venue", "Test City"),
                     status = FullMatchSyncDto.FixtureDto.StatusDto("Finished", "FT", 90, 0),
+                    timezone = "UTC",
                 ),
             league =
                 FullMatchSyncDto.LeagueDto(

@@ -198,7 +198,6 @@ class BaseMatchEntitySyncerTest {
         FixtureApiSportsDto(
             apiId = 12345L,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             status =
@@ -241,7 +240,6 @@ class BaseMatchEntitySyncerTest {
         FixtureApiSportsDto(
             apiId = 12345L,
             referee = "Michael Oliver",
-            timezone = "UTC",
             date = java.time.Instant.now(),
             round = "Regular Season - 10",
             homeTeam = null,

@@ -1,7 +1,6 @@
 package com.footballay.core.infra.apisports.match.persist.player.planner
 
 import com.footballay.core.infra.apisports.match.plan.dto.MatchPlayerDto
-import com.footballay.core.infra.apisports.match.persist.player.planner.MatchPlayerChangePlanner
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer
 import com.footballay.core.infra.util.UidGenerator
@@ -69,7 +68,7 @@ class MatchPlayerChangePlannerTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(2)
-        assertThat(changeSet.updateCount).isEqualTo(0)
+        assertThat(changeSet.retainedCount).isEqualTo(0)
         assertThat(changeSet.deleteCount).isEqualTo(0)
 
         val createEntities = changeSet.toCreate
@@ -108,10 +107,10 @@ class MatchPlayerChangePlannerTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(1) // 변경사항이 있는 1개만
+        assertThat(changeSet.retainedCount).isEqualTo(2) // 변경사항이 있는 1개만
         assertThat(changeSet.deleteCount).isEqualTo(0)
 
-        val updateEntity = changeSet.toUpdate.first()
+        val updateEntity = changeSet.toRetain.find { it.playerApiSports?.apiId == 123L }!!
         assertThat(updateEntity.name).isEqualTo("New Name")
         assertThat(updateEntity.position).isEqualTo("Forward")
     }
@@ -134,12 +133,12 @@ class MatchPlayerChangePlannerTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(0)
+        assertThat(changeSet.retainedCount).isEqualTo(0)
         assertThat(changeSet.deleteCount).isEqualTo(2)
 
         val deleteEntities = changeSet.toDelete
         assertThat(deleteEntities).hasSize(2)
-        assertThat(deleteEntities.map { it.name }).containsExactlyInAnyOrder("Orphaned Player 1", "Orphaned Player 2")
+        assertThat(deleteEntities.map { it.name }).contains("Orphaned Player 1", "Orphaned Player 2")
     }
 
     @Test
@@ -167,13 +166,15 @@ class MatchPlayerChangePlannerTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(1) // unmatchedDto 1개
-        assertThat(changeSet.updateCount).isEqualTo(1) // 변경사항 있는 matched 1개
+        assertThat(changeSet.retainedCount).isEqualTo(2) // 업데이트1개 + 변경사항1개 = 2개
         assertThat(changeSet.deleteCount).isEqualTo(1) // orphaned 1개
-        assertThat(changeSet.totalCount).isEqualTo(3)
+        assertThat(changeSet.totalCount).isEqualTo(4)
 
         assertThat(changeSet.toCreate.first().name).isEqualTo("New Player")
-        assertThat(changeSet.toUpdate.first().name).isEqualTo("Updated Player")
-        assertThat(changeSet.toUpdate.first().number).isEqualTo(10)
+        assertThat(changeSet.toRetain).hasSize(2)
+        assertThat(changeSet.toRetain.map { it.name }).contains("Updated Player", "Same Player")
+        assertThat(changeSet.toRetain.find { it.number == 10 }?.name)
+            .isEqualTo("Updated Player") // 업데이트된 선수 확인
         assertThat(changeSet.toDelete.first().name).isEqualTo("Deleted Player")
     }
 
@@ -226,10 +227,10 @@ class MatchPlayerChangePlannerTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(0)
+        assertThat(changeSet.retainedCount).isEqualTo(0)
         assertThat(changeSet.deleteCount).isEqualTo(0)
         assertThat(changeSet.totalCount).isEqualTo(0)
-        assertThat(changeSet.hasChanges()).isFalse()
+        assertThat(changeSet.hasRetained()).isFalse()
     }
 
     // 테스트 헬퍼 메서드들

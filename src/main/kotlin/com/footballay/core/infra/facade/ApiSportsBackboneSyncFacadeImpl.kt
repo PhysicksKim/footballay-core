@@ -229,7 +229,6 @@ class ApiSportsBackboneSyncFacadeImpl(
         return FixtureApiSportsSyncDto(
             apiId = response.fixture.id,
             referee = response.fixture.referee,
-            timezone = response.fixture.timezone,
             date = response.fixture.date.toString(),
             timestamp = response.fixture.timestamp,
             round = response.league.round,

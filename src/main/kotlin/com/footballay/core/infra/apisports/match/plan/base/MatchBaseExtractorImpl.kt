@@ -23,7 +23,6 @@ class MatchBaseExtractorImpl : MatchBaseDtoExtractor {
         return FixtureApiSportsDto(
             apiId = dto.fixture.id,
             referee = dto.fixture.referee,
-            timezone = dto.fixture.timezone,
             date = dto.fixture.date?.toInstant(),
             round = dto.league.round,
             venue = mapVenue(dto.fixture.venue),

@@ -47,13 +47,13 @@ class TeamStatsManager(
 
         try {
             var createdCount = 0
-            var updatedCount = 0
+            var retainedCount = 0
 
             // 1. Home TeamStats 처리
             val homeTeamStat =
                 teamStatDto.homeStats?.let { dto ->
                     processTeamStat(dto, entityBundle.homeTeam, entityBundle.homeTeamStat).also {
-                        if (entityBundle.homeTeamStat == null) createdCount++ else updatedCount++
+                        if (entityBundle.homeTeamStat == null) createdCount++ else retainedCount++
                     }
                 }
 
@@ -61,7 +61,7 @@ class TeamStatsManager(
             val awayTeamStat =
                 teamStatDto.awayStats?.let { dto ->
                     processTeamStat(dto, entityBundle.awayTeam, entityBundle.awayTeamStat).also {
-                        if (entityBundle.awayTeamStat == null) createdCount++ else updatedCount++
+                        if (entityBundle.awayTeamStat == null) createdCount++ else retainedCount++
                     }
                 }
 
@@ -77,18 +77,18 @@ class TeamStatsManager(
             entityBundle.awayTeamStat = awayTeamStat
 
             log.info(
-                "TeamStats processing completed - Home: {}, Away: {}, Created: {}, Updated: {}",
+                "TeamStats processing completed - Home: {}, Away: {}, Created: {}, Retained: {}",
                 homeTeamStat != null,
                 awayTeamStat != null,
                 createdCount,
-                updatedCount,
+                retainedCount,
             )
 
             return TeamStatsProcessResult(
                 hasHome = homeTeamStat != null,
                 hasAway = awayTeamStat != null,
                 createdCount = createdCount,
-                updatedCount = updatedCount,
+                retainedCount = retainedCount,
                 homeTeamStat = homeTeamStat,
                 awayTeamStat = awayTeamStat,
             )

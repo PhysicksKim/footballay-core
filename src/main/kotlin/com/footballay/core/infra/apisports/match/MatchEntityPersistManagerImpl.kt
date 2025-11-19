@@ -103,7 +103,7 @@ class MatchEntityPersistManagerImpl(
             try {
                 val result = matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle)
                 log.info(
-                    "MatchPlayer processing completed - Total: ${result.totalPlayers}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                    "MatchPlayer processing completed - Total: ${result.totalPlayers}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
                 )
                 result
             } catch (e: Exception) {
@@ -119,7 +119,7 @@ class MatchEntityPersistManagerImpl(
             try {
                 val result = matchEventManager.processMatchEvents(eventDto, entityBundle)
                 log.info(
-                    "MatchEvent processing completed - Total: ${result.totalEvents}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                    "MatchEvent processing completed - Total: ${result.totalEvents}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
                 )
                 result
             } catch (e: Exception) {
@@ -132,7 +132,7 @@ class MatchEntityPersistManagerImpl(
             try {
                 val result = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
                 log.info(
-                    "PlayerStats processing completed - Total: ${result.totalStats}, Created: ${result.createdCount}, Updated: ${result.updatedCount}, Deleted: ${result.deletedCount}",
+                    "PlayerStats processing completed - Total: ${result.totalStats}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
                 )
                 result
             } catch (e: Exception) {
@@ -145,7 +145,7 @@ class MatchEntityPersistManagerImpl(
             try {
                 val result = teamStatsManager.processTeamStats(teamStatDto, entityBundle)
                 log.info(
-                    "TeamStats processing completed - Home: ${result.hasHome}, Away: ${result.hasAway}, Created: ${result.createdCount}, Updated: ${result.updatedCount}",
+                    "TeamStats processing completed - Home: ${result.hasHome}, Away: ${result.hasAway}, Created: ${result.createdCount}, Retained: ${result.retainedCount}",
                 )
                 result
             } catch (e: Exception) {
@@ -159,21 +159,21 @@ class MatchEntityPersistManagerImpl(
             createdCount =
                 matchPlayerResult.createdCount + matchEventResult.createdCount + playerStatsResult.createdCount +
                     teamStatsResult.createdCount,
-            updatedCount =
-                matchPlayerResult.updatedCount + matchEventResult.updatedCount + playerStatsResult.updatedCount +
-                    teamStatsResult.updatedCount,
+            retainedCount =
+                matchPlayerResult.retainedCount + matchEventResult.retainedCount + playerStatsResult.retainedCount +
+                    teamStatsResult.retainedCount,
             deletedCount =
                 matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
             playerChanges =
                 MatchPlayerSyncResult(
                     created = matchPlayerResult.createdCount,
-                    updated = matchPlayerResult.updatedCount,
+                    retained = matchPlayerResult.retainedCount,
                     deleted = matchPlayerResult.deletedCount,
                 ),
             eventChanges =
                 MatchEventSyncResult(
                     created = matchEventResult.createdCount,
-                    updated = matchEventResult.updatedCount,
+                    retained = matchEventResult.retainedCount,
                     deleted = matchEventResult.deletedCount,
                 ),
         )

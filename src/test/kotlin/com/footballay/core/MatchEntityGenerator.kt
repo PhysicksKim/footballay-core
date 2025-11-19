@@ -300,7 +300,6 @@ class MatchEntityGenerator(
                 core = fixtureCore,
                 apiId = config.fixtureApiId,
                 referee = config.referee,
-                timezone = "UTC",
                 date = config.kickoffTime,
                 round = config.round,
                 status =

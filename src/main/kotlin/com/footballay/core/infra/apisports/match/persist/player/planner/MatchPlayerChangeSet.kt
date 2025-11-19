@@ -9,24 +9,26 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  *
  * **구성 요소:**
  * - **toCreate**: 새로 생성할 엔티티들
- * - **toUpdate**: 기존 엔티티에서 변경할 것들
+ * - **toRetain**: DTO와 매칭되어 유지될 엔티티들 (변경 여부와 무관)
  * - **toDelete**: 삭제할 엔티티들
  */
 data class MatchPlayerChangeSet(
     val toCreate: List<ApiSportsMatchPlayer>,
-    val toUpdate: List<ApiSportsMatchPlayer>,
+    val toRetain: List<ApiSportsMatchPlayer>,
     val toDelete: List<ApiSportsMatchPlayer>,
+    // 변경 없는 것들
+    val toSame: List<ApiSportsMatchPlayer> = emptyList(),
 ) {
     // 편의 메서드들
-    val totalCount: Int get() = toCreate.size + toUpdate.size + toDelete.size
+    val totalCount: Int get() = toCreate.size + toRetain.size + toDelete.size + toSame.size
     val createCount: Int get() = toCreate.size
-    val updateCount: Int get() = toUpdate.size
+    val retainedCount: Int get() = toRetain.size
     val deleteCount: Int get() = toDelete.size
 
     /**
      * 변경 작업이 있는지 확인
      */
-    fun hasChanges(): Boolean = totalCount > 0
+    fun hasRetained(): Boolean = totalCount > 0
 
     companion object {
         /**
@@ -35,7 +37,7 @@ data class MatchPlayerChangeSet(
         fun empty(): MatchPlayerChangeSet =
             MatchPlayerChangeSet(
                 toCreate = emptyList(),
-                toUpdate = emptyList(),
+                toRetain = emptyList(),
                 toDelete = emptyList(),
             )
     }

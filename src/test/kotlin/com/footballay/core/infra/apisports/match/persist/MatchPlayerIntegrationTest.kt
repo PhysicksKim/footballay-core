@@ -64,7 +64,7 @@ class MatchPlayerIntegrationTest {
 
         // 3단계 결과: 변경 계획 검증
         assertThat(changeSet.createCount).isEqualTo(6) // 새로운 선수 6명
-        assertThat(changeSet.updateCount).isEqualTo(1) // 번호 변경된 선수 1명
+        assertThat(changeSet.retainedCount).isEqualTo(1) // 번호 변경된 선수 1명
         assertThat(changeSet.deleteCount).isEqualTo(1) // 고아 선수 1명
         assertThat(changeSet.totalCount).isEqualTo(8)
 
@@ -80,7 +80,7 @@ class MatchPlayerIntegrationTest {
         )
 
         // 업데이트될 선수 확인
-        val updatedPlayer = changeSet.toUpdate.first()
+        val updatedPlayer = changeSet.toRetain.first()
         assertThat(updatedPlayer.name).isEqualTo("Home Player 1")
         assertThat(updatedPlayer.number).isEqualTo(10) // 새로운 번호로 업데이트
 
@@ -129,18 +129,18 @@ class MatchPlayerIntegrationTest {
 
         // then
         assertThat(changeSet.createCount).isEqualTo(1) // New Player
-        assertThat(changeSet.updateCount).isEqualTo(1) // Updated Player (name, number, position 변경)
+        assertThat(changeSet.retainedCount).isEqualTo(1) // Updated Player (name, number, position 변경)
         assertThat(changeSet.deleteCount).isEqualTo(1) // Orphaned Player
 
         // 업데이트 내용 상세 확인
-        val updatedPlayer = changeSet.toUpdate.first()
+        val updatedPlayer = changeSet.toRetain.first()
         assertThat(updatedPlayer.name).isEqualTo("Updated Player")
         assertThat(updatedPlayer.number).isEqualTo(10)
         assertThat(updatedPlayer.position).isEqualTo("Forward")
     }
 
     @Test
-    @DisplayName("기존 엔티티와 새로운 DTO가 동일한 정보를 가지고 있을 때 변경 계획이 생성되지 않습니다")
+    @DisplayName("기존 엔티티와 새로운 DTO가 동일한 정보를 가지고 있을 때는 Retain으로 채워집니다")
     fun `변경사항이 없는 경우 빈 변경 계획이 반환된다`() {
         // given: 변경사항이 없는 상황
         val context = MatchPlayerContext()
@@ -166,9 +166,9 @@ class MatchPlayerIntegrationTest {
 
         // then: 변경사항 없음
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(0) // 변경사항 없어서 업데이트 안됨
+        assertThat(changeSet.retainedCount).isEqualTo(1)
         assertThat(changeSet.deleteCount).isEqualTo(0)
-        assertThat(changeSet.hasChanges()).isFalse()
+        assertThat(changeSet.hasRetained()).isTrue()
     }
 
     @Test
@@ -188,9 +188,9 @@ class MatchPlayerIntegrationTest {
         assertThat(collectedDtos).isEmpty()
         assertThat(entityKeyMap).isEmpty()
         assertThat(changeSet.createCount).isEqualTo(0)
-        assertThat(changeSet.updateCount).isEqualTo(0)
+        assertThat(changeSet.retainedCount).isEqualTo(0)
         assertThat(changeSet.deleteCount).isEqualTo(0)
-        assertThat(changeSet.hasChanges()).isFalse()
+        assertThat(changeSet.hasRetained()).isFalse()
     }
 
     // 테스트 헬퍼 메서드들

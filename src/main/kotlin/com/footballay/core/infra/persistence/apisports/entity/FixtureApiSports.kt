@@ -20,7 +20,13 @@ data class FixtureApiSports(
     @Column(name = "api_id", unique = true, nullable = false)
     var apiId: Long,
     var referee: String? = null,
-    var timezone: String? = null,
+    /**
+     * 경기 시작 시간 (API 응답 값).
+     *
+     * **Important**: 이 값은 항상 UTC로 저장됩니다.
+     * API 응답에서 받은 OffsetDateTime(시간대 정보 포함)을 Instant로 변환하여 저장하므로,
+     * 데이터베이스에는 UTC 기준 시간이 저장됩니다.
+     */
     var date: Instant? = null,
     var round: String? = null,
     /**
@@ -55,7 +61,7 @@ data class FixtureApiSports(
     var events: MutableList<ApiSportsMatchEvent> = mutableListOf(),
 ) {
     override fun toString(): String =
-        "FixtureApiSports(id=$id, core.id=${core?.id}, apiId=$apiId, referee=$referee, timezone=$timezone, " +
+        "FixtureApiSports(id=$id, core.id=${core?.id}, apiId=$apiId, referee=$referee, " +
             "date=$date, round=$round, venue.id=${venue?.id}, status=$status, " +
             "score=$score, homeTeam.id=${homeTeam?.id}, awayTeam.id=${awayTeam?.id})"
 }

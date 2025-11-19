@@ -72,9 +72,9 @@ class PlayerStatsManager(
                     entityBundle.allMatchPlayers,
                 )
             log.info(
-                "Planned changes - Create: {}, Update: {}, Delete: {}",
+                "Planned changes - Create: {}, Retain: {}, Delete: {}",
                 statsChangeSet.createCount,
-                statsChangeSet.updateCount,
+                statsChangeSet.retainedCount,
                 statsChangeSet.deleteCount,
             )
 
@@ -103,7 +103,7 @@ class PlayerStatsManager(
             return PlayerStatsProcessResult(
                 totalStats = savedStats.size,
                 createdCount = statsChangeSet.createCount,
-                updatedCount = statsChangeSet.updateCount,
+                retainedCount = statsChangeSet.retainedCount,
                 deletedCount = statsChangeSet.deleteCount,
                 savedStats = savedStats,
             )
@@ -143,9 +143,9 @@ class PlayerStatsManager(
                     playerStats
                 }.filterNotNull()
 
-        // 3. 수정할 통계: 기존 통계 업데이트
-        val statsToUpdate =
-            statsChangeSet.toUpdate.map { (existingStats, statsDto) ->
+        // 3. 유지할 통계: 기존 통계 업데이트 (변경 여부와 무관)
+        val statsToRetain =
+            statsChangeSet.toRetain.map { (existingStats, statsDto) ->
                 updateStats(existingStats, statsDto)
 
                 log.debug("Updated player statistics for: {} ({})", existingStats.matchPlayer?.name, statsDto.playerKey)
@@ -153,14 +153,14 @@ class PlayerStatsManager(
             }
 
         // 4. 배치 저장 (성능 최적화)
-        val allStatsToSave = statsToCreate + statsToUpdate
+        val allStatsToSave = statsToCreate + statsToRetain
         if (allStatsToSave.isNotEmpty()) {
             val savedStats = playerStatsRepository.saveAll(allStatsToSave)
             log.info(
-                "Saved {} player statistics (Create: {}, Update: {})",
+                "Saved {} player statistics (Create: {}, Retain: {})",
                 savedStats.size,
                 statsToCreate.size,
-                statsToUpdate.size,
+                statsToRetain.size,
             )
 
             // 5. 영속화 후 MatchPlayer와 연관관계 설정

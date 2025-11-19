@@ -5,7 +5,7 @@ package com.footballay.core.infra.apisports.syncer.match.persist.result
  */
 data class MatchEntitySyncResult(
     val createdCount: Int,
-    val updatedCount: Int,
+    val retainedCount: Int,
     val deletedCount: Int,
     val playerChanges: MatchPlayerSyncResult,
     val eventChanges: MatchEventSyncResult,
@@ -15,14 +15,14 @@ data class MatchEntitySyncResult(
     companion object {
         fun success(
             createdCount: Int,
-            updatedCount: Int,
+            retainedCount: Int,
             deletedCount: Int,
             playerChanges: MatchPlayerSyncResult,
             eventChanges: MatchEventSyncResult,
         ): MatchEntitySyncResult =
             MatchEntitySyncResult(
                 createdCount = createdCount,
-                updatedCount = updatedCount,
+                retainedCount = retainedCount,
                 deletedCount = deletedCount,
                 playerChanges = playerChanges,
                 eventChanges = eventChanges,
@@ -32,7 +32,7 @@ data class MatchEntitySyncResult(
         fun failure(errorMessage: String): MatchEntitySyncResult =
             MatchEntitySyncResult(
                 createdCount = 0,
-                updatedCount = 0,
+                retainedCount = 0,
                 deletedCount = 0,
                 playerChanges = MatchPlayerSyncResult.empty(),
                 eventChanges = MatchEventSyncResult.empty(),
@@ -47,7 +47,7 @@ data class MatchEntitySyncResult(
  */
 data class MatchPlayerSyncResult(
     val created: Int,
-    val updated: Int,
+    val retained: Int,
     val deleted: Int,
     val skipped: Int = 0,
 ) {
@@ -61,7 +61,7 @@ data class MatchPlayerSyncResult(
  */
 data class MatchEventSyncResult(
     val created: Int,
-    val updated: Int,
+    val retained: Int,
     val deleted: Int,
     val skipped: Int = 0,
 ) {

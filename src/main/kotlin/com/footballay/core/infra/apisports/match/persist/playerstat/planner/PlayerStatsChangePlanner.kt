@@ -73,7 +73,7 @@ object PlayerStatsChangePlanner {
         matchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): PlayerStatsChangeSet {
         val toCreate = mutableListOf<PlayerStatsDto>()
-        val toUpdate = mutableListOf<Pair<ApiSportsMatchPlayerStatistics, PlayerStatsDto>>()
+        val toRetain = mutableListOf<Pair<ApiSportsMatchPlayerStatistics, PlayerStatsDto>>()
         val toDelete = mutableListOf<ApiSportsMatchPlayerStatistics>()
 
         // 새로운 통계 처리
@@ -92,9 +92,9 @@ object PlayerStatsChangePlanner {
                 toCreate.add(newStat)
                 log.debug("Planned to create statistics for: {} ({})", matchPlayer.name, newStat.playerKey)
             } else {
-                // 기존 통계가 있으면 수정
-                toUpdate.add(existingStat to newStat)
-                log.debug("Planned to update statistics for: {} ({})", matchPlayer.name, newStat.playerKey)
+                // 기존 통계가 있으면 유지 (변경 여부와 무관)
+                toRetain.add(existingStat to newStat)
+                log.debug("Planned to retain statistics for: {} ({})", matchPlayer.name, newStat.playerKey)
             }
         }
 
@@ -107,11 +107,11 @@ object PlayerStatsChangePlanner {
             }
         }
 
-        log.info("Planned changes - Create: {}, Update: {}, Delete: {}", toCreate.size, toUpdate.size, toDelete.size)
+        log.info("Planned changes - Create: {}, Retain: {}, Delete: {}", toCreate.size, toRetain.size, toDelete.size)
 
         return PlayerStatsChangeSet(
             toCreate = toCreate,
-            toUpdate = toUpdate,
+            toRetain = toRetain,
             toDelete = toDelete,
         )
     }

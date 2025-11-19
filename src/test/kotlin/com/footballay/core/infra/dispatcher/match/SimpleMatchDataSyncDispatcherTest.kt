@@ -14,7 +14,7 @@ import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.quartz.JobKey
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * SimpleMatchDataSyncDispatcher 단위 테스트
@@ -52,7 +52,7 @@ class SimpleMatchDataSyncDispatcherTest {
         val result =
             MatchDataSyncResult.PreMatch(
                 lineupCached = true,
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 shouldTerminatePreMatchJob = true,
             )
 
@@ -79,7 +79,7 @@ class SimpleMatchDataSyncDispatcherTest {
         val result =
             MatchDataSyncResult.PreMatch(
                 lineupCached = false,
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 shouldTerminatePreMatchJob = false,
             )
 
@@ -104,7 +104,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         val result =
             MatchDataSyncResult.Live(
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 isMatchFinished = true,
                 elapsedMin = 90,
                 statusShort = "FT",
@@ -133,7 +133,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         val result =
             MatchDataSyncResult.Live(
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 isMatchFinished = false,
                 elapsedMin = 45,
                 statusShort = "HT",
@@ -160,7 +160,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         val result =
             MatchDataSyncResult.PostMatch(
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 shouldStopPolling = true,
                 minutesSinceFinish = 65,
             )
@@ -186,7 +186,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         val result =
             MatchDataSyncResult.PostMatch(
-                kickoffTime = OffsetDateTime.now(),
+                kickoffTime = Instant.now(),
                 shouldStopPolling = false,
                 minutesSinceFinish = 30,
             )

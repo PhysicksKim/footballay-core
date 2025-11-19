@@ -97,7 +97,6 @@ class BaseMatchEntityManager(
     ) {
         fixture.apply {
             referee = baseDto.referee ?: referee
-            timezone = baseDto.timezone ?: timezone
             date = baseDto.date ?: date
             round = baseDto.round ?: round
 

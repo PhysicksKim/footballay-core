@@ -9,14 +9,14 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  *
  * @param totalStats 총 처리된 통계 수
  * @param createdCount 새로 생성된 통계 수
- * @param updatedCount 수정된 통계 수
+ * @param retainedCount DTO와 매칭되어 유지된 통계 수 (변경 여부와 무관)
  * @param deletedCount 삭제된 통계 수
  * @param savedStats 저장된 PlayerStats 목록
  */
 data class PlayerStatsProcessResult(
     val totalStats: Int,
     val createdCount: Int,
-    val updatedCount: Int,
+    val retainedCount: Int,
     val deletedCount: Int,
     val savedStats: List<ApiSportsMatchPlayerStatistics>,
 )

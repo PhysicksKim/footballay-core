@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
@@ -53,6 +55,7 @@ class AdminFixtureQueryWebServiceImpl(
         leagueApiId: Long,
         at: Instant?,
         mode: String,
+        zoneId: ZoneId,
     ): List<FixtureSummaryDto> {
         val targetInstant = at ?: Instant.now(clock)
 
@@ -64,8 +67,8 @@ class AdminFixtureQueryWebServiceImpl(
 
         val fixtures =
             when (mode) {
-                "exact" -> findFixturesOnExactDate(leagueUid, targetInstant)
-                "nearest" -> findFixturesOnNearestDate(leagueUid, targetInstant)
+                "exact" -> findFixturesOnExactDate(leagueUid, targetInstant, zoneId)
+                "nearest" -> findFixturesOnNearestDate(leagueUid, targetInstant, zoneId)
                 else -> emptyList()
             }
 
@@ -83,13 +86,15 @@ class AdminFixtureQueryWebServiceImpl(
      *
      * @param leagueUid 리그 UID
      * @param at 기준 시각. 날짜만 사용됨
+     * @param zoneId 날짜 계산 기준 타임존
      * @return FixtureCore 리스트
      */
     private fun findFixturesOnExactDate(
         leagueUid: String,
         at: Instant,
+        zoneId: ZoneId,
     ): List<FixtureCore> {
-        val (start, end) = DateQueryResolver.resolveExactRangeAt(at, clock)
+        val (start, end) = DateQueryResolver.resolveExactRangeAt(at, clock, zoneId)
         return fixtureCoreRepository
             .findFixturesByLeagueUidInKickoffRange(leagueUid, start, end)
     }
@@ -106,20 +111,23 @@ class AdminFixtureQueryWebServiceImpl(
      *
      * @param leagueUid 리그 UID
      * @param from 기준 시각. 날짜만 사용됨
+     * @param zoneId 날짜 계산 기준 타임존
      * @return FixtureCore 리스트
      */
     private fun findFixturesOnNearestDate(
         leagueUid: String,
         from: Instant,
+        zoneId: ZoneId,
     ): List<FixtureCore> {
         // 가장 가까운 kickoff 시각을 찾기
         val nearestKickoff =
             fixtureCoreRepository.findMinKickoffAfterByLeagueUid(leagueUid, from)
                 ?: return emptyList()
 
-        // 해당 날짜의 시작과 끝(exclusive) 계산 (UTC 기준)
-        val dayStart = nearestKickoff.truncatedTo(ChronoUnit.DAYS)
-        val dayEnd = dayStart.plus(1, ChronoUnit.DAYS)
+        // 해당 날짜의 시작과 끝(exclusive) 계산 (지정된 timezone 기준)
+        val date = nearestKickoff.atZone(zoneId).toLocalDate()
+        val dayStart = date.atStartOfDay(zoneId).toInstant()
+        val dayEnd = date.plusDays(1).atStartOfDay(zoneId).toInstant()
 
         // 해당 날짜 범위의 모든 fixture 조회
         return fixtureCoreRepository.findFixturesByLeagueUidInKickoffRange(

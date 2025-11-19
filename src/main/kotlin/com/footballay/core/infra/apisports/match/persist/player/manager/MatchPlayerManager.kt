@@ -65,16 +65,16 @@ class MatchPlayerManager(
                     entityBundle.awayTeam,
                 )
             log.info(
-                "Planned changes - Create: {}, Update: {}, Delete: {}",
+                "Planned changes - Create: {}, Retain: {}, Delete: {}",
                 playerChangeSet.createCount,
-                playerChangeSet.updateCount,
+                playerChangeSet.retainedCount,
                 playerChangeSet.deleteCount,
             )
 
             // Lineup 에 등장하는 선수는 lineup 관련 정보 추가
             val lineupEnhancedPlayers =
                 enhancePlayersWithLineup(
-                    playerChangeSet.toCreate + playerChangeSet.toUpdate,
+                    playerChangeSet.toCreate + playerChangeSet.toRetain,
                     lineupDto,
                     collectedDtos,
                     entityBundle,
@@ -87,10 +87,10 @@ class MatchPlayerManager(
             // PlayerApiSports 연결 및 영속 상태 저장
             val savedPlayers = persistChangesWithPlayerApiSports(lineupEnhancedPlayers, collectedDtos, entityBundle)
             log.info(
-                "Saved MatchPlayers: {}, Create: {}, Update: {}, Delete: {}",
+                "Saved MatchPlayers: {}, Create: {}, Retain: {}, Delete: {}",
                 savedPlayers.size,
                 playerChangeSet.createCount,
-                playerChangeSet.updateCount,
+                playerChangeSet.retainedCount,
                 playerChangeSet.deleteCount,
             )
             log.info(
@@ -131,7 +131,7 @@ class MatchPlayerManager(
             return MatchPlayerProcessResult(
                 totalPlayers = savedPlayers.size,
                 createdCount = playerChangeSet.createCount,
-                updatedCount = playerChangeSet.updateCount,
+                retainedCount = playerChangeSet.retainedCount,
                 deletedCount = playerChangeSet.deleteCount,
                 savedPlayers = savedPlayers,
             )
@@ -330,7 +330,7 @@ class MatchPlayerManager(
 data class MatchPlayerProcessResult(
     val totalPlayers: Int,
     val createdCount: Int,
-    val updatedCount: Int,
+    val retainedCount: Int,
     val deletedCount: Int,
     val savedPlayers: List<ApiSportsMatchPlayer>,
 ) {

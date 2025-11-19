@@ -2,7 +2,7 @@ package com.footballay.core.infra.dispatcher.match
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.OffsetDateTime
+import java.time.Instant
 
 /**
  * MatchDataSyncResult sealed class 테스트
@@ -14,7 +14,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `PreMatch Result 생성 및 필드 검증`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().plusHours(2)
+        val kickoffTime = Instant.now().plusSeconds(2 * 3600)
 
         // When
         val result =
@@ -34,7 +34,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `PreMatch Result - shouldTerminatePreMatchJob이 true인 경우`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().plusMinutes(3)
+        val kickoffTime = Instant.now().plusSeconds(3 * 60)
 
         // When
         val result =
@@ -52,7 +52,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `Live Result 생성 및 필드 검증`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().minusMinutes(30)
+        val kickoffTime = Instant.now().minusSeconds(30 * 60)
 
         // When
         val result =
@@ -74,7 +74,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `Live Result - 경기 종료 상태`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().minusMinutes(100)
+        val kickoffTime = Instant.now().minusSeconds(100 * 60)
 
         // When
         val result =
@@ -93,7 +93,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `PostMatch Result 생성 및 필드 검증`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().minusHours(2)
+        val kickoffTime = Instant.now().minusSeconds(2 * 3600)
 
         // When
         val result =
@@ -113,7 +113,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `PostMatch Result - polling 중단 조건`() {
         // Given
-        val kickoffTime = OffsetDateTime.now().minusHours(3)
+        val kickoffTime = Instant.now().minusSeconds(3 * 3600)
 
         // When
         val result =
@@ -131,7 +131,7 @@ class MatchDataSyncResultTest {
     @Test
     fun `Error Result 생성 및 필드 검증`() {
         // Given
-        val kickoffTime = OffsetDateTime.now()
+        val kickoffTime = Instant.now()
         val errorMessage = "API call failed"
 
         // When
@@ -152,10 +152,10 @@ class MatchDataSyncResultTest {
         // Given
         val results =
             listOf<MatchDataSyncResult>(
-                MatchDataSyncResult.PreMatch(true, OffsetDateTime.now(), false),
-                MatchDataSyncResult.Live(OffsetDateTime.now(), false, 30, "1H"),
-                MatchDataSyncResult.PostMatch(OffsetDateTime.now(), false, 30),
-                MatchDataSyncResult.Error("Error", OffsetDateTime.now()),
+                MatchDataSyncResult.PreMatch(true, Instant.now(), false),
+                MatchDataSyncResult.Live(Instant.now(), false, 30, "1H"),
+                MatchDataSyncResult.PostMatch(Instant.now(), false, 30),
+                MatchDataSyncResult.Error("Error", Instant.now()),
             )
 
         // When & Then

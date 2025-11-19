@@ -108,14 +108,14 @@ object MatchEventChangePlanner {
                 allMatchPlayers,
             )
 
-        // 3단계: 매칭된 DTO-엔티티 → 변경사항 확인 후 업데이트 계획 - sequence가 일치하는 쌍들
+        // 3단계: 매칭된 DTO-엔티티 → 변경사항 확인 후 유지 계획 - sequence가 일치하는 쌍들
         val matchedPairs =
             dtoEvents
                 .filter { entityEvents.containsKey(it.sequence) }
                 .associate { dto ->
                     dto.sequence to MatchedPair(dto, entityEvents[dto.sequence]!!)
                 }
-        val toUpdate = buildUpdatedEntities(matchedPairs, allMatchPlayers)
+        val toRetain = buildRetainedEntities(matchedPairs, allMatchPlayers)
 
         // 4단계: 효율적인 고아 엔티티 → 삭제 계획 - Entity에만 있고 DTO에 없는 엔티티들
         val toDelete = calculateOrphanEntities(dtoEvents, entityEvents)
@@ -123,12 +123,12 @@ object MatchEventChangePlanner {
         val changeSet =
             MatchEventChangeSet(
                 toCreate = toCreate,
-                toUpdate = toUpdate,
+                toRetain = toRetain,
                 toDelete = toDelete,
             )
 
         log.info(
-            "Event change planning completed - Create: ${changeSet.createCount}, Update: ${changeSet.updateCount}, Delete: ${changeSet.deleteCount}",
+            "Event change planning completed - Create: ${changeSet.createCount}, Retain: ${changeSet.retainedCount}, Delete: ${changeSet.deleteCount}",
         )
 
         return changeSet
@@ -308,11 +308,11 @@ object MatchEventChangePlanner {
         }
 
     /**
-     * 매칭된 쌍에서 변경사항이 있는 엔티티만 업데이트 목록에 추가합니다.
+     * 매칭된 쌍에서 변경사항이 있는 엔티티만 유지 목록에 추가합니다.
      *
      * **처리 과정:**
      * 1. 매칭된 DTO-Entity 쌍에서 필드 변경사항 확인
-     * 2. 변경사항이 있는 경우에만 업데이트 목록에 추가
+     * 2. 변경사항이 있는 경우에만 유지 목록에 추가
      * 3. 변경사항이 없는 경우 null 반환하여 제외
      *
      * **변경사항 확인 항목:**
@@ -321,9 +321,9 @@ object MatchEventChangePlanner {
      *
      * @param matched 매칭된 DTO-Entity 쌍 맵
      * @param allMatchPlayers 모든 MatchPlayer 엔티티들 (key: MatchPlayerKey, value: ApiSportsMatchPlayer)
-     * @return 업데이트할 Event 엔티티 목록
+     * @return 유지할 Event 엔티티 목록
      */
-    private fun buildUpdatedEntities(
+    private fun buildRetainedEntities(
         matched: Map<Int, MatchedPair>,
         allMatchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): List<ApiSportsMatchEvent> =
@@ -340,7 +340,7 @@ object MatchEventChangePlanner {
                         player = findMatchPlayer(pair.dto.playerMpKey, allMatchPlayers)
                         assist = findMatchPlayer(pair.dto.assistMpKey, allMatchPlayers)
                     }.also {
-                        log.debug("Planned event update: sequence={}, type={}", pair.dto.sequence, pair.dto.eventType)
+                        log.debug("Planned event retention (with update): sequence={}, type={}", pair.dto.sequence, pair.dto.eventType)
                     }
             } else {
                 log.debug("No changes detected: sequence={}", pair.dto.sequence)

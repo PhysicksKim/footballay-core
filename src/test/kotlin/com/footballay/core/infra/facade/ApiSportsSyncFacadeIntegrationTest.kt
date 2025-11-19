@@ -146,7 +146,6 @@ class ApiSportsSyncFacadeIntegrationTest {
         val firstFixture = savedFixtures.find { it.apiId == 1208021L }
         assertThat(firstFixture!!).isNotNull
         assertThat(firstFixture.referee).isEqualTo("Mock Referee")
-        assertThat(firstFixture.timezone).isEqualTo("UTC")
         assertThat(firstFixture.round).isEqualTo("Regular Season - 1")
 
         // 홈팀 검증
@@ -306,7 +305,6 @@ class ApiSportsSyncFacadeIntegrationTest {
         savedFixtures.forEach { fixture ->
             assertThat(fixture.apiId).isNotNull()
             assertThat(fixture.referee).isNotNull()
-            assertThat(fixture.timezone).isNotNull()
             assertThat(fixture.date).isNotNull()
             assertThat(fixture.round).isNotNull()
             assertThat(fixture.core).isNotNull()

@@ -122,7 +122,7 @@ object MatchPlayerChangePlanner {
                 awayTeam,
             )
 
-        val toUpdate = buildUpdatedEntities(allMatches)
+        val toRetain = buildRetainedEntities(allMatches)
 
         val toDelete = unmatchedEntities.values.toList()
 
@@ -145,15 +145,27 @@ object MatchPlayerChangePlanner {
         val changeSet =
             MatchPlayerChangeSet(
                 toCreate = toCreate,
-                toUpdate = toUpdate,
+                toRetain = toRetain,
                 toDelete = toDelete,
             )
 
         log.info(
-            "Change planning completed - Create: {}, Update: {}, Delete: {}",
+            "Change planning completed - Create: {}, Retain: {}, Delete: {}",
             changeSet.createCount,
-            changeSet.updateCount,
+            changeSet.retainedCount,
             changeSet.deleteCount,
+        )
+
+        log.info(
+            """
+            DEBUG INFO:
+            create : {}
+            retain : {}
+            delete : {}
+            """.trimIndent(),
+            toCreate.map { it.name },
+            toRetain.map { it.name },
+            toDelete.map { it.name },
         )
 
         return changeSet
@@ -197,7 +209,7 @@ object MatchPlayerChangePlanner {
      * 매칭된 쌍의 엔티티를 반환합니다.
      * 변경사항이 있으면 업데이트하고, 없으면 그대로 유지합니다.
      */
-    private fun buildUpdatedEntities(matched: Map<String, MatchedPair>): List<ApiSportsMatchPlayer> =
+    private fun buildRetainedEntities(matched: Map<String, MatchedPair>): List<ApiSportsMatchPlayer> =
         matched.values.map { pair ->
             if (hasFieldChanges(pair.entity, pair.dto)) {
                 // 직접 필드 업데이트

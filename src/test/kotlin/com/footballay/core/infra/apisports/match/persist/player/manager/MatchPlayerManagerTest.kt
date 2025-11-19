@@ -129,7 +129,7 @@ class MatchPlayerManagerTest {
         val result = matchPlayerManager.processMatchTeamAndPlayers(context, MatchLineupPlanDto.EMPTY, entityBundle)
 
         // then
-        assertThat(result.updatedCount).isEqualTo(1)
+        assertThat(result.retainedCount).isEqualTo(1)
         assertThat(result.totalPlayers).isEqualTo(1)
         verify(matchPlayerRepository).saveAll(any<List<ApiSportsMatchPlayer>>())
 
@@ -485,7 +485,7 @@ class MatchPlayerManagerTest {
 
         // then
         assertThat(result.createdCount).isEqualTo(0)
-        assertThat(result.updatedCount).isEqualTo(0)
+        assertThat(result.retainedCount).isEqualTo(0)
         assertThat(result.deletedCount).isEqualTo(0)
         assertThat(result.totalPlayers).isEqualTo(0)
 

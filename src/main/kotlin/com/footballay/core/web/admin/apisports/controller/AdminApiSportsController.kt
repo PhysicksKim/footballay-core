@@ -30,6 +30,8 @@ import jakarta.validation.constraints.Positive
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 @Tag(
     name = "Admin - ApiSports Sync",
@@ -179,7 +181,7 @@ class AdminApiSportsController(
     @GetMapping("/leagues/available")
     fun getAvailableLeagues(): ResponseEntity<List<AvailableLeagueDto>> = ResponseEntity.ok(adminLeagueQueryWebService.findAvailableLeagues())
 
-    @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준. mode 기본값 exact")
+    @Operation(summary = "리그별 픽스처 조회", description = "at(ISO-8601 UTC) 기준으로 exact/nearest 조회. at 미지정 시 서버 now 기준. mode 기본값 exact. timezone으로 날짜 계산 기준 지정 가능 (IANA format, default: UTC)")
     @ApiResponse(responseCode = "200")
     @GetMapping("/leagues/{leagueApiId}/fixtures")
     fun getLeagueFixtures(
@@ -187,13 +189,16 @@ class AdminApiSportsController(
         @PathVariable
         @Positive
         leagueApiId: Long,
-        @Parameter(description = "ISO-8601 UTC")
+        @Parameter(description = "ISO-8601 UTC", example = "2025-03-05T10:00:00Z")
         @RequestParam(required = false)
         at: String?,
         @Parameter(description = "nearest | exact")
         @RequestParam(required = false, defaultValue = "exact")
         @Pattern(regexp = "exact|nearest")
         mode: String,
+        @Parameter(description = "Timezone (IANA format, default: UTC)", example = "Asia/Seoul")
+        @RequestParam(required = false, defaultValue = "UTC")
+        timezone: String,
     ): ResponseEntity<List<FixtureSummaryDto>> {
         val atInstant =
             try {
@@ -201,7 +206,13 @@ class AdminApiSportsController(
             } catch (_: Exception) {
                 null
             }
-        return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueApiId, atInstant, mode))
+        val zoneId =
+            try {
+                ZoneId.of(timezone)
+            } catch (_: Exception) {
+                ZoneOffset.UTC
+            }
+        return ResponseEntity.ok(adminFixtureQueryWebService.findFixturesByLeague(leagueApiId, atInstant, mode, zoneId))
     }
 
     @Operation(summary = "리그의 경기 일정 동기화", description = OP_SYNC_FIXTURES)

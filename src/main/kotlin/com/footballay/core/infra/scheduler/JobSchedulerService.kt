@@ -38,12 +38,12 @@ class JobSchedulerService(
      * 경기 시작 전 라인업 캐싱을 위한 Job을 등록합니다.
      *
      * @param fixtureUid Fixture UID
-     * @param startTime Job 시작 시각 (OffsetDateTime, 킥오프 1시간 전 권장)
+     * @param startTime Job 시작 시각 (Instant, 킥오프 1시간 전 권장)
      * @return Job이 성공적으로 추가되었는지 여부
      */
     fun addPreMatchJob(
         fixtureUid: String,
-        startTime: java.time.OffsetDateTime,
+        startTime: Instant,
     ): Boolean {
         try {
             val jobKey = createJobKey(JOB_GROUP_PRE_MATCH, fixtureUid)
@@ -65,7 +65,7 @@ class JobSchedulerService(
                 TriggerBuilder
                     .newTrigger()
                     .withIdentity("pre-match-trigger-$fixtureUid", JOB_GROUP_PRE_MATCH)
-                    .startAt(Date.from(startTime.toInstant()))
+                    .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()

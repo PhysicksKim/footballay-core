@@ -482,7 +482,6 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
             leagueApiId = 39L,
             seasonYear = "2024",
             referee = "John Doe",
-            timezone = "UTC",
             date = "2024-01-01T15:00:00+00:00",
             timestamp = 1704117600L,
             round = "Regular Season - 1",

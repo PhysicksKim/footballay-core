@@ -36,10 +36,10 @@ class JobSchedulerServiceTest {
     fun `PreMatchJob 추가 성공`() {
         // Given
         val fixtureUid = "testjob000000001"
-        val startTime = OffsetDateTime.now().plusHours(1)
+        val startTime = Instant.now().plusSeconds(3600) // 1시간 후
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(false)
-        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime.toInstant()))
+        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime))
 
         // When
         val result = jobSchedulerService.addPreMatchJob(fixtureUid, startTime)
@@ -53,11 +53,11 @@ class JobSchedulerServiceTest {
     fun `이미 존재하는 PreMatchJob은 삭제 후 재등록`() {
         // Given
         val fixtureUid = "testjob000000002"
-        val startTime = OffsetDateTime.now()
+        val startTime = Instant.now()
 
         given(scheduler.checkExists(any(JobKey::class.java))).willReturn(true)
         given(scheduler.deleteJob(any(JobKey::class.java))).willReturn(true)
-        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime.toInstant()))
+        given(scheduler.scheduleJob(any(JobDetail::class.java), any(Trigger::class.java))).willReturn(Date.from(startTime))
 
         // When
         val result = jobSchedulerService.addPreMatchJob(fixtureUid, startTime)
@@ -148,7 +148,7 @@ class JobSchedulerServiceTest {
     fun `Scheduler 예외 발생 시 false 반환 - PreMatchJob 추가`() {
         // Given
         val fixtureUid = "testjob000000008"
-        val startTime = java.time.OffsetDateTime.now()
+        val startTime = Instant.now()
         given(scheduler.checkExists(any(JobKey::class.java))).willThrow(RuntimeException("Scheduler error"))
 
         // When

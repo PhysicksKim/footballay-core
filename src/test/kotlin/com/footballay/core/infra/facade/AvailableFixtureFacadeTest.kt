@@ -22,7 +22,6 @@ import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.junit.jupiter.MockitoExtension
 import java.time.Instant
-import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
@@ -64,7 +63,7 @@ class AvailableFixtureFacadeTest {
                 available = false,
             )
 
-        val preMatchStartTime = kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1)
+        val preMatchStartTime = kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS)
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
@@ -82,7 +81,7 @@ class AvailableFixtureFacadeTest {
         assertThat(fixtureCore.available).isTrue()
 
         verify(fixtureCoreRepository).save(fixtureCore)
-        verify(jobSchedulerService).addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1))
+        verify(jobSchedulerService).addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS))
         verify(jobSchedulerService).addLiveMatchJob(fixtureUid, kickoff)
         verify(jobSchedulerService, never()).removeAllJobsForFixture(fixtureUid)
     }
@@ -112,7 +111,7 @@ class AvailableFixtureFacadeTest {
         assertThat((result as DomainResult.Success).value).isEqualTo(fixtureUid)
 
         verify(fixtureCoreRepository, never()).save(fixtureCore)
-        verify(jobSchedulerService, never()).addPreMatchJob(any(String::class.java), any(OffsetDateTime::class.java))
+        verify(jobSchedulerService, never()).addPreMatchJob(any(String::class.java), any(Instant::class.java))
         verify(jobSchedulerService, never()).addLiveMatchJob(any(String::class.java), any(Instant::class.java))
     }
 
@@ -143,7 +142,7 @@ class AvailableFixtureFacadeTest {
         assertThat(validation.errors.first().code).isEqualTo("KICKOFF_TIME_NOT_SET")
 
         verify(fixtureCoreRepository, never()).save(fixtureCore)
-        verify(jobSchedulerService, never()).addPreMatchJob(any(String::class.java), any(OffsetDateTime::class.java))
+        verify(jobSchedulerService, never()).addPreMatchJob(any(String::class.java), any(Instant::class.java))
         verify(jobSchedulerService, never()).addLiveMatchJob(any(String::class.java), any(Instant::class.java))
     }
 
@@ -164,7 +163,7 @@ class AvailableFixtureFacadeTest {
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
-        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1)))
+        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS)))
             .willReturn(true)
         given(jobSchedulerService.addLiveMatchJob(fixtureUid, kickoff))
             .willReturn(true)
@@ -173,7 +172,7 @@ class AvailableFixtureFacadeTest {
         facade.addAvailableFixture(fixtureId)
 
         // Then
-        verify(jobSchedulerService).addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1))
+        verify(jobSchedulerService).addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS))
     }
 
     @Test
@@ -196,18 +195,18 @@ class AvailableFixtureFacadeTest {
         // 킥오프 1시간 전이 이미 지났으므로 now()로 시작 시간이 계산됨
         // 시간 계산 때문에 정확한 값 매칭이 어려우므로 ArgumentCaptor 사용
         val fixtureUidCaptor = ArgumentCaptor.forClass(String::class.java)
-        val startTimeCaptor = ArgumentCaptor.forClass(OffsetDateTime::class.java)
-        given(jobSchedulerService.addPreMatchJob(any(String::class.java), any(OffsetDateTime::class.java))).willReturn(true)
+        val startTimeCaptor = ArgumentCaptor.forClass(Instant::class.java)
+        given(jobSchedulerService.addPreMatchJob(any(String::class.java), any(Instant::class.java))).willReturn(true)
         given(jobSchedulerService.addLiveMatchJob(fixtureUid, kickoff))
             .willReturn(true)
 
-        val beforeExecution = OffsetDateTime.now()
+        val beforeExecution = Instant.now()
 
         // When
         facade.addAvailableFixture(fixtureId)
 
         // Then
-        val afterExecution = OffsetDateTime.now()
+        val afterExecution = Instant.now()
         verify(jobSchedulerService).addPreMatchJob(fixtureUidCaptor.capture(), startTimeCaptor.capture())
         assertThat(fixtureUidCaptor.value).isEqualTo(fixtureUid)
         // 실제 호출된 시간이 now()와 가까운지 확인 (beforeExecution ~ afterExecution 사이)
@@ -232,7 +231,7 @@ class AvailableFixtureFacadeTest {
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
-        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1)))
+        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS)))
             .willReturn(false)
 
         // When
@@ -266,7 +265,7 @@ class AvailableFixtureFacadeTest {
 
         given(fixtureCoreQueryService.findById(fixtureId)).willReturn(fixtureCore)
         given(fixtureCoreRepository.save(fixtureCore)).willReturn(fixtureCore)
-        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toOffsetDateTime().minusHours(1)))
+        given(jobSchedulerService.addPreMatchJob(fixtureUid, kickoff.atZone(ZoneId.systemDefault()).toInstant().minus(1, ChronoUnit.HOURS)))
             .willReturn(true)
         given(jobSchedulerService.addLiveMatchJob(fixtureUid, kickoff))
             .willReturn(false)
