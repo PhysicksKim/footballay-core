@@ -21,12 +21,14 @@ data class FixtureInfoResponse(
     data class LeagueInfo(
         val leagueUid: String,
         val name: String,
+        val koreanName: String?,
         val logo: String?,
     )
 
     data class TeamInfo(
         val teamUid: String,
         val name: String,
+        val koreanName: String?,
         val logo: String?,
     )
 }

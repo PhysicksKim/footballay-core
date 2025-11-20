@@ -6,6 +6,8 @@ import com.footballay.core.domain.model.TeamSide
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
+import com.footballay.core.infra.persistence.core.entity.TeamCore
+import com.footballay.core.logger
 import com.footballay.core.web.util.DateQueryResolver
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import com.footballay.core.web.admin.apisports.mapper.FixtureWebMapper
@@ -20,8 +22,18 @@ import java.time.ZoneId
  * 관리자용 Fixture 조회 서비스 구현체
  *
  * **주의**
- * 이 서비스는 Admin 전용 단순 조회이므로 Facade 없이 곧장 Repository를 호출합니다
- * 비즈니스 로직이 복잡하게 추가된다면 Domain Facade 내부로 옮기고 분리하세요
+ * 이 서비스는 의도적으로 아키텍처를 깨고 WebService 가 곧장 처리하도록 했습니다.
+ * 초기 단계에서 단순 조회 기능만 필요하기 때문입니다.
+ *
+ * #### 올바른 구조
+ *
+ * `Controller -> WebService -> Domain Facade -> Domain Service -> Repository`
+ *
+ * #### 현재 - 웹서비스 단 하나로 압축
+ *
+ * `Controller -> WebService -> Repository`
+ *
+ * 로직이 복잡하게 추가된다면 Domain Facade 내부로 옮기고 분리하세요
  */
 @Service
 class AdminFixtureQueryWebServiceImpl(
@@ -30,6 +42,8 @@ class AdminFixtureQueryWebServiceImpl(
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     private val clock: Clock = Clock.systemUTC(), // 기본 Clock 을 못찾으면
 ) : AdminFixtureQueryWebService {
+    val log = logger()
+
     /**
      * 리그의 Fixture 요약 정보를 조회합니다
      *
@@ -63,12 +77,14 @@ class AdminFixtureQueryWebServiceImpl(
                 ?: return emptyList()
         val leagueUid = leagueApiSports.leagueCore?.uid ?: return emptyList()
 
+        // Assert 1 : HomeTeam, AwayTeam, Kickoff 가 무조건 존재하는 FixtureCore 만 조회됨
+        // Assert 2 : Team 은 TeamApiSports 가 같이 조인 되어 존재함
         val fixtures =
             when (mode) {
                 "exact" -> findFixturesOnExactDate(leagueUid, targetInstant, zoneId)
                 "nearest" -> findFixturesOnNearestDate(leagueUid, targetInstant, zoneId)
                 else -> emptyList()
-            }
+            }.map { it -> Triple(it, it.homeTeam!!, it.awayTeam!!) }
 
         return fixtures
             .map { toFixtureModel(it) }
@@ -135,26 +151,35 @@ class AdminFixtureQueryWebServiceImpl(
         )
     }
 
-    private fun toFixtureModel(entity: FixtureCore): FixtureModel =
-        FixtureModel(
-            uid = entity.uid,
-            kickoffAt = entity.kickoff!!, // kickoff 조건으로 조회했으므로 무조건 non-null 보장
+    /**
+     * Triple<FixtureCore, Home with TeamApiSports, Away with TeamApiSports> 를 FixtureModel 로 변환합니다
+     */
+    private fun toFixtureModel(tri: Triple<FixtureCore, TeamCore, TeamCore>): FixtureModel {
+        val (fixture, home, away) = tri
+        return FixtureModel(
+            uid = fixture.uid,
+            kickoffAt = fixture.kickoff!!, // kickoff 조건으로 조회했으므로 무조건 non-null 보장
             homeTeam =
                 TeamSide(
-                    uid = entity.homeTeam?.uid ?: "",
-                    name = entity.homeTeam?.name ?: "",
+                    uid = home.uid,
+                    name = home.name,
+                    nameKo = home.nameKo ?: "",
+                    logo = home.teamApiSports?.logo,
                 ),
             awayTeam =
                 TeamSide(
-                    uid = entity.awayTeam?.uid ?: "",
-                    name = entity.awayTeam?.name ?: "",
+                    uid = away.uid,
+                    name = away.name,
+                    nameKo = away.nameKo ?: "",
+                    logo = away.teamApiSports?.logo,
                 ),
-            status = entity.status,
+            status = fixture.status,
             score =
                 Score(
-                    home = entity.goalsHome,
-                    away = entity.goalsAway,
+                    home = fixture.goalsHome,
+                    away = fixture.goalsAway,
                 ),
-            available = entity.available,
+            available = fixture.available,
         )
+    }
 }

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 
+// TODO : 변경된 KickOff time 다루는 방법(무조건 UTC에 저장)에 따라서 제대로 Job 시간이 계산되는지 확인 필요
+
 /**
  * Available Fixture 관리 Facade
  *

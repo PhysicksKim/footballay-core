@@ -67,6 +67,10 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         """
         SELECT f
         FROM FixtureCore f
+        LEFT JOIN FETCH f.homeTeam AS ht    
+        LEFT JOIN FETCH f.awayTeam AS at
+        LEFT JOIN FETCH ht.teamApiSports
+        LEFT JOIN FETCH at.teamApiSports
         WHERE f.league.uid = :leagueUid
           AND f.kickoff >= :startInclusive
           AND f.kickoff < :endExclusive

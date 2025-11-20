@@ -5,6 +5,8 @@ import java.time.Instant
 data class TeamSide(
     val uid: String,
     val name: String,
+    val nameKo: String?,
+    val logo: String?,
 )
 
 data class Score(

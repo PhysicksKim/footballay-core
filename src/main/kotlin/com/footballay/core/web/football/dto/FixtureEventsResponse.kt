@@ -17,7 +17,7 @@ data class FixtureEventsResponse(
         val team: TeamInfo,
         val player: PlayerInfo?,
         val assist: PlayerInfo?,
-        val type: String, // Goal, Card, subst, Var
+        val type: String, // Goal, Card, Subst, Var
         val detail: String, // Yellow Card, Red Card, Substitution 1, 2, 3, etc.
         val comments: String?,
     )
@@ -25,11 +25,14 @@ data class FixtureEventsResponse(
     data class TeamInfo(
         val teamUid: String,
         val name: String,
+        val koreanName: String?,
     )
 
     data class PlayerInfo(
         val matchPlayerUid: String,
+        val playerUid: String?,
         val name: String,
+        val koreanName: String?,
         val number: Int?,
     )
 }

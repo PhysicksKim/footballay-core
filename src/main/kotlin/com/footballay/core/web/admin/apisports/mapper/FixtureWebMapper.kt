@@ -8,8 +8,18 @@ object FixtureWebMapper {
         FixtureSummaryDto(
             uid = model.uid,
             kickoffAt = model.kickoffAt.toString(),
-            homeTeam = model.homeTeam.name,
-            awayTeam = model.awayTeam.name,
+            home =
+                FixtureSummaryDto.TeamDto(
+                    name = model.homeTeam.name,
+                    nameKo = model.homeTeam.nameKo,
+                    logo = model.homeTeam.logo,
+                ),
+            away =
+                FixtureSummaryDto.TeamDto(
+                    name = model.awayTeam.name,
+                    nameKo = model.awayTeam.nameKo,
+                    logo = model.awayTeam.logo,
+                ),
             status = model.status,
             available = model.available,
         )

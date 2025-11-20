@@ -19,15 +19,12 @@ data class TeamCore(
      */
     @Column(nullable = false)
     var name: String,
+    @Column(name = "name_ko")
+    var nameKo: String? = null,
     var code: String? = null,
     var country: String? = null,
     var founded: Int? = null,
     var national: Boolean = false,
-    // api id 는 절대 core 에 두면 안됩니다. api id 는 api 에 종속적이기 때문입니다. <br>
-//    /**
-//     * Core 엔티티에도 apiId를 두면, 동일 팀 중복여부 검사 시 편함
-//     */
-//    var apiId: Long? = null,
     @OneToOne(mappedBy = "teamCore", cascade = [CascadeType.ALL], optional = true)
     var teamApiSports: TeamApiSports? = null,
     /**

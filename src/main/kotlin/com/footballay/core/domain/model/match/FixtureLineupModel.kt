@@ -34,5 +34,6 @@ data class FixtureLineupModel(
         val grid: String?,
         val substitute: Boolean,
         val matchPlayerUid: String,
+        val playerUid: String?,
     )
 }

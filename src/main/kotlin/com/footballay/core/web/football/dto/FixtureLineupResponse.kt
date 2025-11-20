@@ -20,6 +20,7 @@ data class FixtureLineupResponse(
     data class StartLineup(
         val teamUid: String,
         val teamName: String,
+        val teamKoreanName: String?,
         val formation: String?,
         val players: List<LineupPlayer>,
         val substitutes: List<LineupPlayer>,
@@ -27,10 +28,13 @@ data class FixtureLineupResponse(
 
     data class LineupPlayer(
         val matchPlayerUid: String,
+        val playerUid: String?,
         val name: String,
+        val koreanName: String?,
         val number: Int?,
         val photo: String?,
         val position: String?,
         val grid: String?,
+        val substitute: Boolean,
     )
 }

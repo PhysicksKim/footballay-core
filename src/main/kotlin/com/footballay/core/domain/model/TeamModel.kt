@@ -11,6 +11,7 @@ data class TeamModel(
     val teamCoreId: Long?,
     val uid: String,
     val name: String,
+    val nameKo: String?,
     val code: String?,
     val country: String?,
     val details: ProviderDetails,

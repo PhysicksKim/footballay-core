@@ -3,8 +3,14 @@ package com.footballay.core.web.admin.apisports.dto
 data class FixtureSummaryDto(
     val uid: String,
     val kickoffAt: String,
-    val homeTeam: String,
-    val awayTeam: String,
+    val home: TeamDto,
+    val away: TeamDto,
     val status: String,
     val available: Boolean,
-)
+) {
+    data class TeamDto(
+        val name: String,
+        val nameKo: String?,
+        val logo: String?,
+    )
+}

@@ -31,6 +31,7 @@ class DomainModelApiSportsMapper {
             teamCoreId = teamCore?.id,
             uid = teamCore?.uid!!, // TODO : 진짜로 teamCore null일때는??
             name = teamApiSports.name ?: "Unknown Team",
+            nameKo = teamCore?.nameKo,
             code = teamApiSports.code,
             country = teamApiSports.country,
             details =
@@ -58,6 +59,7 @@ class DomainModelApiSportsMapper {
             playerCoreId = playerCore?.id,
             uid = playerCore?.uid!!, // TODO : 진짜로 playerCore null일때는??
             name = playerApiSports.name ?: "Unknown Player",
+            nameKo = playerCore?.nameKo,
             firstname = playerApiSports.firstname,
             lastname = playerApiSports.lastname,
             position = playerApiSports.position,

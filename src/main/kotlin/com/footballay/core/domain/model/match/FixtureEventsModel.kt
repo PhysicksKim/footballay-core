@@ -34,5 +34,6 @@ data class FixtureEventsModel(
         val koreanName: String?,
         val number: Int?,
         val matchPlayerUid: String?,
+        val playerUid: String?,
     )
 }

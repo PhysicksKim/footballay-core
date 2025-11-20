@@ -82,7 +82,7 @@ class MatchDataQueryServiceImplTest {
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val model = (result as DomainResult.Success).value
         assertThat(model.events).isNotEmpty // MatchEntityGenerator가 이벤트 생성
-        assertThat(model.events[0].type).isEqualTo("goal")
+        assertThat(model.events[0].type).isEqualTo("Goal")
         assertThat(model.events[0].elapsed).isEqualTo(25)
     }
 

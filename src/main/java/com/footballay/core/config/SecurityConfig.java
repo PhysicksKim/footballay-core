@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -32,6 +34,7 @@ import static org.slf4j.LoggerFactory.*;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private static final Logger log = getLogger(SecurityConfig.class);
+
 
     private final boolean isLocal;
 
@@ -79,7 +82,7 @@ public class SecurityConfig {
             .headers(headers ->
                 headers.frameOptions(custom -> custom.sameOrigin()))
             .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .exceptionHandling(exception ->
                 exception
                     .authenticationEntryPoint(mainDomainLoginEntryPoint)
@@ -118,6 +121,9 @@ public class SecurityConfig {
     private CsrfTokenRepository csrfConfigurationSource() {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setCookiePath("/");
+        repository.setCookieName("XSRF-TOKEN");
+        repository.setHeaderName("X-XSRF-TOKEN");
+        repository.setParameterName("_csrf");
 
         repository.setCookieCustomizer(cookie -> {
             cookie.httpOnly(false);
@@ -133,6 +139,7 @@ public class SecurityConfig {
     }
 
     public SecurityConfig(
+                Environment env,
                 @Value("${csrf.cookie.samesite:lax}") String csrfCookieSameSite,
                 @Value("${custom.cookie.domain:footballay.com}") String cookieDomain,
                 @Value("${custom.login.remember-me-key}") String rememberMeKey,
@@ -160,6 +167,6 @@ public class SecurityConfig {
         this.corsConfigurationSource = corsConfigurationSource;
         this.mainDomainLoginEntryPoint = mainDomainLoginEntryPoint;
 
-        this.isLocal = "localhost".equalsIgnoreCase(cookieDomain);
+        this.isLocal = env.acceptsProfiles(Profiles.of("local"));
     }
 }

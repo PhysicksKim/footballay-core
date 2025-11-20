@@ -206,7 +206,7 @@ class MatchDataQueryServiceImpl(
                 FixtureInfoModel.LeagueInfo(
                     id = 0L, // Deprecated: PK 노출 방지
                     name = league.name,
-                    koreanName = null,
+                    koreanName = leagueCore.nameKo,
                     logo = league.logo,
                     leagueUid = leagueCore.uid,
                 ),
@@ -214,7 +214,7 @@ class MatchDataQueryServiceImpl(
                 FixtureInfoModel.TeamInfo(
                     id = 0L, // Deprecated: PK 노출 방지
                     name = homeTeamCore.name,
-                    koreanName = null,
+                    koreanName = homeTeamCore.nameKo,
                     logo = homeTeamCore.teamApiSports?.logo,
                     teamUid = homeTeamCore.uid,
                 ),
@@ -222,7 +222,7 @@ class MatchDataQueryServiceImpl(
                 FixtureInfoModel.TeamInfo(
                     id = 0L, // Deprecated: PK 노출 방지
                     name = awayTeamCore.name,
-                    koreanName = null,
+                    koreanName = awayTeamCore.nameKo,
                     logo = awayTeamCore.teamApiSports?.logo,
                     teamUid = awayTeamCore.uid,
                 ),
@@ -272,12 +272,12 @@ class MatchDataQueryServiceImpl(
                 FixtureEventsModel.TeamInfo(
                     teamId = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
-                    koreanName = null,
+                    koreanName = teamCore?.nameKo,
                     teamUid = teamCore?.uid ?: "",
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
-            type = event.eventType,
+            type = normalizeEventType(event.eventType),
             detail = event.detail ?: "",
             comments = event.comments,
         )
@@ -290,9 +290,10 @@ class MatchDataQueryServiceImpl(
         return FixtureEventsModel.PlayerInfo(
             playerId = null, // Deprecated: PK 노출 방지
             name = matchPlayer.name ?: playerCore?.name,
-            koreanName = null,
+            koreanName = playerCore?.nameKo,
             number = matchPlayer.number,
             matchPlayerUid = matchPlayer.matchPlayerUid,
+            playerUid = playerCore?.uid,
         )
     }
 
@@ -329,7 +330,7 @@ class MatchDataQueryServiceImpl(
         return FixtureLineupModel.StartLineup(
             teamId = 0L, // Deprecated: PK 노출 방지
             teamName = teamCore?.name ?: "",
-            teamKoreanName = null,
+            teamKoreanName = teamCore?.nameKo,
             formation = matchTeam.formation,
             players = startXI,
             substitutes = substitutes,
@@ -344,13 +345,14 @@ class MatchDataQueryServiceImpl(
         return FixtureLineupModel.LineupPlayer(
             id = 0L, // Deprecated: PK 노출 방지
             name = matchPlayer.name ?: playerCore?.name ?: "",
-            koreanName = null,
+            koreanName = playerCore?.nameKo,
             number = matchPlayer.number,
             photo = playerApiSports?.photo,
             position = matchPlayer.position,
             grid = matchPlayer.grid,
             substitute = matchPlayer.substitute,
             matchPlayerUid = matchPlayer.matchPlayerUid,
+            playerUid = playerCore?.uid,
         )
     }
 
@@ -399,7 +401,7 @@ class MatchDataQueryServiceImpl(
                 FixtureStatisticsModel.TeamInfo(
                     id = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
-                    koreanName = null,
+                    koreanName = teamCore?.nameKo,
                     logo = teamApiSports?.logo,
                     teamUid = teamCore?.uid ?: "",
                 ),
@@ -445,11 +447,12 @@ class MatchDataQueryServiceImpl(
                 FixtureStatisticsModel.PlayerInfoBasic(
                     id = null, // Deprecated: PK 노출 방지
                     name = matchPlayer.name ?: playerCore?.name,
-                    koreanName = null,
+                    koreanName = playerCore?.nameKo,
                     photo = playerApiSports?.photo,
                     position = matchPlayer.position,
                     number = matchPlayer.number,
                     matchPlayerUid = matchPlayer.matchPlayerUid,
+                    playerUid = playerCore?.uid,
                 ),
             statistics =
                 FixtureStatisticsModel.PlayerStatistics(
@@ -519,4 +522,11 @@ class MatchDataQueryServiceImpl(
         )
 
     private fun parseIntFromPercentage(percentageStr: String?): Int = percentageStr?.removeSuffix("%")?.toIntOrNull() ?: 0
+
+    /**
+     * Event type을 PascalCase로 정규화
+     * "subst" → "Subst", "Goal" → "Goal" 등
+     */
+    private fun normalizeEventType(eventType: String): String =
+        eventType.replaceFirstChar { it.uppercaseChar() }
 }

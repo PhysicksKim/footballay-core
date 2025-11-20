@@ -29,18 +29,21 @@ class MatchDataMapper {
                 FixtureInfoResponse.LeagueInfo(
                     leagueUid = model.league.leagueUid,
                     name = model.league.name,
+                    koreanName = model.league.koreanName,
                     logo = model.league.logo,
                 ),
             home =
                 FixtureInfoResponse.TeamInfo(
                     teamUid = model.home.teamUid,
                     name = model.home.name,
+                    koreanName = model.home.koreanName,
                     logo = model.home.logo,
                 ),
             away =
                 FixtureInfoResponse.TeamInfo(
                     teamUid = model.away.teamUid,
                     name = model.away.name,
+                    koreanName = model.away.koreanName,
                     logo = model.away.logo,
                 ),
         )
@@ -82,6 +85,7 @@ class MatchDataMapper {
                 FixtureEventsResponse.TeamInfo(
                     teamUid = event.team.teamUid,
                     name = event.team.name,
+                    koreanName = event.team.koreanName,
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
@@ -93,7 +97,9 @@ class MatchDataMapper {
     private fun toPlayerInfo(player: FixtureEventsModel.PlayerInfo): FixtureEventsResponse.PlayerInfo =
         FixtureEventsResponse.PlayerInfo(
             matchPlayerUid = player.matchPlayerUid ?: "",
+            playerUid = player.playerUid,
             name = player.name ?: "",
+            koreanName = player.koreanName,
             number = player.number,
         )
 
@@ -114,6 +120,7 @@ class MatchDataMapper {
         FixtureLineupResponse.StartLineup(
             teamUid = lineup.teamUid,
             teamName = lineup.teamName,
+            teamKoreanName = lineup.teamKoreanName,
             formation = lineup.formation,
             players = lineup.players.map { toLineupPlayer(it) },
             substitutes = lineup.substitutes.map { toLineupPlayer(it) },
@@ -122,11 +129,14 @@ class MatchDataMapper {
     private fun toLineupPlayer(player: FixtureLineupModel.LineupPlayer): FixtureLineupResponse.LineupPlayer =
         FixtureLineupResponse.LineupPlayer(
             matchPlayerUid = player.matchPlayerUid,
+            playerUid = player.playerUid,
             name = player.name,
+            koreanName = player.koreanName,
             number = player.number,
             photo = player.photo,
             position = player.position,
             grid = player.grid,
+            substitute = player.substitute,
         )
 
     /**
@@ -150,6 +160,7 @@ class MatchDataMapper {
                 FixtureStatisticsResponse.TeamInfo(
                     teamUid = team.team.teamUid,
                     name = team.team.name,
+                    koreanName = team.team.koreanName,
                     logo = team.team.logo,
                 ),
             teamStatistics = toTeamStatistics(team.teamStatistics),
@@ -189,7 +200,9 @@ class MatchDataMapper {
             player =
                 FixtureStatisticsResponse.PlayerInfo(
                     matchPlayerUid = player.player.matchPlayerUid ?: "",
+                    playerUid = player.player.playerUid,
                     name = player.player.name ?: "",
+                    koreanName = player.player.koreanName,
                     photo = player.player.photo,
                     position = player.player.position,
                     number = player.player.number,

@@ -75,7 +75,7 @@ class FootballayFixtureWebServiceTest {
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val data = result.getOrNull()!!
         assertThat(data.events).isNotEmpty
-        assertThat(data.events[0].type).isEqualTo("goal")
+        assertThat(data.events[0].type).isEqualTo("Goal")
     }
 
     @Test

@@ -21,13 +21,14 @@ data class FixtureCore(
     @Column(name = "uid", unique = true, nullable = false, updatable = false)
     var uid: String,
     /**
-     * 경기 시작 시간.
+     * 경기 시작 시간
      *
      * **Important**: 이 값은 항상 **UTC**로 저장됩니다.
      * - API 응답에서 받은 OffsetDateTime(시간대 정보 포함)을 Instant로 변환하여 UTC 기준으로 저장
      * - 데이터베이스에는 timestamp with time zone 타입으로 UTC 값이 저장됨
-     * - 조회 시 지역 시간대로 변환하여 API 응답에 제공
      * - 일정이 미정인 경우 null로 처리
+     *
+     * 조회 시 서비스에서 적절히 지역 시간대로 변환하여 API 응답에 제공해야 합니다.
      *
      * **Note**: kickoff time이 변경된다면, Data Provider의 match data polling 작업을 확인하고 수정 필요
      */

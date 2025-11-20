@@ -21,6 +21,7 @@ data class FixtureStatisticsResponse(
     data class TeamInfo(
         val teamUid: String,
         val name: String,
+        val koreanName: String?,
         val logo: String?,
     )
 
@@ -52,7 +53,9 @@ data class FixtureStatisticsResponse(
 
     data class PlayerInfo(
         val matchPlayerUid: String,
+        val playerUid: String?,
         val name: String,
+        val koreanName: String?,
         val photo: String?,
         val position: String?,
         val number: Int?,

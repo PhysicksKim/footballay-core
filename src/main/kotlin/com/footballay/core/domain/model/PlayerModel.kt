@@ -11,6 +11,7 @@ data class PlayerModel(
     val playerCoreId: Long?,
     val uid: String,
     val name: String,
+    val nameKo: String?,
     val firstname: String?,
     val lastname: String?,
     val position: String?,

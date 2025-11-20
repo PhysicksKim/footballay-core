@@ -58,6 +58,7 @@ data class FixtureStatisticsModel(
         val position: String?,
         val number: Int?,
         val matchPlayerUid: String?,
+        val playerUid: String?,
     )
 
     data class PlayerStatistics(
