@@ -3,7 +3,7 @@ package com.footballay.core.infra.core
 import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
 import com.footballay.core.infra.core.dto.FixtureCoreUpdateDto
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
@@ -77,7 +77,7 @@ class FixtureCoreSyncServiceTest {
                 uid = uid1,
                 kickoff = Instant.now(),
                 status = "Match Finished",
-                statusShort = FixtureStatusShort.FT,
+                statusShort = FixtureStatusCode.FT,
                 elapsedMin = 90,
                 goalsHome = 2,
                 goalsAway = 1,
@@ -94,7 +94,7 @@ class FixtureCoreSyncServiceTest {
                 uid = uid2,
                 kickoff = Instant.now().plus(1, ChronoUnit.DAYS),
                 status = "Not Started",
-                statusShort = FixtureStatusShort.NS,
+                statusShort = FixtureStatusCode.NS,
                 elapsedMin = null,
                 goalsHome = null,
                 goalsAway = null,
@@ -116,8 +116,8 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid1,
                 kickoff = createDto1.kickoff!!,
-                status = createDto1.status!!,
-                statusShort = createDto1.statusShort!!,
+                statusText = createDto1.status!!,
+                statusCode = createDto1.statusShort!!,
                 elapsedMin = createDto1.elapsedMin,
                 league = createDto1.leagueCore,
                 homeTeam = createDto1.homeTeam,
@@ -133,8 +133,8 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid2,
                 kickoff = createDto2.kickoff!!,
-                status = createDto2.status!!,
-                statusShort = createDto2.statusShort!!,
+                statusText = createDto2.status!!,
+                statusCode = createDto2.statusShort!!,
                 elapsedMin = createDto2.elapsedMin,
                 league = createDto2.leagueCore,
                 homeTeam = createDto2.homeTeam,
@@ -183,8 +183,8 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid1,
                 kickoff = Instant.now(),
-                status = "Match Finished",
-                statusShort = FixtureStatusShort.FT,
+                statusText = "Match Finished",
+                statusCode = FixtureStatusCode.FT,
                 elapsedMin = 90,
                 league = leagueCore,
                 homeTeam = homeTeamCore,
@@ -200,8 +200,8 @@ class FixtureCoreSyncServiceTest {
             FixtureCore(
                 uid = uid2,
                 kickoff = Instant.now().plus(1, ChronoUnit.DAYS),
-                status = "Not Started",
-                statusShort = FixtureStatusShort.NS,
+                statusText = "Not Started",
+                statusCode = FixtureStatusCode.NS,
                 elapsedMin = null,
                 league = leagueCore,
                 homeTeam = homeTeamCore,
@@ -217,7 +217,7 @@ class FixtureCoreSyncServiceTest {
             FixtureCoreUpdateDto(
                 kickoff = Instant.now().plus(1, ChronoUnit.HOURS),
                 status = "Match Finished",
-                statusShort = FixtureStatusShort.FT,
+                statusShort = FixtureStatusCode.FT,
                 elapsedMin = 90,
                 goalsHome = 3,
                 goalsAway = 2,
@@ -229,7 +229,7 @@ class FixtureCoreSyncServiceTest {
             FixtureCoreUpdateDto(
                 kickoff = Instant.now().plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS),
                 status = "First Half",
-                statusShort = FixtureStatusShort.FIRST_HALF,
+                statusShort = FixtureStatusCode.FIRST_HALF,
                 elapsedMin = 45,
                 goalsHome = 1,
                 goalsAway = 0,
@@ -246,8 +246,8 @@ class FixtureCoreSyncServiceTest {
         val expectedUpdatedFixtureCore1 =
             existingFixtureCore1.copy(
                 kickoff = updateDto1.kickoff!!,
-                status = updateDto1.status!!,
-                statusShort = updateDto1.statusShort!!,
+                statusText = updateDto1.status!!,
+                statusCode = updateDto1.statusShort!!,
                 elapsedMin = updateDto1.elapsedMin,
                 goalsHome = updateDto1.goalsHome,
                 goalsAway = updateDto1.goalsAway,
@@ -258,8 +258,8 @@ class FixtureCoreSyncServiceTest {
         val expectedUpdatedFixtureCore2 =
             existingFixtureCore2.copy(
                 kickoff = updateDto2.kickoff!!,
-                status = updateDto2.status!!,
-                statusShort = updateDto2.statusShort!!,
+                statusText = updateDto2.status!!,
+                statusCode = updateDto2.statusShort!!,
                 elapsedMin = updateDto2.elapsedMin,
                 goalsHome = updateDto2.goalsHome,
                 goalsAway = updateDto2.goalsAway,

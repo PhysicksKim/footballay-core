@@ -3,8 +3,8 @@ package com.footballay.core.web.football.response;
 public record FixtureOfLeagueResponse(
         long fixtureId,
         _Match matchSchedule,
-        _Team teamALogo,
-        _Team teamBLogo,
+        _Team teamA,
+        _Team teamB,
         _Status status,
         boolean available
 ) {

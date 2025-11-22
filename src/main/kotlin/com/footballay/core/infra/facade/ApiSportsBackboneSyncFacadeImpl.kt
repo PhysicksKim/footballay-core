@@ -5,7 +5,7 @@ package com.footballay.core.infra.facade
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.apisports.LeagueApiSportsQueryService
-import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsCreateDto
 import com.footballay.core.infra.apisports.backbone.sync.fixture.FixtureApiSportsSyncer
 import com.footballay.core.infra.apisports.backbone.sync.league.LeagueApiSportsSyncer
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
@@ -254,7 +254,7 @@ class ApiSportsBackboneSyncFacadeImpl(
                     name = response.fixture.venue.name,
                     city = response.fixture.venue.city,
                 ),
-            leagueApiId = response.league.id.toLong(),
+            leagueApiId = response.league.id,
             seasonYear = response.league.season.toString(),
             status =
                 StatusOfFixtureApiSportsCreateDto(

@@ -34,28 +34,6 @@ sealed interface ProviderDetails {
 }
 
 /**
- * ApiSports League 상세 정보
- *
- * League 엔티티의 ApiSports provider 전용 상세 데이터
- */
-data class ApiSportsLeagueDetails(
-    /**
-     * 리그 로고 URL
-     */
-    val logo: String?,
-    /**
-     * 국가 코드 (ISO 3166-1 alpha-2, 예: "GB", "ES", "IT")
-     */
-    val countryCode: String?,
-    /**
-     * 국가 국기 이미지 URL
-     */
-    val countryFlag: String?,
-) : ProviderDetails {
-    override val type: String = "ApiSports"
-}
-
-/**
  * ApiSports Team 상세 정보
  *
  * Team 엔티티의 ApiSports provider 전용 상세 데이터
@@ -108,17 +86,3 @@ data class ApiSportsPlayerDetails(
 ) : ProviderDetails {
     override val type: String = "ApiSports"
 }
-
-/**
- * 향후 다른 Provider 추가 예시:
- *
- * ```kotlin
- * data class SportMonksTeamDetails(
- *     val venue: String?,
- *     val capacity: Int?,
- *     val website: String?
- * ) : ProviderDetails {
- *     override val type: String = "SportMonks"
- * }
- * ```
- */

@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.backbone.sync
+package com.footballay.core.infra.apisports.backbone.sync.player
 
 /**
  * 선수 동기화 요청 데이터

@@ -3,6 +3,7 @@ package com.footballay.core.web.football.controller
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Positive
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -33,15 +34,20 @@ class V1FixtureController {
      */
     @GetMapping("league/{leagueUid}/fixtures")
     fun getFixturesByLeague(
-        @PathVariable("leagueUid")
+        @Parameter(description = "League UID", example = "qt1ow043gp")
+        @PathVariable
+        @Positive
         leagueUid: String,
-        @Parameter(description = "ISO-8601 UTC")
+        @Parameter(description = "날짜 (YYYY-MM-DD), 미지정 시 서버 현재 날짜", example = "2025-12-25")
         @RequestParam(required = false)
-        at: String?,
+        date: String?,
         @Parameter(description = "nearest | exact")
         @RequestParam(required = false, defaultValue = "exact")
         @Pattern(regexp = "exact|nearest")
-        mode: String, // mode 기본값 exact
+        mode: String,
+        @Parameter(description = "Timezone (IANA format, default: UTC)", example = "Asia/Seoul")
+        @RequestParam(required = false, defaultValue = "UTC")
+        timezone: String,
     ): String {
         TODO("리그별 경기 정보를 제공합니다. 모드에 따라서 다르게 동작해야합니다.")
     }

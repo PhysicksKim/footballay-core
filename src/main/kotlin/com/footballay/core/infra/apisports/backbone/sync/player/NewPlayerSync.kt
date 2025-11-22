@@ -1,4 +1,4 @@
-package com.footballay.core.infra.apisports.backbone.sync
+package com.footballay.core.infra.apisports.backbone.sync.player
 
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore

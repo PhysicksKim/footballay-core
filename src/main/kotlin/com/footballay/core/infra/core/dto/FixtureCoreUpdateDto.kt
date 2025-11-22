@@ -1,6 +1,6 @@
 package com.footballay.core.infra.core.dto
 
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import java.time.Instant
 
 /**
@@ -11,7 +11,7 @@ import java.time.Instant
 data class FixtureCoreUpdateDto(
     val kickoff: Instant?,
     val status: String?,
-    val statusShort: FixtureStatusShort?,
+    val statusShort: FixtureStatusCode?,
     val elapsedMin: Int?,
     val goalsHome: Int?,
     val goalsAway: Int?,

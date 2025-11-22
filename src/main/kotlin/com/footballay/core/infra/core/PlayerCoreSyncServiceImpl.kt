@@ -1,6 +1,6 @@
 package com.footballay.core.infra.core
 
-import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsCreateDto
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import com.footballay.core.infra.persistence.core.repository.PlayerCoreRepository
 import com.footballay.core.infra.util.UidGenerator

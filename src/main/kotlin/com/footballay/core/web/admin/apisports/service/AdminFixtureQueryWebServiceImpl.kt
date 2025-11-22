@@ -1,12 +1,10 @@
 package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.domain.model.FixtureModel
-import com.footballay.core.domain.model.Score
-import com.footballay.core.domain.model.TeamSide
+import com.footballay.core.domain.model.mapper.DomainModelMapper
+import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
-import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.logger
 import com.footballay.core.web.util.DateQueryResolver
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
@@ -37,10 +35,11 @@ import java.time.ZoneId
  */
 @Service
 class AdminFixtureQueryWebServiceImpl(
+    private val domainModelMapper: DomainModelMapper,
     private val fixtureCoreRepository: FixtureCoreRepository,
     private val leagueApiSportsRepository: LeagueApiSportsRepository,
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-    private val clock: Clock = Clock.systemUTC(), // 기본 Clock 을 못찾으면
+    private val clock: Clock = Clock.systemUTC(),
 ) : AdminFixtureQueryWebService {
     val log = logger()
 
@@ -78,16 +77,21 @@ class AdminFixtureQueryWebServiceImpl(
         val leagueUid = leagueApiSports.leagueCore?.uid ?: return emptyList()
 
         // Assert 1 : HomeTeam, AwayTeam, Kickoff 가 무조건 존재하는 FixtureCore 만 조회됨
-        // Assert 2 : Team 은 TeamApiSports 가 같이 조인 되어 존재함
+        // Assert 2 : Team 은 TeamApiSports 가 같이 조인 되어 로드됨
         val fixtures =
             when (mode) {
-                "exact" -> findFixturesOnExactDate(leagueUid, targetInstant, zoneId)
-                "nearest" -> findFixturesOnNearestDate(leagueUid, targetInstant, zoneId)
-                else -> emptyList()
-            }.map { it -> Triple(it, it.homeTeam!!, it.awayTeam!!) }
-
+                "exact" -> {
+                    findFixturesOnExactDate(leagueUid, targetInstant, zoneId)
+                }
+                "nearest" -> {
+                    findFixturesOnNearestDate(leagueUid, targetInstant, zoneId)
+                }
+                else -> {
+                    emptyList()
+                }
+            }
         return fixtures
-            .map { toFixtureModel(it) }
+            .map { (core, api) -> domainModelMapper.toFixtureModel(core, api) }
             .map { FixtureWebMapper.toSummaryDto(it) }
     }
 
@@ -107,10 +111,14 @@ class AdminFixtureQueryWebServiceImpl(
         leagueUid: String,
         at: Instant,
         zoneId: ZoneId,
-    ): List<FixtureCore> {
+    ): List<Pair<FixtureCore, FixtureApiSports>> {
         val (start, end) = DateQueryResolver.resolveExactRangeAt(at, clock, zoneId)
         return fixtureCoreRepository
             .findFixturesByLeagueUidInKickoffRange(leagueUid, start, end)
+            .mapNotNull { core ->
+                val apiSports = core.apiSports ?: return@mapNotNull null
+                Pair(core, apiSports)
+            }
     }
 
     /**
@@ -132,7 +140,7 @@ class AdminFixtureQueryWebServiceImpl(
         leagueUid: String,
         from: Instant,
         zoneId: ZoneId,
-    ): List<FixtureCore> {
+    ): List<Pair<FixtureCore, FixtureApiSports>> {
         // 가장 가까운 kickoff 시각을 찾기
         val nearestKickoff =
             fixtureCoreRepository.findMinKickoffAfterByLeagueUid(leagueUid, from)
@@ -144,42 +152,14 @@ class AdminFixtureQueryWebServiceImpl(
         val dayEnd = date.plusDays(1).atStartOfDay(zoneId).toInstant()
 
         // 해당 날짜 범위의 모든 fixture 조회
-        return fixtureCoreRepository.findFixturesByLeagueUidInKickoffRange(
-            leagueUid = leagueUid,
-            startInclusive = dayStart,
-            endExclusive = dayEnd,
-        )
-    }
-
-    /**
-     * Triple<FixtureCore, Home with TeamApiSports, Away with TeamApiSports> 를 FixtureModel 로 변환합니다
-     */
-    private fun toFixtureModel(tri: Triple<FixtureCore, TeamCore, TeamCore>): FixtureModel {
-        val (fixture, home, away) = tri
-        return FixtureModel(
-            uid = fixture.uid,
-            kickoffAt = fixture.kickoff!!, // kickoff 조건으로 조회했으므로 무조건 non-null 보장
-            homeTeam =
-                TeamSide(
-                    uid = home.uid,
-                    name = home.name,
-                    nameKo = home.nameKo ?: "",
-                    logo = home.teamApiSports?.logo,
-                ),
-            awayTeam =
-                TeamSide(
-                    uid = away.uid,
-                    name = away.name,
-                    nameKo = away.nameKo ?: "",
-                    logo = away.teamApiSports?.logo,
-                ),
-            status = fixture.status,
-            score =
-                Score(
-                    home = fixture.goalsHome,
-                    away = fixture.goalsAway,
-                ),
-            available = fixture.available,
-        )
+        return fixtureCoreRepository
+            .findFixturesByLeagueUidInKickoffRange(
+                leagueUid = leagueUid,
+                startInclusive = dayStart,
+                endExclusive = dayEnd,
+            ).mapNotNull { core ->
+                val apiSports = core.apiSports ?: return@mapNotNull null
+                Pair(core, apiSports)
+            }
     }
 }

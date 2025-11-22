@@ -5,7 +5,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.core.FixtureCoreQueryService
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.JobSchedulerService
@@ -397,8 +397,8 @@ class AvailableFixtureFacadeTest {
             id = id,
             uid = uid,
             kickoff = kickoff,
-            status = "Not Started",
-            statusShort = FixtureStatusShort.NS,
+            statusText = "Not Started",
+            statusCode = FixtureStatusCode.NS,
             elapsedMin = null,
             league = league,
             homeTeam = null,

@@ -1,6 +1,5 @@
 package com.footballay.core.infra.apisports.backbone.sync.player
 
-import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 
 /**

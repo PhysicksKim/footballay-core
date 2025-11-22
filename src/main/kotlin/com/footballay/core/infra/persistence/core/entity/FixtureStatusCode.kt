@@ -8,8 +8,8 @@ package com.footballay.core.infra.persistence.core.entity
  * @author Footballay Core Team
  * @since 1.0.0
  */
-enum class FixtureStatusShort(
-    val value: String,
+enum class FixtureStatusCode(
+    val code: String,
 ) {
     TBD("TBD"), // Time To Be Defined
     NS("NS"), // Not Started
@@ -33,9 +33,9 @@ enum class FixtureStatusShort(
     ;
 
     companion object {
-        fun fromString(value: String?): FixtureStatusShort? = values().find { it.value == value }
+        fun fromString(value: String?): FixtureStatusCode? = values().find { it.code == value }
 
-        fun isLiveStatus(status: FixtureStatusShort): Boolean =
+        fun isLiveStatus(status: FixtureStatusCode): Boolean =
             status in
                 setOf(
                     FIRST_HALF,

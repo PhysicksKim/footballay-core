@@ -1,8 +1,12 @@
 package com.footballay.core.web.admin.apisports.service
 
 import com.footballay.core.domain.admin.apisports.facade.AdminApiSportsQueryFacade
-import com.footballay.core.web.admin.apisports.dto.PlayerAdminResponse
-import com.footballay.core.web.admin.apisports.dto.TeamAdminResponse
+import com.footballay.core.domain.model.PlayerApiSportsExtension
+import com.footballay.core.domain.model.PlayerModel
+import com.footballay.core.domain.model.TeamApiSportsExtension
+import com.footballay.core.domain.model.TeamModel
+import com.footballay.core.web.admin.apisports.dto.PlayerApiSportsAdminResponse
+import com.footballay.core.web.admin.apisports.dto.TeamApiSportsAdminResponse
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
 
@@ -25,23 +29,24 @@ class AdminApiSportsQueryWebService(
      * @return TeamAdminResponse 목록
      */
     @PreAuthorize("hasRole('ADMIN')")
-    fun findTeamsByLeagueApiId(leagueApiId: Long): List<TeamAdminResponse> {
+    fun findTeamsByLeagueApiId(leagueApiId: Long): List<TeamApiSportsAdminResponse> {
         val result = adminApiSportsQueryFacade.findTeamsByLeagueApiId(leagueApiId)
 
-        // DomainResult에서 Model 추출 (현재는 항상 Success)
         val teams = result.getOrNull() ?: emptyList()
+        val pairList: List<Pair<TeamModel, TeamApiSportsExtension>> =
+            teams.mapNotNull { model ->
+                val ext = model.extension as? TeamApiSportsExtension ?: return@mapNotNull null
+                Pair(model, ext)
+            }
 
-        // Domain Model → Web Response DTO 변환
-        return teams.map { model ->
-            TeamAdminResponse(
-                teamApiId = model.teamApiId,
-                teamCoreId = model.teamCoreId,
+        return pairList.map { (model, ext) ->
+            TeamApiSportsAdminResponse(
+                apiId = ext.apiId,
                 uid = model.uid,
                 name = model.name,
+                nameKo = model.nameKo,
+                logo = ext.logo,
                 code = model.code,
-                country = model.country,
-                details = model.details,
-                detailsType = model.detailsType,
             )
         }
     }
@@ -53,25 +58,26 @@ class AdminApiSportsQueryWebService(
      * @return PlayerAdminResponse 목록
      */
     @PreAuthorize("hasRole('ADMIN')")
-    fun findPlayersByTeamApiId(teamApiId: Long): List<PlayerAdminResponse> {
+    fun findPlayersByTeamApiId(teamApiId: Long): List<PlayerApiSportsAdminResponse> {
         val result = adminApiSportsQueryFacade.findPlayersByTeamApiId(teamApiId)
 
-        // DomainResult에서 Model 추출 (현재는 항상 Success)
         val players = result.getOrNull() ?: emptyList()
+        val pairList: List<Pair<PlayerModel, PlayerApiSportsExtension>> =
+            players.mapNotNull { model ->
+                val ext = model.extension as? PlayerApiSportsExtension ?: return@mapNotNull null
+                Pair(model, ext)
+            }
 
-        // Domain Model → Web Response DTO 변환
-        return players.map { model ->
-            PlayerAdminResponse(
-                playerApiId = model.playerApiId,
-                playerCoreId = model.playerCoreId,
+        return pairList.map { (model, ext) ->
+            PlayerApiSportsAdminResponse(
+                apiId = ext.apiId,
                 uid = model.uid,
                 name = model.name,
-                firstname = model.firstname,
-                lastname = model.lastname,
+                nameKo = model.nameKo,
+                photo = model.photo,
                 position = model.position,
                 number = model.number,
-                details = model.details,
-                detailsType = model.detailsType,
+                nationality = ext.nationality,
             )
         }
     }

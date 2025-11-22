@@ -2,7 +2,7 @@ package com.footballay.core.domain.admin.apisports.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.domain.model.mapper.DomainModelApiSportsMapper
+import com.footballay.core.domain.model.mapper.DomainModelMapper
 import com.footballay.core.domain.model.PlayerModel
 import com.footballay.core.domain.model.TeamModel
 import com.footballay.core.infra.persistence.apisports.repository.PlayerApiSportsRepository
@@ -17,11 +17,10 @@ import org.springframework.transaction.annotation.Transactional
  * Repository에서 조회한 엔티티를 DomainModelMapper를 통해 Domain Model로 변환하고 DomainResult로 래핑합니다.
  */
 @Component
-@Transactional(readOnly = true)
 class AdminApiSportsQueryFacade(
     private val teamApiSportsRepository: TeamApiSportsRepository,
     private val playerApiSportsRepository: PlayerApiSportsRepository,
-    private val domainModelApiSportsMapper: DomainModelApiSportsMapper,
+    private val domainModelMapper: DomainModelMapper,
 ) {
     /**
      * LeagueApiSports apiId로 해당 리그의 팀 목록 조회
@@ -33,10 +32,16 @@ class AdminApiSportsQueryFacade(
      * @param leagueApiId LeagueApiSports의 apiId (예: 39 = Premier League)
      * @return DomainResult<List<TeamModel>, DomainFail>
      */
+    @Transactional(readOnly = true)
     fun findTeamsByLeagueApiId(leagueApiId: Long): DomainResult<List<TeamModel>, DomainFail> {
         val teamApiSportsList = teamApiSportsRepository.findAllByLeagueApiSportsApiId(leagueApiId)
 
-        val teams = teamApiSportsList.map { domainModelApiSportsMapper.toTeamModel(it) }
+        val teams =
+            teamApiSportsList
+                .mapNotNull { api ->
+                    val core = api.teamCore ?: return@mapNotNull null
+                    domainModelMapper.toTeamModel(core, api)
+                }
 
         return DomainResult.Success(teams)
     }
@@ -51,11 +56,16 @@ class AdminApiSportsQueryFacade(
      * @param teamApiId TeamApiSports의 apiId (예: 50 = Manchester City)
      * @return DomainResult<List<PlayerModel>, DomainFail>
      */
+    @Transactional(readOnly = true)
     fun findPlayersByTeamApiId(teamApiId: Long): DomainResult<List<PlayerModel>, DomainFail> {
         val playerApiSportsList = playerApiSportsRepository.findAllByTeamApiSportsApiId(teamApiId)
 
-        val players = playerApiSportsList.map { domainModelApiSportsMapper.toPlayerModel(it) }
-
+        val players =
+            playerApiSportsList.mapNotNull { api ->
+                api.playerCore?.let { core ->
+                    domainModelMapper.toPlayerModel(core, api)
+                }
+            }
         return DomainResult.Success(players)
     }
 }

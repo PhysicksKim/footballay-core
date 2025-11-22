@@ -3,7 +3,7 @@ package com.footballay.core.web.admin.fixture.service
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
@@ -262,8 +262,8 @@ class AdminFixtureQueryWebServiceImplTest {
             FixtureCore(
                 uid = "test_fixture",
                 kickoff = targetDate,
-                status = "First Half",
-                statusShort = FixtureStatusShort.FIRST_HALF,
+                statusText = "First Half",
+                statusCode = FixtureStatusCode.FIRST_HALF,
                 elapsedMin = 30,
                 league = testLeague,
                 homeTeam = homeTeam,
@@ -303,8 +303,8 @@ class AdminFixtureQueryWebServiceImplTest {
         FixtureCore(
             uid = uid,
             kickoff = kickoff,
-            status = status,
-            statusShort = FixtureStatusShort.NS,
+            statusText = status,
+            statusCode = FixtureStatusCode.NS,
             league = testLeague,
             homeTeam = homeTeam,
             awayTeam = awayTeam,

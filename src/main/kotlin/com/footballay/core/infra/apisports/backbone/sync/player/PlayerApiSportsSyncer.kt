@@ -1,9 +1,7 @@
 package com.footballay.core.infra.apisports.backbone.sync.player
 
-import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.PlayerApiSports
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
-import kotlin.collections.get
 
 /**
  * PlayerApiSports 엔티티 동기화를 위한 인터페이스

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.apisports.backbone.extractor
 
-import com.footballay.core.infra.apisports.backbone.sync.PlayerApiSportsCreateDto
+import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsCreateDto
 import com.footballay.core.infra.apisports.backbone.sync.player.PlayerApiSportsSyncer
 import org.springframework.stereotype.Component
 

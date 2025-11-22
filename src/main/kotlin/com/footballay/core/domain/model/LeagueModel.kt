@@ -1,17 +1,18 @@
 package com.footballay.core.domain.model
 
-sealed interface LeagueExtra
+sealed interface LeagueExtension
 
 data class LeagueModel(
-    val photo: String?,
     val uid: String,
     val name: String,
     val nameKo: String?,
-    val season: Int?,
+    val photo: String?,
     val available: Boolean,
-    val extra: LeagueExtra? = null,
+    val extension: LeagueExtension = NoLeagueExtension,
 )
 
-data class LeagueApiSportsExtra(
+object NoLeagueExtension : LeagueExtension
+
+data class LeagueApiSportsExtension(
     val apiId: Long,
-) : LeagueExtra
+) : LeagueExtension

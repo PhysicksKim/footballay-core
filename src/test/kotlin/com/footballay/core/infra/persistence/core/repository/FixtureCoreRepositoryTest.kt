@@ -1,7 +1,7 @@
 package com.footballay.core.infra.persistence.core.repository
 
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.logger
@@ -334,8 +334,8 @@ class FixtureCoreRepositoryTest {
         FixtureCore(
             uid = uid,
             kickoff = kickoff,
-            status = "Not Started",
-            statusShort = FixtureStatusShort.NS,
+            statusText = "Not Started",
+            statusCode = FixtureStatusCode.NS,
             league = league,
             homeTeam = homeTeam,
             awayTeam = awayTeam,

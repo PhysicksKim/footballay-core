@@ -3,7 +3,7 @@ package com.footballay.core.infra.core
 import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
 import com.footballay.core.infra.core.dto.FixtureCoreUpdateDto
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.util.UidGenerator
 import com.footballay.core.logger
@@ -64,8 +64,8 @@ class FixtureCoreSyncServiceImpl(
         FixtureCore(
             uid = uid,
             kickoff = createDto.kickoff,
-            status = createDto.status ?: "Unknown",
-            statusShort = createDto.statusShort ?: FixtureStatusShort.NS,
+            statusText = createDto.status ?: "Unknown",
+            statusCode = createDto.statusShort ?: FixtureStatusCode.NS,
             elapsedMin = createDto.elapsedMin,
             league = createDto.leagueCore,
             homeTeam = createDto.homeTeam,
@@ -82,8 +82,8 @@ class FixtureCoreSyncServiceImpl(
         updateDto: FixtureCoreUpdateDto,
     ): FixtureCore {
         updateDto.kickoff?.let { fixtureCore.kickoff = it }
-        updateDto.status?.let { fixtureCore.status = it }
-        updateDto.statusShort?.let { fixtureCore.statusShort = it }
+        updateDto.status?.let { fixtureCore.statusText = it }
+        updateDto.statusShort?.let { fixtureCore.statusCode = it }
         updateDto.elapsedMin?.let { fixtureCore.elapsedMin = it }
         updateDto.goalsHome?.let { fixtureCore.goalsHome = it }
         updateDto.goalsAway?.let { fixtureCore.goalsAway = it }

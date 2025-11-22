@@ -6,7 +6,7 @@ import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCr
 import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import org.springframework.stereotype.Component
@@ -27,7 +27,7 @@ interface FixtureDataMapper {
     /**
      * API Sports Status를 Core Status로 매핑
      */
-    fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusShort?
+    fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusCode?
 
     /**
      * API Sports Score를 Core Score로 매핑
@@ -75,7 +75,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
      *
      * @return 매칭되는 enum 값 또는 null (매칭 실패 시)
      */
-    override fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusShort? = apiStatus?.shortStatus?.let { FixtureStatusShort.fromString(it) }
+    override fun mapStatusToCore(apiStatus: StatusOfFixtureApiSportsCreateDto?): FixtureStatusCode? = apiStatus?.shortStatus?.let { FixtureStatusCode.fromString(it) }
 
     /**
      * API Sports Score에서 풀타임 홈 골을 추출
@@ -163,7 +163,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
             uid = uid,
             kickoff = kickoff,
             status = dto.status?.longStatus ?: "Unknown",
-            statusShort = mapStatusToCore(dto.status) ?: FixtureStatusShort.NS,
+            statusShort = mapStatusToCore(dto.status) ?: FixtureStatusCode.NS,
             elapsedMin = dto.status?.elapsed,
             goalsHome = dto.score?.fulltimeHome,
             goalsAway = dto.score?.fulltimeAway,

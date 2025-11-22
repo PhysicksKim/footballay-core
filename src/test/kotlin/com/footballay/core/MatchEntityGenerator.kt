@@ -13,7 +13,7 @@ import com.footballay.core.infra.persistence.apisports.repository.live.ApiSports
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamRepository
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamStatisticsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusShort
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
@@ -22,7 +22,6 @@ import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepositor
 import com.footballay.core.infra.persistence.core.repository.PlayerCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.infra.util.UidGenerator
-import com.footballay.core.logger
 import org.springframework.boot.test.context.TestComponent
 import java.time.Instant
 import java.time.LocalDate
@@ -175,8 +174,8 @@ class MatchEntityGenerator(
             FixtureCore(
                 uid = uidGenerator.generateUid(),
                 kickoff = kickoffTime,
-                status = "Not Started",
-                statusShort = FixtureStatusShort.NS,
+                statusText = "Not Started",
+                statusCode = FixtureStatusCode.NS,
                 elapsedMin = null,
                 league = league,
                 homeTeam = homeTeam,

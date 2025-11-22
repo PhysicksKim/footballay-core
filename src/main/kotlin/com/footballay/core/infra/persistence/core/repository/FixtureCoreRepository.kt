@@ -67,6 +67,7 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         """
         SELECT f
         FROM FixtureCore f
+        LEFT JOIN FETCH f.apiSports AS fas
         LEFT JOIN FETCH f.homeTeam AS ht    
         LEFT JOIN FETCH f.awayTeam AS at
         LEFT JOIN FETCH ht.teamApiSports

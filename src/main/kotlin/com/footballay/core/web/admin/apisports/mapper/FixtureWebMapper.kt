@@ -7,20 +7,29 @@ object FixtureWebMapper {
     fun toSummaryDto(model: FixtureModel): FixtureSummaryDto =
         FixtureSummaryDto(
             uid = model.uid,
-            kickoffAt = model.kickoffAt.toString(),
+            kickoffAt = model.schedule.kickoffAt.toString(),
             home =
-                FixtureSummaryDto.TeamDto(
-                    name = model.homeTeam.name,
-                    nameKo = model.homeTeam.nameKo,
-                    logo = model.homeTeam.logo,
-                ),
+                if (model.homeTeam != null) {
+                    FixtureSummaryDto.TeamDto(
+                        name = model.homeTeam.name,
+                        nameKo = model.homeTeam.nameKo,
+                        logo = model.homeTeam.logo,
+                    )
+                } else {
+                    null
+                },
             away =
-                FixtureSummaryDto.TeamDto(
-                    name = model.awayTeam.name,
-                    nameKo = model.awayTeam.nameKo,
-                    logo = model.awayTeam.logo,
-                ),
-            status = model.status,
+                if (model.awayTeam != null) {
+                    FixtureSummaryDto.TeamDto(
+                        name = model.awayTeam.name,
+                        nameKo = model.awayTeam.nameKo,
+                        logo = model.awayTeam.logo,
+                    )
+                } else {
+                    null
+                },
+            status = model.status.code.value,
+            statusText = model.status.statusText,
             available = model.available,
         )
 }

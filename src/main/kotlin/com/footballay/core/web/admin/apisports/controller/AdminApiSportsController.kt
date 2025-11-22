@@ -21,8 +21,8 @@ import com.footballay.core.web.admin.apisports.dto.AvailableLeagueDto
 import com.footballay.core.web.admin.apisports.service.AdminLeagueQueryWebService
 import com.footballay.core.web.admin.apisports.service.AdminFixtureQueryWebService
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
-import com.footballay.core.web.admin.apisports.dto.PlayerAdminResponse
-import com.footballay.core.web.admin.apisports.dto.TeamAdminResponse
+import com.footballay.core.web.admin.apisports.dto.PlayerApiSportsAdminResponse
+import com.footballay.core.web.admin.apisports.dto.TeamApiSportsAdminResponse
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsQueryWebService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
@@ -268,12 +268,12 @@ class AdminApiSportsController(
         @Parameter(description = "ApiSports League ID", example = "39")
         @PathVariable
         leagueApiId: Long,
-    ): ResponseEntity<List<TeamAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findTeamsByLeagueApiId(leagueApiId))
+    ): ResponseEntity<List<TeamApiSportsAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findTeamsByLeagueApiId(leagueApiId))
 
     @Operation(summary = "팀별 선수 목록 조회", description = OP_GET_PLAYERS_BY_TEAM)
     @ApiResponse(responseCode = "200")
     @GetMapping("/teams/{teamApiId}/players")
     fun getPlayersByTeam(
         @Parameter(description = "ApiSports Team ID", example = "50") @PathVariable teamApiId: Long,
-    ): ResponseEntity<List<PlayerAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findPlayersByTeamApiId(teamApiId))
+    ): ResponseEntity<List<PlayerApiSportsAdminResponse>> = ResponseEntity.ok(adminApiSportsQueryWebService.findPlayersByTeamApiId(teamApiId))
 }
