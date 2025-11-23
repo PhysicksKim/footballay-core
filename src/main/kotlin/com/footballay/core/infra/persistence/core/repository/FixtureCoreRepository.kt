@@ -103,4 +103,25 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         @Param("leagueUid") leagueUid: String,
         @Param("from") from: Instant,
     ): Instant?
+
+    /**
+     * 특정 리그(UID 기반)에서 before 이전 가장 가까운 kickoff 시각을 조회합니다.
+     * previous 모드에서 사용됩니다.
+     *
+     * @param leagueUid 리그 UID
+     * @param before 기준 시각 (exclusive)
+     * @return 가장 가까운 kickoff 시각, 없으면 null
+     */
+    @Query(
+        """
+        SELECT MAX(f.kickoff)
+        FROM FixtureCore f
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff < :before
+    """,
+    )
+    fun findMaxKickoffBeforeByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+        @Param("before") before: Instant,
+    ): Instant?
 }

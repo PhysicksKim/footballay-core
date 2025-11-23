@@ -8,6 +8,7 @@ data class FixtureSummaryDto(
     val status: String,
     val statusText: String,
     val available: Boolean,
+    val apiId: Long?,
 ) {
     data class TeamDto(
         val name: String,

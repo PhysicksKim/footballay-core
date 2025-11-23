@@ -1,5 +1,6 @@
 package com.footballay.core.web.admin.apisports.mapper
 
+import com.footballay.core.domain.model.FixtureApiSportsExtension
 import com.footballay.core.domain.model.FixtureModel
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 
@@ -31,5 +32,6 @@ object FixtureWebMapper {
             status = model.status.code.value,
             statusText = model.status.statusText,
             available = model.available,
+            apiId = if (model.extension is FixtureApiSportsExtension) model.extension.apiId else null,
         )
 }

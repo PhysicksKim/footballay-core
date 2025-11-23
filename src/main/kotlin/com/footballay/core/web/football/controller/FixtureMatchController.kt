@@ -89,29 +89,6 @@ class FixtureMatchController(
     }
 
     @Operation(
-        summary = "경기 이벤트 조회",
-        description = "골, 카드, 교체 등 이벤트 타임라인을 조회합니다.",
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            content = [Content(schema = Schema(implementation = FixtureEventsResponse::class))],
-        ),
-        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
-    )
-    @GetMapping("/{uid}/events")
-    fun getFixtureEvents(
-        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
-        @PathVariable
-        @NotBlank uid: String,
-    ): ResponseEntity<FixtureEventsResponse> {
-        log.info("GET /api/v1/football/fixtures/{}/events", uid)
-        return webService
-            .getFixtureEvents(uid)
-            .toResponseEntity()
-    }
-
-    @Operation(
         summary = "경기 라인업 조회",
         description = "홈/원정 선발/교체 선수 라인업 정보를 조회합니다.",
     )
@@ -131,6 +108,29 @@ class FixtureMatchController(
         log.info("GET /api/v1/football/fixtures/{}/lineup", uid)
         return webService
             .getFixtureLineup(uid)
+            .toResponseEntity()
+    }
+
+    @Operation(
+        summary = "경기 이벤트 조회",
+        description = "골, 카드, 교체 등 이벤트 타임라인을 조회합니다.",
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            content = [Content(schema = Schema(implementation = FixtureEventsResponse::class))],
+        ),
+        ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
+    )
+    @GetMapping("/{uid}/events")
+    fun getFixtureEvents(
+        @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
+        @PathVariable
+        @NotBlank uid: String,
+    ): ResponseEntity<FixtureEventsResponse> {
+        log.info("GET /api/v1/football/fixtures/{}/events", uid)
+        return webService
+            .getFixtureEvents(uid)
             .toResponseEntity()
     }
 

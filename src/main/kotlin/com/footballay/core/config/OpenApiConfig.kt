@@ -96,4 +96,17 @@ class OpenApiConfig {
             .displayName("Public API")
             .pathsToMatch("/api/football/**")
             .build()
+
+    /**
+     * v1 api 그룹
+     */
+    @Bean
+    fun apiV1(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("v1")
+            .displayName("v1 API")
+            .pathsToMatch("/api/v1/**")
+            .pathsToExclude("/api/v1/admin/**")
+            .build()
 }

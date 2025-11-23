@@ -95,7 +95,7 @@ logging:
 # 로컬 개발 환경 CORS 출처
 # Vite dev server(5173) → Spring Boot(8083) proxy 사용
 cors:
-  allowedorigins: "http://localhost:5173,http://localhost:8083,http://localhost:8080,http://localhost:1212"
+  allowedorigins: "http://localhost:5173,http://localhost:8083,http://localhost:8080,http://localhost:1212,http://localhost:7777"
 
 custom:
   cookie:

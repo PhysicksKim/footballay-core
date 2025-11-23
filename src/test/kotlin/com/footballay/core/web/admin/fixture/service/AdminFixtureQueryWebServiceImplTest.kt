@@ -1,6 +1,8 @@
 package com.footballay.core.web.admin.fixture.service
 
+import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
+import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
@@ -53,6 +55,9 @@ class AdminFixtureQueryWebServiceImplTest {
 
     @Autowired
     private lateinit var leagueApiSportsRepository: LeagueApiSportsRepository
+
+    @Autowired
+    private lateinit var fixtureApiSportsRepository: FixtureApiSportsRepository
 
     @Autowired
     private lateinit var teamCoreRepository: TeamCoreRepository
@@ -110,19 +115,12 @@ class AdminFixtureQueryWebServiceImplTest {
         // Given: 2025-03-05에 3개, 2025-03-06에 2개 경기
         val targetDate = Instant.parse("2025-03-05T10:00:00Z")
 
-        val fixturesOnTarget =
-            listOf(
-                createFixture("f1", targetDate, "Not Started"),
-                createFixture("f2", targetDate.plus(3, ChronoUnit.HOURS), "Not Started"),
-                createFixture("f3", targetDate.plus(6, ChronoUnit.HOURS), "Not Started"),
-            )
-        val fixturesNextDay =
-            listOf(
-                createFixture("f4", targetDate.plus(1, ChronoUnit.DAYS), "Not Started"),
-                createFixture("f5", targetDate.plus(1, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS), "Not Started"),
-            )
+        createFixture("f1", targetDate, "Not Started")
+        createFixture("f2", targetDate.plus(3, ChronoUnit.HOURS), "Not Started")
+        createFixture("f3", targetDate.plus(6, ChronoUnit.HOURS), "Not Started")
+        createFixture("f4", targetDate.plus(1, ChronoUnit.DAYS), "Not Started")
+        createFixture("f5", targetDate.plus(1, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS), "Not Started")
 
-        fixtureCoreRepository.saveAll(fixturesOnTarget + fixturesNextDay)
         em.flush()
         em.clear()
 
@@ -139,10 +137,8 @@ class AdminFixtureQueryWebServiceImplTest {
     fun `exact 모드 - at이 null이면 서버 현재 시간 기준으로 조회`() {
         // Given: 테스트를 위해 현재 시간 근처에 경기 생성
         val now = Instant.now()
-        val todayFixture = createFixture("today", now, "Not Started")
-        val tomorrowFixture = createFixture("tomorrow", now.plus(1, ChronoUnit.DAYS), "Not Started")
-
-        fixtureCoreRepository.saveAll(listOf(todayFixture, tomorrowFixture))
+        createFixture("today", now, "Not Started")
+        createFixture("tomorrow", now.plus(1, ChronoUnit.DAYS), "Not Started")
         em.flush()
         em.clear()
 
@@ -159,9 +155,7 @@ class AdminFixtureQueryWebServiceImplTest {
     fun `exact 모드 - 해당 날짜에 경기 없으면 빈 리스트 반환`() {
         // Given: 경기가 없는 날짜
         val targetDate = Instant.parse("2025-03-05T10:00:00Z")
-        val futureFixture = createFixture("f1", targetDate.plus(7, ChronoUnit.DAYS), "Not Started")
-
-        fixtureCoreRepository.save(futureFixture)
+        createFixture("f1", targetDate.plus(7, ChronoUnit.DAYS), "Not Started")
         em.flush()
         em.clear()
 
@@ -178,14 +172,9 @@ class AdminFixtureQueryWebServiceImplTest {
         // Given: 2025-03-05에 2개 경기
         val targetDate = Instant.parse("2025-03-05T10:00:00Z")
 
-        val fixturesOnTarget =
-            listOf(
-                createFixture("f1", targetDate, "Not Started"),
-                createFixture("f2", targetDate.plus(5, ChronoUnit.HOURS), "Not Started"),
-            )
-        val futureFixture = createFixture("f3", targetDate.plus(3, ChronoUnit.DAYS), "Not Started")
-
-        fixtureCoreRepository.saveAll(fixturesOnTarget + futureFixture)
+        createFixture("f1", targetDate, "Not Started")
+        createFixture("f2", targetDate.plus(5, ChronoUnit.HOURS), "Not Started")
+        createFixture("f3", targetDate.plus(3, ChronoUnit.DAYS), "Not Started")
         em.flush()
         em.clear()
 
@@ -204,14 +193,9 @@ class AdminFixtureQueryWebServiceImplTest {
         val requestDate = Instant.parse("2025-03-05T10:00:00Z")
         val nearestDate = Instant.parse("2025-03-07T10:00:00Z")
 
-        val fixturesOnNearestDate =
-            listOf(
-                createFixture("f1", nearestDate, "Not Started"),
-                createFixture("f2", nearestDate.plus(3, ChronoUnit.HOURS), "Not Started"),
-            )
-        val fartherFixture = createFixture("f3", nearestDate.plus(5, ChronoUnit.DAYS), "Not Started")
-
-        fixtureCoreRepository.saveAll(fixturesOnNearestDate + fartherFixture)
+        createFixture("f1", nearestDate, "Not Started")
+        createFixture("f2", nearestDate.plus(3, ChronoUnit.HOURS), "Not Started")
+        createFixture("f3", nearestDate.plus(5, ChronoUnit.DAYS), "Not Started")
         em.flush()
         em.clear()
 
@@ -241,8 +225,7 @@ class AdminFixtureQueryWebServiceImplTest {
     fun `invalid 모드 - 빈 리스트 반환`() {
         // Given
         val targetDate = Instant.parse("2025-03-05T10:00:00Z")
-        val fixture = createFixture("f1", targetDate, "Not Started")
-        fixtureCoreRepository.save(fixture)
+        createFixture("f1", targetDate, "Not Started")
         em.flush()
         em.clear()
 
@@ -274,8 +257,16 @@ class AdminFixtureQueryWebServiceImplTest {
                 available = true,
                 autoGenerated = false,
             )
-
         fixtureCoreRepository.save(fixture)
+
+        val fixtureApiSports =
+            FixtureApiSports(
+                apiId = 12345L,
+                core = fixture,
+                round = "Round 1",
+                season = null,
+            )
+        fixtureApiSportsRepository.save(fixtureApiSports)
         em.flush()
         em.clear()
 
@@ -287,9 +278,10 @@ class AdminFixtureQueryWebServiceImplTest {
         val dto = result[0]
         assertThat(dto.uid).isEqualTo("test_fixture")
         assertThat(dto.kickoffAt).isEqualTo(targetDate.toString())
-        assertThat(dto.homeTeam).isEqualTo("Home Team")
-        assertThat(dto.awayTeam).isEqualTo("Away Team")
-        assertThat(dto.status).isEqualTo("First Half")
+        assertThat(dto.home?.name).isEqualTo("Home Team")
+        assertThat(dto.away?.name).isEqualTo("Away Team")
+        assertThat(dto.status).isEqualTo("1H")
+        assertThat(dto.statusText).isEqualTo("First Half")
         assertThat(dto.available).isTrue()
 
         log.info("DTO mapping verified: $dto")
@@ -299,19 +291,33 @@ class AdminFixtureQueryWebServiceImplTest {
         uid: String,
         kickoff: Instant,
         status: String,
-    ): FixtureCore =
-        FixtureCore(
-            uid = uid,
-            kickoff = kickoff,
-            statusText = status,
-            statusCode = FixtureStatusCode.NS,
-            league = testLeague,
-            homeTeam = homeTeam,
-            awayTeam = awayTeam,
-            goalsHome = 0,
-            goalsAway = 0,
-            finished = false,
-            available = true,
-            autoGenerated = false,
-        )
+    ): FixtureCore {
+        val fixtureCore =
+            FixtureCore(
+                uid = uid,
+                kickoff = kickoff,
+                statusText = status,
+                statusCode = FixtureStatusCode.NS,
+                league = testLeague,
+                homeTeam = homeTeam,
+                awayTeam = awayTeam,
+                goalsHome = 0,
+                goalsAway = 0,
+                finished = false,
+                available = true,
+                autoGenerated = false,
+            )
+        fixtureCoreRepository.save(fixtureCore)
+
+        val fixtureApiSports =
+            FixtureApiSports(
+                apiId = uid.hashCode().toLong().let { if (it < 0) -it else it },
+                core = fixtureCore,
+                round = "Round 1",
+                season = null,
+            )
+        fixtureApiSportsRepository.save(fixtureApiSports)
+
+        return fixtureCore
+    }
 }

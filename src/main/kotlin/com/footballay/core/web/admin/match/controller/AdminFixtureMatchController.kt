@@ -39,6 +39,10 @@ class AdminFixtureMatchController(
                 "Available 상태와 무관하게 동작합니다."
     }
 
+    /**
+     * 특수하게 수동으로 단건 sync 하는 path 이므로
+     * restful에 어긋나지만 ../sync 같은 경로를 사용합니다.
+     */
     @Operation(summary = "Match Sync Once", description = OP_MATCH_SYNC_ONCE)
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "경기 저장 성공"),
