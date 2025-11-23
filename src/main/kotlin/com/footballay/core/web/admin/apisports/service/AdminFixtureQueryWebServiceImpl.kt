@@ -91,8 +91,24 @@ class AdminFixtureQueryWebServiceImpl(
                 }
             }
         return fixtures
-            .map { (core, api) -> domainModelMapper.toFixtureModel(core, api) }
-            .map { FixtureWebMapper.toSummaryDto(it) }
+            .mapNotNull { (core, api) ->
+                val teamHomeAndAway =
+                    Pair(
+                        core.homeTeam ?: return@mapNotNull null,
+                        core.awayTeam ?: return@mapNotNull null,
+                    )
+                val apiTeamHomeAndAway =
+                    Pair(
+                        core.homeTeam?.teamApiSports ?: return@mapNotNull null,
+                        core.awayTeam?.teamApiSports ?: return@mapNotNull null,
+                    )
+                domainModelMapper.toFixtureModel(
+                    core,
+                    api,
+                    teamHomeAndAway,
+                    apiTeamHomeAndAway,
+                )
+            }.map { FixtureWebMapper.toSummaryDto(it) }
     }
 
     /**

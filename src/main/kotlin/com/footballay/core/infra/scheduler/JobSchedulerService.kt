@@ -46,6 +46,7 @@ class JobSchedulerService(
         startTime: Instant,
     ): Boolean {
         try {
+            log.info("Adding PreMatchJob fixtures for $fixtureUid")
             val jobKey = createJobKey(JOB_GROUP_PRE_MATCH, fixtureUid)
 
             // 이미 존재하면 삭제
@@ -97,6 +98,7 @@ class JobSchedulerService(
         startTime: Instant,
     ): Boolean {
         try {
+            log.info("Adding LiveMatchJob fixtures for $fixtureUid")
             val jobKey = createJobKey(JOB_GROUP_LIVE_MATCH, fixtureUid)
 
             // 이미 존재하면 삭제
@@ -148,6 +150,7 @@ class JobSchedulerService(
         startTime: Instant = Instant.now(),
     ): Boolean {
         try {
+            log.info("Adding PostMatchJob fixtures for $fixtureUid")
             val jobKey = createJobKey(JOB_GROUP_POST_MATCH, fixtureUid)
 
             // 이미 존재하면 삭제
@@ -193,6 +196,7 @@ class JobSchedulerService(
      */
     fun removeJob(jobKey: JobKey): Boolean {
         try {
+            log.info("Removing Job fixtures for $jobKey")
             val deleted = scheduler.deleteJob(jobKey)
             if (deleted) {
                 log.info("Job removed - jobKey={}", jobKey)

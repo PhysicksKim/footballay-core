@@ -527,6 +527,5 @@ class MatchDataQueryServiceImpl(
      * Event type을 PascalCase로 정규화
      * "subst" → "Subst", "Goal" → "Goal" 등
      */
-    private fun normalizeEventType(eventType: String): String =
-        eventType.replaceFirstChar { it.uppercaseChar() }
+    private fun normalizeEventType(eventType: String): String = eventType.replaceFirstChar { it.uppercaseChar() }
 }

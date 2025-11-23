@@ -123,19 +123,23 @@ class DomainModelMapper {
     fun toFixtureModel(
         fixtureCore: FixtureCore,
         fixtureApiSports: FixtureApiSports,
+        teamHomeAndAway: Pair<TeamCore, TeamCore>,
+        apiTeamHomeAndAway: Pair<TeamApiSports, TeamApiSports>,
         leagueUid: String? = null,
     ): FixtureModel {
-        val homeCore = fixtureCore.homeTeam
-        val awayCore = fixtureCore.awayTeam
+        val homeCore = teamHomeAndAway.first
+        val awayCore = teamHomeAndAway.second
+        val homeApi = apiTeamHomeAndAway.first
+        val awayApi = apiTeamHomeAndAway.second
 
         val fixtureSchedule =
             FixtureModel.FixtureSchedule(
                 kickoffAt = fixtureCore.kickoff,
-                round = fixtureCore.apiSports?.round ?: "",
+                round = fixtureApiSports.round ?: "",
             )
 
-        val homeSide = createTeamSide(homeCore)
-        val awaySide = createTeamSide(awayCore)
+        val homeSide = createTeamSide(homeCore, homeApi)
+        val awaySide = createTeamSide(awayCore, awayApi)
 
         val modelStatusCode = mapStatusCode(fixtureCore.statusCode)
         val status =
@@ -143,7 +147,7 @@ class DomainModelMapper {
                 statusText = fixtureCore.statusText,
                 code = modelStatusCode,
                 elapsed = fixtureCore.elapsedMin,
-                extra = fixtureCore.apiSports?.status?.extra,
+                extra = fixtureApiSports.status?.extra,
             )
 
         val score = createScore(fixtureCore)
@@ -190,15 +194,14 @@ class DomainModelMapper {
         )
     }
 
-    private fun createTeamSide(teamCore: TeamCore?): FixtureModel.TeamSide? =
-        if (teamCore != null) {
-            FixtureModel.TeamSide(
-                uid = teamCore.uid,
-                name = teamCore.name,
-                nameKo = teamCore.nameKo,
-                logo = null, // 로고 정보는 FixtureCore에서 직접 제공되지 않으므로 null로 설정
-            )
-        } else {
-            null
-        }
+    private fun createTeamSide(
+        teamCore: TeamCore,
+        teamApiSports: TeamApiSports,
+    ): FixtureModel.TeamSide? =
+        FixtureModel.TeamSide(
+            uid = teamCore.uid,
+            name = teamCore.name,
+            nameKo = teamCore.nameKo,
+            logo = teamApiSports.logo, // 로고 정보는 FixtureCore에서 직접 제공되지 않으므로 apiSports 사용
+        )
 }
