@@ -33,7 +33,7 @@ enum class FixtureStatusCode(
     ;
 
     companion object {
-        fun fromString(value: String?): FixtureStatusCode? = values().find { it.code == value }
+        fun fromString(value: String?): FixtureStatusCode? = entries.find { it.code == value }
 
         fun isLiveStatus(status: FixtureStatusCode): Boolean =
             status in

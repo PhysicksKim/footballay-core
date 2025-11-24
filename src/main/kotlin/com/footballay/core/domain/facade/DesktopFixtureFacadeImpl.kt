@@ -5,6 +5,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.model.FixtureModel
 import com.footballay.core.domain.model.mapper.DomainModelMapper
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.logger
 import com.footballay.core.web.util.DateQueryResolver
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,9 +18,9 @@ import java.time.ZoneId
  *
  * Admin용 AdminFixtureQueryWebServiceImpl과 분리된 구현입니다.
  * 모드별 동작:
- * - previous: 기준 날짜 이전 가장 가까운 날짜의 경기들
+ * - previous: 기준 날짜를 포함하여 이전 가장 가까운 날짜의 경기들
  * - exact: 정확히 해당 날짜의 경기들
- * - nearest: 기준 날짜 이후 가장 가까운 날짜의 경기들
+ * - nearest: 기준 날짜를 포함하여 이후 가장 가까운 날짜의 경기들
  */
 @Service
 class DesktopFixtureFacadeImpl(
@@ -28,6 +29,8 @@ class DesktopFixtureFacadeImpl(
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     private val clock: Clock = Clock.systemUTC(),
 ) : DesktopFixtureFacade {
+    val log = logger()
+
     @Transactional(readOnly = true)
     override fun getFixturesByLeague(
         leagueUid: String,
@@ -67,6 +70,8 @@ class DesktopFixtureFacadeImpl(
                         leagueUid,
                     )
                 }
+
+            log.info("Fetched Fixture Models ${fixtureModels.first()} \n for leagueUid=$leagueUid, mode=$mode, at=$at, zoneId=$zoneId")
 
             DomainResult.Success(fixtureModels)
         } catch (ex: Exception) {
@@ -108,20 +113,24 @@ class DesktopFixtureFacadeImpl(
     }
 
     /**
-     * 기준 날짜 이전 가장 가까운 날짜의 경기들을 조회합니다.
+     * 기준 날짜를 포함하여 이전 가장 가까운 날짜의 경기들을 조회합니다.
      */
     private fun findFixturesOnPreviousDate(
         leagueUid: String,
         before: Instant,
         zoneId: ZoneId,
     ) = let {
+        // before를 해당 날짜 끝 시점(다음날 시작)으로 변경하여 당일 포함
+        val date = before.atZone(zoneId).toLocalDate()
+        val endOfDay = date.plusDays(1).atStartOfDay(zoneId).toInstant()
+
         val previousKickoff =
-            fixtureCoreRepository.findMaxKickoffBeforeByLeagueUid(leagueUid, before)
+            fixtureCoreRepository.findMaxKickoffBeforeByLeagueUid(leagueUid, endOfDay)
                 ?: return@let emptyList()
 
-        val date = previousKickoff.atZone(zoneId).toLocalDate()
-        val dayStart = date.atStartOfDay(zoneId).toInstant()
-        val dayEnd = date.plusDays(1).atStartOfDay(zoneId).toInstant()
+        val previousDate = previousKickoff.atZone(zoneId).toLocalDate()
+        val dayStart = previousDate.atStartOfDay(zoneId).toInstant()
+        val dayEnd = previousDate.plusDays(1).atStartOfDay(zoneId).toInstant()
 
         fixtureCoreRepository.findFixturesByLeagueUidInKickoffRange(leagueUid, dayStart, dayEnd)
     }

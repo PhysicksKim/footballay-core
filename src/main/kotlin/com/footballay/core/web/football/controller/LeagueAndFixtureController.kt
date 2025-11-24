@@ -1,6 +1,7 @@
 package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.toResponseEntity
+import com.footballay.core.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.service.LeagueAndFixtureWebService
@@ -30,6 +31,8 @@ import java.time.ZoneOffset
 class LeagueAndFixtureController(
     private val leagueAndFixtureWebService: LeagueAndFixtureWebService,
 ) {
+    val log = logger()
+
     @Operation(summary = "가용 리그 목록 조회", description = "Available한 모든 리그를 조회합니다.")
     @ApiResponse(responseCode = "200")
     @GetMapping("/available")

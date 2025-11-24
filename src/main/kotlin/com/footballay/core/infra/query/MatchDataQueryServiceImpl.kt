@@ -433,7 +433,7 @@ class MatchDataQueryServiceImpl(
                         } ?: emptyList(),
                 ),
             playerStatistics =
-                matchTeam.players?.mapNotNull { toPlayerWithStatistics(it) } ?: emptyList(),
+                matchTeam.players.mapNotNull { toPlayerWithStatistics(it) },
         )
     }
 

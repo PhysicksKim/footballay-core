@@ -19,6 +19,9 @@ import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatc
  * - 일관성과 단순성 보장
  */
 data class MatchEntityBundle(
+    /**
+     * FixtureCore가 Join Fetch 들어가 있음을 가정합니다.
+     */
     var fixture: FixtureApiSports?,
     var homeTeam: ApiSportsMatchTeam?,
     var awayTeam: ApiSportsMatchTeam?,

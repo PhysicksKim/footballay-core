@@ -5,10 +5,12 @@ import com.footballay.core.infra.apisports.match.plan.dto.FixtureApiSportsDto
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.UniformColor
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamRepository
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -59,6 +61,9 @@ class BaseMatchEntityManager(
                 return BaseMatchSyncResult.failure("Fixture not found in entityBundle for apiId: $fixtureApiId")
             }
 
+            val core = existingFixture.core
+            if (core != null) updateFixtureCore(core, baseDto)
+
             // 2. FixtureApiSports 기본 정보 업데이트
             updateFixtureApiSports(existingFixture, baseDto)
 
@@ -85,6 +90,19 @@ class BaseMatchEntityManager(
         } catch (e: Exception) {
             log.error("Failed to sync base entities for fixture: {}", fixtureApiId, e)
             return BaseMatchSyncResult.failure("Base entity sync failed: ${e.message}")
+        }
+    }
+
+    private fun updateFixtureCore(
+        fixtureCore: FixtureCore,
+        baseDto: FixtureApiSportsDto,
+    ) {
+        fixtureCore.apply {
+            this.goalsHome = baseDto.score?.totalHome ?: 0
+            this.goalsAway = baseDto.score?.totalAway ?: 0
+            this.elapsedMin = baseDto.status?.elapsed ?: 0
+            this.statusText = baseDto.status?.longStatus ?: statusText
+            this.statusCode = FixtureStatusCode.fromString(baseDto.status?.shortStatus) ?: FixtureStatusCode.NS
         }
     }
 

@@ -7,6 +7,7 @@ import com.footballay.core.domain.facade.DesktopFixtureFacade
 import com.footballay.core.domain.facade.DesktopLeagueFacade
 import com.footballay.core.domain.model.FixtureModel
 import com.footballay.core.domain.model.LeagueModel
+import com.footballay.core.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import org.springframework.stereotype.Service
@@ -22,6 +23,8 @@ class LeagueAndFixtureWebServiceImpl(
     private val desktopLeagueFacade: DesktopLeagueFacade,
     private val desktopFixtureFacade: DesktopFixtureFacade,
 ) : LeagueAndFixtureWebService {
+    val log = logger()
+
     override fun getAvailableLeagues(): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
         desktopLeagueFacade.getAvailableLeagues().map { leagues ->
             leagues.map { toAvailableLeagueResponse(it) }

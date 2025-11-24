@@ -33,7 +33,7 @@ interface MatchEntityQueryService {
     fun loadAwayTeamWithPlayersAndStats(fixtureApiId: Long): ApiSportsMatchTeam?
 
     /**
-     * 3. Fixture 핵심 데이터 + Events 조회
+     * 3. Fixture 핵심 데이터 + Events 조회 + fixtureCore
      *
      * FixtureApiSports + ApiSportsMatchEvent[] (player, assist 포함)
      */
