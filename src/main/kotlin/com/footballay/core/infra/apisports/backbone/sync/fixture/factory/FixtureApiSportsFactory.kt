@@ -69,6 +69,7 @@ class FixtureApiSportsFactory(
             status = fixtureDataMapper.mapStatusToApi(dto.status),
             score = fixtureDataMapper.mapScoreToApi(dto.score),
             preventUpdate = false, // 새로 생성하는 것은 preventUpdate = false
+            available = false, // 기본값 - 관리자가 명시적으로 활성화해야 함
         )
     }
 
