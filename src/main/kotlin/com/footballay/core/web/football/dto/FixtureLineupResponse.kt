@@ -24,6 +24,13 @@ data class FixtureLineupResponse(
         val formation: String?,
         val players: List<LineupPlayer>,
         val substitutes: List<LineupPlayer>,
+        val playerColor: UniformColorDto?,
+    )
+
+    data class UniformColorDto(
+        val primary: String?,
+        val number: String?,
+        val border: String?,
     )
 
     data class LineupPlayer(

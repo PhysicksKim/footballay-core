@@ -38,6 +38,9 @@ class MatchDataMapper {
                     name = model.home.name,
                     koreanName = model.home.koreanName,
                     logo = model.home.logo,
+                    playerColor = model.home.playerColor?.let {
+                        FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
+                    },
                 ),
             away =
                 FixtureInfoResponse.TeamInfo(
@@ -45,6 +48,9 @@ class MatchDataMapper {
                     name = model.away.name,
                     koreanName = model.away.koreanName,
                     logo = model.away.logo,
+                    playerColor = model.away.playerColor?.let {
+                        FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
+                    },
                 ),
         )
 
@@ -86,6 +92,9 @@ class MatchDataMapper {
                     teamUid = event.team.teamUid,
                     name = event.team.name,
                     koreanName = event.team.koreanName,
+                    playerColor = event.team.playerColor?.let {
+                        FixtureEventsResponse.UniformColorDto(it.primary, it.number, it.border)
+                    },
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
@@ -124,6 +133,9 @@ class MatchDataMapper {
             formation = lineup.formation,
             players = lineup.players.map { toLineupPlayer(it) },
             substitutes = lineup.substitutes.map { toLineupPlayer(it) },
+            playerColor = lineup.playerColor?.let {
+                FixtureLineupResponse.UniformColorDto(it.primary, it.number, it.border)
+            },
         )
 
     private fun toLineupPlayer(player: FixtureLineupModel.LineupPlayer): FixtureLineupResponse.LineupPlayer =
@@ -162,6 +174,9 @@ class MatchDataMapper {
                     name = team.team.name,
                     koreanName = team.team.koreanName,
                     logo = team.team.logo,
+                    playerColor = team.team.playerColor?.let {
+                        FixtureStatisticsResponse.UniformColorDto(it.primary, it.number, it.border)
+                    },
                 ),
             teamStatistics = toTeamStatistics(team.teamStatistics),
             playerStatistics = team.playerStatistics.map { toPlayerWithStatistics(it) },

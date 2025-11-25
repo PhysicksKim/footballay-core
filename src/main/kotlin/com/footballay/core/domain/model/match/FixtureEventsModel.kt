@@ -26,6 +26,13 @@ data class FixtureEventsModel(
         val name: String,
         val koreanName: String?,
         val teamUid: String,
+        val playerColor: UniformColorModel?,
+    )
+
+    data class UniformColorModel(
+        val primary: String?,
+        val number: String?,
+        val border: String?,
     )
 
     data class PlayerInfo(

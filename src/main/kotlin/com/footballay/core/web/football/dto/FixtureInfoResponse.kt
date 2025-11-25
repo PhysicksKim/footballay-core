@@ -30,5 +30,12 @@ data class FixtureInfoResponse(
         val name: String,
         val koreanName: String?,
         val logo: String?,
+        val playerColor: UniformColorDto?,
+    )
+
+    data class UniformColorDto(
+        val primary: String?,
+        val number: String?,
+        val border: String?,
     )
 }

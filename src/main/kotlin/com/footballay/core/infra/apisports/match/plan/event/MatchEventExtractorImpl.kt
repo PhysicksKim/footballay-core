@@ -399,7 +399,7 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
 
         return MatchEventDto(
             sequence = sequence,
-            elapsedTime = event.time.elapsed,
+            elapsedTime = if (event.time.elapsed > 0) event.time.elapsed else 0,
             extraTime = event.time.extra,
             eventType = adjustedType,
             detail = event.detail,

@@ -217,6 +217,9 @@ class MatchDataQueryServiceImpl(
                     koreanName = homeTeamCore.nameKo,
                     logo = homeTeamCore.teamApiSports?.logo,
                     teamUid = homeTeamCore.uid,
+                    playerColor = fixture.homeTeam?.playerColor?.let {
+                        FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
+                    },
                 ),
             away =
                 FixtureInfoModel.TeamInfo(
@@ -225,6 +228,9 @@ class MatchDataQueryServiceImpl(
                     koreanName = awayTeamCore.nameKo,
                     logo = awayTeamCore.teamApiSports?.logo,
                     teamUid = awayTeamCore.uid,
+                    playerColor = fixture.awayTeam?.playerColor?.let {
+                        FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
+                    },
                 ),
         )
     }
@@ -274,6 +280,9 @@ class MatchDataQueryServiceImpl(
                     name = teamCore?.name ?: "",
                     koreanName = teamCore?.nameKo,
                     teamUid = teamCore?.uid ?: "",
+                    playerColor = matchTeam?.playerColor?.let {
+                        FixtureEventsModel.UniformColorModel(it.primary, it.number, it.border)
+                    },
                 ),
             player = event.player?.let { toPlayerInfo(it) },
             assist = event.assist?.let { toPlayerInfo(it) },
@@ -335,6 +344,9 @@ class MatchDataQueryServiceImpl(
             players = startXI,
             substitutes = substitutes,
             teamUid = teamCore?.uid ?: "",
+            playerColor = matchTeam.playerColor?.let {
+                FixtureLineupModel.UniformColorModel(it.primary, it.number, it.border)
+            },
         )
     }
 
@@ -365,6 +377,7 @@ class MatchDataQueryServiceImpl(
             players = emptyList(),
             substitutes = emptyList(),
             teamUid = "",
+            playerColor = null,
         )
 
     private fun toFixtureStatisticsModel(
@@ -404,6 +417,9 @@ class MatchDataQueryServiceImpl(
                     koreanName = teamCore?.nameKo,
                     logo = teamApiSports?.logo,
                     teamUid = teamCore?.uid ?: "",
+                    playerColor = matchTeam.playerColor?.let {
+                        FixtureStatisticsModel.UniformColorModel(it.primary, it.number, it.border)
+                    },
                 ),
             teamStatistics =
                 FixtureStatisticsModel.TeamStatistics(
@@ -496,6 +512,7 @@ class MatchDataQueryServiceImpl(
                     koreanName = null,
                     logo = null,
                     teamUid = "",
+                    playerColor = null,
                 ),
             teamStatistics =
                 FixtureStatisticsModel.TeamStatistics(

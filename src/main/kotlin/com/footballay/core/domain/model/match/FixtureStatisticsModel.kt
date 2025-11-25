@@ -22,6 +22,13 @@ data class FixtureStatisticsModel(
         val koreanName: String?,
         val logo: String?,
         val teamUid: String,
+        val playerColor: UniformColorModel?,
+    )
+
+    data class UniformColorModel(
+        val primary: String?,
+        val number: String?,
+        val border: String?,
     )
 
     data class XG(

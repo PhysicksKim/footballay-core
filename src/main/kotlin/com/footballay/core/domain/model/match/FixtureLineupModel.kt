@@ -22,6 +22,13 @@ data class FixtureLineupModel(
         val players: List<LineupPlayer>,
         val substitutes: List<LineupPlayer>,
         val teamUid: String,
+        val playerColor: UniformColorModel?,
+    )
+
+    data class UniformColorModel(
+        val primary: String?,
+        val number: String?,
+        val border: String?,
     )
 
     data class LineupPlayer(
