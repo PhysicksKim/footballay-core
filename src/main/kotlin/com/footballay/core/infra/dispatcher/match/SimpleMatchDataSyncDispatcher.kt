@@ -67,6 +67,10 @@ class SimpleMatchDataSyncDispatcher(
 
     /**
      * Result에 따라 Job 전환 관리
+     *
+     * Pre / Live / Post MatchJob 간의 전환 로직을 처리합니다.
+     * - PreMatch → LiveMatch 전환
+     * - LiveMatch → PostMatch 전환
      */
     private fun manageJobTransition(
         fixtureUid: String,

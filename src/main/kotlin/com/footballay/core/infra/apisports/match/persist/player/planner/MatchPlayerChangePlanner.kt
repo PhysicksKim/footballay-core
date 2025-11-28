@@ -131,7 +131,7 @@ object MatchPlayerChangePlanner {
         val deleteRatio = if (totalEntities > 0) toDelete.size.toDouble() / totalEntities else 0.0
         if (deleteRatio > 0.5 && totalEntities >= 10) {
             log.error(
-                "⚠️ SUSPICIOUS MASS DELETION DETECTED! Deleting {}/{} players ({}%). " +
+                "SUSPICIOUS MASS DELETION DETECTED! Deleting {}/{} players ({}%). " +
                     "This might indicate apiId mismatch or data corruption. " +
                     "Please verify before proceeding.",
                 toDelete.size,
@@ -154,18 +154,6 @@ object MatchPlayerChangePlanner {
             changeSet.createCount,
             changeSet.retainedCount,
             changeSet.deleteCount,
-        )
-
-        log.info(
-            """
-            DEBUG INFO:
-            create : {}
-            retain : {}
-            delete : {}
-            """.trimIndent(),
-            toCreate.map { it.name },
-            toRetain.map { it.name },
-            toDelete.map { it.name },
         )
 
         return changeSet

@@ -2,15 +2,16 @@ package com.footballay.core.infra.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.Instant
-
-// TODO : 변경된 KickOff time 다루는 방법(무조건 UTC에 저장)에 따라서 제대로 Job 시간이 계산되는지 확인 필요
 
 /**
  * Available Fixture 관리 Facade
@@ -28,6 +29,7 @@ class AvailableFixtureFacade(
     private val fixtureCoreRepository: FixtureCoreRepository,
     private val fixtureApiSportsRepository: FixtureApiSportsRepository,
     private val jobSchedulerService: JobSchedulerService,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     private val log = logger()
 
@@ -93,37 +95,64 @@ class AvailableFixtureFacade(
             )
         }
 
+        val now = Instant.now(clock)
+
         // 5. FixtureCore available 플래그 설정
-        fixtureCore.available = true
-        fixtureCoreRepository.save(fixtureCore)
+        setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
+        log.info(
+            "FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true, kickoff={}, now={}",
+            fixtureApiId,
+            fixtureCore.uid,
+            kickoff,
+            now,
+        )
 
-        // 6. FixtureApiSports available 플래그 동기화
-        fixtureApiSports.available = true
-        fixtureApiSportsRepository.save(fixtureApiSports)
-        log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true", fixtureApiId, fixtureCore.uid)
+        // 6. PreMatchJob 조건부 등록 (킥오프 이전인 경우에만)
+        if (kickoff.isAfter(now)) {
+            val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
+            val preJobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, preMatchStartTime)
 
-        // 7. PreMatchJob 등록 (킥오프 1시간 전)
-        val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
-        val preJobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, preMatchStartTime)
+            if (!preJobAdded) {
+                log.error(
+                    "Failed to add PreMatchJob - fixtureApiId={}, uid={}, kickoff={}, preMatchStart={}",
+                    fixtureApiId,
+                    fixtureCore.uid,
+                    kickoff,
+                    preMatchStartTime,
+                )
 
-        if (!preJobAdded) {
-            log.error("Failed to add PreMatchJob - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
-            return DomainResult.Fail(
-                DomainFail.Validation.single(
-                    code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
-                    message = "Failed to register PreMatchJob for fixture ${fixtureCore.uid}",
-                    field = "fixtureApiId",
-                ),
+                // available 플래그 롤백
+                setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
+
+                return DomainResult.Fail(
+                    DomainFail.Validation.single(
+                        code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
+                        message = "Failed to register PreMatchJob for fixture ${fixtureCore.uid}",
+                        field = "fixtureApiId",
+                    ),
+                )
+            }
+        } else {
+            log.info(
+                "Kickoff already passed, skipping PreMatchJob - fixtureApiId={}, uid={}, kickoff={}, now={}",
+                fixtureApiId,
+                fixtureCore.uid,
+                kickoff,
+                now,
             )
         }
 
-        // 8. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
+        // 7. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
         val liveJobAdded = jobSchedulerService.addLiveMatchJob(fixtureCore.uid, kickoff)
 
         if (!liveJobAdded) {
             log.error("Failed to add LiveMatchJob - fixtureApiId={}, uid={}, rolling back PreMatchJob", fixtureApiId, fixtureCore.uid)
             // PreMatchJob 롤백
             jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
+
+            // available 플래그 롤백
+            setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
+
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "LIVE_MATCH_JOB_REGISTRATION_FAILED",
@@ -134,15 +163,23 @@ class AvailableFixtureFacade(
         }
 
         log.info(
-            "Available fixture added successfully - fixtureApiId={}, uid={}, kickoff={}, preMatchStart={}, liveMatchStart={}",
+            "Available fixture added successfully - fixtureApiId={}, uid={}, kickoff={}",
             fixtureApiId,
             fixtureCore.uid,
             kickoff,
-            preMatchStartTime,
-            kickoff,
         )
-
         return DomainResult.Success(fixtureCore.uid)
+    }
+
+    private fun setFixtureAvailableFlag(
+        fixtureCore: FixtureCore,
+        fixtureApiSports: FixtureApiSports,
+        available: Boolean,
+    ) {
+        fixtureCore.available = available
+        fixtureApiSports.available = available
+        fixtureCoreRepository.save(fixtureCore)
+        fixtureApiSportsRepository.save(fixtureApiSports)
     }
 
     /**
@@ -182,12 +219,7 @@ class AvailableFixtureFacade(
         }
 
         // 4. FixtureCore available 플래그 해제
-        fixtureCore.available = false
-        fixtureCoreRepository.save(fixtureCore)
-
-        // 5. FixtureApiSports available 플래그 동기화
-        fixtureApiSports.available = false
-        fixtureApiSportsRepository.save(fixtureApiSports)
+        setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
         log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
 
         // 6. 모든 Job 삭제
@@ -214,7 +246,7 @@ class AvailableFixtureFacade(
      */
     private fun calculatePreMatchJobStartTime(kickoff: Instant): Instant {
         val oneHourBeforeKickoff = kickoff.minusSeconds(3600) // 1시간 = 3600초
-        val now = Instant.now()
+        val now = Instant.now(clock)
 
         return if (oneHourBeforeKickoff.isBefore(now)) {
             // 이미 킥오프 1시간 전이 지났으면 즉시 시작
