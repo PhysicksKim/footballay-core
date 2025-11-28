@@ -102,7 +102,7 @@ logging:
 # - 로컬 개발용 포트들 (로컬 프로필 없이 dev 프로필 직접 사용 시)
 # - 레거시 도메인들 (하위 호환성 유지)
 cors:
-  allowedorigins: "https://api.dev.footballay.com,https://admin.dev.footballay.com,http://localhost:5173,http://localhost:8080,http://localhost:1212,https://localhost:7777,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechune.com,https://gyechune.com,https://gyechunhoe.com,https://static.gyechunhoe.com"
+  allowedorigins: "https://api.dev.footballay.com,https://admin.dev.footballay.com,http://localhost:5173,http://localhost:8080,http://localhost:1212,https://localhost:7777,http://localhost:7777,https://localhost:1212,https://localhost:8080,http://localhost:8083,https://localhost:8083,https://static.gyechune.com,https://gyechune.com,https://gyechunhoe.com,https://static.gyechunhoe.com,footballay://footballay.app"
 
 # 개발 환경 Security 키
 custom:
