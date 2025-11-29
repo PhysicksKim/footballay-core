@@ -227,4 +227,85 @@ class SimpleMatchDataSyncDispatcherTest {
         verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
         verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
     }
+
+    @Test
+    fun `LiveMatchJob이 PreMatch Result를 받으면 무시하고 계속 실행`() {
+        // Given
+        val fixtureUid = "testfixture0012"
+        val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
+        val jobContext = JobContext(JobContext.JobPhase.LIVE_MATCH, jobKey) // LiveMatchJob
+
+        val result =
+            MatchDataSyncResult.PreMatch( // PreMatch Result (잘못된 조합)
+                lineupCached = true,
+                kickoffTime = Instant.now(),
+                shouldTerminatePreMatchJob = true,
+            )
+
+        whenever(orchestrator.isSupport(fixtureUid)).thenReturn(true)
+        whenever(orchestrator.syncMatchData(fixtureUid)).thenReturn(result)
+
+        // When
+        val syncResult = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+
+        // Then
+        assertThat(syncResult).isEqualTo(result)
+        // Job 삭제가 일어나지 않아야 함 (무시됨)
+        verify(jobSchedulerService, never()).removeJob(any())
+        verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
+    }
+
+    @Test
+    fun `PreMatchJob이 Live Result를 받으면 무시하고 계속 실행`() {
+        // Given
+        val fixtureUid = "testfixture0013"
+        val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
+        val jobContext = JobContext(JobContext.JobPhase.PRE_MATCH, jobKey) // PreMatchJob
+
+        val result =
+            MatchDataSyncResult.Live( // Live Result (잘못된 조합)
+                kickoffTime = Instant.now(),
+                isMatchFinished = false,
+                elapsedMin = 10,
+                statusShort = "1H",
+            )
+
+        whenever(orchestrator.isSupport(fixtureUid)).thenReturn(true)
+        whenever(orchestrator.syncMatchData(fixtureUid)).thenReturn(result)
+
+        // When
+        val syncResult = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+
+        // Then
+        assertThat(syncResult).isEqualTo(result)
+        // Job 삭제/전환이 일어나지 않아야 함 (무시됨)
+        verify(jobSchedulerService, never()).removeJob(any())
+        verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
+    }
+
+    @Test
+    fun `LiveMatchJob이 PostMatch Result를 받으면 무시하고 계속 실행`() {
+        // Given
+        val fixtureUid = "testfixture0014"
+        val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
+        val jobContext = JobContext(JobContext.JobPhase.LIVE_MATCH, jobKey) // LiveMatchJob
+
+        val result =
+            MatchDataSyncResult.PostMatch( // PostMatch Result (잘못된 조합)
+                kickoffTime = Instant.now(),
+                shouldStopPolling = true,
+                minutesSinceFinish = 65,
+            )
+
+        whenever(orchestrator.isSupport(fixtureUid)).thenReturn(true)
+        whenever(orchestrator.syncMatchData(fixtureUid)).thenReturn(result)
+
+        // When
+        val syncResult = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+
+        // Then
+        assertThat(syncResult).isEqualTo(result)
+        // Job 삭제가 일어나지 않아야 함 (무시됨)
+        verify(jobSchedulerService, never()).removeJob(any())
+    }
 }

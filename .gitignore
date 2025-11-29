@@ -76,3 +76,4 @@ lombok.config
 docs/**
 
 .claude/settings.local.json
+/docker/dev/logs/

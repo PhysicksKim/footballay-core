@@ -79,6 +79,16 @@ class SimpleMatchDataSyncDispatcher(
     ) {
         when (result) {
             is MatchDataSyncResult.PreMatch -> {
+                // PreMatch Result는 오직 PreMatchJob만 처리할 수 있음
+                if (jobContext.jobPhase != JobContext.JobPhase.PRE_MATCH) {
+                    log.warn(
+                        "PreMatch result received from non-PreMatch job - fixtureUid={}, jobPhase={}, ignoring",
+                        fixtureUid,
+                        jobContext.jobPhase,
+                    )
+                    return
+                }
+
                 if (result.shouldTerminatePreMatchJob) {
                     log.info("PreMatch complete - removing PreMatchJob (LiveMatchJob already scheduled) - fixtureUid={}", fixtureUid)
                     jobSchedulerService.removeJob(jobContext.jobKey)
@@ -87,6 +97,16 @@ class SimpleMatchDataSyncDispatcher(
             }
 
             is MatchDataSyncResult.Live -> {
+                // Live Result는 오직 LiveMatchJob만 처리할 수 있음
+                if (jobContext.jobPhase != JobContext.JobPhase.LIVE_MATCH) {
+                    log.warn(
+                        "Live result received from non-LiveMatch job - fixtureUid={}, jobPhase={}, ignoring",
+                        fixtureUid,
+                        jobContext.jobPhase,
+                    )
+                    return
+                }
+
                 if (result.isMatchFinished) {
                     log.info("LiveMatch → PostMatch transition - fixtureUid={}", fixtureUid)
                     jobSchedulerService.removeJob(jobContext.jobKey)
@@ -98,6 +118,16 @@ class SimpleMatchDataSyncDispatcher(
             }
 
             is MatchDataSyncResult.PostMatch -> {
+                // PostMatch Result는 오직 PostMatchJob만 처리할 수 있음
+                if (jobContext.jobPhase != JobContext.JobPhase.POST_MATCH) {
+                    log.warn(
+                        "PostMatch result received from non-PostMatch job - fixtureUid={}, jobPhase={}, ignoring",
+                        fixtureUid,
+                        jobContext.jobPhase,
+                    )
+                    return
+                }
+
                 if (result.shouldStopPolling) {
                     log.info("PostMatch polling complete - removing job for fixtureUid={}", fixtureUid)
                     jobSchedulerService.removeJob(jobContext.jobKey)

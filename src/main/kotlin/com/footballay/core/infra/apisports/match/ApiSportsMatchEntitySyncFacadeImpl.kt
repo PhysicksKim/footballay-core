@@ -137,9 +137,26 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 )
             }
 
-            // 경기 진행 중
+            // 경기 진행 중 (명시적 Live 상태 코드)
             isMatchLive(statusShort) -> {
                 log.info("Match is live - status={}, elapsed={}", statusShort, elapsedMin)
+
+                MatchDataSyncResult.Live(
+                    kickoffTime = kickoffTime,
+                    isMatchFinished = false,
+                    elapsedMin = elapsedMin,
+                    statusShort = statusShort,
+                )
+            }
+
+            // NS 상태이지만 킥오프 시간이 지났으면 Live로 간주 (API 응답 지연 고려)
+            statusShort == "NS" && isKickoffPassed(kickoffTime) -> {
+                log.info(
+                    "Match status is NS but kickoff passed, treating as Live - status={}, kickoff={}, now={}",
+                    statusShort,
+                    kickoffTime,
+                    Instant.now(),
+                )
 
                 MatchDataSyncResult.Live(
                     kickoffTime = kickoffTime,
@@ -183,6 +200,17 @@ class ApiSportsMatchEntitySyncFacadeImpl(
      * 경기 진행 중 상태인지 확인
      */
     private fun isMatchLive(statusShort: String): Boolean = statusShort in LIVE_STATUSES
+
+    /**
+     * 킥오프 시간이 지났는지 확인
+     *
+     * @param kickoffTime 킥오프 시각
+     * @return 현재 시각이 킥오프 시각을 지났으면 true
+     */
+    private fun isKickoffPassed(kickoffTime: Instant?): Boolean {
+        if (kickoffTime == null) return false
+        return Instant.now().isAfter(kickoffTime)
+    }
 
     /**
      * 킥오프까지 남은 시간이 지정된 분(minute) 이내인지 확인

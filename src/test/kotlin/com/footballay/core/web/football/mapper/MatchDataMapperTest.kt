@@ -44,6 +44,7 @@ class MatchDataMapperTest {
                         koreanName = null,
                         logo = "https://city-logo.png",
                         teamUid = "team-city-50",
+                        playerColor = null,
                     ),
                 away =
                     FixtureInfoModel.TeamInfo(
@@ -52,6 +53,7 @@ class MatchDataMapperTest {
                         koreanName = null,
                         logo = "https://liverpool-logo.png",
                         teamUid = "team-liverpool-51",
+                        playerColor = null,
                     ),
             )
 
@@ -130,6 +132,7 @@ class MatchDataMapperTest {
                                 players = emptyList(),
                                 substitutes = emptyList(),
                                 teamUid = "",
+                                playerColor = null,
                             ),
                         away =
                             FixtureLineupModel.StartLineup(
@@ -140,6 +143,7 @@ class MatchDataMapperTest {
                                 players = emptyList(),
                                 substitutes = emptyList(),
                                 teamUid = "",
+                                playerColor = null,
                             ),
                     ),
             )
