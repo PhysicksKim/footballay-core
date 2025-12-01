@@ -6,10 +6,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @DataJpaTest
+@ActiveProfiles("test")
 class AnonymousUserTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AnonymousUserTest.class);
     @Autowired

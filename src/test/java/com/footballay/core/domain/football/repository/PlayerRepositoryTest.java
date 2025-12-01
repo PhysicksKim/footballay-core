@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.LeagueTeamFixture;
@@ -16,6 +17,7 @@ import static com.footballay.core.domain.football.util.GeneratePlayersOfTeam.gen
 
 @Transactional
 @DataJpaTest
+@ActiveProfiles("test")
 class PlayerRepositoryTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PlayerRepositoryTest.class);
     @Autowired

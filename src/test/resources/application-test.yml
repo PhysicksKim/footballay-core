@@ -2,6 +2,10 @@
 # 테스트 환경 설정 (H2 in-memory, Mock API)
 
 spring:
+  # Flyway 비활성화 (테스트 환경에서는 JPA ddl-auto 사용)
+  flyway:
+    enabled: false
+
   # H2 in-memory Database
   datasource:
     url: jdbc:h2:mem:gyechunsik-scoreboard;MODE=MySQL

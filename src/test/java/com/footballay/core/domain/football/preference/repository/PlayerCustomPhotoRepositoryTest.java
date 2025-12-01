@@ -11,6 +11,7 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
+@ActiveProfiles("test")
 @Transactional
 class PlayerCustomPhotoRepositoryTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PlayerCustomPhotoRepositoryTest.class);

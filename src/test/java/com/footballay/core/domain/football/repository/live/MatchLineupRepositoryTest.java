@@ -19,12 +19,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
+
 import java.util.ArrayList;
 import java.util.List;
 import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture.generate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@ActiveProfiles("test")
 class MatchLineupRepositoryTest {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MatchLineupRepositoryTest.class);
     @Autowired
