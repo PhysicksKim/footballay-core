@@ -18,14 +18,14 @@ public class UserDetailsServiceBeanProvider {
         // 사용자 조회 쿼리에 스키마 명시
         userDetailsManager.setUsersByUsernameQuery(
                 "select username, password, enabled " +
-                        "from footballay_core.users " +
+                        "from users " +
                         "where username = ?"
         );
         
         // 권한 조회 쿼리에 스키마 명시
         userDetailsManager.setAuthoritiesByUsernameQuery(
                 "select u.username, a.authority " +
-                        "from footballay_core.users u inner join footballay_core.authorities a on u.id = a.user_id " +
+                        "from users u inner join authorities a on u.id = a.user_id " +
                         "where u.username = ?"
         );
         
