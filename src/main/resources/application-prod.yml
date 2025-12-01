@@ -22,7 +22,7 @@ spring:
           jobStore:
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-            tablePrefix: footballay_core.QRTZ_
+            tablePrefix: QRTZ_
             isClustered: false
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool

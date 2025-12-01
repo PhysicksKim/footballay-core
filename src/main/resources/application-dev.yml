@@ -8,7 +8,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        default_schema: footballay_core
     hibernate:
       ddl-auto: update
     open-in-view: false
@@ -21,7 +20,7 @@ spring:
 
   # PostgreSQL 로컬 도커 (docker/dev/docker-compose.yml)
   datasource:
-    url: jdbc:postgresql://localhost:5432/footballay_core?currentSchema=footballay_core
+    url: jdbc:postgresql://localhost:5432/footballay_core
     username: dev
     password: dev1234
     driver-class-name: org.postgresql.Driver
