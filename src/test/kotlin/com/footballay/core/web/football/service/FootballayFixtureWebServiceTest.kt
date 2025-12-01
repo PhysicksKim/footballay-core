@@ -41,8 +41,8 @@ class FootballayFixtureWebServiceTest {
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val data = result.getOrNull()!!
         assertThat(data.fixtureUid).isEqualTo(fixtureUid)
-        assertThat(data.home.name).isEqualTo("Manchester United")
-        assertThat(data.away.name).isEqualTo("Arsenal")
+        assertThat(data.home?.name).isEqualTo("Manchester United")
+        assertThat(data.away?.name).isEqualTo("Arsenal")
         assertThat(data.referee).isEqualTo("Michael Oliver")
     }
 
@@ -106,11 +106,11 @@ class FootballayFixtureWebServiceTest {
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val data = result.getOrNull()!!
-        assertThat(data.lineup.home.teamName).isEqualTo("Manchester United")
-        assertThat(data.lineup.home.formation).isEqualTo("4-3-3")
-        assertThat(data.lineup.home.players).isNotEmpty
-        assertThat(data.lineup.away.teamName).isEqualTo("Arsenal")
-        assertThat(data.lineup.away.formation).isEqualTo("4-2-3-1")
+        assertThat(data.lineup.home?.teamName).isEqualTo("Manchester United")
+        assertThat(data.lineup.home?.formation).isEqualTo("4-3-3")
+        assertThat(data.lineup.home?.players).isNotEmpty
+        assertThat(data.lineup.away?.teamName).isEqualTo("Arsenal")
+        assertThat(data.lineup.away?.formation).isEqualTo("4-2-3-1")
     }
 
     @Test
@@ -126,9 +126,9 @@ class FootballayFixtureWebServiceTest {
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val data = result.getOrNull()!!
         assertThat(data.fixture.uid).isEqualTo(fixtureUid)
-        assertThat(data.home.teamStatistics.shotsOnGoal).isEqualTo(5)
-        assertThat(data.home.teamStatistics.ballPossession).isEqualTo(55)
-        assertThat(data.away.teamStatistics.shotsOnGoal).isEqualTo(5)
+        assertThat(data.home?.teamStatistics?.shotsOnGoal).isEqualTo(5)
+        assertThat(data.home?.teamStatistics?.ballPossession).isEqualTo(55)
+        assertThat(data.away?.teamStatistics?.shotsOnGoal).isEqualTo(5)
     }
 
     @Test

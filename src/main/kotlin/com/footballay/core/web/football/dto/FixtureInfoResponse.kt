@@ -15,8 +15,8 @@ data class FixtureInfoResponse(
     val referee: String?,
     val date: String,
     val league: LeagueInfo,
-    val home: TeamInfo,
-    val away: TeamInfo,
+    val home: TeamInfo?,
+    val away: TeamInfo?,
 ) {
     data class LeagueInfo(
         val leagueUid: String,

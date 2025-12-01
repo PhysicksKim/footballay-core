@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 
 @WebMvcTest(AdminApiSportsController::class)
-@Import(TestSecurityConfig::class)
+@Import(TestSecurityConfig::class, AdminValidationExceptionHandler::class)
 class AdminApiSportsControllerTest(
     @Autowired private val objectMapper: ObjectMapper,
 ) {
@@ -92,15 +92,18 @@ class AdminApiSportsControllerTest(
     fun syncTeamsOfLeague_negativeLeagueId_returns400() {
         val body = LeagueSeasonRequest(season = 2024)
 
-        mockMvc
-            .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", -1L) {
-                contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(body)
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
-                jsonPath("$.errors") { isArray() }
-            }
+        val result =
+            mockMvc
+                .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", -1L) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(body)
+                }.andDo {
+                    print()
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
+                    jsonPath("$.errors") { isArray() }
+                }
     }
 
     @WithMockUser(roles = ["ADMIN"])

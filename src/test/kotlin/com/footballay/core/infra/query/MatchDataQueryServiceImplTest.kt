@@ -98,9 +98,9 @@ class MatchDataQueryServiceImplTest {
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val model = (result as DomainResult.Success).value
-        assertThat(model.lineup.home.formation).isEqualTo("4-3-3")
-        assertThat(model.lineup.home.players).isNotEmpty
-        assertThat(model.lineup.away.formation).isEqualTo("4-2-3-1")
+        assertThat(model.lineup.home?.formation).isEqualTo("4-3-3")
+        assertThat(model.lineup.home?.players).isNotEmpty
+        assertThat(model.lineup.away?.formation).isEqualTo("4-2-3-1")
     }
 
     @Test
@@ -115,8 +115,8 @@ class MatchDataQueryServiceImplTest {
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val model = (result as DomainResult.Success).value
-        assertThat(model.home.teamStatistics.shotsOnGoal).isEqualTo(5)
-        assertThat(model.home.teamStatistics.ballPossession).isEqualTo(55)
+        assertThat(model.home?.teamStatistics?.shotsOnGoal).isEqualTo(5)
+        assertThat(model.home?.teamStatistics?.ballPossession).isEqualTo(55)
     }
 
     @Test

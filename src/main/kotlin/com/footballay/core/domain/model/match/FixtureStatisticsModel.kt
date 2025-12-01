@@ -7,8 +7,8 @@ package com.footballay.core.domain.model.match
  */
 data class FixtureStatisticsModel(
     val fixture: FixtureBasic,
-    val home: TeamWithStatistics,
-    val away: TeamWithStatistics,
+    val home: TeamWithStatistics?,
+    val away: TeamWithStatistics?,
 ) {
     data class FixtureBasic(
         val uid: String,

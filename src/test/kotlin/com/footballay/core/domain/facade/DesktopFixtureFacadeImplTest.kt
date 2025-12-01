@@ -154,9 +154,9 @@ class DesktopFixtureFacadeImplTest {
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val fixtures = (result as DomainResult.Success).value
-        assertThat(fixtures).hasSize(2)
-        assertThat(fixtures.map { it.uid }).containsExactlyInAnyOrder("f1", "f2")
-        log.info("Previous mode: Found ${fixtures.size} fixtures on previous date (2025-03-03)")
+        assertThat(fixtures).hasSize(1)
+        assertThat(fixtures.map { it.uid }).containsExactlyInAnyOrder("f3")
+        log.info("Previous mode: Found ${fixtures.size} fixtures on request date (2025-03-05), includes current date")
     }
 
     @Test
@@ -301,7 +301,7 @@ class DesktopFixtureFacadeImplTest {
                 ZoneOffset.UTC,
             )
         assertThat((previousResult as DomainResult.Success).value.map { it.uid })
-            .containsExactly("march01")
+            .containsExactly("march05")
 
         // exact: 03-05 경기
         val exactResult =

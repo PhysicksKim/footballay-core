@@ -13,8 +13,8 @@ data class FixtureLineupResponse(
     val lineup: Lineup,
 ) {
     data class Lineup(
-        val home: StartLineup,
-        val away: StartLineup,
+        val home: StartLineup?,
+        val away: StartLineup?,
     )
 
     data class StartLineup(

@@ -69,6 +69,7 @@ class AdminFixtureQueryWebServiceImpl(
         zoneId: ZoneId,
     ): List<FixtureSummaryDto> {
         val targetInstant = at ?: Instant.now(clock)
+        log.info("find FixturesByLeague called with leagueApiId=$leagueApiId, at=$targetInstant, mode=$mode, zoneId=$zoneId")
 
         // leagueApiId → LeagueApiSports.LeagueCore.uid
         val leagueApiSports =
@@ -78,6 +79,7 @@ class AdminFixtureQueryWebServiceImpl(
 
         // Assert 1 : HomeTeam, AwayTeam, Kickoff 가 무조건 존재하는 FixtureCore 만 조회됨
         // Assert 2 : Team 은 TeamApiSports 가 같이 조인 되어 로드됨
+        log.info("Fetching Fixtures for leagueUid=$leagueUid, mode=$mode, at=$targetInstant, zoneId=$zoneId")
         val fixtures =
             when (mode) {
                 "exact" -> {
@@ -90,17 +92,18 @@ class AdminFixtureQueryWebServiceImpl(
                     emptyList()
                 }
             }
+        log.info("Fetched Fixtures size=${fixtures.size} for leagueUid=$leagueUid, mode=$mode, at=$targetInstant, zoneId=$zoneId")
         return fixtures
-            .mapNotNull { (core, api) ->
+            .map { (core, api) ->
                 val teamHomeAndAway =
                     Pair(
-                        core.homeTeam ?: return@mapNotNull null,
-                        core.awayTeam ?: return@mapNotNull null,
+                        core.homeTeam,
+                        core.awayTeam,
                     )
                 val apiTeamHomeAndAway =
                     Pair(
-                        core.homeTeam?.teamApiSports ?: return@mapNotNull null,
-                        core.awayTeam?.teamApiSports ?: return@mapNotNull null,
+                        core.homeTeam?.teamApiSports,
+                        core.awayTeam?.teamApiSports,
                     )
                 domainModelMapper.toFixtureModel(
                     core,
@@ -132,7 +135,11 @@ class AdminFixtureQueryWebServiceImpl(
         return fixtureCoreRepository
             .findFixturesByLeagueUidInKickoffRange(leagueUid, start, end)
             .mapNotNull { core ->
-                val apiSports = core.apiSports ?: return@mapNotNull null
+                val apiSports = core.apiSports
+                if (apiSports == null) {
+                    log.warn("FixtureCore(uid=${core.uid}) has no apiSports - skipping")
+                    return@mapNotNull null
+                }
                 Pair(core, apiSports)
             }
     }

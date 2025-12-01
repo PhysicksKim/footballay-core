@@ -123,8 +123,8 @@ class DomainModelMapper {
     fun toFixtureModel(
         fixtureCore: FixtureCore,
         fixtureApiSports: FixtureApiSports,
-        teamHomeAndAway: Pair<TeamCore, TeamCore>,
-        apiTeamHomeAndAway: Pair<TeamApiSports, TeamApiSports>,
+        teamHomeAndAway: Pair<TeamCore?, TeamCore?>,
+        apiTeamHomeAndAway: Pair<TeamApiSports?, TeamApiSports?>,
         leagueUid: String? = null,
     ): FixtureModel {
         val homeCore = teamHomeAndAway.first
@@ -138,8 +138,18 @@ class DomainModelMapper {
                 round = fixtureApiSports.round ?: "",
             )
 
-        val homeSide = createTeamSide(homeCore, homeApi)
-        val awaySide = createTeamSide(awayCore, awayApi)
+        val homeSide =
+            if (homeCore != null && homeApi != null) {
+                createTeamSide(homeCore, homeApi)
+            } else {
+                null
+            }
+        val awaySide =
+            if (awayCore != null && awayApi != null) {
+                createTeamSide(awayCore, awayApi)
+            } else {
+                null
+            }
 
         val modelStatusCode = mapStatusCode(fixtureCore.statusCode)
         val status =
