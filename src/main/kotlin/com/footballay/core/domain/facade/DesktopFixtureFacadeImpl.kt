@@ -54,13 +54,13 @@ class DesktopFixtureFacadeImpl(
                     val apiSports = core.apiSports ?: return@mapNotNull null
                     val teamHomeAndAway =
                         Pair(
-                            core.homeTeam ?: return@mapNotNull null,
-                            core.awayTeam ?: return@mapNotNull null,
+                            core.homeTeam,
+                            core.awayTeam,
                         )
                     val apiTeamHomeAndAway =
                         Pair(
-                            core.homeTeam?.teamApiSports ?: return@mapNotNull null,
-                            core.awayTeam?.teamApiSports ?: return@mapNotNull null,
+                            core.homeTeam?.teamApiSports,
+                            core.awayTeam?.teamApiSports,
                         )
                     domainModelMapper.toFixtureModel(
                         core,
@@ -71,7 +71,7 @@ class DesktopFixtureFacadeImpl(
                     )
                 }
 
-            log.info("Fetched Fixture Models ${fixtureModels.first()} \n for leagueUid=$leagueUid, mode=$mode, at=$at, zoneId=$zoneId")
+            log.info("Fetched Fixtures size=${fixtureModels.size} \n for leagueUid=$leagueUid, mode=$mode, at=$at, zoneId=$zoneId")
 
             DomainResult.Success(fixtureModels)
         } catch (ex: Exception) {

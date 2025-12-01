@@ -54,19 +54,23 @@ class LeagueAndFixtureWebServiceImpl(
             kickoff = model.schedule.kickoffAt?.let { DateTimeFormatter.ISO_INSTANT.format(it) },
             round = model.schedule.round,
             homeTeam =
-                FixtureByLeagueResponse.TeamInfo(
-                    uid = model.homeTeam?.uid,
-                    name = model.homeTeam?.name ?: "",
-                    nameKo = model.homeTeam?.nameKo,
-                    logo = model.homeTeam?.logo,
-                ),
+                model.homeTeam?.let { team ->
+                    FixtureByLeagueResponse.TeamInfo(
+                        uid = team.uid,
+                        name = team.name,
+                        nameKo = team.nameKo,
+                        logo = team.logo,
+                    )
+                },
             awayTeam =
-                FixtureByLeagueResponse.TeamInfo(
-                    uid = model.awayTeam?.uid,
-                    name = model.awayTeam?.name ?: "",
-                    nameKo = model.awayTeam?.nameKo,
-                    logo = model.awayTeam?.logo,
-                ),
+                model.awayTeam?.let { team ->
+                    FixtureByLeagueResponse.TeamInfo(
+                        uid = team.uid,
+                        name = team.name,
+                        nameKo = team.nameKo,
+                        logo = team.logo,
+                    )
+                },
             status =
                 FixtureByLeagueResponse.StatusInfo(
                     longStatus = model.status.statusText,

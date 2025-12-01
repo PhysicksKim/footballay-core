@@ -9,8 +9,8 @@ package com.footballay.core.web.football.dto
  */
 data class FixtureStatisticsResponse(
     val fixture: FixtureBasic,
-    val home: TeamWithStatistics,
-    val away: TeamWithStatistics,
+    val home: TeamWithStatistics?,
+    val away: TeamWithStatistics?,
 ) {
     data class FixtureBasic(
         val uid: String,

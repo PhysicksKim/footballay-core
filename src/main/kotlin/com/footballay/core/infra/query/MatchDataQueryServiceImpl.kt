@@ -189,8 +189,8 @@ class MatchDataQueryServiceImpl(
         val league = season.leagueApiSports ?: throw IllegalArgumentException("League is null")
         val leagueCore = league.leagueCore ?: throw IllegalArgumentException("LeagueCore is null")
 
-        val homeTeamCore = core.homeTeam ?: throw IllegalArgumentException("Home team is null")
-        val awayTeamCore = core.awayTeam ?: throw IllegalArgumentException("Away team is null")
+        val homeTeamCore = core.homeTeam
+        val awayTeamCore = core.awayTeam
 
         val dateStr =
             fixture.date
@@ -211,29 +211,33 @@ class MatchDataQueryServiceImpl(
                     leagueUid = leagueCore.uid,
                 ),
             home =
-                FixtureInfoModel.TeamInfo(
-                    id = 0L, // Deprecated: PK 노출 방지
-                    name = homeTeamCore.name,
-                    koreanName = homeTeamCore.nameKo,
-                    logo = homeTeamCore.teamApiSports?.logo,
-                    teamUid = homeTeamCore.uid,
-                    playerColor =
-                        fixture.homeTeam?.playerColor?.let {
-                            FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
-                        },
-                ),
+                homeTeamCore?.let { teamCore ->
+                    FixtureInfoModel.TeamInfo(
+                        id = 0L, // Deprecated: PK 노출 방지
+                        name = teamCore.name,
+                        koreanName = teamCore.nameKo,
+                        logo = teamCore.teamApiSports?.logo,
+                        teamUid = teamCore.uid,
+                        playerColor =
+                            fixture.homeTeam?.playerColor?.let {
+                                FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
+                            },
+                    )
+                },
             away =
-                FixtureInfoModel.TeamInfo(
-                    id = 0L, // Deprecated: PK 노출 방지
-                    name = awayTeamCore.name,
-                    koreanName = awayTeamCore.nameKo,
-                    logo = awayTeamCore.teamApiSports?.logo,
-                    teamUid = awayTeamCore.uid,
-                    playerColor =
-                        fixture.awayTeam?.playerColor?.let {
-                            FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
-                        },
-                ),
+                awayTeamCore?.let { teamCore ->
+                    FixtureInfoModel.TeamInfo(
+                        id = 0L, // Deprecated: PK 노출 방지
+                        name = teamCore.name,
+                        koreanName = teamCore.nameKo,
+                        logo = teamCore.teamApiSports?.logo,
+                        teamUid = teamCore.uid,
+                        playerColor =
+                            fixture.awayTeam?.playerColor?.let {
+                                FixtureInfoModel.UniformColorModel(it.primary, it.number, it.border)
+                            },
+                    )
+                },
         )
     }
 
@@ -314,12 +318,8 @@ class MatchDataQueryServiceImpl(
         homeTeamFixture: FixtureApiSports?,
         awayTeamFixture: FixtureApiSports?,
     ): FixtureLineupModel {
-        val homeLineup =
-            homeTeamFixture?.homeTeam?.let { toStartLineup(it) }
-                ?: createEmptyLineup()
-        val awayLineup =
-            awayTeamFixture?.awayTeam?.let { toStartLineup(it) }
-                ?: createEmptyLineup()
+        val homeLineup = homeTeamFixture?.homeTeam?.let { toStartLineup(it) }
+        val awayLineup = awayTeamFixture?.awayTeam?.let { toStartLineup(it) }
 
         return FixtureLineupModel(
             fixtureUid = fixtureUid,
@@ -399,12 +399,8 @@ class MatchDataQueryServiceImpl(
                     elapsed = status?.elapsed,
                     status = status?.shortStatus ?: "",
                 ),
-            home =
-                homeTeamFixture?.homeTeam?.let { toTeamWithStatistics(it) }
-                    ?: createEmptyTeamStatistics(),
-            away =
-                awayTeamFixture?.awayTeam?.let { toTeamWithStatistics(it) }
-                    ?: createEmptyTeamStatistics(),
+            home = homeTeamFixture?.homeTeam?.let { toTeamWithStatistics(it) },
+            away = awayTeamFixture?.awayTeam?.let { toTeamWithStatistics(it) },
         )
     }
 

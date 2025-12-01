@@ -33,27 +33,31 @@ class MatchDataMapper {
                     logo = model.league.logo,
                 ),
             home =
-                FixtureInfoResponse.TeamInfo(
-                    teamUid = model.home.teamUid,
-                    name = model.home.name,
-                    koreanName = model.home.koreanName,
-                    logo = model.home.logo,
-                    playerColor =
-                        model.home.playerColor?.let {
-                            FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
-                        },
-                ),
+                model.home?.let { team ->
+                    FixtureInfoResponse.TeamInfo(
+                        teamUid = team.teamUid,
+                        name = team.name,
+                        koreanName = team.koreanName,
+                        logo = team.logo,
+                        playerColor =
+                            team.playerColor?.let {
+                                FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
+                            },
+                    )
+                },
             away =
-                FixtureInfoResponse.TeamInfo(
-                    teamUid = model.away.teamUid,
-                    name = model.away.name,
-                    koreanName = model.away.koreanName,
-                    logo = model.away.logo,
-                    playerColor =
-                        model.away.playerColor?.let {
-                            FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
-                        },
-                ),
+                model.away?.let { team ->
+                    FixtureInfoResponse.TeamInfo(
+                        teamUid = team.teamUid,
+                        name = team.name,
+                        koreanName = team.koreanName,
+                        logo = team.logo,
+                        playerColor =
+                            team.playerColor?.let {
+                                FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
+                            },
+                    )
+                },
         )
 
     /**
@@ -123,8 +127,8 @@ class MatchDataMapper {
             fixtureUid = model.fixtureUid,
             lineup =
                 FixtureLineupResponse.Lineup(
-                    home = toStartLineup(model.lineup.home),
-                    away = toStartLineup(model.lineup.away),
+                    home = model.lineup.home?.let { toStartLineup(it) },
+                    away = model.lineup.away?.let { toStartLineup(it) },
                 ),
         )
 
@@ -166,8 +170,8 @@ class MatchDataMapper {
                     elapsed = model.fixture.elapsed,
                     status = model.fixture.status,
                 ),
-            home = toTeamWithStatistics(model.home),
-            away = toTeamWithStatistics(model.away),
+            home = model.home?.let { toTeamWithStatistics(it) },
+            away = model.away?.let { toTeamWithStatistics(it) },
         )
 
     private fun toTeamWithStatistics(team: FixtureStatisticsModel.TeamWithStatistics): FixtureStatisticsResponse.TeamWithStatistics =

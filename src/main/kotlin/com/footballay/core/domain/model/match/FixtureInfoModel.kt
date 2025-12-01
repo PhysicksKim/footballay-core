@@ -10,8 +10,8 @@ data class FixtureInfoModel(
     val referee: String?,
     val date: String,
     val league: LeagueInfo,
-    val home: TeamInfo,
-    val away: TeamInfo,
+    val home: TeamInfo?,
+    val away: TeamInfo?,
 ) {
     data class LeagueInfo(
         val id: Long = 0, // Deprecated: PK 노출 방지

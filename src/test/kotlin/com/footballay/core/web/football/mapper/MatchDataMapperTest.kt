@@ -64,8 +64,8 @@ class MatchDataMapperTest {
         assertThat(dto.fixtureUid).isEqualTo("testfixture0001")
         assertThat(dto.referee).isEqualTo("Michael Oliver")
         assertThat(dto.league.name).isEqualTo("Premier League")
-        assertThat(dto.home.name).isEqualTo("Manchester City")
-        assertThat(dto.away.name).isEqualTo("Liverpool")
+        assertThat(dto.home?.name).isEqualTo("Manchester City")
+        assertThat(dto.away?.name).isEqualTo("Liverpool")
     }
 
     @Test
@@ -153,7 +153,7 @@ class MatchDataMapperTest {
 
         // Then
         assertThat(dto.fixtureUid).isEqualTo("testfixture0004")
-        assertThat(dto.lineup.home.teamName).isEmpty()
-        assertThat(dto.lineup.away.teamName).isEmpty()
+        assertThat(dto.lineup.home?.teamName).isEmpty()
+        assertThat(dto.lineup.away?.teamName).isEmpty()
     }
 }
