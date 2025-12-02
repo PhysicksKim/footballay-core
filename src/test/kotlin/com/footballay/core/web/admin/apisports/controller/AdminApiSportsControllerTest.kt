@@ -1,7 +1,6 @@
 package com.footballay.core.web.admin.apisports.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.footballay.core.TestSecurityConfig
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
@@ -11,56 +10,40 @@ import com.footballay.core.web.admin.apisports.service.AdminApiSportsQueryWebSer
 import com.footballay.core.web.admin.apisports.service.AdminApiSportsWebService
 import com.footballay.core.web.admin.apisports.service.AdminFixtureQueryWebService
 import com.footballay.core.web.admin.apisports.service.AdminLeagueQueryWebService
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
-import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
-import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import org.springframework.web.context.WebApplicationContext
 
-@WebMvcTest(AdminApiSportsController::class)
-@Import(TestSecurityConfig::class, AdminValidationExceptionHandler::class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AdminApiSportsControllerTest(
     @Autowired private val objectMapper: ObjectMapper,
+    @Autowired private val mockMvc: MockMvc,
 ) {
-    @Autowired
-    private lateinit var context: WebApplicationContext
-
-    @MockitoBean
+    @MockBean
     private lateinit var adminApiSportsWebService: AdminApiSportsWebService
 
-    @MockitoBean
+    @MockBean
     private lateinit var adminLeagueQueryWebService: AdminLeagueQueryWebService
 
-    @MockitoBean
+    @MockBean
     private lateinit var adminFixtureQueryWebService: AdminFixtureQueryWebService
 
-    @MockitoBean
+    @MockBean
     private lateinit var adminApiSportsQueryWebService: AdminApiSportsQueryWebService
 
-    private lateinit var mockMvc: MockMvc
-
     val log = logger()
-
-    @BeforeEach
-    fun setup() {
-        mockMvc =
-            MockMvcBuilders
-                .webAppContextSetup(context)
-                .apply<DefaultMockMvcBuilder>(springSecurity())
-                .build()
-    }
 
     @WithMockUser(roles = ["ADMIN"])
     @Test
@@ -92,18 +75,15 @@ class AdminApiSportsControllerTest(
     fun syncTeamsOfLeague_negativeLeagueId_returns400() {
         val body = LeagueSeasonRequest(season = 2024)
 
-        val result =
-            mockMvc
-                .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", -1L) {
-                    contentType = MediaType.APPLICATION_JSON
-                    content = objectMapper.writeValueAsString(body)
-                }.andDo {
-                    print()
-                }.andExpect {
-                    status { isBadRequest() }
-                    jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
-                    jsonPath("$.errors") { isArray() }
-                }
+        mockMvc
+            .post("/api/v1/admin/apisports/leagues/{leagueId}/teams/sync", -1L) {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(body)
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.code") { value("WEB_VALIDATION_ERROR") }
+                jsonPath("$.errors") { isArray() }
+            }
     }
 
     @WithMockUser(roles = ["ADMIN"])

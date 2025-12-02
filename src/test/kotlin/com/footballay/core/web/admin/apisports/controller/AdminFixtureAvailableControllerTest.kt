@@ -1,7 +1,6 @@
 package com.footballay.core.web.admin.apisports.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.footballay.core.TestSecurityConfig
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.web.admin.apisports.dto.ToggleAvailableResponse
 import com.footballay.core.web.admin.apisports.service.AdminFixtureAvailableWebService
@@ -10,29 +9,28 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.BDDMockito.given
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.context.annotation.Import
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.put
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
  * AdminFixtureController 단위 테스트
  *
  * Facade를 Mock으로 주입하여 Controller 레이어만 테스트합니다.
  */
-@WebMvcTest(AdminFixtureAvailableController::class)
-@Import(TestSecurityConfig::class, AdminValidationExceptionHandler::class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AdminFixtureAvailableControllerTest(
     @Autowired private val mockMvc: MockMvc,
     @Autowired private val objectMapper: ObjectMapper,
 ) {
-    @MockitoBean
+    @MockBean
     private lateinit var adminFixtureAvailableWebService: AdminFixtureAvailableWebService
 
     @WithMockUser(roles = ["ADMIN"])

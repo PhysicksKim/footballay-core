@@ -12,6 +12,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # JDK + Gradle 캐시
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'gradle'
+
     # 커밋 메시지에서 [manual], [notest] 뽑아서 env에 기록
     - name: Parse commit flags
       run: |
@@ -33,7 +41,7 @@ jobs:
     - name: Run tests
       if: env.SKIP_TESTS == 'false'
       run: |
-        ./gradlew --no-daemon clean test
+        ./gradlew --no-daemon test
 
     # 테스트 리포트 업로드
     - name: Upload test report (HTML)
