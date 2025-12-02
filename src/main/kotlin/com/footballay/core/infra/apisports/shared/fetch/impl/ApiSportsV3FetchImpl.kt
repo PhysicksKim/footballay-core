@@ -66,17 +66,7 @@ class ApiSportsV3FetchImpl(
                 .build()
                 .toUri()
         logNameAndUri("teams of league", uri)
-//
-//        // raw response를 확인
-//        val rawResponse = restClient.get()
-//            .uri(uri)
-//            .header(properties.headers.xRapidapiHostName, properties.headers.xRapidapiHostValue)
-//            .header(properties.headers.xRapidapiKeyName, properties.headers.xRapidapiKeyValue)
-//            .retrieve()
-//            .body(String::class.java)
-//
-//        log.info("Raw response: $rawResponse")
-//
+
         return apiSportsRestClientRequestBuild(uri)
             .bodyObject<ApiSportsV3Envelope<ApiSportsTeam.OfLeague>>()
             ?: throw IllegalStateException("Response body is null of ApiSports Teams of League")
