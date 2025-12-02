@@ -12,13 +12,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    # JDK + Gradle 캐시
     - name: Setup JDK
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
-        cache: 'gradle'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     # 커밋 메시지에서 [manual], [notest] 뽑아서 env에 기록
     - name: Parse commit flags
@@ -40,8 +43,7 @@ jobs:
     # 테스트 (SKIP_TESTS == false 일 때만)
     - name: Run tests
       if: env.SKIP_TESTS == 'false'
-      run: |
-        ./gradlew --no-daemon test
+      run: ./gradlew test --build-cache
 
     # 테스트 리포트 업로드
     - name: Upload test report (HTML)
@@ -50,6 +52,7 @@ jobs:
       with:
         name: junit-html-report
         path: build/reports/tests/test
+        if-no-files-found: ignore
 
     # private repo로 repository_dispatch 날리기
     - name: Trigger private deploy workflow
