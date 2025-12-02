@@ -4,6 +4,7 @@ import com.footballay.core.infra.apisports.match.persist.base.BaseMatchEntityMan
 import com.footballay.core.infra.apisports.match.persist.event.manager.MatchEventManager
 import com.footballay.core.infra.apisports.match.persist.event.manager.MatchEventProcessResult
 import com.footballay.core.infra.apisports.match.persist.player.manager.MatchPlayerManager
+import com.footballay.core.infra.apisports.match.persist.player.manager.MatchPlayerProcessResult
 import com.footballay.core.infra.apisports.match.persist.playerstat.manager.PlayerStatsManager
 import com.footballay.core.infra.apisports.match.persist.playerstat.result.PlayerStatsProcessResult
 import com.footballay.core.infra.apisports.match.persist.teamstat.manager.TeamStatsManager
@@ -22,25 +23,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * MatchEntitySyncService 구현체
- * Match Data 관련 Dto 를 받아 DB Entity 로 저장합니다.
- * [MatchPlayerContext] 를 통해 Dto 들에 등장하는 MatchPlayer 들의 정보를 받습니다.
+ * Match 엔티티 저장 관리자
  *
- * ## id=null 선수 처리 중요성
- * ApiSports 는 불안정한 데이터 제공으로 인해 선수 아이디가 누락되는 경우가 빈번합니다.
- * 이 문제는 [MatchPlayerContext] 를 구성하는 쪽에서도 유의하여 동작하는 책임이며,
- * [MatchPlayerContext] 를 사용하는 측과 더불어 DB entity 로 변환하는 과정에서도 유의해야 합니다.
- * [com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchPlayer] 를 활용해 id=null 선수를 저장합니다.
- *
- * **처리 단계:**
- * 1. 기존 엔티티 로드 (Fixture, MatchTeam, MatchPlayer, Event)
- * 2. Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
- * 3. MatchPlayer 처리 (MatchPlayerManager로 통합) + Lineup 정보 적용
- * 4. Event 처리 (생성/업데이트/삭제)
- * 5. PlayerStats 처리 (PlayerStatsManager로 통합)
- * 6. TeamStats 처리 (TeamStatsManager로 통합)
- * 7. 데이터베이스 영속화 (각 Manager에서 완료)
- *
+ * Plan DTO들을 받아 실제 DB 엔티티로 변환하고 저장합니다.
+ * MatchPlayer와 MatchTeam의 영속성 상태 유지 및 연관관계 설정이 핵심입니다.
+ * (Core 엔티티와 Provider 엔티티 분리 설계를 준수)
  */
 @Service
 class MatchEntityPersistManagerImpl(
@@ -63,119 +50,104 @@ class MatchEntityPersistManagerImpl(
         playerStatDto: MatchPlayerStatPlanDto,
         playerContext: MatchPlayerContext,
     ): MatchEntitySyncResult {
-        log.info("Starting entity sync for fixture: {}", fixtureApiId)
+        log.info("[Entity Persist] Start: fixture={}", fixtureApiId)
 
-        // 1. 기존 저장된 엔티티들 로드
-        val entityBundle = MatchEntityBundle.createEmpty()
-        try {
-            matchDataLoader.loadContext(fixtureApiId, playerContext, entityBundle)
-            log.info(
-                "Loaded existing entities - Players: ${entityBundle.allMatchPlayers.size}, Events: ${entityBundle.allEvents.size}",
-            )
-        } catch (e: Exception) {
-            log.error("Failed to load existing entities: {}", e.message, e)
+        val entityBundle = loadExistingEntities(fixtureApiId, playerContext)
+        syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+
+        val matchPlayerResult = processMatchPlayers(playerContext, lineupDto, entityBundle)
+        val matchEventResult = processNonCriticalStep("Event", MatchEventProcessResult(0, 0, 0, 0, emptyList())) {
+            matchEventManager.processMatchEvents(eventDto, entityBundle)
+        }
+        val playerStatsResult = processNonCriticalStep("PlayerStats", PlayerStatsProcessResult(0, 0, 0, 0, emptyList())) {
+            playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
+        }
+        val teamStatsResult = processNonCriticalStep("TeamStats", TeamStatsProcessResult(false, false, 0, 0, null, null)) {
+            teamStatsManager.processTeamStats(teamStatDto, entityBundle)
+        }
+
+        log.info("[Entity Persist] Complete: fixture={}", fixtureApiId)
+
+        return buildSyncResult(matchPlayerResult, matchEventResult, playerStatsResult, teamStatsResult)
+    }
+
+    private fun loadExistingEntities(fixtureApiId: Long, playerContext: MatchPlayerContext): MatchEntityBundle {
+        val bundle = MatchEntityBundle.createEmpty()
+        runCatching {
+            matchDataLoader.loadContext(fixtureApiId, playerContext, bundle)
+            log.debug("[Load] Players={}, Events={}", bundle.allMatchPlayers.size, bundle.allEvents.size)
+        }.onFailure { e ->
+            log.error("[Load] Failed to load existing entities", e)
             throw e
         }
+        return bundle
+    }
 
-        // 2. Base DTO 처리 (Fixture + MatchTeam 생성/업데이트)
-        try {
-            val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
-
-            if (!result.success) {
-                log.error("Base entity sync failed: {}", result.errorMessage)
-                return MatchEntitySyncResult.failure(
-                    "failed to sync base entities: ${result.errorMessage}",
-                )
-            }
-
-            log.info(
-                "Base entities synced - Home team: ${result.homeMatchTeam?.teamApiSports?.name}, Away team: ${result.awayMatchTeam?.teamApiSports?.name}",
-            )
-        } catch (e: Exception) {
-            log.error("Failed to sync base entities: {}", e.message, e)
-            return MatchEntitySyncResult.failure(
-                "failed to sync base entities: ${e.message}",
-            )
+    private fun syncBaseEntities(fixtureApiId: Long, baseDto: FixtureApiSportsDto, entityBundle: MatchEntityBundle) {
+        val result = baseMatchEntityManager.syncBaseEntities(fixtureApiId, baseDto, entityBundle)
+        if (!result.success) {
+            log.error("[Base] Sync failed: {}", result.errorMessage)
+            throw IllegalStateException("Failed to sync base entities: ${result.errorMessage}")
         }
+        log.debug("[Base] Synced: home={}, away={}", result.homeMatchTeam?.teamApiSports?.name, result.awayMatchTeam?.teamApiSports?.name)
+    }
 
-        // 3. MatchPlayer 처리 + Lineup 정보 적용
-        val matchPlayerResult =
-            try {
-                val result = matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle)
-                log.info(
-                    "MatchPlayer processing completed - Total: ${result.totalPlayers}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
-                )
-                result
-            } catch (e: Exception) {
-                log.error("Failed to process match players: {}", e.message, e)
-                // 라인업 저장 에러시에는 이후 진행하기 어려우므로 실패 처리
-                return MatchEntitySyncResult.failure(
-                    "failed to process match lineup: ${e.message}",
-                )
+    private fun processMatchPlayers(
+        playerContext: MatchPlayerContext,
+        lineupDto: MatchLineupPlanDto,
+        entityBundle: MatchEntityBundle
+    ): MatchPlayerProcessResult {
+        return runCatching {
+            matchPlayerManager.processMatchTeamAndPlayers(playerContext, lineupDto, entityBundle).also {
+                log.debug("[Player] Total={}, +{} -{}", it.totalPlayers, it.createdCount, it.deletedCount)
             }
+        }.getOrElse { e ->
+            log.error("[Player] Processing failed", e)
+            throw IllegalStateException("Failed to process match players: ${e.message}", e)
+        }
+    }
 
-        // 4. Event 처리
-        val matchEventResult =
-            try {
-                val result = matchEventManager.processMatchEvents(eventDto, entityBundle)
-                log.info(
-                    "MatchEvent processing completed - Total: ${result.totalEvents}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
-                )
-                result
-            } catch (e: Exception) {
-                log.error("Failed to process match events: {}", e.message, e)
-                MatchEventProcessResult(0, 0, 0, 0, emptyList())
+    private inline fun <reified T> processNonCriticalStep(
+        stepName: String,
+        defaultValue: T,
+        processor: () -> T
+    ): T {
+        return runCatching {
+            processor().also { result ->
+                when (result) {
+                    is MatchEventProcessResult -> log.debug("[{}] Total={}, +{} -{}", stepName, result.totalEvents, result.createdCount, result.deletedCount)
+                    is PlayerStatsProcessResult -> log.debug("[{}] Total={}, +{} -{}", stepName, result.totalStats, result.createdCount, result.deletedCount)
+                    is TeamStatsProcessResult -> log.debug("[{}] Home={}, Away={}, +{}", stepName, result.hasHome, result.hasAway, result.createdCount)
+                }
             }
+        }.getOrElse { e ->
+            log.warn("[{}] Processing failed, using default", stepName, e)
+            defaultValue
+        }
+    }
 
-        // 5. PlayerStats 처리
-        val playerStatsResult =
-            try {
-                val result = playerStatsManager.processPlayerStats(playerStatDto, entityBundle)
-                log.info(
-                    "PlayerStats processing completed - Total: ${result.totalStats}, Created: ${result.createdCount}, Retained: ${result.retainedCount}, Deleted: ${result.deletedCount}",
-                )
-                result
-            } catch (e: Exception) {
-                log.error("Failed to process player stats: {}", e.message, e)
-                PlayerStatsProcessResult(0, 0, 0, 0, emptyList())
-            }
-
-        // 6. TeamStats 처리
-        val teamStatsResult =
-            try {
-                val result = teamStatsManager.processTeamStats(teamStatDto, entityBundle)
-                log.info(
-                    "TeamStats processing completed - Home: ${result.hasHome}, Away: ${result.hasAway}, Created: ${result.createdCount}, Retained: ${result.retainedCount}",
-                )
-                result
-            } catch (e: Exception) {
-                log.error("Failed to process team stats: {}", e.message, e)
-                TeamStatsProcessResult(false, false, 0, 0, null, null)
-            }
-
-        log.info("All entities persisted successfully for fixture: {}", fixtureApiId)
-
+    private fun buildSyncResult(
+        matchPlayerResult: MatchPlayerProcessResult,
+        matchEventResult: MatchEventProcessResult,
+        playerStatsResult: PlayerStatsProcessResult,
+        teamStatsResult: TeamStatsProcessResult,
+    ): MatchEntitySyncResult {
         return MatchEntitySyncResult.success(
-            createdCount =
-                matchPlayerResult.createdCount + matchEventResult.createdCount + playerStatsResult.createdCount +
-                    teamStatsResult.createdCount,
-            retainedCount =
-                matchPlayerResult.retainedCount + matchEventResult.retainedCount + playerStatsResult.retainedCount +
-                    teamStatsResult.retainedCount,
-            deletedCount =
-                matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
-            playerChanges =
-                MatchPlayerSyncResult(
-                    created = matchPlayerResult.createdCount,
-                    retained = matchPlayerResult.retainedCount,
-                    deleted = matchPlayerResult.deletedCount,
-                ),
-            eventChanges =
-                MatchEventSyncResult(
-                    created = matchEventResult.createdCount,
-                    retained = matchEventResult.retainedCount,
-                    deleted = matchEventResult.deletedCount,
-                ),
+            createdCount = matchPlayerResult.createdCount + matchEventResult.createdCount +
+                playerStatsResult.createdCount + teamStatsResult.createdCount,
+            retainedCount = matchPlayerResult.retainedCount + matchEventResult.retainedCount +
+                playerStatsResult.retainedCount + teamStatsResult.retainedCount,
+            deletedCount = matchPlayerResult.deletedCount + matchEventResult.deletedCount + playerStatsResult.deletedCount,
+            playerChanges = MatchPlayerSyncResult(
+                created = matchPlayerResult.createdCount,
+                retained = matchPlayerResult.retainedCount,
+                deleted = matchPlayerResult.deletedCount,
+            ),
+            eventChanges = MatchEventSyncResult(
+                created = matchEventResult.createdCount,
+                retained = matchEventResult.retainedCount,
+                deleted = matchEventResult.deletedCount,
+            ),
         )
     }
 }
