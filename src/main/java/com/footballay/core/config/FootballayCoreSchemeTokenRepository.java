@@ -10,12 +10,15 @@ import org.springframework.core.log.LogMessage;
 import java.util.Date;
 
 /**
- * SQL Query 에서 Scheme 으로 footballay_core 를 사용하도록 수정한 Remember-Me token repository 구현체
+ * 더 이상 footballay_core 스키마를 사용하지 않으므로 deprecated 된 클래스
  */
 public class FootballayCoreSchemeTokenRepository extends JdbcTokenRepositoryImpl {
 
-    private static final String SCHEMA = "footballay_core";
-    private static final String TABLE = SCHEMA + ".persistent_logins";
+    // if you need to use schema, uncomment below lines and comment out TABLE definition
+    // private static final String SCHEMA = "footballay_core";
+    // private static final String TABLE = SCHEMA + ".persistent_logins";
+
+    private static final String TABLE = "persistent_logins";
 
     private static final String INSERT_SQL =
             "insert into " + TABLE + " (username, series, token, last_used) values(?,?,?,?)";
