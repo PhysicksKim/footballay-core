@@ -18,6 +18,12 @@ data class FixtureStatisticsResponse(
         val status: String,
     )
 
+    data class TeamWithStatistics(
+        val team: TeamInfo,
+        val teamStatistics: TeamStatistics,
+        val playerStatistics: List<PlayerWithStatistics>,
+    )
+
     data class TeamInfo(
         val teamUid: String,
         val name: String,
@@ -101,11 +107,5 @@ data class FixtureStatisticsResponse(
     data class PlayerWithStatistics(
         val player: PlayerInfo,
         val statistics: PlayerStatistics,
-    )
-
-    data class TeamWithStatistics(
-        val team: TeamInfo,
-        val teamStatistics: TeamStatistics,
-        val playerStatistics: List<PlayerWithStatistics>,
     )
 }
