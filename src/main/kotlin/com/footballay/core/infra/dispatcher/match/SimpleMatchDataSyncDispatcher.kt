@@ -3,6 +3,8 @@ package com.footballay.core.infra.dispatcher.match
 import com.footballay.core.infra.match.MatchSyncOrchestrator
 import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
+import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTrigger
+import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
 
@@ -31,6 +33,7 @@ import java.time.Instant
 class SimpleMatchDataSyncDispatcher(
     private val orchestrators: List<MatchSyncOrchestrator>,
     private val jobSchedulerService: JobSchedulerService,
+    private val refreshTriggerPublisher: FixtureMatchCacheRefreshTriggerPublisher,
 ) : MatchDataSyncDispatcher {
     private val log = logger()
 
@@ -41,12 +44,36 @@ class SimpleMatchDataSyncDispatcher(
         // 1. Orchestrator를 통해 동기화 수행
         val result = performSync(fixtureUid)
 
+        publishRefreshTriggerIfNeeded(fixtureUid, result, jobContext)
+
         // 2. JobContext가 있으면 Result에 따라 Job 관리
         if (jobContext != null) {
             manageJobTransition(fixtureUid, result, jobContext)
         }
 
         return result
+    }
+
+    private fun publishRefreshTriggerIfNeeded(
+        fixtureUid: String,
+        result: MatchDataSyncResult,
+        jobContext: JobContext?,
+    ) {
+        if (result is MatchDataSyncResult.Error) {
+            return
+        }
+
+        runCatching {
+            refreshTriggerPublisher.publish(
+                FixtureMatchCacheRefreshTrigger(
+                    fixtureUid = fixtureUid,
+                    source = "MATCH_DATA_SYNC",
+                    jobPhase = jobContext?.jobPhase?.name,
+                ),
+            )
+        }.onFailure { ex ->
+            log.warn("Failed to publish fixture cache refresh trigger. fixtureUid={}", fixtureUid, ex)
+        }
     }
 
     /**

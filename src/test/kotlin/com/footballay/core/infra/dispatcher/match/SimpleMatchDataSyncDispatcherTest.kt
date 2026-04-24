@@ -2,6 +2,7 @@ package com.footballay.core.infra.dispatcher.match
 
 import com.footballay.core.infra.match.MatchSyncOrchestrator
 import com.footballay.core.infra.scheduler.JobSchedulerService
+import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -31,6 +32,9 @@ class SimpleMatchDataSyncDispatcherTest {
     @Mock
     private lateinit var jobSchedulerService: JobSchedulerService
 
+    @Mock
+    private lateinit var refreshTriggerPublisher: FixtureMatchCacheRefreshTriggerPublisher
+
     private lateinit var dispatcher: SimpleMatchDataSyncDispatcher
 
     @BeforeEach
@@ -39,6 +43,7 @@ class SimpleMatchDataSyncDispatcherTest {
             SimpleMatchDataSyncDispatcher(
                 orchestrators = listOf(orchestrator),
                 jobSchedulerService = jobSchedulerService,
+                refreshTriggerPublisher = refreshTriggerPublisher,
             )
     }
 
@@ -65,6 +70,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService).removeJob(jobKey)
         verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
     }
@@ -91,6 +97,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
     }
@@ -120,6 +127,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService).removeJob(jobKey)
         verify(jobSchedulerService).addPostMatchJob(eq(fixtureUid), any())
     }
@@ -147,6 +155,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
     }
@@ -174,6 +183,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService).removeJob(jobKey)
     }
 
@@ -199,6 +209,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         verify(jobSchedulerService, never()).removeJob(any())
     }
 
@@ -223,6 +234,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher, never()).publish(any())
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
         verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
@@ -250,6 +262,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         // Job 삭제가 일어나지 않아야 함 (무시됨)
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
@@ -278,6 +291,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         // Job 삭제/전환이 일어나지 않아야 함 (무시됨)
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
@@ -305,6 +319,7 @@ class SimpleMatchDataSyncDispatcherTest {
 
         // Then
         assertThat(syncResult).isEqualTo(result)
+        verify(refreshTriggerPublisher).publish(any())
         // Job 삭제가 일어나지 않아야 함 (무시됨)
         verify(jobSchedulerService, never()).removeJob(any())
     }

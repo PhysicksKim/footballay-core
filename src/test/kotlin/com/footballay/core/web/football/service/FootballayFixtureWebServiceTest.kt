@@ -53,13 +53,13 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureLiveStatus(fixtureUid)
+        val result = webService.getFixtureLiveStatus(fixtureUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        val data = result.getOrNull()!!
-        assertThat(data.liveStatus.shortStatus).isEqualTo("NS")
-        assertThat(data.liveStatus.score).isNotNull
+        assertThat(result).isInstanceOf(FixtureWebResult.Ok::class.java)
+        val data = result as FixtureWebResult.Ok
+        assertThat(data.snapshotJson).contains(""""shortStatus":"NS"""")
+        assertThat(data.etagHash).isNotBlank()
     }
 
     @Test
@@ -69,13 +69,13 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureEvents(fixtureUid)
+        val result = webService.getFixtureEvents(fixtureUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        val data = result.getOrNull()!!
-        assertThat(data.events).isNotEmpty
-        assertThat(data.events[0].type).isEqualTo("Goal")
+        assertThat(result).isInstanceOf(FixtureWebResult.Ok::class.java)
+        val data = result as FixtureWebResult.Ok
+        assertThat(data.snapshotJson).contains("Goal")
+        assertThat(data.etagHash).isNotBlank()
     }
 
     @Test
@@ -86,12 +86,12 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureEvents(fixtureUid)
+        val result = webService.getFixtureEvents(fixtureUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        val data = result.getOrNull()!!
-        assertThat(data.events).isEmpty()
+        assertThat(result).isInstanceOf(FixtureWebResult.Ok::class.java)
+        val data = result as FixtureWebResult.Ok
+        assertThat(data.snapshotJson).contains(""""events":[]""")
     }
 
     @Test
@@ -101,16 +101,15 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureLineup(fixtureUid)
+        val result = webService.getFixtureLineup(fixtureUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        val data = result.getOrNull()!!
-        assertThat(data.lineup.home?.teamName).isEqualTo("Manchester United")
-        assertThat(data.lineup.home?.formation).isEqualTo("4-3-3")
-        assertThat(data.lineup.home?.players).isNotEmpty
-        assertThat(data.lineup.away?.teamName).isEqualTo("Arsenal")
-        assertThat(data.lineup.away?.formation).isEqualTo("4-2-3-1")
+        assertThat(result).isInstanceOf(FixtureWebResult.Ok::class.java)
+        val data = result as FixtureWebResult.Ok
+        assertThat(data.snapshotJson).contains("Manchester United")
+        assertThat(data.snapshotJson).contains("4-3-3")
+        assertThat(data.snapshotJson).contains("Arsenal")
+        assertThat(data.snapshotJson).contains("4-2-3-1")
     }
 
     @Test
@@ -120,15 +119,14 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureStatistics(fixtureUid)
+        val result = webService.getFixtureStatistics(fixtureUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
-        val data = result.getOrNull()!!
-        assertThat(data.fixture.uid).isEqualTo(fixtureUid)
-        assertThat(data.home?.teamStatistics?.shotsOnGoal).isEqualTo(5)
-        assertThat(data.home?.teamStatistics?.ballPossession).isEqualTo(55)
-        assertThat(data.away?.teamStatistics?.shotsOnGoal).isEqualTo(5)
+        assertThat(result).isInstanceOf(FixtureWebResult.Ok::class.java)
+        val data = result as FixtureWebResult.Ok
+        assertThat(data.snapshotJson).contains(fixtureUid)
+        assertThat(data.snapshotJson).contains(""""shotsOnGoal":5""")
+        assertThat(data.snapshotJson).contains(""""ballPossession":55""")
     }
 
     @Test
@@ -154,11 +152,11 @@ class FootballayFixtureWebServiceTest {
         val invalidUid = "invaliduid99999"
 
         // When
-        val result = webService.getFixtureLiveStatus(invalidUid)
+        val result = webService.getFixtureLiveStatus(invalidUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
-        val error = result.errorOrNull()!!
+        assertThat(result).isInstanceOf(FixtureWebResult.Fail::class.java)
+        val error = (result as FixtureWebResult.Fail).error
         assertThat(error).isInstanceOf(DomainFail.NotFound::class.java)
         val notFoundError = error as DomainFail.NotFound
         assertThat(notFoundError.resource).contains("Fixture")
@@ -171,11 +169,11 @@ class FootballayFixtureWebServiceTest {
         val invalidUid = "invaliduid99999"
 
         // When
-        val result = webService.getFixtureEvents(invalidUid)
+        val result = webService.getFixtureEvents(invalidUid, null)
 
         // Then
-        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
-        val error = result.errorOrNull()!!
+        assertThat(result).isInstanceOf(FixtureWebResult.Fail::class.java)
+        val error = (result as FixtureWebResult.Fail).error
         assertThat(error).isInstanceOf(DomainFail.NotFound::class.java)
         val notFoundError = error as DomainFail.NotFound
         assertThat(notFoundError.resource).contains("Fixture")

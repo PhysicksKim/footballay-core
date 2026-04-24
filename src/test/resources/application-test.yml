@@ -100,3 +100,6 @@ footballay:
     headers:
       x-rapidapi-host: v3.football.api-sports.io
       x-rapidapi-key: __CENSOREDKEY__
+  fixture-cache-refresh:
+    redis-pubsub:
+      enabled: false

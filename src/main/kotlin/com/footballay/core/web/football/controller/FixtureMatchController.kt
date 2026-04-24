@@ -1,8 +1,11 @@
 package com.footballay.core.web.football.controller
 
+import com.footballay.core.common.result.toHttpStatus
 import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.logger
+import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.dto.*
+import com.footballay.core.web.football.service.FixtureWebResult
 import com.footballay.core.web.football.service.FixtureWebService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -12,6 +15,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.NotBlank
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -37,6 +42,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/football/fixtures")
 class FixtureMatchController(
     private val webService: FixtureWebService,
+    private val httpEtagHelper: FixtureHttpEtagHelper,
 ) {
     private val log = logger()
 
@@ -81,11 +87,13 @@ class FixtureMatchController(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
-    ): ResponseEntity<FixtureLiveStatusResponse> {
+        @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false)
+        ifNoneMatch: String?,
+        @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
+        fixtureCacheControl: String?,
+    ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/status", uid)
-        return webService
-            .getFixtureLiveStatus(uid)
-            .toResponseEntity()
+        return toPollingResponse(webService.getFixtureLiveStatus(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
     }
 
     @Operation(
@@ -104,11 +112,13 @@ class FixtureMatchController(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
-    ): ResponseEntity<FixtureLineupResponse> {
+        @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false)
+        ifNoneMatch: String?,
+        @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
+        fixtureCacheControl: String?,
+    ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/lineup", uid)
-        return webService
-            .getFixtureLineup(uid)
-            .toResponseEntity()
+        return toPollingResponse(webService.getFixtureLineup(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
     }
 
     @Operation(
@@ -127,11 +137,13 @@ class FixtureMatchController(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
-    ): ResponseEntity<FixtureEventsResponse> {
+        @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false)
+        ifNoneMatch: String?,
+        @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
+        fixtureCacheControl: String?,
+    ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/events", uid)
-        return webService
-            .getFixtureEvents(uid)
-            .toResponseEntity()
+        return toPollingResponse(webService.getFixtureEvents(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
     }
 
     @Operation(
@@ -150,10 +162,38 @@ class FixtureMatchController(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
-    ): ResponseEntity<FixtureStatisticsResponse> {
+        @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false)
+        ifNoneMatch: String?,
+        @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
+        fixtureCacheControl: String?,
+    ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/statistics", uid)
-        return webService
-            .getFixtureStatistics(uid)
-            .toResponseEntity()
+        return toPollingResponse(webService.getFixtureStatistics(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
+    }
+
+    private fun shouldBypassCacheRead(fixtureCacheControl: String?): Boolean = fixtureCacheControl.equals(CACHE_CONTROL_BYPASS, ignoreCase = true)
+
+    private fun toPollingResponse(result: FixtureWebResult): ResponseEntity<String> =
+        when (result) {
+            is FixtureWebResult.Ok ->
+                ResponseEntity
+                    .ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .eTag(httpEtagHelper.toWeakEtag(result.etagHash))
+                    .body(result.snapshotJson)
+            is FixtureWebResult.NotModified ->
+                ResponseEntity
+                    .status(304)
+                    .eTag(httpEtagHelper.toWeakEtag(result.etagHash))
+                    .build()
+            is FixtureWebResult.Fail ->
+                ResponseEntity
+                    .status(result.error.toHttpStatus())
+                    .build()
+        }
+
+    private companion object {
+        const val FIXTURE_CACHE_CONTROL_HEADER = "X-Fixture-Cache-Control"
+        const val CACHE_CONTROL_BYPASS = "bypass"
     }
 }
