@@ -11,10 +11,6 @@ class DefaultFixtureEtagHasher : FixtureEtagHasher {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(digest)
     }
 
-    override fun toWeakEtag(hash: String): String = """W/"$hash""""
-
-    override fun hashToWeakEtag(bytes: ByteArray): String = toWeakEtag(hash(bytes))
-
     private companion object {
         const val SHA_256 = "SHA-256"
     }

@@ -43,20 +43,4 @@ class DefaultFixtureEtagHasherTest {
 
         assertThat(firstHash).isNotEqualTo(secondHash)
     }
-
-    @Test
-    fun `toWeakEtag - weak etag 포맷으로 감싼다`() {
-        val weakEtag = hasher.toWeakEtag("abc123")
-
-        assertThat(weakEtag).isEqualTo("""W/"abc123"""")
-    }
-
-    @Test
-    fun `hashToWeakEtag - bytes 를 바로 weak etag 로 변환한다`() {
-        val bytes = "abc".toByteArray(StandardCharsets.UTF_8)
-
-        val weakEtag = hasher.hashToWeakEtag(bytes)
-
-        assertThat(weakEtag).isEqualTo("""W/"ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"""")
-    }
 }
