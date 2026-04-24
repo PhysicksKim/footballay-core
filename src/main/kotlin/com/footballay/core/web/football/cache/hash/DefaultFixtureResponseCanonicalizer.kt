@@ -60,7 +60,7 @@ class DefaultFixtureResponseCanonicalizer : FixtureResponseCanonicalizer {
 
     private companion object {
         val eventInfoComparator: Comparator<FixtureEventsResponse.EventInfo> =
-            compareBy<FixtureEventsResponse.EventInfo>(
+            compareBy(
                 { it.sequence },
                 { it.elapsed },
                 { it.extraTime },
