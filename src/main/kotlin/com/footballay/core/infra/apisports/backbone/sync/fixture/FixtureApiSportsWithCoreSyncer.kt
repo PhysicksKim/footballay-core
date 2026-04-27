@@ -9,12 +9,9 @@ import com.footballay.core.infra.apisports.backbone.sync.fixture.model.FixtureWi
 import com.footballay.core.infra.apisports.backbone.sync.fixture.model.VenueProcessingCases
 import com.footballay.core.infra.apisports.mapper.FixtureDataMapper
 import com.footballay.core.infra.apisports.shared.dto.FixtureApiSportsSyncDto
-import com.footballay.core.infra.apisports.shared.dto.TeamApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.core.FixtureCoreSyncService
-import com.footballay.core.infra.core.LeagueTeamCoreSyncService
-import com.footballay.core.infra.core.TeamCoreSyncService
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason
@@ -68,8 +65,6 @@ class FixtureApiSportsWithCoreSyncer(
     private val teamApiSportsRepository: TeamApiSportsRepository,
     private val venueApiSportsRepository: VenueApiSportsRepository,
     private val fixtureCoreSyncService: FixtureCoreSyncService,
-    private val teamCoreSyncService: TeamCoreSyncService,
-    private val leagueTeamCoreSyncService: LeagueTeamCoreSyncService,
     private val fixtureApiSportsFactory: FixtureApiSportsFactory,
     private val venueApiSportsFactory: VenueApiSportsFactory,
     private val fixtureDataMapper: FixtureDataMapper,
@@ -537,15 +532,14 @@ class FixtureApiSportsWithCoreSyncer(
     }
 
     /**
-     * Fixture DTO에서 참조하는 team들이 FixtureCore에 바로 연결 가능하도록 TeamApiSports / TeamCore를 보강합니다.
+     * Fixture DTO에서 참조하는 team들이 FixtureCore에 바로 연결 가능한지 확인합니다.
+     *
+     * 계약:
+     * - TeamApiSports가 없으면 fixture sync는 실패합니다. 팀은 `syncTeamsOfLeague*`를 통해 먼저 저장되어 있어야 합니다.
+     * - TeamApiSports는 있지만 TeamCore가 없는 경우는 비정상 무결성 상태이므로 error 로그를 남기고 계속 진행합니다.
      *
      * 이 메서드를 거친 뒤에는, 현재 fixture DTO들에 등장하는 team apiId들에 대해
-     * `FixtureDataCollection.teams` 안에 TeamApiSports와 그에 연결된 TeamCore가 모두 준비되어 있음을 보장합니다.
-     *
-     * - 기존 TeamApiSports + TeamCore가 있으면 재사용
-     * - TeamApiSports만 있으면 TeamCore를 생성해 연결
-     * - 둘 다 없으면 TeamCore와 TeamApiSports를 최소 정보로 암시적 생성
-     * - 리그-팀 관계는 추가만 수행하고, fixture sync 과정에서 리그-팀 관계 제거는 수행하지 않음
+     * `FixtureDataCollection.teams` 안에 적어도 대응되는 TeamApiSports가 준비되어 있음을 보장합니다.
      */
     private fun ensureTeamsForFixtures(
         fixtureData: FixtureDataCollection,
@@ -557,26 +551,24 @@ class FixtureApiSportsWithCoreSyncer(
         }
 
         val existingTeamsByApiId: MutableMap<Long, TeamApiSports> = mapExistingTeamsByApiId(fixtureData)
-        val fixtureTeamProvisionPlan: FixtureTeamProvisionPlan = planFixtureTeamProvision(existingTeamsByApiId, requestedTeamDtos)
+        val teamAvailabilityCheck: FixtureTeamAvailabilityCheck = checkFixtureTeamAvailability(existingTeamsByApiId, requestedTeamDtos)
 
-        val createdTeamCoreMap =
-            if (fixtureTeamProvisionPlan.teamDtosNeedingCore.isNotEmpty()) {
-                teamCoreSyncService.createTeamCoresFromApiSports(fixtureTeamProvisionPlan.teamDtosNeedingCore)
-            } else {
-                emptyMap()
-            }
-
-        attachTeamsToLeagueIfNeeded(fixtureData, createdTeamCoreMap)
-
-        val teamsToPersist =
-            collectTeamsToPersist(
-                existingTeamsByApiId = existingTeamsByApiId,
-                requestedTeamDtos = requestedTeamDtos,
-                missingTeamDtos = fixtureTeamProvisionPlan.missingTeamDtos,
-                createdTeamCoreMap = createdTeamCoreMap,
+        if (teamAvailabilityCheck.missingTeamDtos.isNotEmpty()) {
+            val missingApiIds = teamAvailabilityCheck.missingTeamDtos.keys.sorted()
+            throw IllegalStateException(
+                "Some teams are missing in the database: $missingApiIds. Sync teams first with syncTeamsOfLeague or syncTeamsOfLeagueWithCurrentSeason.",
             )
+        }
 
-        persistEnsuredTeams(existingTeamsByApiId, teamsToPersist)
+        if (teamAvailabilityCheck.teamsMissingCore.isNotEmpty()) {
+            log.error(
+                "Fixture sync found TeamApiSports without TeamCore. leagueApiId={}, teamApiIds={}",
+                fixtureData.league.apiId,
+                teamAvailabilityCheck.teamsMissingCore.keys.sorted(),
+            )
+        }
+
+        applyFixtureTeamMetadataUpdates(existingTeamsByApiId, requestedTeamDtos)
 
         return fixtureData.copy(teams = existingTeamsByApiId.values.toList())
     }
@@ -588,116 +580,26 @@ class FixtureApiSportsWithCoreSyncer(
             .toMutableMap()
 
     /**
-     * Fixture DTO가 참조한 팀들 중 어떤 팀이 Core 생성이 필요한지, 어떤 팀이 완전히 누락됐는지 먼저 분류합니다.
+     * Fixture DTO가 참조한 팀들 중 어떤 팀이 완전히 누락됐는지,
+     * 그리고 어떤 팀이 TeamApiSports는 있지만 TeamCore가 없는 비정상 상태인지 분류합니다.
      */
-    private fun planFixtureTeamProvision(
+    private fun checkFixtureTeamAvailability(
         existingTeamsByApiId: Map<Long, TeamApiSports>,
         requestedTeamDtos: Map<Long, TeamOfFixtureApiSportsCreateDto>,
-    ): FixtureTeamProvisionPlan {
+    ): FixtureTeamAvailabilityCheck {
         val missingTeamDtos =
             requestedTeamDtos.filterKeys { apiId ->
                 !existingTeamsByApiId.containsKey(apiId)
             }
-
-        val teamDtosNeedingCore =
-            buildList {
-                existingTeamsByApiId.forEach { (apiId, existingTeam) ->
-                    if (existingTeam.teamCore == null && requestedTeamDtos.containsKey(apiId)) {
-                        add(apiId to toTeamApiSportsCreateDto(requestedTeamDtos.getValue(apiId)))
-                    }
-                }
-
-                missingTeamDtos.forEach { (apiId, dto) ->
-                    add(apiId to toTeamApiSportsCreateDto(dto))
-                }
+        val teamsMissingCore =
+            existingTeamsByApiId.filter { (apiId, existingTeam) ->
+                requestedTeamDtos.containsKey(apiId) && existingTeam.teamCore == null
             }
 
-        return FixtureTeamProvisionPlan(
-            teamDtosNeedingCore = teamDtosNeedingCore,
+        return FixtureTeamAvailabilityCheck(
             missingTeamDtos = missingTeamDtos,
+            teamsMissingCore = teamsMissingCore,
         )
-    }
-
-    /**
-     * 새로 만든 TeamCore가 있다면 현재 fixture의 리그와 관계를 추가합니다.
-     * fixture sync에서는 팀 제거를 하지 않고 추가만 수행합니다.
-     */
-    private fun attachTeamsToLeagueIfNeeded(
-        fixtureData: FixtureDataCollection,
-        createdTeamCoreMap: Map<Long, TeamCore>,
-    ) {
-        if (createdTeamCoreMap.isEmpty()) {
-            return
-        }
-
-        val leagueCore =
-            fixtureData.league.leagueCore
-                ?: throw IllegalStateException("LeagueCore must not be null for fixture team creation")
-        leagueTeamCoreSyncService.createLeagueTeamRelationshipsBatch(leagueCore, createdTeamCoreMap.values)
-    }
-
-    /**
-     * 기존 TeamApiSports는 기본 정보를 보강하고, Core가 비어 있으면 연결합니다.
-     * 완전히 없던 팀은 새 TeamApiSports 엔티티를 만들어 저장 대상으로 올립니다.
-     */
-    private fun collectTeamsToPersist(
-        existingTeamsByApiId: Map<Long, TeamApiSports>,
-        requestedTeamDtos: Map<Long, TeamOfFixtureApiSportsCreateDto>,
-        missingTeamDtos: Map<Long, TeamOfFixtureApiSportsCreateDto>,
-        createdTeamCoreMap: Map<Long, TeamCore>,
-    ): Set<TeamApiSports> {
-        val teamsToPersist = linkedSetOf<TeamApiSports>()
-
-        existingTeamsByApiId.forEach { (apiId, existingTeam) ->
-            requestedTeamDtos[apiId]?.let { dto ->
-                updateTeamApiSportsFromFixtureDto(existingTeam, dto)
-            }
-
-            if (existingTeam.teamCore == null) {
-                existingTeam.teamCore =
-                    createdTeamCoreMap[apiId]
-                        ?: throw IllegalStateException("TeamCore must exist for apiId=$apiId during fixture sync")
-                teamsToPersist.add(existingTeam)
-            }
-        }
-
-        missingTeamDtos.forEach { (apiId, dto) ->
-            teamsToPersist.add(createImplicitTeamApiSports(apiId, dto, createdTeamCoreMap))
-        }
-
-        return teamsToPersist
-    }
-
-    private fun createImplicitTeamApiSports(
-        apiId: Long,
-        dto: TeamOfFixtureApiSportsCreateDto,
-        createdTeamCoreMap: Map<Long, TeamCore>,
-    ): TeamApiSports {
-        val teamCore =
-            createdTeamCoreMap[apiId]
-                ?: throw IllegalStateException("Created TeamCore not found for apiId=$apiId")
-
-        return TeamApiSports(
-            teamCore = teamCore,
-            apiId = apiId,
-            name = dto.name,
-            logo = dto.logo,
-        )
-    }
-
-    private fun persistEnsuredTeams(
-        existingTeamsByApiId: MutableMap<Long, TeamApiSports>,
-        teamsToPersist: Set<TeamApiSports>,
-    ) {
-        if (teamsToPersist.isEmpty()) {
-            return
-        }
-
-        val savedTeams = teamApiSportsRepository.saveAll(teamsToPersist.toList())
-        savedTeams.forEach { team ->
-            val apiId = team.apiId ?: return@forEach
-            existingTeamsByApiId[apiId] = team
-        }
     }
 
     private fun extractTeamDtosByApiId(dtos: List<FixtureApiSportsSyncDto>): Map<Long, TeamOfFixtureApiSportsCreateDto> {
@@ -709,12 +611,16 @@ class FixtureApiSportsWithCoreSyncer(
         return result
     }
 
-    private fun toTeamApiSportsCreateDto(dto: TeamOfFixtureApiSportsCreateDto): TeamApiSportsCreateDto =
-        TeamApiSportsCreateDto(
-            apiId = dto.apiId ?: throw IllegalArgumentException("Team apiId is required"),
-            name = dto.name ?: "Unknown Team",
-            logo = dto.logo,
-        )
+    private fun applyFixtureTeamMetadataUpdates(
+        existingTeamsByApiId: Map<Long, TeamApiSports>,
+        requestedTeamDtos: Map<Long, TeamOfFixtureApiSportsCreateDto>,
+    ) {
+        existingTeamsByApiId.forEach { (apiId, existingTeam) ->
+            requestedTeamDtos[apiId]?.let { dto ->
+                updateTeamApiSportsFromFixtureDto(existingTeam, dto)
+            }
+        }
+    }
 
     private fun updateTeamApiSportsFromFixtureDto(
         teamApiSports: TeamApiSports,
@@ -729,29 +635,27 @@ class FixtureApiSportsWithCoreSyncer(
     }
 
     /**
-     * fixture에 등장한 team들을 "FixtureCore에 바로 연결 가능한 상태"로 만들기 위한 보강 계획입니다.
+     * fixture에 등장한 team들이 현재 어떤 상태인지 점검한 결과입니다.
      *
-     * 이 객체는 저장 결과가 아니라, 아래 단계에서 어떤 TeamCore / TeamApiSports를
-     * 추가로 만들어야 하는지 미리 분류해 둔 계획 데이터입니다.
+     * 이 객체는 저장 계획이 아니라,
+     * fixture sync를 계속 진행해도 되는지 판단하기 위한 점검 결과입니다.
      */
-    private data class FixtureTeamProvisionPlan(
-        /**
-         * TeamCore가 아직 없는 팀들입니다.
-         *
-         * 포함 대상:
-         * - TeamApiSports는 이미 있지만 TeamCore가 아직 연결되지 않은 팀
-         * - TeamApiSports 자체도 없어서, 이번 fixture sync에서 최소 정보로 TeamCore를 먼저 만들어야 하는 팀
-         *
-         * 값은 `TeamCoreSyncService.createTeamCoresFromApiSports()`에 바로 넘길 수 있는 입력 형식입니다.
-         */
-        val teamDtosNeedingCore: List<Pair<Long, TeamApiSportsCreateDto>>,
+    private data class FixtureTeamAvailabilityCheck(
         /**
          * TeamApiSports row 자체가 아직 존재하지 않는 팀들입니다.
          *
-         * 이 목록은 TeamCore 생성 이후, 새 TeamApiSports 엔티티를 암시적으로 만들어 저장해야 하는
-         * 대상을 식별하는 데 사용됩니다.
+         * 이 경우는 fixture sync의 선행조건 위반이므로,
+         * 호출자는 먼저 `syncTeamsOfLeague*`를 통해 팀을 저장해야 합니다.
          */
         val missingTeamDtos: Map<Long, TeamOfFixtureApiSportsCreateDto>,
+        /**
+         * TeamApiSports는 존재하지만 TeamCore가 연결되지 않은 비정상 상태의 팀들입니다.
+         *
+         * 이 경우는 중요한 무결성 위반이지만,
+         * fixture sync는 error 로그만 남기고 계속 진행합니다.
+         * 결과적으로 해당 팀은 FixtureCore.homeTeam/awayTeam에 null로 남을 수 있습니다.
+         */
+        val teamsMissingCore: Map<Long, TeamApiSports>,
     )
 
     /**

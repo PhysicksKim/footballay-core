@@ -7,6 +7,7 @@ import com.footballay.core.infra.apisports.shared.dto.ScoreOfFixtureApiSportsCre
 import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
+import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
@@ -509,7 +510,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
     @Test
     @DisplayName("누락된 Team은 암시적으로 생성되어 FixtureCore에 연결됨")
-    fun `누락된 Team은 암시적으로 생성되어 FixtureCore에 연결됨`() {
+    fun `누락된 Team으로 호출 시 IllegalStateException 발생`() {
         // given
         val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNonExistentTeam =
@@ -519,21 +520,45 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
                 awayTeam = TeamOfFixtureApiSportsCreateDto(apiId = 99998L, name = "Another Missing Team"),
             )
 
+        // when & then
+        val exception =
+            assertThrows<IllegalStateException> {
+                syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentTeam))
+            }
+        assertThat(exception.message).contains("Some teams are missing in the database")
+        assertThat(exception.message).contains("syncTeamsOfLeague")
+    }
+
+    @Test
+    @DisplayName("TeamApiSports는 있으나 TeamCore가 없는 경우 error 로그 후 계속 진행")
+    fun `TeamApiSports는 있으나 TeamCore가 없는 경우 error 로그 후 계속 진행`() {
+        // given
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
+        teamApiSportsRepository.save(
+            TeamApiSports(
+                teamCore = null,
+                apiId = 99997L,
+                name = "Broken Team",
+                logo = "broken-logo",
+            ),
+        )
+        val fixtureDto =
+            createValidFixtureDto().copy(
+                apiId = 2223L,
+                homeTeam = TeamOfFixtureApiSportsCreateDto(apiId = 99997L, name = "Broken Team"),
+                awayTeam = TeamOfFixtureApiSportsCreateDto(apiId = 42L, name = "Arsenal"),
+            )
+
         // when
-        syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentTeam))
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(fixtureDto))
 
         // then
-        val savedFixture = fixtureApiSportsRepository.findByApiId(2222L)
-        val createdHomeTeam = teamApiSportsRepository.findByApiId(99999L)
-        val createdAwayTeam = teamApiSportsRepository.findByApiId(99998L)
-
-        assertThat(createdHomeTeam).isNotNull
-        assertThat(createdAwayTeam).isNotNull
-        assertThat(createdHomeTeam!!.teamCore).isNotNull
-        assertThat(createdAwayTeam!!.teamCore).isNotNull
+        val savedFixture = fixtureApiSportsRepository.findByApiId(2223L)
         assertThat(savedFixture).isNotNull
-        assertThat(savedFixture!!.core!!.homeTeam!!.id).isEqualTo(createdHomeTeam.teamCore!!.id)
-        assertThat(savedFixture.core!!.awayTeam!!.id).isEqualTo(createdAwayTeam.teamCore!!.id)
+        assertThat(savedFixture!!.core).isNotNull
+        assertThat(savedFixture.core!!.homeTeam).isNull()
+        assertThat(savedFixture.core!!.awayTeam).isNotNull
+        assertThat(savedFixture.core!!.awayTeam!!.id).isEqualTo(teamApiSportsRepository.findByApiId(42L)!!.teamCore!!.id)
     }
 
     @Test
