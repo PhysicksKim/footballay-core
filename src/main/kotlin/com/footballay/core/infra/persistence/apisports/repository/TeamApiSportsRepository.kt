@@ -70,4 +70,15 @@ interface TeamApiSportsRepository : JpaRepository<TeamApiSports, Long> {
     fun findAllByLeagueApiSportsApiId(
         @Param("leagueApiId") leagueApiId: Long,
     ): List<TeamApiSports>
+
+    @Query(
+        """
+        SELECT DISTINCT tas FROM TeamApiSports tas
+        LEFT JOIN FETCH tas.teamCore tc
+        WHERE tas.apiId IN :teamApiIds
+    """,
+    )
+    fun findAllWithTeamCoreByApiIds(
+        @Param("teamApiIds") teamApiIds: List<Long>,
+    ): List<TeamApiSports>
 }

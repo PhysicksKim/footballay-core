@@ -219,6 +219,8 @@ class FixtureCoreSyncServiceTest {
                 status = "Match Finished",
                 statusShort = FixtureStatusCode.FT,
                 elapsedMin = 90,
+                homeTeam = awayTeamCore,
+                awayTeam = homeTeamCore,
                 goalsHome = 3,
                 goalsAway = 2,
                 finished = true,
@@ -231,6 +233,8 @@ class FixtureCoreSyncServiceTest {
                 status = "First Half",
                 statusShort = FixtureStatusCode.FIRST_HALF,
                 elapsedMin = 45,
+                homeTeam = null,
+                awayTeam = awayTeamCore,
                 goalsHome = 1,
                 goalsAway = 0,
                 finished = false,
@@ -245,25 +249,29 @@ class FixtureCoreSyncServiceTest {
 
         val expectedUpdatedFixtureCore1 =
             existingFixtureCore1.copy(
-                kickoff = updateDto1.kickoff!!,
-                statusText = updateDto1.status!!,
-                statusCode = updateDto1.statusShort!!,
+                kickoff = updateDto1.kickoff,
+                statusText = updateDto1.status,
+                statusCode = updateDto1.statusShort,
                 elapsedMin = updateDto1.elapsedMin,
+                homeTeam = updateDto1.homeTeam,
+                awayTeam = updateDto1.awayTeam,
                 goalsHome = updateDto1.goalsHome,
                 goalsAway = updateDto1.goalsAway,
-                finished = updateDto1.finished!!,
+                finished = updateDto1.finished,
                 available = updateDto1.available!!,
             )
 
         val expectedUpdatedFixtureCore2 =
             existingFixtureCore2.copy(
-                kickoff = updateDto2.kickoff!!,
-                statusText = updateDto2.status!!,
-                statusCode = updateDto2.statusShort!!,
+                kickoff = updateDto2.kickoff,
+                statusText = updateDto2.status,
+                statusCode = updateDto2.statusShort,
                 elapsedMin = updateDto2.elapsedMin,
+                homeTeam = updateDto2.homeTeam,
+                awayTeam = updateDto2.awayTeam,
                 goalsHome = updateDto2.goalsHome,
                 goalsAway = updateDto2.goalsAway,
-                finished = updateDto2.finished!!,
+                finished = updateDto2.finished,
                 available = updateDto2.available!!,
             )
 

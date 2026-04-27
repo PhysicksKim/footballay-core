@@ -8,6 +8,8 @@ import com.footballay.core.infra.apisports.shared.dto.StatusOfFixtureApiSportsCr
 import com.footballay.core.infra.apisports.shared.dto.TeamOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCreateDto
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
+import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
+import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -18,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -27,6 +30,12 @@ import org.springframework.transaction.annotation.Transactional
 class FixtureApiSportsWithCoreSyncerIntegrationTest {
     @Autowired
     private lateinit var fixtureApiSportsRepository: FixtureApiSportsRepository
+
+    @Autowired
+    private lateinit var fixtureCoreRepository: FixtureCoreRepository
+
+    @Autowired
+    private lateinit var teamApiSportsRepository: TeamApiSportsRepository
 
     @Autowired
     private lateinit var syncer: FixtureApiSportsWithCoreSyncer
@@ -317,6 +326,82 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     }
 
     @Test
+    @DisplayName("기존 Fixture 재동기화 시 FixtureApiSports date와 FixtureCore kickoff가 함께 갱신됨")
+    fun `기존 Fixture 재동기화 시 FixtureApiSports date와 FixtureCore kickoff가 함께 갱신됨`() {
+        // given
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
+        val fixtureApiId = 8888L
+        val originalDto = createValidFixtureDto().copy(apiId = fixtureApiId, date = "2024-01-01T15:00:00+00:00")
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(originalDto))
+
+        val originalFixture = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+        val originalCoreId = originalFixture!!.core!!.id!!
+        assertThat(originalFixture.date).isEqualTo(Instant.parse("2024-01-01T15:00:00Z"))
+        assertThat(originalFixture.core!!.kickoff).isEqualTo(Instant.parse("2024-01-01T15:00:00Z"))
+
+        // when
+        val updatedDto =
+            originalDto.copy(
+                date = "2024-02-02T18:30:00+00:00",
+                status =
+                    StatusOfFixtureApiSportsCreateDto(
+                        longStatus = "Time Changed",
+                        shortStatus = "NS",
+                        elapsed = null,
+                        extra = null,
+                    ),
+            )
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(updatedDto))
+
+        // then
+        val updatedFixture = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+        val updatedCore = fixtureCoreRepository.findById(originalCoreId).orElseThrow()
+        val expectedKickoff = Instant.parse("2024-02-02T18:30:00Z")
+
+        assertThat(updatedFixture).isNotNull
+        assertThat(updatedFixture!!.date).isEqualTo(expectedKickoff)
+        assertThat(updatedFixture.core!!.id).isEqualTo(originalCoreId)
+        assertThat(updatedCore.kickoff).isEqualTo(expectedKickoff)
+    }
+
+    @Test
+    @DisplayName("팀 미정 Fixture 재동기화 시 기존 TeamCore가 FixtureCore에 연결됨")
+    fun `팀 미정 Fixture 재동기화 시 기존 TeamCore가 FixtureCore에 연결됨`() {
+        // given
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
+        val fixtureApiId = 7777L
+        val unresolvedFixture =
+            createValidFixtureDto().copy(
+                apiId = fixtureApiId,
+                homeTeam = null,
+                awayTeam = null,
+            )
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(unresolvedFixture))
+
+        val originalFixture = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+        val originalCoreId = originalFixture!!.core!!.id!!
+        assertThat(originalFixture.core!!.homeTeam).isNull()
+        assertThat(originalFixture.core!!.awayTeam).isNull()
+
+        // when
+        val resolvedFixture =
+            unresolvedFixture.copy(
+                homeTeam = TeamOfFixtureApiSportsCreateDto(apiId = 33L, name = "Manchester United"),
+                awayTeam = TeamOfFixtureApiSportsCreateDto(apiId = 42L, name = "Arsenal"),
+            )
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(resolvedFixture))
+
+        // then
+        val updatedCore = fixtureCoreRepository.findById(originalCoreId).orElseThrow()
+        val existingHomeTeam = teamApiSportsRepository.findByApiId(33L)
+        val existingAwayTeam = teamApiSportsRepository.findByApiId(42L)
+        assertThat(updatedCore.homeTeam).isNotNull
+        assertThat(updatedCore.awayTeam).isNotNull
+        assertThat(updatedCore.homeTeam!!.id).isEqualTo(existingHomeTeam!!.teamCore!!.id)
+        assertThat(updatedCore.awayTeam!!.id).isEqualTo(existingAwayTeam!!.teamCore!!.id)
+    }
+
+    @Test
     @DisplayName("여러 Fixture 동시 처리")
     fun `여러 Fixture 동시 처리`() {
         // given
@@ -423,22 +508,32 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     }
 
     @Test
-    @DisplayName("누락된 Team으로 호출 시 IllegalStateException 발생")
-    fun `누락된 Team으로 호출 시 IllegalStateException 발생`() {
+    @DisplayName("누락된 Team은 암시적으로 생성되어 FixtureCore에 연결됨")
+    fun `누락된 Team은 암시적으로 생성되어 FixtureCore에 연결됨`() {
         // given
         val leagueApiId = backboneEntities.leagueApiSports.apiId
         val dtoWithNonExistentTeam =
             createValidFixtureDto().copy(
                 apiId = 2222L,
                 homeTeam = TeamOfFixtureApiSportsCreateDto(apiId = 99999L, name = "Non Existent Team"),
+                awayTeam = TeamOfFixtureApiSportsCreateDto(apiId = 99998L, name = "Another Missing Team"),
             )
 
-        // when & then
-        val exception =
-            assertThrows<IllegalStateException> {
-                syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentTeam))
-            }
-        assertThat(exception.message).contains("Some teams are missing in the database")
+        // when
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(dtoWithNonExistentTeam))
+
+        // then
+        val savedFixture = fixtureApiSportsRepository.findByApiId(2222L)
+        val createdHomeTeam = teamApiSportsRepository.findByApiId(99999L)
+        val createdAwayTeam = teamApiSportsRepository.findByApiId(99998L)
+
+        assertThat(createdHomeTeam).isNotNull
+        assertThat(createdAwayTeam).isNotNull
+        assertThat(createdHomeTeam!!.teamCore).isNotNull
+        assertThat(createdAwayTeam!!.teamCore).isNotNull
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.core!!.homeTeam!!.id).isEqualTo(createdHomeTeam.teamCore!!.id)
+        assertThat(savedFixture.core!!.awayTeam!!.id).isEqualTo(createdAwayTeam.teamCore!!.id)
     }
 
     @Test

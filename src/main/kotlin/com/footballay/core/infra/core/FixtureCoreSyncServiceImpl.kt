@@ -81,13 +81,15 @@ class FixtureCoreSyncServiceImpl(
         fixtureCore: FixtureCore,
         updateDto: FixtureCoreUpdateDto,
     ): FixtureCore {
-        updateDto.kickoff?.let { fixtureCore.kickoff = it }
-        updateDto.status?.let { fixtureCore.statusText = it }
-        updateDto.statusShort?.let { fixtureCore.statusCode = it }
-        updateDto.elapsedMin?.let { fixtureCore.elapsedMin = it }
-        updateDto.goalsHome?.let { fixtureCore.goalsHome = it }
-        updateDto.goalsAway?.let { fixtureCore.goalsAway = it }
-        updateDto.finished?.let { fixtureCore.finished = it }
+        fixtureCore.kickoff = updateDto.kickoff
+        fixtureCore.statusText = updateDto.status
+        fixtureCore.statusCode = updateDto.statusShort
+        fixtureCore.elapsedMin = updateDto.elapsedMin
+        fixtureCore.homeTeam = updateDto.homeTeam
+        fixtureCore.awayTeam = updateDto.awayTeam
+        fixtureCore.goalsHome = updateDto.goalsHome
+        fixtureCore.goalsAway = updateDto.goalsAway
+        fixtureCore.finished = updateDto.finished
         updateDto.available?.let { fixtureCore.available = it }
 
         return fixtureCore
