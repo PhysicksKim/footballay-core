@@ -26,6 +26,10 @@ spring:
 
 server:
   forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
 
 # SpringDoc OpenAPI Configuration
 springdoc:
