@@ -1,11 +1,65 @@
-# Footballay Core - Production Secrets Configuration
-# 프로덕션 환경 시크릿 설정 (외부 파일에서 로드)
-# 사용법: --spring.profiles.active=prod,live
+footballay:
+  apisports:
+    scheme: https
+    host: v3.football.api-sports.io
+    url: v3.football.api-sports.io
+    headers:
+      x-rapidapi-host-name: "X-RapidAPI-Host"
+      x-rapidapi-host-value: "v3.football.api-sports.io"
+      x-rapidapi-key-name: x-rapidapi-key
+      x-rapidapi-key-value: ${FOOTBALLAY_APISPORTS_X_RAPIDAPI_KEY_VALUE}
+
+aws:
+  cloudfront:
+    domain: "https://static.gyechunhoe.com"
+    keyPairId: ${AWS_CLOUDFRONT_KEY_PAIR_ID}
+    privateKeyPath: ${AWS_CLOUDFRONT_PRIVATE_KEY_PATH}
+    publicKeyPath: ${AWS_CLOUDFRONT_PUBLIC_KEY_PATH}
+  s3:
+    public-domain: "https://static.gyechunhoe.com"
+    accessKey: ${AWS_S3_ACCESS_KEY}
+    secretKey: ${AWS_S3_SECRET_KEY}
+    region: ${AWS_S3_REGION}
+    bucket-name: ${AWS_S3_BUCKET_NAME}
 
 spring:
-  config:
-    import:
-      - file:/config-external/application-api.yml
-      - file:/config-external/application-aws.yml
-      - file:/config-external/application-path.yml
-      - file:/config-external/application-secret.yml
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${SPRING_DATA_REDIS_PASSWORD}
+
+rapidapi:
+  football:
+    key: ${RAPIDAPI_FOOTBALL_KEY}
+
+sportmonks:
+  key: ${SPORTMONKS_KEY}
+
+discord:
+  role:
+    developer: ${DISCORD_ROLE_DEVELOPER}
+  webhook:
+    lineup: ${DISCORD_WEBHOOK_LINEUP}
+    match: ${DISCORD_WEBHOOK_MATCH}
+    id-null: ${DISCORD_WEBHOOK_ID_NULL}
+
+secret:
+  key: ${SECRET_KEY}
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}
+
+custom:
+  login:
+    remember-me-key: ${CUSTOM_LOGIN_REMEMBER_ME_KEY}
+
+loki:
+  url: ${LOKI_URL}
+  username: ${LOKI_USERNAME}
+  password: ${LOKI_PASSWORD}

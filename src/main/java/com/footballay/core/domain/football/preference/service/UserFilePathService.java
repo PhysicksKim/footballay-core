@@ -10,15 +10,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Optional;
 
+@Deprecated
 @Service
 public class UserFilePathService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(UserFilePathService.class);
     private final UserFilePathRepository userFilePathRepository;
     @Value("${aws.cloudfront.domain}")
     private String CLOUDFRONT_DOMAIN;
-    @Value("${path.football.players.photo.prefix}")
+    @Value("${path.football.players.photo.prefix:chuncity/football/players}")
     private String PLAYER_CUSTOM_PHOTO_PREFIX;
-    @Value("${path.football.players.photo.suffix}")
+    @Value("${path.football.players.photo.suffix:photo}")
     private String PLAYER_CUSTOM_PHOTO_SUFFIX;
 
     /**
