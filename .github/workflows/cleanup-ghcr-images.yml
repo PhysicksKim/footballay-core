@@ -1,0 +1,103 @@
+name: Cleanup GHCR Images
+
+#  latest 태그가 붙은 version은 보존
+#  latest가 없는 version 중 updated_at 최신순 20개 보존
+#  그보다 오래된 latest 없는 version 삭제
+#  untagged version도 오래되면 삭제 대상
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run only"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+  schedule:
+    # Every Wednesday 11:00 KST = Wednesday 02:00 UTC
+    - cron: "0 2 * * 3"
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  PACKAGE_OWNER: PhysicksKim
+  PACKAGE_OWNER_TYPE: users
+  PACKAGE: footballay-core
+  KEEP_NON_LATEST: 20
+  DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cleanup old GHCR image versions
+        env:
+          GH_TOKEN: ${{ secrets.GHCR_CLEANUP_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "GHCR_CLEANUP_TOKEN is required."
+            echo "Create a PAT with read:packages and delete:packages."
+            exit 1
+          fi
+
+          echo "Package: ${PACKAGE_OWNER_TYPE}/${PACKAGE_OWNER}/${PACKAGE}"
+          echo "Policy: keep all versions tagged latest + keep recent ${KEEP_NON_LATEST} non-latest versions"
+          echo "Dry run: ${DRY_RUN}"
+
+          echo "Fetching all GHCR versions..."
+
+          gh api --paginate \
+            "/${PACKAGE_OWNER_TYPE}/${PACKAGE_OWNER}/packages/container/${PACKAGE}/versions?per_page=100" \
+            | jq -s 'add' \
+            > versions.json
+
+          total="$(jq 'length' versions.json)"
+          echo "Fetched versions: ${total}"
+
+          jq -r --argjson keep "${KEEP_NON_LATEST}" '
+            sort_by(.updated_at) | reverse
+            | [ .[]
+                | {
+                    id,
+                    updated_at,
+                    tags: (.metadata.container.tags // []),
+                    has_latest: ((.metadata.container.tags // []) | index("latest") != null)
+                  }
+              ]
+            | [ .[] | select(.has_latest | not) ]
+            | .[$keep:]
+            | .[]
+            | "\(.id)\t\(.updated_at)\t\(.tags | if length == 0 then "<untagged>" else join(",") end)"
+          ' versions.json > delete-list.tsv
+
+          if [ ! -s delete-list.tsv ]; then
+            echo "Nothing to delete."
+            exit 0
+          fi
+
+          echo "Delete candidates:"
+          cat delete-list.tsv | sed 's/^/- /'
+
+          if [ "${DRY_RUN}" = "true" ]; then
+            echo "Dry run enabled. Nothing deleted."
+            exit 0
+          fi
+
+          while IFS=$'\t' read -r id updated_at tags; do
+            echo "Deleting version id=${id}, updated_at=${updated_at}, tags=${tags}"
+
+            gh api \
+              --method DELETE \
+              "/${PACKAGE_OWNER_TYPE}/${PACKAGE_OWNER}/packages/container/${PACKAGE}/versions/${id}"
+          done < delete-list.tsv
+
+          echo "Cleanup completed."
