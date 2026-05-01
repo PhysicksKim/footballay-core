@@ -23,7 +23,9 @@ spring:
             class: org.springframework.scheduling.quartz.LocalDataSourceJobStore
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
             tablePrefix: QRTZ_
-            isClustered: false
+            isClustered: true
+            clusterCheckinInterval: 10000
+            misfireThreshold: 60000
           threadPool:
             class: org.quartz.simpl.SimpleThreadPool
             threadCount: 5

@@ -19,15 +19,6 @@ on:
         options:
           - "true"
           - "false"
-      deploy_mode:
-        description: "Deploy mode passed to private repo"
-        required: true
-        default: "prepare_only"
-        type: choice
-        options:
-          - "prepare_only"
-          - "standby_only"
-          - "deploy_and_switch"
 
 permissions:
   contents: read
@@ -166,7 +157,6 @@ jobs:
           TOKEN: ${{ secrets.ACTIONS_RELAY_TOKEN }}
           IMAGE: ${{ needs.docker-build-push.outputs.image }}
           IMAGE_TAG: ${{ needs.docker-build-push.outputs.image_tag }}
-          DEPLOY_MODE: ${{ github.event.inputs.deploy_mode }}
           SKIP_TESTS: ${{ github.event.inputs.skip_tests }}
         run: |
           PAYLOAD="$(jq -n \
@@ -175,7 +165,6 @@ jobs:
             --arg commit_sha "${GITHUB_SHA}" \
             --arg source_repo "${GITHUB_REPOSITORY}" \
             --arg source_run_id "${GITHUB_RUN_ID}" \
-            --arg deploy_mode "$DEPLOY_MODE" \
             --arg skip_tests "$SKIP_TESTS" \
             '{
               event_type: "deploy_request",
@@ -185,7 +174,6 @@ jobs:
                 commit_sha: $commit_sha,
                 source_repo: $source_repo,
                 source_run_id: $source_run_id,
-                deploy_mode: $deploy_mode,
                 skip_tests: $skip_tests
               }
             }'
