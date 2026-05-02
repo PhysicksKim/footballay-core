@@ -49,6 +49,31 @@ class RedisFixtureWebCacheManagerTest {
     }
 
     @Test
+    fun `findSnapshot - snapshot 과 etag 만 가져온다`() {
+        every {
+            hashOperations.multiGet(
+                "footballay:fixture:web:status:fixture-1",
+                listOf("snapshotJson", "etagHash"),
+            )
+        } returns listOf("""{"fixtureUid":"fixture-1"}""", "etag-1")
+
+        val result = cacheManager.findSnapshot("fixture-1", FixturePollingEndpoint.STATUS)
+
+        assertThat(result).isNotNull
+        assertThat(result!!.snapshotJson).isEqualTo("""{"fixtureUid":"fixture-1"}""")
+        assertThat(result.etagHash).isEqualTo("etag-1")
+    }
+
+    @Test
+    fun `findEtagHash - etag 필드만 가져온다`() {
+        every { hashOperations.get("footballay:fixture:web:status:fixture-1", "etagHash") } returns "etag-1"
+
+        val result = cacheManager.findEtagHash("fixture-1", FixturePollingEndpoint.STATUS)
+
+        assertThat(result).isEqualTo("etag-1")
+    }
+
+    @Test
     fun `save - snapshot 과 etag 와 updatedAt 을 같은 key 에 저장하고 ttl 을 건다`() {
         every { hashOperations.putAll(any(), any<Map<String, String>>()) } just runs
         every { stringRedisTemplate.expire("footballay:fixture:web:events:fixture-2", any<Duration>()) } returns true

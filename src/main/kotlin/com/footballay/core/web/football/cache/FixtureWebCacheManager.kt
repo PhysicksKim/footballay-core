@@ -13,6 +13,16 @@ interface FixtureWebCacheManager {
         endpoint: FixturePollingEndpoint,
     ): FixtureWebCacheEntry?
 
+    fun findSnapshot(
+        fixtureUid: String,
+        endpoint: FixturePollingEndpoint,
+    ): FixtureWebCacheSnapshot?
+
+    fun findEtagHash(
+        fixtureUid: String,
+        endpoint: FixturePollingEndpoint,
+    ): String?
+
     fun save(
         fixtureUid: String,
         endpoint: FixturePollingEndpoint,
@@ -26,11 +36,17 @@ data class FixtureWebCacheEntry(
     val updatedAt: Instant,
 )
 
+data class FixtureWebCacheSnapshot(
+    val snapshotJson: String,
+    val etagHash: String,
+)
+
 @Component
 class RedisFixtureWebCacheManager(
     private val stringRedisTemplate: StringRedisTemplate,
 ) : FixtureWebCacheManager {
     private val log = logger()
+    private val hashOperations by lazy { stringRedisTemplate.opsForHash<String, String>() }
 
     override fun find(
         fixtureUid: String,
@@ -39,7 +55,7 @@ class RedisFixtureWebCacheManager(
         val key = key(fixtureUid, endpoint)
 
         return runCatching {
-            val values = stringRedisTemplate.opsForHash<String, String>().entries(key)
+            val values = hashOperations.entries(key)
             if (values.isEmpty()) {
                 return null
             }
@@ -58,6 +74,39 @@ class RedisFixtureWebCacheManager(
         }.getOrNull()
     }
 
+    override fun findSnapshot(
+        fixtureUid: String,
+        endpoint: FixturePollingEndpoint,
+    ): FixtureWebCacheSnapshot? {
+        val key = key(fixtureUid, endpoint)
+
+        return runCatching {
+            val values = hashOperations.multiGet(key, SNAPSHOT_FIELDS)
+            val snapshotJson = values?.getOrNull(0) ?: return null
+            val etagHash = values.getOrNull(1) ?: return null
+
+            FixtureWebCacheSnapshot(
+                snapshotJson = snapshotJson,
+                etagHash = etagHash,
+            )
+        }.onFailure { ex ->
+            log.warn("Failed to read fixture web cache snapshot. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+        }.getOrNull()
+    }
+
+    override fun findEtagHash(
+        fixtureUid: String,
+        endpoint: FixturePollingEndpoint,
+    ): String? {
+        val key = key(fixtureUid, endpoint)
+
+        return runCatching {
+            hashOperations.get(key, ETAG_HASH_FIELD)
+        }.onFailure { ex ->
+            log.warn("Failed to read fixture web cache etag. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+        }.getOrNull()
+    }
+
     override fun save(
         fixtureUid: String,
         endpoint: FixturePollingEndpoint,
@@ -66,16 +115,14 @@ class RedisFixtureWebCacheManager(
         val key = key(fixtureUid, endpoint)
 
         runCatching {
-            stringRedisTemplate
-                .opsForHash<String, String>()
-                .putAll(
-                    key,
-                    mapOf(
-                        SNAPSHOT_JSON_FIELD to document.snapshotJson,
-                        ETAG_HASH_FIELD to document.etagHash,
-                        UPDATED_AT_FIELD to Instant.now().toString(),
-                    ),
-                )
+            hashOperations.putAll(
+                key,
+                mapOf(
+                    SNAPSHOT_JSON_FIELD to document.snapshotJson,
+                    ETAG_HASH_FIELD to document.etagHash,
+                    UPDATED_AT_FIELD to Instant.now().toString(),
+                ),
+            )
             stringRedisTemplate.expire(key, CACHE_TTL)
         }.onFailure { ex ->
             log.warn("Failed to write fixture web cache. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
@@ -92,6 +139,7 @@ class RedisFixtureWebCacheManager(
         const val SNAPSHOT_JSON_FIELD = "snapshotJson"
         const val ETAG_HASH_FIELD = "etagHash"
         const val UPDATED_AT_FIELD = "updatedAt"
+        val SNAPSHOT_FIELDS: List<String> = listOf(SNAPSHOT_JSON_FIELD, ETAG_HASH_FIELD)
         /**
          * Fixture web cache TTL.
          *

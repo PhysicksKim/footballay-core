@@ -132,13 +132,16 @@ class FixtureWebService(
         createDocument: (T) -> FixtureResponseCacheDocument,
     ): FixtureWebResult {
         if (!bypassCacheRead) {
-            val cached = cacheManager.find(fixtureUid, endpoint)
-            if (cached != null) {
-                return if (httpEtagHelper.matchesIfNoneMatch(ifNoneMatch, cached.etagHash)) {
-                    FixtureWebResult.NotModified(cached.etagHash)
-                } else {
-                    FixtureWebResult.Ok(cached.snapshotJson, cached.etagHash)
+            if (!ifNoneMatch.isNullOrBlank()) {
+                val cachedEtagHash = cacheManager.findEtagHash(fixtureUid, endpoint)
+                if (cachedEtagHash != null && httpEtagHelper.matchesIfNoneMatch(ifNoneMatch, cachedEtagHash)) {
+                    return FixtureWebResult.NotModified(cachedEtagHash)
                 }
+            }
+
+            val cached = cacheManager.findSnapshot(fixtureUid, endpoint)
+            if (cached != null) {
+                return FixtureWebResult.Ok(cached.snapshotJson, cached.etagHash)
             }
         }
 
