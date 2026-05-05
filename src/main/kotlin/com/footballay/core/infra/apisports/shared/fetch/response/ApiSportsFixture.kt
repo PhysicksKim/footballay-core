@@ -365,7 +365,7 @@ object ApiSportsFixture {
             val date: OffsetDateTime,
             val timestamp: Long,
             val periods: Periods,
-            val venue: Venue,
+            val venue: Venue?,
             val status: Status,
         ) {
             @JsonIgnoreProperties(ignoreUnknown = true)
@@ -384,9 +384,9 @@ object ApiSportsFixture {
 
             @JsonIgnoreProperties(ignoreUnknown = true)
             data class Venue(
-                val id: Long,
-                val name: String,
-                val city: String,
+                val id: Long?,
+                val name: String?,
+                val city: String?,
             )
         }
 

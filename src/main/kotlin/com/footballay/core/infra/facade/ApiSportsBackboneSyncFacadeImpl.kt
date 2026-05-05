@@ -248,12 +248,7 @@ class ApiSportsBackboneSyncFacadeImpl(
                     name = response.teams.away.name,
                     logo = response.teams.away.logo,
                 ),
-            venue =
-                VenueOfFixtureApiSportsCreateDto(
-                    apiId = response.fixture.venue.id,
-                    name = response.fixture.venue.name,
-                    city = response.fixture.venue.city,
-                ),
+            venue = mapToFixtureVenueCreateDto(response.fixture.venue),
             leagueApiId = response.league.id,
             seasonYear = response.league.season.toString(),
             status =
@@ -274,6 +269,16 @@ class ApiSportsBackboneSyncFacadeImpl(
                     penaltyHome = response.score.penalty?.home,
                     penaltyAway = response.score.penalty?.away,
                 ),
+        )
+    }
+
+    private fun mapToFixtureVenueCreateDto(venue: ApiSportsFixture.OfLeague.Fixture.Venue?): VenueOfFixtureApiSportsCreateDto? {
+        val venueApiId = venue?.id?.takeIf { it > 0 } ?: return null
+
+        return VenueOfFixtureApiSportsCreateDto(
+            apiId = venueApiId,
+            name = venue.name,
+            city = venue.city,
         )
     }
 
