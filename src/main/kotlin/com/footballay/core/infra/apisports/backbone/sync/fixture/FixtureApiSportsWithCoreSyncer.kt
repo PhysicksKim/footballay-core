@@ -393,11 +393,21 @@ class FixtureApiSportsWithCoreSyncer(
         val existingVenuesMap =
             fixtureData.fixtures
                 .mapNotNull { it.venue }
-                .associateBy { it.apiId }
+                .mapNotNull { venue ->
+                    venue.apiId
+                        ?.takeIf { it > 0 }
+                        ?.let { it to venue }
+                }.toMap()
 
         dtos.forEach { dto ->
             dto.venue?.let { venueDto ->
-                val existingVenue = existingVenuesMap[venueDto.apiId]
+                val venueApiId =
+                    venueDto.apiId?.takeIf { it > 0 } ?: run {
+                        log.debug("Fixture apiId={} has unmanaged venue apiId={}. Skipping venue.", dto.apiId, venueDto.apiId)
+                        return@let
+                    }
+
+                val existingVenue = existingVenuesMap[venueApiId]
 
                 if (existingVenue != null) {
                     if (!existingVenue.preventUpdate) {

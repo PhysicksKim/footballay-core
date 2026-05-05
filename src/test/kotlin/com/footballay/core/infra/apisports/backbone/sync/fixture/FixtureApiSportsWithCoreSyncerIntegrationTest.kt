@@ -448,6 +448,32 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     }
 
     @Test
+    @DisplayName("Venue apiId가 0인 Fixture는 Venue 없이 저장")
+    fun `Venue apiId가 0인 Fixture는 Venue 없이 저장`() {
+        // given
+        val leagueApiId = backboneEntities.leagueApiSports.apiId
+        val fixtureWithUnmanagedVenue =
+            createValidFixtureDto().copy(
+                apiId = 6667L,
+                venue =
+                    VenueOfFixtureApiSportsCreateDto(
+                        apiId = 0L,
+                        name = "Pohang Steel Yard",
+                        city = "Pohang",
+                    ),
+            )
+
+        // when
+        syncer.saveFixturesOfLeague(leagueApiId, listOf(fixtureWithUnmanagedVenue))
+
+        // then
+        val savedFixture = fixtureApiSportsRepository.findByApiId(6667L)
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.venue).isNull()
+        assertThat(savedFixture.core).isNotNull()
+    }
+
+    @Test
     @DisplayName("Team 없는 Fixture 처리")
     fun `Team 없는 Fixture 처리`() {
         // given
