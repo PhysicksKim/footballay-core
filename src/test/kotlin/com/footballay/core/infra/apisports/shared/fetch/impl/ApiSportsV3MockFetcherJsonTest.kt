@@ -108,21 +108,21 @@ class ApiSportsV3MockFetcherJsonTest {
 
         // 첫 번째 팀의 venue 검증
         assertThat(firstTeam.venue).isNotNull()
-        assertThat(firstTeam.venue.id).isEqualTo(556)
-        assertThat(firstTeam.venue.name).isEqualTo("Old Trafford")
-        assertThat(firstTeam.venue.address).isEqualTo("Sir Matt Busby Way")
-        assertThat(firstTeam.venue.city).isEqualTo("Manchester")
-        assertThat(firstTeam.venue.capacity).isEqualTo(76212)
-        assertThat(firstTeam.venue.surface).isEqualTo("grass")
-        assertThat(firstTeam.venue.image).isEqualTo("https://media.api-sports.io/football/venues/556.png")
+        assertThat(firstTeam.venue!!.id).isEqualTo(556)
+        assertThat(firstTeam.venue!!.name).isEqualTo("Old Trafford")
+        assertThat(firstTeam.venue!!.address).isEqualTo("Sir Matt Busby Way")
+        assertThat(firstTeam.venue!!.city).isEqualTo("Manchester")
+        assertThat(firstTeam.venue!!.capacity).isEqualTo(76212)
+        assertThat(firstTeam.venue!!.surface).isEqualTo("grass")
+        assertThat(firstTeam.venue!!.image).isEqualTo("https://media.api-sports.io/football/venues/556.png")
 
         // 마지막 팀 (Aston Villa) 검증
         val lastTeam = result.response.last()
         assertThat(lastTeam.team.id).isEqualTo(66)
         assertThat(lastTeam.team.name).isEqualTo("Aston Villa")
         assertThat(lastTeam.team.code).isEqualTo("AST")
-        assertThat(lastTeam.venue.name).isEqualTo("Villa Park")
-        assertThat(lastTeam.venue.city).isEqualTo("Birmingham")
+        assertThat(lastTeam.venue!!.name).isEqualTo("Villa Park")
+        assertThat(lastTeam.venue!!.city).isEqualTo("Birmingham")
     }
 
     @Test

@@ -334,9 +334,11 @@ class ApiSportsBackboneSyncFacadeImpl(
         )
     }
 
-    private fun mapToVenueCreateDto(venue: ApiSportsTeam.OfLeague.VenueDetail): VenueApiSportsCreateDto =
-        VenueApiSportsCreateDto(
-            apiId = venue.id.toLong(),
+    private fun mapToVenueCreateDto(venue: ApiSportsTeam.OfLeague.VenueDetail?): VenueApiSportsCreateDto? {
+        val venueApiId = venue?.id ?: return null
+
+        return VenueApiSportsCreateDto(
+            apiId = venueApiId.toLong(),
             name = venue.name,
             address = venue.address,
             city = venue.city,
@@ -344,6 +346,7 @@ class ApiSportsBackboneSyncFacadeImpl(
             surface = venue.surface,
             image = venue.image,
         )
+    }
 
     private fun mapToPlayerCreateDto(player: ApiSportsPlayer.OfTeam.PlayerInfo): PlayerApiSportsCreateDto {
         log.debug("Mapping player: ${player.name} (${player.id})")
