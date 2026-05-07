@@ -2,8 +2,8 @@ package com.footballay.core.web.admin.match.service
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
-import com.footballay.core.infra.match.MatchSyncOrchestrator
+import com.footballay.core.matchdata.sync.dispatcher.MatchDataSyncResult
+import com.footballay.core.matchdata.sync.MatchSyncOrchestrator
 import org.springframework.stereotype.Service
 
 @Service

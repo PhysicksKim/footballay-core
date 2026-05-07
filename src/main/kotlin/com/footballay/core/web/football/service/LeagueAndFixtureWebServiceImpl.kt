@@ -3,11 +3,11 @@ package com.footballay.core.web.football.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
-import com.footballay.core.domain.facade.DesktopFixtureFacade
-import com.footballay.core.domain.facade.DesktopLeagueFacade
-import com.footballay.core.domain.model.FixtureModel
-import com.footballay.core.domain.model.LeagueModel
-import com.footballay.core.logger
+import com.footballay.core.read.fixture.DesktopFixtureFacade
+import com.footballay.core.read.league.DesktopLeagueFacade
+import com.footballay.core.domain.football.FixtureModel
+import com.footballay.core.domain.football.LeagueModel
+import com.footballay.core.common.logging.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import org.springframework.stereotype.Service

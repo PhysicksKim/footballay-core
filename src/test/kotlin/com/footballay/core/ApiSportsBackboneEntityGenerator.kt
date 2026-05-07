@@ -11,8 +11,8 @@ import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
-import com.footballay.core.infra.util.UidGenerator
-import com.footballay.core.logger
+import com.footballay.core.infra.uid.UidGenerator
+import com.footballay.core.common.logging.logger
 import org.springframework.boot.test.context.TestComponent
 import java.time.Instant
 import java.time.LocalDate

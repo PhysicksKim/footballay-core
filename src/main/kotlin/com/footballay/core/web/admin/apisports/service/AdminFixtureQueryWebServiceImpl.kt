@@ -1,12 +1,12 @@
 package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.domain.model.mapper.DomainModelMapper
+import com.footballay.core.read.mapper.DomainModelMapper
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
-import com.footballay.core.logger
-import com.footballay.core.web.util.DateQueryResolver
+import com.footballay.core.common.logging.logger
+import com.footballay.core.common.time.DateQueryResolver
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 import com.footballay.core.web.admin.apisports.mapper.FixtureWebMapper
 import org.springframework.security.access.prepost.PreAuthorize

@@ -3,7 +3,7 @@ package com.footballay.core.web.admin.apisports.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
-import com.footballay.core.infra.facade.AvailableFixtureFacade
+import com.footballay.core.admin.apisports.availability.AvailableFixtureFacade
 import com.footballay.core.web.admin.apisports.dto.ToggleAvailableResponse
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service

@@ -1,10 +1,10 @@
 package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.domain.admin.apisports.facade.AdminApiSportsQueryFacade
-import com.footballay.core.domain.model.PlayerApiSportsExtension
-import com.footballay.core.domain.model.PlayerModel
-import com.footballay.core.domain.model.TeamApiSportsExtension
-import com.footballay.core.domain.model.TeamModel
+import com.footballay.core.admin.apisports.query.AdminApiSportsQueryFacade
+import com.footballay.core.domain.football.PlayerApiSportsExtension
+import com.footballay.core.domain.football.PlayerModel
+import com.footballay.core.domain.football.TeamApiSportsExtension
+import com.footballay.core.domain.football.TeamModel
 import com.footballay.core.web.admin.apisports.dto.PlayerApiSportsAdminResponse
 import com.footballay.core.web.admin.apisports.dto.TeamApiSportsAdminResponse
 import org.springframework.security.access.prepost.PreAuthorize

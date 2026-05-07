@@ -1,7 +1,7 @@
 package com.footballay.core.web.admin.apisports.mapper
 
-import com.footballay.core.domain.model.FixtureApiSportsExtension
-import com.footballay.core.domain.model.FixtureModel
+import com.footballay.core.domain.football.FixtureApiSportsExtension
+import com.footballay.core.domain.football.FixtureModel
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 
 object FixtureWebMapper {

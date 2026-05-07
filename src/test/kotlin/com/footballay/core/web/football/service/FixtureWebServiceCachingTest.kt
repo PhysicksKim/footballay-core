@@ -2,14 +2,14 @@ package com.footballay.core.web.football.service
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.domain.model.match.FixtureLiveStatusModel
-import com.footballay.core.infra.query.MatchDataQueryService
-import com.footballay.core.web.football.cache.FixturePollingEndpoint
-import com.footballay.core.web.football.cache.FixtureWebCacheManager
-import com.footballay.core.web.football.cache.FixtureWebCacheSnapshot
-import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
-import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocument
-import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocumentFactory
+import com.footballay.core.domain.football.match.FixtureLiveStatusModel
+import com.footballay.core.matchdata.read.MatchDataQueryService
+import com.footballay.core.matchdata.cache.FixturePollingEndpoint
+import com.footballay.core.matchdata.cache.FixtureWebCacheManager
+import com.footballay.core.matchdata.cache.FixtureWebCacheSnapshot
+import com.footballay.core.matchdata.cache.hash.FixtureHttpEtagHelper
+import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocument
+import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocumentFactory
 import com.footballay.core.web.football.dto.FixtureLiveStatusResponse
 import com.footballay.core.web.football.mapper.MatchDataMapper
 import io.mockk.Runs

@@ -3,9 +3,9 @@ package com.footballay.core.web.admin.apisports.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
-import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
-import com.footballay.core.infra.facade.AvailableLeagueFacade
-import com.footballay.core.logger
+import com.footballay.core.admin.apisports.backbone.ApiSportsBackboneSyncFacade
+import com.footballay.core.admin.apisports.availability.AvailableLeagueFacade
+import com.footballay.core.common.logging.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto

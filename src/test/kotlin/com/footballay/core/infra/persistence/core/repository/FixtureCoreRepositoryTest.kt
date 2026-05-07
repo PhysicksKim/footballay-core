@@ -4,7 +4,7 @@ import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
-import com.footballay.core.logger
+import com.footballay.core.common.logging.logger
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
 import org.assertj.core.api.Assertions.assertThat

@@ -1,7 +1,7 @@
 package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.DomainFail
-import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
+import com.footballay.core.matchdata.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.service.FixtureWebResult
 import com.footballay.core.web.football.service.FixtureWebService
 import io.mockk.every

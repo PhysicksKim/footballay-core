@@ -2,7 +2,7 @@ package com.footballay.core.infra.persistence.apisports.repository
 
 import com.footballay.core.MatchEntities
 import com.footballay.core.MatchEntityGenerator
-import com.footballay.core.logger
+import com.footballay.core.common.logging.logger
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest

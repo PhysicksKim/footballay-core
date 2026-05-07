@@ -1,5 +1,6 @@
 package com.footballay.core
 
+import com.footballay.core.common.logging.logger
 import com.footballay.core.infra.persistence.apisports.entity.*
 import com.footballay.core.infra.persistence.apisports.entity.live.*
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
@@ -21,7 +22,7 @@ import com.footballay.core.infra.persistence.core.repository.FixtureCoreReposito
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.persistence.core.repository.PlayerCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
-import com.footballay.core.infra.util.UidGenerator
+import com.footballay.core.infra.uid.UidGenerator
 import org.springframework.boot.test.context.TestComponent
 import java.time.Instant
 import java.time.LocalDate
