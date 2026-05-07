@@ -3,13 +3,13 @@ package com.footballay.core.web.football.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
-import com.footballay.core.matchdata.read.MatchDataQueryService
 import com.footballay.core.common.logging.logger
 import com.footballay.core.matchdata.cache.FixturePollingEndpoint
 import com.footballay.core.matchdata.cache.FixtureWebCacheManager
 import com.footballay.core.matchdata.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocumentFactory
+import com.footballay.core.matchdata.facade.MatchDataFacade
 import com.footballay.core.web.football.dto.*
 import com.footballay.core.web.football.mapper.MatchDataMapper
 import org.springframework.stereotype.Service
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service
  */
 @Service
 class FixtureWebService(
-    private val matchDataQueryService: MatchDataQueryService,
+    private val matchDataFacade: MatchDataFacade,
     private val matchDataMapper: MatchDataMapper,
     private val cacheManager: FixtureWebCacheManager,
     private val cacheDocumentFactory: FixtureResponseCacheDocumentFactory,
@@ -30,7 +30,7 @@ class FixtureWebService(
     fun getFixtureInfo(fixtureUid: String): DomainResult<FixtureInfoResponse, DomainFail> {
         log.info("getFixtureInfo. fixtureUid={}", fixtureUid)
 
-        return matchDataQueryService
+        return matchDataFacade
             .getFixtureInfo(fixtureUid)
             .map { domain -> matchDataMapper.toFixtureInfoResponse(domain) }
     }
@@ -104,22 +104,22 @@ class FixtureWebService(
     }
 
     private fun queryFixtureLiveStatus(fixtureUid: String): DomainResult<FixtureLiveStatusResponse, DomainFail> =
-        matchDataQueryService
+        matchDataFacade
             .getFixtureLiveStatus(fixtureUid)
             .map { domain -> matchDataMapper.toFixtureLiveStatusResponse(domain) }
 
     private fun queryFixtureEvents(fixtureUid: String): DomainResult<FixtureEventsResponse, DomainFail> =
-        matchDataQueryService
+        matchDataFacade
             .getFixtureEvents(fixtureUid)
             .map { domain -> matchDataMapper.toFixtureEventsResponse(domain) }
 
     private fun queryFixtureLineup(fixtureUid: String): DomainResult<FixtureLineupResponse, DomainFail> =
-        matchDataQueryService
+        matchDataFacade
             .getFixtureLineup(fixtureUid)
             .map { domain -> matchDataMapper.toFixtureLineupResponse(domain) }
 
     private fun queryFixtureStatistics(fixtureUid: String): DomainResult<FixtureStatisticsResponse, DomainFail> =
-        matchDataQueryService
+        matchDataFacade
             .getFixtureStatistics(fixtureUid)
             .map { domain -> matchDataMapper.toFixtureStatisticsResponse(domain) }
 

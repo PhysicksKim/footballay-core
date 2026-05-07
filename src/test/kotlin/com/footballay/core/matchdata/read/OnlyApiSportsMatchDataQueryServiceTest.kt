@@ -13,7 +13,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * MatchDataQueryService 통합 테스트
+ * OnlyApiSportsMatchDataQueryService 통합 테스트
  *
  * **테스트 목적:**
  * - UID 기반 조회 동작 검증
@@ -29,9 +29,9 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("test")
 @Import(MatchEntityGenerator::class)
 @Transactional
-class MatchDataQueryServiceImplTest {
+class OnlyApiSportsMatchDataQueryServiceTest {
     @Autowired
-    private lateinit var queryService: MatchDataQueryServiceImpl
+    private lateinit var queryService: OnlyApiSportsMatchDataQueryService
 
     @Autowired
     private lateinit var entityGenerator: MatchEntityGenerator

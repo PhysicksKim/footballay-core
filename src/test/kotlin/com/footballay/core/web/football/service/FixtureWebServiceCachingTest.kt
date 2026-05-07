@@ -3,13 +3,13 @@ package com.footballay.core.web.football.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.football.match.FixtureLiveStatusModel
-import com.footballay.core.matchdata.read.MatchDataQueryService
 import com.footballay.core.matchdata.cache.FixturePollingEndpoint
 import com.footballay.core.matchdata.cache.FixtureWebCacheManager
 import com.footballay.core.matchdata.cache.FixtureWebCacheSnapshot
 import com.footballay.core.matchdata.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocumentFactory
+import com.footballay.core.matchdata.facade.MatchDataFacade
 import com.footballay.core.web.football.dto.FixtureLiveStatusResponse
 import com.footballay.core.web.football.mapper.MatchDataMapper
 import io.mockk.Runs
@@ -22,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class FixtureWebServiceCachingTest {
-    private lateinit var matchDataQueryService: MatchDataQueryService
+    private lateinit var matchDataFacade: MatchDataFacade
     private lateinit var matchDataMapper: MatchDataMapper
     private lateinit var cacheManager: FixtureWebCacheManager
     private lateinit var cacheDocumentFactory: FixtureResponseCacheDocumentFactory
@@ -31,14 +31,14 @@ class FixtureWebServiceCachingTest {
 
     @BeforeEach
     fun setUp() {
-        matchDataQueryService = mockk()
+        matchDataFacade = mockk()
         matchDataMapper = mockk()
         cacheManager = mockk()
         cacheDocumentFactory = mockk()
         httpEtagHelper = mockk()
         service =
             FixtureWebService(
-                matchDataQueryService = matchDataQueryService,
+                matchDataFacade = matchDataFacade,
                 matchDataMapper = matchDataMapper,
                 cacheManager = cacheManager,
                 cacheDocumentFactory = cacheDocumentFactory,
@@ -55,7 +55,7 @@ class FixtureWebServiceCachingTest {
 
         assertThat(result).isEqualTo(FixtureWebResult.NotModified("etag-1"))
         verify(exactly = 0) { cacheManager.findSnapshot(any(), any()) }
-        verify(exactly = 0) { matchDataQueryService.getFixtureLiveStatus(any()) }
+        verify(exactly = 0) { matchDataFacade.getFixtureLiveStatus(any()) }
     }
 
     @Test
@@ -89,7 +89,7 @@ class FixtureWebServiceCachingTest {
             )
 
         every { cacheManager.findSnapshot("fixture-1", FixturePollingEndpoint.STATUS) } returns null
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(model)
+        every { matchDataFacade.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(model)
         every { matchDataMapper.toFixtureLiveStatusResponse(model) } returns response
         every { cacheDocumentFactory.create(response) } returns document
         every { cacheManager.save("fixture-1", FixturePollingEndpoint.STATUS, document) } just Runs
@@ -130,7 +130,7 @@ class FixtureWebServiceCachingTest {
                 etagHash = "etag-fresh",
             )
 
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(model)
+        every { matchDataFacade.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(model)
         every { matchDataMapper.toFixtureLiveStatusResponse(model) } returns response
         every { cacheDocumentFactory.create(response) } returns document
         every { cacheManager.save("fixture-1", FixturePollingEndpoint.STATUS, document) } just Runs
@@ -141,7 +141,7 @@ class FixtureWebServiceCachingTest {
         verify(exactly = 0) { cacheManager.findEtagHash(any(), any()) }
         verify(exactly = 0) { cacheManager.findSnapshot(any(), any()) }
         verify(exactly = 0) { httpEtagHelper.matchesIfNoneMatch(any(), any()) }
-        verify { matchDataQueryService.getFixtureLiveStatus("fixture-1") }
+        verify { matchDataFacade.getFixtureLiveStatus("fixture-1") }
         verify { cacheDocumentFactory.create(response) }
         verify { cacheManager.save("fixture-1", FixturePollingEndpoint.STATUS, document) }
     }
@@ -164,7 +164,7 @@ class FixtureWebServiceCachingTest {
                 etagHash = "etag-2",
             ),
         )
-        verify(exactly = 0) { matchDataQueryService.getFixtureLiveStatus(any()) }
+        verify(exactly = 0) { matchDataFacade.getFixtureLiveStatus(any()) }
     }
 
     @Test
@@ -172,7 +172,7 @@ class FixtureWebServiceCachingTest {
         val error = DomainFail.NotFound(resource = "Fixture", id = "missing")
 
         every { cacheManager.findSnapshot("missing", FixturePollingEndpoint.STATUS) } returns null
-        every { matchDataQueryService.getFixtureLiveStatus("missing") } returns DomainResult.Fail(error)
+        every { matchDataFacade.getFixtureLiveStatus("missing") } returns DomainResult.Fail(error)
 
         val result = service.getFixtureLiveStatus("missing", null)
 

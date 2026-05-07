@@ -6,11 +6,11 @@ import com.footballay.core.domain.football.match.FixtureEventsModel
 import com.footballay.core.domain.football.match.FixtureLineupModel
 import com.footballay.core.domain.football.match.FixtureLiveStatusModel
 import com.footballay.core.domain.football.match.FixtureStatisticsModel
-import com.footballay.core.matchdata.read.MatchDataQueryService
 import com.footballay.core.matchdata.cache.FixturePollingEndpoint
 import com.footballay.core.matchdata.cache.FixtureWebCacheManager
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocumentFactory
+import com.footballay.core.matchdata.facade.MatchDataFacade
 import com.footballay.core.web.football.dto.FixtureEventsResponse
 import com.footballay.core.web.football.dto.FixtureLineupResponse
 import com.footballay.core.web.football.dto.FixtureLiveStatusResponse
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class FixtureSnapshotRefreshServiceTest {
-    private lateinit var matchDataQueryService: MatchDataQueryService
+    private lateinit var matchDataFacade: MatchDataFacade
     private lateinit var matchDataMapper: MatchDataMapper
     private lateinit var cacheDocumentFactory: FixtureResponseCacheDocumentFactory
     private lateinit var cacheManager: FixtureWebCacheManager
@@ -33,13 +33,13 @@ class FixtureSnapshotRefreshServiceTest {
 
     @BeforeEach
     fun setUp() {
-        matchDataQueryService = mockk()
+        matchDataFacade = mockk()
         matchDataMapper = mockk()
         cacheDocumentFactory = mockk()
         cacheManager = mockk()
         service =
             FixtureSnapshotRefreshService(
-                matchDataQueryService = matchDataQueryService,
+                matchDataFacade = matchDataFacade,
                 matchDataMapper = matchDataMapper,
                 cacheDocumentFactory = cacheDocumentFactory,
                 cacheManager = cacheManager,
@@ -66,19 +66,19 @@ class FixtureSnapshotRefreshServiceTest {
         val statisticsResponse = FixtureStatisticsResponse(FixtureStatisticsResponse.FixtureBasic("fixture-1", 12, "1H"), null, null)
         val statisticsDocument = FixtureResponseCacheDocument("""{"fixture":{"uid":"fixture-1","elapsed":12,"status":"1H"},"home":null,"away":null}""", "etag-statistics")
 
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(liveStatusModel)
+        every { matchDataFacade.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(liveStatusModel)
         every { matchDataMapper.toFixtureLiveStatusResponse(liveStatusModel) } returns liveStatusResponse
         every { cacheDocumentFactory.create(liveStatusResponse) } returns liveStatusDocument
 
-        every { matchDataQueryService.getFixtureLineup("fixture-1") } returns DomainResult.Success(lineupModel)
+        every { matchDataFacade.getFixtureLineup("fixture-1") } returns DomainResult.Success(lineupModel)
         every { matchDataMapper.toFixtureLineupResponse(lineupModel) } returns lineupResponse
         every { cacheDocumentFactory.create(lineupResponse) } returns lineupDocument
 
-        every { matchDataQueryService.getFixtureEvents("fixture-1") } returns DomainResult.Success(eventsModel)
+        every { matchDataFacade.getFixtureEvents("fixture-1") } returns DomainResult.Success(eventsModel)
         every { matchDataMapper.toFixtureEventsResponse(eventsModel) } returns eventsResponse
         every { cacheDocumentFactory.create(eventsResponse) } returns eventsDocument
 
-        every { matchDataQueryService.getFixtureStatistics("fixture-1") } returns DomainResult.Success(statisticsModel)
+        every { matchDataFacade.getFixtureStatistics("fixture-1") } returns DomainResult.Success(statisticsModel)
         every { matchDataMapper.toFixtureStatisticsResponse(statisticsModel) } returns statisticsResponse
         every { cacheDocumentFactory.create(statisticsResponse) } returns statisticsDocument
 
@@ -109,17 +109,17 @@ class FixtureSnapshotRefreshServiceTest {
         val statisticsResponse = FixtureStatisticsResponse(FixtureStatisticsResponse.FixtureBasic("fixture-1", 12, "1H"), null, null)
         val statisticsDocument = FixtureResponseCacheDocument("""{"fixture":{"uid":"fixture-1","elapsed":12,"status":"1H"},"home":null,"away":null}""", "etag-statistics")
 
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Fail(error)
+        every { matchDataFacade.getFixtureLiveStatus("fixture-1") } returns DomainResult.Fail(error)
 
-        every { matchDataQueryService.getFixtureLineup("fixture-1") } returns DomainResult.Success(lineupModel)
+        every { matchDataFacade.getFixtureLineup("fixture-1") } returns DomainResult.Success(lineupModel)
         every { matchDataMapper.toFixtureLineupResponse(lineupModel) } returns lineupResponse
         every { cacheDocumentFactory.create(lineupResponse) } returns lineupDocument
 
-        every { matchDataQueryService.getFixtureEvents("fixture-1") } returns DomainResult.Success(eventsModel)
+        every { matchDataFacade.getFixtureEvents("fixture-1") } returns DomainResult.Success(eventsModel)
         every { matchDataMapper.toFixtureEventsResponse(eventsModel) } returns eventsResponse
         every { cacheDocumentFactory.create(eventsResponse) } returns eventsDocument
 
-        every { matchDataQueryService.getFixtureStatistics("fixture-1") } returns DomainResult.Success(statisticsModel)
+        every { matchDataFacade.getFixtureStatistics("fixture-1") } returns DomainResult.Success(statisticsModel)
         every { matchDataMapper.toFixtureStatisticsResponse(statisticsModel) } returns statisticsResponse
         every { cacheDocumentFactory.create(statisticsResponse) } returns statisticsDocument
 

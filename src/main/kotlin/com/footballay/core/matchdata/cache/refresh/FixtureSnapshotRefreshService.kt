@@ -3,12 +3,12 @@ package com.footballay.core.matchdata.cache.refresh
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
-import com.footballay.core.matchdata.read.MatchDataQueryService
 import com.footballay.core.common.logging.logger
 import com.footballay.core.matchdata.cache.FixturePollingEndpoint
 import com.footballay.core.matchdata.cache.FixtureWebCacheManager
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.matchdata.cache.hash.FixtureResponseCacheDocumentFactory
+import com.footballay.core.matchdata.facade.MatchDataFacade
 import com.footballay.core.web.football.dto.FixtureEventsResponse
 import com.footballay.core.web.football.dto.FixtureLineupResponse
 import com.footballay.core.web.football.dto.FixtureLiveStatusResponse
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class FixtureSnapshotRefreshService(
-    private val matchDataQueryService: MatchDataQueryService,
+    private val matchDataFacade: MatchDataFacade,
     private val matchDataMapper: MatchDataMapper,
     private val cacheDocumentFactory: FixtureResponseCacheDocumentFactory,
     private val cacheManager: FixtureWebCacheManager,
@@ -32,7 +32,7 @@ class FixtureSnapshotRefreshService(
             fixtureUid = fixtureUid,
             endpoint = FixturePollingEndpoint.STATUS,
             query = {
-                matchDataQueryService
+                matchDataFacade
                     .getFixtureLiveStatus(fixtureUid)
                     .map { domain -> matchDataMapper.toFixtureLiveStatusResponse(domain) }
             },
@@ -43,7 +43,7 @@ class FixtureSnapshotRefreshService(
             fixtureUid = fixtureUid,
             endpoint = FixturePollingEndpoint.LINEUP,
             query = {
-                matchDataQueryService
+                matchDataFacade
                     .getFixtureLineup(fixtureUid)
                     .map { domain -> matchDataMapper.toFixtureLineupResponse(domain) }
             },
@@ -54,7 +54,7 @@ class FixtureSnapshotRefreshService(
             fixtureUid = fixtureUid,
             endpoint = FixturePollingEndpoint.EVENTS,
             query = {
-                matchDataQueryService
+                matchDataFacade
                     .getFixtureEvents(fixtureUid)
                     .map { domain -> matchDataMapper.toFixtureEventsResponse(domain) }
             },
@@ -65,7 +65,7 @@ class FixtureSnapshotRefreshService(
             fixtureUid = fixtureUid,
             endpoint = FixturePollingEndpoint.STATISTICS,
             query = {
-                matchDataQueryService
+                matchDataFacade
                     .getFixtureStatistics(fixtureUid)
                     .map { domain -> matchDataMapper.toFixtureStatisticsResponse(domain) }
             },

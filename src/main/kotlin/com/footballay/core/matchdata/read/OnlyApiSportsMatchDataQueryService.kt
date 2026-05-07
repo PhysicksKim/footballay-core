@@ -16,14 +16,14 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 /**
- * Match Data 조회 서비스
+ * ApiSports 기반 Match Data 조회 서비스
  *
- * FixtureUid 기반으로 라이브 매치 데이터를 조회합니다.
- * - uid → entity 조회
+ * FixtureUid 기반으로 저장된 ApiSports match data를 조회합니다.
+ * - core uid -> ApiSports persistence entity 조회
  */
 @Service
 @Transactional(readOnly = true)
-class MatchDataQueryServiceImpl(
+class OnlyApiSportsMatchDataQueryService(
     private val fixtureApiSportsRepository: FixtureApiSportsRepository,
     private val matchEventRepository: ApiSportsMatchEventRepository,
 ) : MatchDataQueryService {
