@@ -1,8 +1,8 @@
 package com.footballay.core.matchdata.sync.scheduler
 
-import com.footballay.core.matchdata.sync.dispatcher.JobContext
-import com.footballay.core.matchdata.sync.dispatcher.MatchDataSyncDispatcher
 import com.footballay.core.common.logging.logger
+import com.footballay.core.matchdata.facade.MatchDataSyncFacade
+import com.footballay.core.matchdata.sync.dispatcher.JobContext
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -25,7 +25,7 @@ import java.time.OffsetDateTime
  * - 향후 비동기/코루틴으로 전환 예정
  */
 class LiveMatchJob(
-    private val dispatcher: MatchDataSyncDispatcher,
+    private val matchDataSyncFacade: MatchDataSyncFacade,
 ) : Job {
     private val log = logger()
 
@@ -42,7 +42,7 @@ class LiveMatchJob(
 
         try {
             val jobContext = JobContext.liveMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = matchDataSyncFacade.syncByFixtureUid(fixtureUid, jobContext)
             log.info("LiveMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("LiveMatchJob execution failed - fixtureUid={}", fixtureUid, e)

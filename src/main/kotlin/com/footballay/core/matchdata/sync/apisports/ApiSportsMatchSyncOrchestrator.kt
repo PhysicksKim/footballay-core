@@ -57,10 +57,10 @@ class ApiSportsMatchSyncOrchestrator(
     }
 
     private fun extractApiIdFromUid(uid: String): Long {
-        val apiSportsFixture = fixtureQueryService.getApiIdByFixtureUid(uid)
-        requireNotNull(apiSportsFixture?.apiId) {
+        val apiId = fixtureQueryService.findApiIdByFixtureUid(uid)
+        requireNotNull(apiId) {
             "FixtureApiSports의 apiId가 바인딩되지 않았습니다. uid=$uid"
         }
-        return apiSportsFixture.apiId
+        return apiId
     }
 }

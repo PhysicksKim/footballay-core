@@ -1,8 +1,8 @@
 package com.footballay.core.matchdata.sync.scheduler
 
-import com.footballay.core.matchdata.sync.dispatcher.JobContext
-import com.footballay.core.matchdata.sync.dispatcher.MatchDataSyncDispatcher
 import com.footballay.core.common.logging.logger
+import com.footballay.core.matchdata.facade.MatchDataSyncFacade
+import com.footballay.core.matchdata.sync.dispatcher.JobContext
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -24,7 +24,7 @@ import java.time.OffsetDateTime
  * - 최종 데이터가 확정되면 더 이상 변경이 없음
  */
 class PostMatchJob(
-    private val dispatcher: MatchDataSyncDispatcher,
+    private val matchDataSyncFacade: MatchDataSyncFacade,
 ) : Job {
     private val log = logger()
 
@@ -41,7 +41,7 @@ class PostMatchJob(
 
         try {
             val jobContext = JobContext.postMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = matchDataSyncFacade.syncByFixtureUid(fixtureUid, jobContext)
             log.info("PostMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("PostMatchJob execution failed - fixtureUid={}", fixtureUid, e)

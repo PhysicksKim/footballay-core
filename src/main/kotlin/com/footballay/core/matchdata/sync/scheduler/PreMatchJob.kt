@@ -1,8 +1,8 @@
 package com.footballay.core.matchdata.sync.scheduler
 
-import com.footballay.core.matchdata.sync.dispatcher.JobContext
-import com.footballay.core.matchdata.sync.dispatcher.MatchDataSyncDispatcher
 import com.footballay.core.common.logging.logger
+import com.footballay.core.matchdata.facade.MatchDataSyncFacade
+import com.footballay.core.matchdata.sync.dispatcher.JobContext
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -22,7 +22,7 @@ import java.time.OffsetDateTime
  * **Job은 단순히 실행만 담당하고, 판단은 Dispatcher가 합니다.**
  */
 class PreMatchJob(
-    private val dispatcher: MatchDataSyncDispatcher,
+    private val matchDataSyncFacade: MatchDataSyncFacade,
 ) : Job {
     private val log = logger()
 
@@ -39,7 +39,7 @@ class PreMatchJob(
 
         try {
             val jobContext = JobContext.preMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = matchDataSyncFacade.syncByFixtureUid(fixtureUid, jobContext)
             log.info("PreMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("PreMatchJob execution failed - fixtureUid={}", fixtureUid, e)
