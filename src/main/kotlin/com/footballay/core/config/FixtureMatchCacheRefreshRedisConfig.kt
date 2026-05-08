@@ -1,7 +1,7 @@
 package com.footballay.core.config
 
-import com.footballay.core.matchdata.cache.refresh.FixtureMatchCacheRefreshChannels
-import com.footballay.core.matchdata.cache.refresh.RedisFixtureMatchCacheRefreshListener
+import com.footballay.core.cache.matchdata.polling.refresh.FixtureMatchCacheRefreshChannels
+import com.footballay.core.cache.matchdata.polling.refresh.RedisFixtureMatchCacheRefreshListener
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

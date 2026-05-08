@@ -2,7 +2,7 @@ package com.footballay.core.matchdata.sync.dispatcher
 
 import com.footballay.core.matchdata.sync.MatchSyncOrchestrator
 import com.footballay.core.matchdata.sync.scheduler.JobSchedulerService
-import com.footballay.core.matchdata.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
+import com.footballay.core.cache.matchdata.polling.refresh.FixtureMatchCacheRefreshTriggerPublisher
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -43,7 +43,7 @@ class SimpleMatchDataSyncDispatcherTest {
             SimpleMatchDataSyncDispatcher(
                 orchestrators = listOf(orchestrator),
                 jobSchedulerService = jobSchedulerService,
-                refreshTriggerPublisher = refreshTriggerPublisher,
+                cacheRefreshPublisher = refreshTriggerPublisher,
             )
     }
 

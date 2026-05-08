@@ -3,8 +3,8 @@ package com.footballay.core.matchdata.sync.dispatcher
 import com.footballay.core.matchdata.sync.MatchSyncOrchestrator
 import com.footballay.core.matchdata.sync.scheduler.JobSchedulerService
 import com.footballay.core.common.logging.logger
-import com.footballay.core.matchdata.cache.refresh.FixtureMatchCacheRefreshTrigger
-import com.footballay.core.matchdata.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
+import com.footballay.core.cache.matchdata.polling.refresh.FixtureMatchCacheRefreshTrigger
+import com.footballay.core.cache.matchdata.polling.refresh.FixtureMatchCacheRefreshTriggerPublisher
 import org.springframework.stereotype.Component
 import java.time.Instant
 
@@ -33,7 +33,7 @@ import java.time.Instant
 class SimpleMatchDataSyncDispatcher(
     private val orchestrators: List<MatchSyncOrchestrator>,
     private val jobSchedulerService: JobSchedulerService,
-    private val refreshTriggerPublisher: FixtureMatchCacheRefreshTriggerPublisher,
+    private val cacheRefreshPublisher: FixtureMatchCacheRefreshTriggerPublisher,
 ) : MatchDataSyncDispatcher {
     private val log = logger()
 
@@ -64,7 +64,7 @@ class SimpleMatchDataSyncDispatcher(
         }
 
         runCatching {
-            refreshTriggerPublisher.publish(
+            cacheRefreshPublisher.publish(
                 FixtureMatchCacheRefreshTrigger(
                     fixtureUid = fixtureUid,
                     source = "MATCH_DATA_SYNC",
