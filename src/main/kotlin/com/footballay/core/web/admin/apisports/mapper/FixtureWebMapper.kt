@@ -1,37 +1,36 @@
 package com.footballay.core.web.admin.apisports.mapper
 
-import com.footballay.core.domain.football.FixtureApiSportsExtension
-import com.footballay.core.domain.football.FixtureModel
+import com.footballay.core.admin.apisports.query.model.AdminApiSportsFixtureSummaryView
 import com.footballay.core.web.admin.apisports.dto.FixtureSummaryDto
 
 object FixtureWebMapper {
-    fun toSummaryDto(model: FixtureModel): FixtureSummaryDto =
+    fun toSummaryDto(model: AdminApiSportsFixtureSummaryView): FixtureSummaryDto =
         FixtureSummaryDto(
             uid = model.uid,
-            kickoffAt = model.schedule.kickoffAt.toString(),
+            kickoffAt = model.kickoffAt.toString(),
             home =
-                if (model.homeTeam != null) {
+                if (model.home != null) {
                     FixtureSummaryDto.TeamDto(
-                        name = model.homeTeam.name,
-                        nameKo = model.homeTeam.nameKo,
-                        logo = model.homeTeam.logo,
+                        name = model.home.name,
+                        nameKo = model.home.nameKo,
+                        logo = model.home.logo,
                     )
                 } else {
                     null
                 },
             away =
-                if (model.awayTeam != null) {
+                if (model.away != null) {
                     FixtureSummaryDto.TeamDto(
-                        name = model.awayTeam.name,
-                        nameKo = model.awayTeam.nameKo,
-                        logo = model.awayTeam.logo,
+                        name = model.away.name,
+                        nameKo = model.away.nameKo,
+                        logo = model.away.logo,
                     )
                 } else {
                     null
                 },
-            status = model.status.code.value,
-            statusText = model.status.statusText,
+            status = model.status,
+            statusText = model.statusText,
             available = model.available,
-            apiId = if (model.extension is FixtureApiSportsExtension) model.extension.apiId else null,
+            apiId = model.apiId,
         )
 }
