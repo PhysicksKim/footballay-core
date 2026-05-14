@@ -56,6 +56,6 @@ class PostMatchJob(
     }
 
     companion object {
-        const val KEY_FIXTURE_UID = "fixtureUid"
+        const val KEY_FIXTURE_UID = JobSchedulerService.KEY_FIXTURE_UID
     }
 }

@@ -1,6 +1,6 @@
 package com.footballay.core.infra.match
 
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import org.springframework.stereotype.Component
 import java.time.Instant
 

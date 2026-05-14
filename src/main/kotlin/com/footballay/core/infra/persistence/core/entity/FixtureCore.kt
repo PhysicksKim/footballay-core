@@ -1,5 +1,6 @@
 package com.footballay.core.infra.persistence.core.entity
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import jakarta.persistence.*
 import org.hibernate.proxy.HibernateProxy

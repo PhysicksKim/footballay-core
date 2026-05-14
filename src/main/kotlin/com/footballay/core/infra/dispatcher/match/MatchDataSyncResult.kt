@@ -1,6 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import java.time.Instant
 
 /**
@@ -39,15 +39,13 @@ sealed class MatchDataSyncResult {
      * 이벤트, 스탯, 스코어 등을 실시간으로 동기화합니다.
      *
      * @property kickoffTime 경기 킥오프 시각
-     * @property isMatchFinished 경기가 종료되었는지 여부 (FT, AET, PEN 등)
      * @property elapsedMin 경기 경과 시간 (분)
-     * @property statusShort 경기 상태 축약 코드 (NS, 1H, HT, 2H, FT 등)
+     * @property statusCode 정규화된 경기 상태 코드
      */
     data class Live(
         val kickoffTime: Instant?,
-        val isMatchFinished: Boolean,
         val elapsedMin: Int?,
-        val statusShort: String,
+        val statusCode: FixtureStatusCode?,
     ) : MatchDataSyncResult()
 
     /**
@@ -99,12 +97,11 @@ sealed class MatchDataSyncResult {
          * @deprecated Use PostMatch instead
          */
         @Deprecated("Use PostMatch for more detailed result", ReplaceWith("PostMatch"))
-        fun finished(kickoffTime: Instant?): Live =
-            Live(
+        fun finished(kickoffTime: Instant?): PostMatch =
+            PostMatch(
                 kickoffTime = kickoffTime,
-                isMatchFinished = true,
-                elapsedMin = 90,
-                statusShort = "FT",
+                shouldStopPolling = false,
+                minutesSinceFinish = 0,
             )
 
         /**
@@ -115,9 +112,8 @@ sealed class MatchDataSyncResult {
         fun ongoing(kickoffTime: Instant?): Live =
             Live(
                 kickoffTime = kickoffTime,
-                isMatchFinished = false,
                 elapsedMin = null,
-                statusShort = "LIVE",
+                statusCode = FixtureStatusCode.LIVE,
             )
     }
 }

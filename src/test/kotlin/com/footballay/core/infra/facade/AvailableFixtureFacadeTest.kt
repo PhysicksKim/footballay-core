@@ -5,7 +5,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.infra.core.FixtureCoreQueryService
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.JobSchedulerService
@@ -32,6 +32,7 @@ import java.time.temporal.ChronoUnit
  */
 @Disabled("Mock 및 변경된 스펙으로 인한 비활성화")
 @ExtendWith(MockitoExtension::class)
+@Suppress("DEPRECATION")
 class AvailableFixtureFacadeTest {
     @Mock
     private lateinit var fixtureCoreQueryService: FixtureCoreQueryService

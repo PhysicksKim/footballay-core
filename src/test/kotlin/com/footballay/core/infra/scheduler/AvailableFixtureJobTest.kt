@@ -1,5 +1,6 @@
 package com.footballay.core.infra.scheduler
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import org.assertj.core.api.Assertions.assertThat
@@ -37,7 +38,7 @@ class AvailableFixtureJobTest {
     @Test
     fun `PreMatchJob은 sync 후 transition과 cache refresh를 호출한다`() {
         val fixtureUid = "fixture-pre"
-        val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
+        val jobKey = availableJobKey(MatchJobPhase.PRE, fixtureUid)
         val result = MatchDataSyncResult.PreMatch(true, Instant.now(), true)
         whenever(dispatcher.syncByFixtureUid(fixtureUid)).thenReturn(result)
         setupExecutionContext(PreMatchJob.KEY_FIXTURE_UID, fixtureUid, jobKey)
@@ -50,8 +51,8 @@ class AvailableFixtureJobTest {
     @Test
     fun `LiveMatchJob은 sync 후 transition과 cache refresh를 호출한다`() {
         val fixtureUid = "fixture-live"
-        val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
-        val result = MatchDataSyncResult.Live(Instant.now(), false, 20, "1H")
+        val jobKey = availableJobKey(MatchJobPhase.LIVE, fixtureUid)
+        val result = MatchDataSyncResult.Live(Instant.now(), 20, FixtureStatusCode.FIRST_HALF)
         whenever(dispatcher.syncByFixtureUid(fixtureUid)).thenReturn(result)
         setupExecutionContext(LiveMatchJob.KEY_FIXTURE_UID, fixtureUid, jobKey)
 
@@ -63,7 +64,7 @@ class AvailableFixtureJobTest {
     @Test
     fun `PostMatchJob은 sync 후 transition과 cache refresh를 호출한다`() {
         val fixtureUid = "fixture-post"
-        val jobKey = JobKey.jobKey("post-match-$fixtureUid", "post-match")
+        val jobKey = availableJobKey(MatchJobPhase.POST, fixtureUid)
         val result = MatchDataSyncResult.PostMatch(Instant.now(), false, 30)
         whenever(dispatcher.syncByFixtureUid(fixtureUid)).thenReturn(result)
         setupExecutionContext(PostMatchJob.KEY_FIXTURE_UID, fixtureUid, jobKey)
@@ -97,4 +98,15 @@ class AvailableFixtureJobTest {
         assertThat(contextCaptor.firstValue.phase).isEqualTo(phase)
         assertThat(contextCaptor.firstValue.jobKey).isEqualTo(jobKey)
     }
+
+    private fun availableJobKey(
+        phase: MatchJobPhase,
+        fixtureUid: String,
+    ): JobKey =
+        MatchJobIdentity(
+            owner = MatchJobOwner.AVAILABLE,
+            phase = phase,
+            leagueUid = "league-1",
+            fixtureUid = fixtureUid,
+        ).jobKey
 }

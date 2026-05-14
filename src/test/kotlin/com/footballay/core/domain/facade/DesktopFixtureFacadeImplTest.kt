@@ -8,7 +8,7 @@ import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSpor
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository

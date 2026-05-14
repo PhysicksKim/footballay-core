@@ -4,8 +4,10 @@ import com.footballay.core.logger
 import org.quartz.JobBuilder
 import org.quartz.JobKey
 import org.quartz.Scheduler
+import org.quartz.SimpleTrigger
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.TriggerBuilder
+import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.util.*
@@ -41,6 +43,29 @@ class JobSchedulerService(
      * @param startTime Job 시작 시각 (Instant, 킥오프 1시간 전 권장)
      * @return Job이 성공적으로 추가되었는지 여부
      */
+    fun addPreMatchJob(
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant,
+    ): Boolean =
+        registerOrReplace(
+            identity =
+                MatchJobIdentity(
+                    owner = MatchJobOwner.AVAILABLE,
+                    phase = MatchJobPhase.PRE,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                ),
+            schedule =
+                MatchJobSchedule(
+                    jobClass = PreMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = PRE_MATCH_INTERVAL_SECONDS,
+                    repeatCount = PRE_MATCH_MAX_EXECUTIONS,
+                ),
+        )
+
+    @Deprecated("Use addPreMatchJob(leagueUid, fixtureUid, startTime)")
     fun addPreMatchJob(
         fixtureUid: String,
         startTime: Instant,
@@ -94,6 +119,29 @@ class JobSchedulerService(
      * @return Job이 성공적으로 추가되었는지 여부
      */
     fun addLiveMatchJob(
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant,
+    ): Boolean =
+        registerOrReplace(
+            identity =
+                MatchJobIdentity(
+                    owner = MatchJobOwner.AVAILABLE,
+                    phase = MatchJobPhase.LIVE,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                ),
+            schedule =
+                MatchJobSchedule(
+                    jobClass = LiveMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = LIVE_MATCH_INTERVAL_SECONDS,
+                    repeatCount = LIVE_MATCH_MAX_EXECUTIONS,
+                ),
+        )
+
+    @Deprecated("Use addLiveMatchJob(leagueUid, fixtureUid, startTime)")
+    fun addLiveMatchJob(
         fixtureUid: String,
         startTime: Instant,
     ): Boolean {
@@ -145,6 +193,29 @@ class JobSchedulerService(
      * @param startTime Job 시작 시각 (경기 종료 직후 권장)
      * @return Job이 성공적으로 추가되었는지 여부
      */
+    fun addPostMatchJob(
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant = Instant.now(),
+    ): Boolean =
+        registerOrReplace(
+            identity =
+                MatchJobIdentity(
+                    owner = MatchJobOwner.AVAILABLE,
+                    phase = MatchJobPhase.POST,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                ),
+            schedule =
+                MatchJobSchedule(
+                    jobClass = PostMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = POST_MATCH_INTERVAL_SECONDS,
+                    repeatCount = POST_MATCH_MAX_EXECUTIONS,
+                ),
+        )
+
+    @Deprecated("Use addPostMatchJob(leagueUid, fixtureUid, startTime)")
     fun addPostMatchJob(
         fixtureUid: String,
         startTime: Instant = Instant.now(),
@@ -233,6 +304,33 @@ class JobSchedulerService(
         return deletedCount
     }
 
+    fun deleteFixtureJobs(
+        leagueUid: String,
+        fixtureUid: String,
+        owner: MatchJobOwner? = null,
+    ): Int {
+        val owners = owner?.let(::listOf) ?: MatchJobOwner.entries
+        var deletedCount = 0
+
+        owners.forEach { currentOwner ->
+            MatchJobPhase.entries.forEach { phase ->
+                val identity =
+                    MatchJobIdentity(
+                        owner = currentOwner,
+                        phase = phase,
+                        leagueUid = leagueUid,
+                        fixtureUid = fixtureUid,
+                    )
+                if (delete(identity)) {
+                    deletedCount++
+                }
+            }
+        }
+
+        log.info("Deleted fixture match jobs - leagueUid={}, fixtureUid={}, owner={}, count={}", leagueUid, fixtureUid, owner, deletedCount)
+        return deletedCount
+    }
+
     /**
      * Job 존재 확인
      *
@@ -247,6 +345,77 @@ class JobSchedulerService(
             false
         }
 
+    fun registerOrReplace(
+        identity: MatchJobIdentity,
+        schedule: MatchJobSchedule,
+    ): Boolean {
+        try {
+            if (scheduler.checkExists(identity.jobKey)) {
+                if (matchesDesiredSpec(identity, schedule)) {
+                    log.info("Match job already matches desired spec - jobKey={}", identity.jobKey)
+                    return true
+                }
+
+                log.info("Match job spec changed - replacing jobKey={}", identity.jobKey)
+                removeJob(identity.jobKey)
+            }
+
+            val job =
+                JobBuilder
+                    .newJob(schedule.jobClass)
+                    .withIdentity(identity.jobKey)
+                    .usingJobData(KEY_FIXTURE_UID, identity.fixtureUid)
+                    .build()
+
+            val trigger =
+                TriggerBuilder
+                    .newTrigger()
+                    .withIdentity(identity.triggerKey)
+                    .forJob(identity.jobKey)
+                    .startAt(Date.from(schedule.startAt))
+                    .withSchedule(
+                        SimpleScheduleBuilder
+                            .simpleSchedule()
+                            .withIntervalInSeconds(schedule.repeatIntervalSeconds)
+                            .withRepeatCount(schedule.repeatCount)
+                            .withMisfireHandlingInstructionNowWithRemainingCount(),
+                    ).build()
+
+            scheduler.scheduleJob(job, trigger)
+            log.info("Registered match job - jobKey={}, triggerKey={}", identity.jobKey, identity.triggerKey)
+            return true
+        } catch (e: Exception) {
+            log.error("Failed to register match job - identity={}", identity, e)
+            return false
+        }
+    }
+
+    fun delete(identity: MatchJobIdentity): Boolean = removeJob(identity.jobKey)
+
+    fun listLeagueMatchJobs(leagueUid: String): Set<JobKey> =
+        try {
+            scheduler.getJobKeys(GroupMatcher.jobGroupEquals(MatchJobIdentity.groupName(leagueUid)))
+        } catch (e: Exception) {
+            log.error("Failed to list league match jobs - leagueUid={}", leagueUid, e)
+            emptySet()
+        }
+
+    private fun matchesDesiredSpec(
+        identity: MatchJobIdentity,
+        schedule: MatchJobSchedule,
+    ): Boolean {
+        val jobDetail = scheduler.getJobDetail(identity.jobKey) ?: return false
+        if (jobDetail.jobClass != schedule.jobClass) {
+            return false
+        }
+
+        val trigger = scheduler.getTriggersOfJob(identity.jobKey).singleOrNull() as? SimpleTrigger ?: return false
+
+        return trigger.startTime == Date.from(schedule.startAt) &&
+            trigger.repeatInterval == schedule.repeatIntervalMillis &&
+            trigger.repeatCount == schedule.repeatCount
+    }
+
     /**
      * JobKey 생성 헬퍼
      */
@@ -256,6 +425,8 @@ class JobSchedulerService(
     ): JobKey = JobKey.jobKey("$groupName-$fixtureUid", groupName)
 
     companion object {
+        const val KEY_FIXTURE_UID = "fixtureUid"
+
         // Job Group 이름
         private const val JOB_GROUP_PRE_MATCH = "pre-match"
         private const val JOB_GROUP_LIVE_MATCH = "live-match"

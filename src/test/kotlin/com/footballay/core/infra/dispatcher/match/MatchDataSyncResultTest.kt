@@ -1,6 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -59,36 +59,29 @@ class MatchDataSyncResultTest {
         val result =
             MatchDataSyncResult.Live(
                 kickoffTime = kickoffTime,
-                isMatchFinished = false,
                 elapsedMin = 30,
-                statusShort = "1H",
+                statusCode = FixtureStatusCode.FIRST_HALF,
             )
 
         // Then
         assertThat(result).isInstanceOf(MatchDataSyncResult.Live::class.java)
         assertThat(result.kickoffTime).isEqualTo(kickoffTime)
-        assertThat(result.isMatchFinished).isFalse()
         assertThat(result.elapsedMin).isEqualTo(30)
-        assertThat(result.statusShort).isEqualTo("1H")
+        assertThat(result.statusCode).isEqualTo(FixtureStatusCode.FIRST_HALF)
     }
 
     @Test
-    fun `Live Result - 경기 종료 상태`() {
+    @Suppress("DEPRECATION")
+    fun `finished factory는 PostMatch Result를 반환한다`() {
         // Given
         val kickoffTime = Instant.now().minusSeconds(100 * 60)
 
         // When
-        val result =
-            MatchDataSyncResult.Live(
-                kickoffTime = kickoffTime,
-                isMatchFinished = true,
-                elapsedMin = 90,
-                statusShort = "FT",
-            )
+        val result = MatchDataSyncResult.finished(kickoffTime)
 
         // Then
-        assertThat(result.isMatchFinished).isTrue()
-        assertThat(result.statusShort).isEqualTo("FT")
+        assertThat(result).isInstanceOf(MatchDataSyncResult.PostMatch::class.java)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
     }
 
     @Test
@@ -172,7 +165,7 @@ class MatchDataSyncResultTest {
         val results =
             listOf<MatchDataSyncResult>(
                 MatchDataSyncResult.PreMatch(true, Instant.now(), false),
-                MatchDataSyncResult.Live(Instant.now(), false, 30, "1H"),
+                MatchDataSyncResult.Live(Instant.now(), 30, FixtureStatusCode.FIRST_HALF),
                 MatchDataSyncResult.PostMatch(Instant.now(), false, 30),
                 MatchDataSyncResult.NotPlayed(FixtureStatusCode.PST, Instant.now()),
                 MatchDataSyncResult.Error("Error", Instant.now()),
@@ -182,7 +175,7 @@ class MatchDataSyncResultTest {
         results.forEach { result ->
             when (result) {
                 is MatchDataSyncResult.PreMatch -> assertThat(result.lineupCached).isTrue()
-                is MatchDataSyncResult.Live -> assertThat(result.statusShort).isEqualTo("1H")
+                is MatchDataSyncResult.Live -> assertThat(result.statusCode).isEqualTo(FixtureStatusCode.FIRST_HALF)
                 is MatchDataSyncResult.PostMatch -> assertThat(result.shouldStopPolling).isFalse()
                 is MatchDataSyncResult.NotPlayed -> assertThat(result.statusCode).isEqualTo(FixtureStatusCode.PST)
                 is MatchDataSyncResult.Error -> assertThat(result.message).isEqualTo("Error")

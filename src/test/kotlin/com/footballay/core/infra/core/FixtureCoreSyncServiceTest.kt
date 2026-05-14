@@ -3,7 +3,7 @@ package com.footballay.core.infra.core
 import com.footballay.core.infra.core.dto.FixtureCoreCreateDto
 import com.footballay.core.infra.core.dto.FixtureCoreUpdateDto
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository

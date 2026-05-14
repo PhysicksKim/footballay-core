@@ -1,0 +1,42 @@
+package com.footballay.core.infra.scheduler
+
+import org.quartz.JobKey
+import org.quartz.TriggerKey
+
+enum class MatchJobOwner(
+    val key: String,
+) {
+    AVAILABLE("available"),
+}
+
+enum class MatchJobPhase(
+    val key: String,
+) {
+    PRE("pre"),
+    LIVE("live"),
+    POST("post"),
+}
+
+data class MatchJobIdentity(
+    val owner: MatchJobOwner,
+    val phase: MatchJobPhase,
+    val leagueUid: String,
+    val fixtureUid: String,
+) {
+    val groupName: String = groupName(leagueUid)
+    val jobName: String = "${owner.key}:${phase.key}:$fixtureUid"
+    val jobKey: JobKey = JobKey.jobKey(jobName, groupName)
+    val triggerKey: TriggerKey = TriggerKey.triggerKey("$jobName:trigger", groupName)
+
+    companion object {
+        private const val GROUP_PREFIX = "league:match:"
+
+        fun groupName(leagueUid: String): String = "$GROUP_PREFIX$leagueUid"
+
+        fun leagueUidFromGroup(groupName: String): String? =
+            groupName
+                .takeIf { it.startsWith(GROUP_PREFIX) }
+                ?.removePrefix(GROUP_PREFIX)
+                ?.takeIf { it.isNotBlank() }
+    }
+}

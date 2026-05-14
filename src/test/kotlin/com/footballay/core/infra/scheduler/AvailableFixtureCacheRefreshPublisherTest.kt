@@ -1,5 +1,6 @@
 package com.footballay.core.infra.scheduler
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTrigger
 import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
@@ -28,7 +29,7 @@ class AvailableFixtureCacheRefreshPublisherTest {
 
         publisher.publishIfNeeded(
             fixtureUid = "fixture-1",
-            result = MatchDataSyncResult.Live(Instant.now(), false, 30, "1H"),
+            result = MatchDataSyncResult.Live(Instant.now(), 30, FixtureStatusCode.FIRST_HALF),
             phase = AvailableFixtureJobPhase.LIVE_MATCH,
         )
 

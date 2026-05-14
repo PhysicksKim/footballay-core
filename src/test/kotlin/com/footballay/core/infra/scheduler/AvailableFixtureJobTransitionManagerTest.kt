@@ -1,7 +1,7 @@
 package com.footballay.core.infra.scheduler
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
@@ -22,7 +22,7 @@ class AvailableFixtureJobTransitionManagerTest {
 
     @Test
     fun `PreMatch shouldTerminatePreMatchJob=true이면 pre job을 삭제한다`() {
-        val jobKey = JobKey.jobKey("pre-match-$fixtureUid", "pre-match")
+        val jobKey = availableJobKey(MatchJobPhase.PRE)
         val manager = AvailableFixtureJobTransitionManager(jobSchedulerService)
 
         manager.handle(
@@ -32,7 +32,6 @@ class AvailableFixtureJobTransitionManagerTest {
         )
 
         verify(jobSchedulerService).removeJob(jobKey)
-        verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
     }
 
     @Test
@@ -46,41 +45,40 @@ class AvailableFixtureJobTransitionManagerTest {
         )
 
         verify(jobSchedulerService, never()).removeJob(any())
-        verify(jobSchedulerService, never()).addLiveMatchJob(any(), any())
     }
 
     @Test
-    fun `Live isMatchFinished=true이면 live job 삭제 후 post job을 등록한다`() {
-        val jobKey = JobKey.jobKey("live-match-$fixtureUid", "live-match")
+    fun `LiveMatchJob에서 PostMatch result를 받으면 live job 삭제 후 post job을 등록한다`() {
+        val jobKey = availableJobKey(MatchJobPhase.LIVE)
         val manager = AvailableFixtureJobTransitionManager(jobSchedulerService)
 
         manager.handle(
             fixtureUid = fixtureUid,
-            result = MatchDataSyncResult.Live(Instant.now(), true, 90, "FT"),
+            result = MatchDataSyncResult.PostMatch(Instant.now(), false, 0),
             context = AvailableFixtureJobContext(AvailableFixtureJobPhase.LIVE_MATCH, jobKey),
         )
 
         verify(jobSchedulerService).removeJob(jobKey)
-        verify(jobSchedulerService).addPostMatchJob(eq(fixtureUid), any())
+        verify(jobSchedulerService).addPostMatchJob(eq("league-1"), eq(fixtureUid), any())
     }
 
     @Test
-    fun `Live isMatchFinished=false이면 job을 유지한다`() {
+    fun `Live result이면 job을 유지한다`() {
         val manager = AvailableFixtureJobTransitionManager(jobSchedulerService)
 
         manager.handle(
             fixtureUid = fixtureUid,
-            result = MatchDataSyncResult.Live(Instant.now(), false, 45, "HT"),
+            result = MatchDataSyncResult.Live(Instant.now(), 45, FixtureStatusCode.HT),
             context = AvailableFixtureJobContext(AvailableFixtureJobPhase.LIVE_MATCH, JobKey.jobKey("live", "live-match")),
         )
 
         verify(jobSchedulerService, never()).removeJob(any())
-        verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
+        verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
 
     @Test
     fun `PostMatch shouldStopPolling=true이면 post job을 삭제한다`() {
-        val jobKey = JobKey.jobKey("post-match-$fixtureUid", "post-match")
+        val jobKey = availableJobKey(MatchJobPhase.POST)
         val manager = AvailableFixtureJobTransitionManager(jobSchedulerService)
 
         manager.handle(
@@ -112,11 +110,11 @@ class AvailableFixtureJobTransitionManagerTest {
         manager.handle(
             fixtureUid = fixtureUid,
             result = MatchDataSyncResult.NotPlayed(FixtureStatusCode.CANC, Instant.now()),
-            context = AvailableFixtureJobContext(AvailableFixtureJobPhase.LIVE_MATCH, JobKey.jobKey("live", "live-match")),
+            context = AvailableFixtureJobContext(AvailableFixtureJobPhase.LIVE_MATCH, availableJobKey(MatchJobPhase.LIVE)),
         )
 
-        verify(jobSchedulerService).removeAllJobsForFixture(fixtureUid)
-        verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
+        verify(jobSchedulerService).deleteFixtureJobs("league-1", fixtureUid, MatchJobOwner.AVAILABLE)
+        verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
 
     @Test
@@ -131,7 +129,7 @@ class AvailableFixtureJobTransitionManagerTest {
 
         verify(jobSchedulerService, never()).removeJob(any())
         verify(jobSchedulerService, never()).removeAllJobsForFixture(any())
-        verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
+        verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
 
     @Test
@@ -145,6 +143,14 @@ class AvailableFixtureJobTransitionManagerTest {
         )
 
         verify(jobSchedulerService, never()).removeJob(any())
-        verify(jobSchedulerService, never()).addPostMatchJob(any(), any())
+        verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
+
+    private fun availableJobKey(phase: MatchJobPhase): JobKey =
+        MatchJobIdentity(
+            owner = MatchJobOwner.AVAILABLE,
+            phase = phase,
+            leagueUid = "league-1",
+            fixtureUid = fixtureUid,
+        ).jobKey
 }

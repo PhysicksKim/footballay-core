@@ -1,5 +1,6 @@
 package com.footballay.core.infra.apisports.match
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.apisports.match.plan.MatchSyncConstants.KICKOFF_IMMINENT_THRESHOLD_MINUTES
 import com.footballay.core.infra.apisports.match.plan.MatchSyncConstants.POST_MATCH_POLLING_CUTOFF_MINUTES
 import com.footballay.core.infra.apisports.match.plan.base.MatchBaseDtoExtractor
@@ -12,7 +13,6 @@ import com.footballay.core.infra.apisports.match.plan.teamstat.MatchTeamStatDtoE
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.match.FixtureStatusClassifier
 import com.footballay.core.infra.match.FixtureSyncPhase
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -148,9 +148,8 @@ class ApiSportsMatchEntitySyncFacadeImpl(
 
                 MatchDataSyncResult.Live(
                     kickoffTime = kickoffTime,
-                    isMatchFinished = false,
                     elapsedMin = elapsedMin,
-                    statusShort = statusShort,
+                    statusCode = statusCode,
                 )
             }
 

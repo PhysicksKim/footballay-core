@@ -5,7 +5,7 @@ import com.footballay.core.infra.apisports.match.plan.dto.FixtureApiSportsDto
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
 import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.apisports.entity.live.ApiSportsMatchTeam
 import com.footballay.core.infra.persistence.apisports.entity.live.UniformColor
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository

@@ -1,5 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.match.MatchSyncOrchestrator
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -75,9 +76,8 @@ class SimpleMatchDataSyncDispatcherTest {
         val expected =
             MatchDataSyncResult.Live(
                 kickoffTime = Instant.now(),
-                isMatchFinished = false,
                 elapsedMin = 35,
-                statusShort = "1H",
+                statusCode = FixtureStatusCode.FIRST_HALF,
             )
         dispatcher = SimpleMatchDataSyncDispatcher(orchestrators = listOf(orchestrator, anotherOrchestrator))
 

@@ -15,7 +15,7 @@ import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchEven
 import com.footballay.core.infra.apisports.syncer.match.persist.result.MatchPlayerSyncResult
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
 import com.footballay.core.infra.match.FixtureStatusClassifier
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

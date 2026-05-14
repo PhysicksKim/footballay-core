@@ -13,7 +13,7 @@ import com.footballay.core.infra.persistence.apisports.repository.live.ApiSports
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamRepository
 import com.footballay.core.infra.persistence.apisports.repository.live.ApiSportsMatchTeamStatisticsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.PlayerCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore

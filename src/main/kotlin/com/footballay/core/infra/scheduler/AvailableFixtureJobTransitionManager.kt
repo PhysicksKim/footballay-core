@@ -18,9 +18,9 @@ class AvailableFixtureJobTransitionManager(
     ) {
         when (result) {
             is MatchDataSyncResult.PreMatch -> handlePreMatch(fixtureUid, result, context)
-            is MatchDataSyncResult.Live -> handleLive(fixtureUid, result, context)
+            is MatchDataSyncResult.Live -> handleLive(fixtureUid, context)
             is MatchDataSyncResult.PostMatch -> handlePostMatch(fixtureUid, result, context)
-            is MatchDataSyncResult.NotPlayed -> handleNotPlayed(fixtureUid, result)
+            is MatchDataSyncResult.NotPlayed -> handleNotPlayed(fixtureUid, result, context)
             is MatchDataSyncResult.Error -> {
                 log.error(
                     "Available fixture match sync error - fixtureUid={}, phase={}, message={}",
@@ -54,7 +54,6 @@ class AvailableFixtureJobTransitionManager(
 
     private fun handleLive(
         fixtureUid: String,
-        result: MatchDataSyncResult.Live,
         context: AvailableFixtureJobContext,
     ) {
         if (context.phase != AvailableFixtureJobPhase.LIVE_MATCH) {
@@ -65,15 +64,6 @@ class AvailableFixtureJobTransitionManager(
             )
             return
         }
-
-        if (result.isMatchFinished) {
-            log.info("LiveMatch to PostMatch transition - fixtureUid={}", fixtureUid)
-            jobSchedulerService.removeJob(context.jobKey)
-            jobSchedulerService.addPostMatchJob(
-                fixtureUid = fixtureUid,
-                startTime = Instant.now(),
-            )
-        }
     }
 
     private fun handlePostMatch(
@@ -81,6 +71,11 @@ class AvailableFixtureJobTransitionManager(
         result: MatchDataSyncResult.PostMatch,
         context: AvailableFixtureJobContext,
     ) {
+        if (context.phase == AvailableFixtureJobPhase.LIVE_MATCH) {
+            transitionLiveToPost(fixtureUid, context)
+            return
+        }
+
         if (context.phase != AvailableFixtureJobPhase.POST_MATCH) {
             log.warn(
                 "PostMatch result received from non-PostMatch job - fixtureUid={}, phase={}, ignoring",
@@ -96,15 +91,47 @@ class AvailableFixtureJobTransitionManager(
         }
     }
 
+    private fun transitionLiveToPost(
+        fixtureUid: String,
+        context: AvailableFixtureJobContext,
+    ) {
+        log.info("LiveMatch to PostMatch transition - fixtureUid={}", fixtureUid)
+        jobSchedulerService.removeJob(context.jobKey)
+        val leagueUid = MatchJobIdentity.leagueUidFromGroup(context.jobKey.group)
+        if (leagueUid != null) {
+            jobSchedulerService.addPostMatchJob(
+                leagueUid = leagueUid,
+                fixtureUid = fixtureUid,
+                startTime = Instant.now(),
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            jobSchedulerService.addPostMatchJob(
+                fixtureUid = fixtureUid,
+                startTime = Instant.now(),
+            )
+        }
+    }
+
     private fun handleNotPlayed(
         fixtureUid: String,
         result: MatchDataSyncResult.NotPlayed,
+        context: AvailableFixtureJobContext,
     ) {
         log.info(
             "Match not played - removing available fixture jobs - fixtureUid={}, status={}",
             fixtureUid,
             result.statusCode,
         )
-        jobSchedulerService.removeAllJobsForFixture(fixtureUid)
+        val leagueUid = MatchJobIdentity.leagueUidFromGroup(context.jobKey.group)
+        if (leagueUid != null) {
+            jobSchedulerService.deleteFixtureJobs(
+                leagueUid = leagueUid,
+                fixtureUid = fixtureUid,
+                owner = MatchJobOwner.AVAILABLE,
+            )
+        } else {
+            jobSchedulerService.removeAllJobsForFixture(fixtureUid)
+        }
     }
 }

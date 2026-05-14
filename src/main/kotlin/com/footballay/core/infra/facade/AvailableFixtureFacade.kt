@@ -7,6 +7,7 @@ import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSpor
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.JobSchedulerService
+import com.footballay.core.infra.scheduler.MatchJobOwner
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,7 +22,7 @@ import java.time.Instant
  * **동작 흐름:**
  * 1. Fixture available = true 설정
  * 2. PreMatchJob 등록 (킥오프 1시간 전부터 시작 권장)
- * 3. PreMatchJob → LiveMatchJob → PostMatchJob 자동 전환 (Dispatcher가 관리)
+ * 3. PreMatchJob → LiveMatchJob → PostMatchJob 자동 전환
  * 4. Fixture available = false 설정 → 모든 Job 삭제
  */
 @Service
@@ -96,6 +97,7 @@ class AvailableFixtureFacade(
         }
 
         val now = Instant.now(clock)
+        val leagueUid = fixtureCore.league.uid
 
         // 5. FixtureCore available 플래그 설정
         setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
@@ -110,7 +112,7 @@ class AvailableFixtureFacade(
         // 6. PreMatchJob 조건부 등록 (킥오프 이전인 경우에만)
         if (kickoff.isAfter(now)) {
             val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
-            val preJobAdded = jobSchedulerService.addPreMatchJob(fixtureCore.uid, preMatchStartTime)
+            val preJobAdded = jobSchedulerService.addPreMatchJob(leagueUid, fixtureCore.uid, preMatchStartTime)
 
             if (!preJobAdded) {
                 log.error(
@@ -143,12 +145,12 @@ class AvailableFixtureFacade(
         }
 
         // 7. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
-        val liveJobAdded = jobSchedulerService.addLiveMatchJob(fixtureCore.uid, kickoff)
+        val liveJobAdded = jobSchedulerService.addLiveMatchJob(leagueUid, fixtureCore.uid, kickoff)
 
         if (!liveJobAdded) {
             log.error("Failed to add LiveMatchJob - fixtureApiId={}, uid={}, rolling back PreMatchJob", fixtureApiId, fixtureCore.uid)
             // PreMatchJob 롤백
-            jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
+            jobSchedulerService.deleteFixtureJobs(leagueUid, fixtureCore.uid, MatchJobOwner.AVAILABLE)
 
             // available 플래그 롤백
             setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
@@ -223,7 +225,7 @@ class AvailableFixtureFacade(
         log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
 
         // 6. 모든 Job 삭제
-        val deletedCount = jobSchedulerService.removeAllJobsForFixture(fixtureCore.uid)
+        val deletedCount = jobSchedulerService.deleteFixtureJobs(fixtureCore.league.uid, fixtureCore.uid, MatchJobOwner.AVAILABLE)
 
         log.info(
             "Available fixture removed successfully - fixtureApiId={}, uid={}, deletedJobs={}",

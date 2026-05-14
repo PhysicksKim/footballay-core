@@ -1,7 +1,7 @@
 package com.footballay.core.infra.persistence.core.repository
 
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
+import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.logger

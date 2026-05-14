@@ -1,4 +1,4 @@
-package com.footballay.core.infra.persistence.core.entity
+package com.footballay.core.domain.fixture
 
 /**
  * Fixture 상태 약어 Enum
