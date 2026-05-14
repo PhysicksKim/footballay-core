@@ -1,6 +1,5 @@
 package com.footballay.core.infra.scheduler
 
-import com.footballay.core.infra.dispatcher.match.JobContext
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.logger
 import org.quartz.Job
@@ -15,14 +14,13 @@ import java.time.OffsetDateTime
  * 라인업이 발표되면 저장하고, 킥오프가 임박하면 LiveMatchJob으로 전환합니다.
  *
  * **동작 방식:**
- * 1. JobContext에서 fixtureUid 추출
+ * 1. JobDataMap에서 fixtureUid 추출
  * 2. Dispatcher에게 동기화 요청
- * 3. Result에 따라 Dispatcher가 다음 Job 전환 결정
- *
- * **Job은 단순히 실행만 담당하고, 판단은 Dispatcher가 합니다.**
  */
 class PreMatchJob(
     private val dispatcher: MatchDataSyncDispatcher,
+    private val transitionManager: AvailableFixtureJobTransitionManager,
+    private val cacheRefreshPublisher: AvailableFixtureCacheRefreshPublisher,
 ) : Job {
     private val log = logger()
 
@@ -38,8 +36,14 @@ class PreMatchJob(
         log.info("PreMatchJob executing - fixtureUid={}, time={}", fixtureUid, executionTime)
 
         try {
-            val jobContext = JobContext.preMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = dispatcher.syncByFixtureUid(fixtureUid)
+            val jobContext =
+                AvailableFixtureJobContext(
+                    phase = AvailableFixtureJobPhase.PRE_MATCH,
+                    jobKey = context.jobDetail.key,
+                )
+            transitionManager.handle(fixtureUid, result, jobContext)
+            cacheRefreshPublisher.publishIfNeeded(fixtureUid, result, AvailableFixtureJobPhase.PRE_MATCH)
             log.info("PreMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("PreMatchJob execution failed - fixtureUid={}", fixtureUid, e)

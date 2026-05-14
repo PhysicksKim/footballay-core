@@ -40,6 +40,9 @@ class MatchSyncWebService(
             is MatchDataSyncResult.PostMatch -> (
                 return DomainResult.Success(Unit)
             )
+            is MatchDataSyncResult.NotPlayed -> (
+                return DomainResult.Success(Unit)
+            )
             is MatchDataSyncResult.Error -> (
                 return DomainResult.Fail(
                     DomainFail.Unknown(

@@ -1,6 +1,5 @@
 package com.footballay.core.infra.scheduler
 
-import com.footballay.core.infra.dispatcher.match.JobContext
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.logger
 import org.quartz.Job
@@ -16,9 +15,8 @@ import java.time.OffsetDateTime
  * 경기가 종료되면 PostMatchJob으로 전환됩니다.
  *
  * **동작 방식:**
- * 1. JobContext에서 fixtureUid 추출
+ * 1. JobDataMap에서 fixtureUid 추출
  * 2. Dispatcher에게 동기화 요청
- * 3. Result.Live.isMatchFinished가 true면 Dispatcher가 PostMatchJob으로 전환
  *
  * **주의사항:**
  * - Match data sync는 1.5~3초 소요 → Worker Thread 점유 주의
@@ -26,6 +24,8 @@ import java.time.OffsetDateTime
  */
 class LiveMatchJob(
     private val dispatcher: MatchDataSyncDispatcher,
+    private val transitionManager: AvailableFixtureJobTransitionManager,
+    private val cacheRefreshPublisher: AvailableFixtureCacheRefreshPublisher,
 ) : Job {
     private val log = logger()
 
@@ -41,8 +41,14 @@ class LiveMatchJob(
         log.info("LiveMatchJob executing - fixtureUid={}, time={}", fixtureUid, executionTime)
 
         try {
-            val jobContext = JobContext.liveMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = dispatcher.syncByFixtureUid(fixtureUid)
+            val jobContext =
+                AvailableFixtureJobContext(
+                    phase = AvailableFixtureJobPhase.LIVE_MATCH,
+                    jobKey = context.jobDetail.key,
+                )
+            transitionManager.handle(fixtureUid, result, jobContext)
+            cacheRefreshPublisher.publishIfNeeded(fixtureUid, result, AvailableFixtureJobPhase.LIVE_MATCH)
             log.info("LiveMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("LiveMatchJob execution failed - fixtureUid={}", fixtureUid, e)

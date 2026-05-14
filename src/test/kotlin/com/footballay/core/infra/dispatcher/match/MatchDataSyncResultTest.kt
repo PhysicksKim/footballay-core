@@ -1,5 +1,6 @@
 package com.footballay.core.infra.dispatcher.match
 
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -148,6 +149,24 @@ class MatchDataSyncResultTest {
     }
 
     @Test
+    fun `NotPlayed Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(30 * 60)
+
+        // When
+        val result =
+            MatchDataSyncResult.NotPlayed(
+                statusCode = FixtureStatusCode.CANC,
+                kickoffTime = kickoffTime,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.NotPlayed::class.java)
+        assertThat(result.statusCode).isEqualTo(FixtureStatusCode.CANC)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+    }
+
+    @Test
     fun `sealed class when 표현식으로 분기 가능`() {
         // Given
         val results =
@@ -155,6 +174,7 @@ class MatchDataSyncResultTest {
                 MatchDataSyncResult.PreMatch(true, Instant.now(), false),
                 MatchDataSyncResult.Live(Instant.now(), false, 30, "1H"),
                 MatchDataSyncResult.PostMatch(Instant.now(), false, 30),
+                MatchDataSyncResult.NotPlayed(FixtureStatusCode.PST, Instant.now()),
                 MatchDataSyncResult.Error("Error", Instant.now()),
             )
 
@@ -164,6 +184,7 @@ class MatchDataSyncResultTest {
                 is MatchDataSyncResult.PreMatch -> assertThat(result.lineupCached).isTrue()
                 is MatchDataSyncResult.Live -> assertThat(result.statusShort).isEqualTo("1H")
                 is MatchDataSyncResult.PostMatch -> assertThat(result.shouldStopPolling).isFalse()
+                is MatchDataSyncResult.NotPlayed -> assertThat(result.statusCode).isEqualTo(FixtureStatusCode.PST)
                 is MatchDataSyncResult.Error -> assertThat(result.message).isEqualTo("Error")
             }
         }

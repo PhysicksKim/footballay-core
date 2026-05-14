@@ -1,17 +1,18 @@
 package com.footballay.core.infra.dispatcher.match
 
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import java.time.Instant
 
 /**
  * Match 동기화 결과를 나타내는 sealed class
  *
- * Pre/Live/Post 단계별로 상세한 정보를 제공하여
- * Dispatcher가 다음 Job 전환을 결정할 수 있도록 합니다.
+ * Pre/Live/Post 단계별로 상세한 정보를 제공하여 호출자가 다음 동작을 결정할 수 있도록 합니다.
  *
  * **단계별 Result:**
  * - [PreMatch]: 경기 전 라인업 캐싱 단계
  * - [Live]: 경기 진행 중 라이브 데이터 동기화
  * - [PostMatch]: 경기 종료 후 최종 데이터 동기화
+ * - [NotPlayed]: 연기/취소/몰수 등 정상 진행되지 않은 경기
  * - [Error]: 동기화 실패
  */
 sealed class MatchDataSyncResult {
@@ -63,6 +64,19 @@ sealed class MatchDataSyncResult {
         val kickoffTime: Instant?,
         val shouldStopPolling: Boolean,
         val minutesSinceFinish: Long,
+    ) : MatchDataSyncResult()
+
+    /**
+     * 정상 진행되지 않은 경기
+     *
+     * 경기 연기, 취소, 중단 후 미재개, 몰수 등으로 일반적인 post-match 수집 대상이 아닌 경우입니다.
+     *
+     * @property statusCode 경기 상태 코드
+     * @property kickoffTime 경기 킥오프 시각
+     */
+    data class NotPlayed(
+        val statusCode: FixtureStatusCode?,
+        val kickoffTime: Instant?,
     ) : MatchDataSyncResult()
 
     /**

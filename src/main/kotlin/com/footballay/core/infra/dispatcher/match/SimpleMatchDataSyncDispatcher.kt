@@ -1,12 +1,8 @@
 package com.footballay.core.infra.dispatcher.match
 
 import com.footballay.core.infra.match.MatchSyncOrchestrator
-import com.footballay.core.infra.scheduler.JobSchedulerService
 import com.footballay.core.logger
-import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTrigger
-import com.footballay.core.web.football.cache.refresh.FixtureMatchCacheRefreshTriggerPublisher
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 /**
  * 매치 데이터 동기화 Dispatcher 기본 구현체
@@ -17,69 +13,18 @@ import java.time.Instant
  * **동작 방식:**
  * 1. 모든 Orchestrator에 대해 `isSupport(fixtureUid)` 호출
  * 2. 지원하는 Orchestrator를 찾으면 `syncMatchData(fixtureUid)` 호출
- * 3. 동기화 Result에 따라 Job 전환 결정 (JobContext가 있는 경우만)
- * 4. 지원하는 Orchestrator가 없으면 fallback 결과 반환
- *
- * **Job 전환 로직:**
- * - PreMatch.readyForLive = true → LiveMatchJob 전환
- * - Live.isMatchFinished = true → PostMatchJob 전환
- * - PostMatch.shouldStopPolling = true → Job 삭제
+ * 3. 지원하는 Orchestrator가 없으면 fallback 결과 반환
  *
  * @see MatchSyncOrchestrator
  * @see MatchDataSyncDispatcher
- * @see JobSchedulerService
  */
 @Component
 class SimpleMatchDataSyncDispatcher(
     private val orchestrators: List<MatchSyncOrchestrator>,
-    private val jobSchedulerService: JobSchedulerService,
-    private val refreshTriggerPublisher: FixtureMatchCacheRefreshTriggerPublisher,
 ) : MatchDataSyncDispatcher {
     private val log = logger()
 
-    override fun syncByFixtureUid(
-        fixtureUid: String,
-        jobContext: JobContext?,
-    ): MatchDataSyncResult {
-        // 1. Orchestrator를 통해 동기화 수행
-        val result = performSync(fixtureUid)
-
-        publishRefreshTriggerIfNeeded(fixtureUid, result, jobContext)
-
-        // 2. JobContext가 있으면 Result에 따라 Job 관리
-        if (jobContext != null) {
-            manageJobTransition(fixtureUid, result, jobContext)
-        }
-
-        return result
-    }
-
-    private fun publishRefreshTriggerIfNeeded(
-        fixtureUid: String,
-        result: MatchDataSyncResult,
-        jobContext: JobContext?,
-    ) {
-        if (result is MatchDataSyncResult.Error) {
-            return
-        }
-
-        runCatching {
-            refreshTriggerPublisher.publish(
-                FixtureMatchCacheRefreshTrigger(
-                    fixtureUid = fixtureUid,
-                    source = "MATCH_DATA_SYNC",
-                    jobPhase = jobContext?.jobPhase?.name,
-                ),
-            )
-        }.onFailure { ex ->
-            log.warn("Failed to publish fixture cache refresh trigger. fixtureUid={}", fixtureUid, ex)
-        }
-    }
-
-    /**
-     * Orchestrator를 통해 동기화 수행
-     */
-    private fun performSync(fixtureUid: String): MatchDataSyncResult {
+    override fun syncByFixtureUid(fixtureUid: String): MatchDataSyncResult {
         for (orchestrator in orchestrators) {
             if (orchestrator.isSupport(fixtureUid)) {
                 return orchestrator.syncMatchData(fixtureUid)
@@ -90,86 +35,5 @@ class SimpleMatchDataSyncDispatcher(
             message = "No orchestrator found for fixtureUid=$fixtureUid",
             kickoffTime = null,
         )
-    }
-
-    /**
-     * Result에 따라 Job 전환 관리
-     *
-     * Pre / Live / Post MatchJob 간의 전환 로직을 처리합니다.
-     * - PreMatch → LiveMatch 전환
-     * - LiveMatch → PostMatch 전환
-     */
-    private fun manageJobTransition(
-        fixtureUid: String,
-        result: MatchDataSyncResult,
-        jobContext: JobContext,
-    ) {
-        when (result) {
-            is MatchDataSyncResult.PreMatch -> {
-                // PreMatch Result는 오직 PreMatchJob만 처리할 수 있음
-                if (jobContext.jobPhase != JobContext.JobPhase.PRE_MATCH) {
-                    log.warn(
-                        "PreMatch result received from non-PreMatch job - fixtureUid={}, jobPhase={}, ignoring",
-                        fixtureUid,
-                        jobContext.jobPhase,
-                    )
-                    return
-                }
-
-                if (result.shouldTerminatePreMatchJob) {
-                    log.info("PreMatch complete - removing PreMatchJob (LiveMatchJob already scheduled) - fixtureUid={}", fixtureUid)
-                    jobSchedulerService.removeJob(jobContext.jobKey)
-                    // LiveMatchJob은 이미 등록되어 있음, 추가 등록 안 함
-                }
-            }
-
-            is MatchDataSyncResult.Live -> {
-                // Live Result는 오직 LiveMatchJob만 처리할 수 있음
-                if (jobContext.jobPhase != JobContext.JobPhase.LIVE_MATCH) {
-                    log.warn(
-                        "Live result received from non-LiveMatch job - fixtureUid={}, jobPhase={}, ignoring",
-                        fixtureUid,
-                        jobContext.jobPhase,
-                    )
-                    return
-                }
-
-                if (result.isMatchFinished) {
-                    log.info("LiveMatch → PostMatch transition - fixtureUid={}", fixtureUid)
-                    jobSchedulerService.removeJob(jobContext.jobKey)
-                    jobSchedulerService.addPostMatchJob(
-                        fixtureUid = fixtureUid,
-                        startTime = Instant.now(),
-                    )
-                }
-            }
-
-            is MatchDataSyncResult.PostMatch -> {
-                // PostMatch Result는 오직 PostMatchJob만 처리할 수 있음
-                if (jobContext.jobPhase != JobContext.JobPhase.POST_MATCH) {
-                    log.warn(
-                        "PostMatch result received from non-PostMatch job - fixtureUid={}, jobPhase={}, ignoring",
-                        fixtureUid,
-                        jobContext.jobPhase,
-                    )
-                    return
-                }
-
-                if (result.shouldStopPolling) {
-                    log.info("PostMatch polling complete - removing job for fixtureUid={}", fixtureUid)
-                    jobSchedulerService.removeJob(jobContext.jobKey)
-                }
-            }
-
-            is MatchDataSyncResult.Error -> {
-                log.error(
-                    "Match sync error - fixtureUid={}, phase={}, message={}",
-                    fixtureUid,
-                    jobContext.jobPhase,
-                    result.message,
-                )
-                // Error 발생 시 Job은 계속 실행 (자동 재시도)
-            }
-        }
     }
 }

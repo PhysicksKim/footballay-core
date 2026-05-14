@@ -1,6 +1,5 @@
 package com.footballay.core.infra.scheduler
 
-import com.footballay.core.infra.dispatcher.match.JobContext
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.logger
 import org.quartz.Job
@@ -15,9 +14,8 @@ import java.time.OffsetDateTime
  * 일정 시간(60분) 후에는 더 이상 변경이 없으므로 polling을 중단합니다.
  *
  * **동작 방식:**
- * 1. JobContext에서 fixtureUid 추출
+ * 1. JobDataMap에서 fixtureUid 추출
  * 2. Dispatcher에게 동기화 요청
- * 3. Result.PostMatch.shouldStopPolling이 true면 Dispatcher가 Job 삭제
  *
  * **중단 조건:**
  * - 경기 종료 후 60분 경과
@@ -25,6 +23,8 @@ import java.time.OffsetDateTime
  */
 class PostMatchJob(
     private val dispatcher: MatchDataSyncDispatcher,
+    private val transitionManager: AvailableFixtureJobTransitionManager,
+    private val cacheRefreshPublisher: AvailableFixtureCacheRefreshPublisher,
 ) : Job {
     private val log = logger()
 
@@ -40,8 +40,14 @@ class PostMatchJob(
         log.info("PostMatchJob executing - fixtureUid={}, time={}", fixtureUid, executionTime)
 
         try {
-            val jobContext = JobContext.postMatch(context.jobDetail.key)
-            val result = dispatcher.syncByFixtureUid(fixtureUid, jobContext)
+            val result = dispatcher.syncByFixtureUid(fixtureUid)
+            val jobContext =
+                AvailableFixtureJobContext(
+                    phase = AvailableFixtureJobPhase.POST_MATCH,
+                    jobKey = context.jobDetail.key,
+                )
+            transitionManager.handle(fixtureUid, result, jobContext)
+            cacheRefreshPublisher.publishIfNeeded(fixtureUid, result, AvailableFixtureJobPhase.POST_MATCH)
             log.info("PostMatchJob completed - fixtureUid={}, result={}", fixtureUid, result)
         } catch (e: Exception) {
             log.error("PostMatchJob execution failed - fixtureUid={}", fixtureUid, e)

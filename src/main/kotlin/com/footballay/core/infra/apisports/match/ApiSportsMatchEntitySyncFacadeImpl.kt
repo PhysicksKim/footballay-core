@@ -10,6 +10,9 @@ import com.footballay.core.infra.apisports.match.plan.lineup.MatchLineupDtoExtra
 import com.footballay.core.infra.apisports.match.plan.playerstat.MatchPlayerStatDtoExtractor
 import com.footballay.core.infra.apisports.match.plan.teamstat.MatchTeamStatDtoExtractor
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
+import com.footballay.core.infra.match.FixtureStatusClassifier
+import com.footballay.core.infra.match.FixtureSyncPhase
+import com.footballay.core.infra.persistence.core.entity.FixtureStatusCode
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -48,6 +51,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
     private val playerStatExtractor: MatchPlayerStatDtoExtractor,
     // 엔티티 저장 관리자 - Plan to Entity 책임
     private val matchEntityPersistManager: MatchEntityPersistManager,
+    private val fixtureStatusClassifier: FixtureStatusClassifier,
 ) : ApiSportsMatchEntitySyncFacade {
     private val log = logger()
 
@@ -100,11 +104,12 @@ class ApiSportsMatchEntitySyncFacadeImpl(
      * 경기 상태를 분석하여 적절한 MatchDataSyncResult를 결정합니다.
      *
      * **상태 판단 기준:**
-     * - **PreMatch** (NS, TBD, INT): 경기 전 단계
+     * - **PreMatch** (NS, TBD): 경기 전 단계
      *   - shouldTerminatePreMatchJob: 완전한 라인업 (모든 선수 ID 존재) OR 킥오프 1분 전
-     * - **Live** (1H, HT, 2H, ET, BT, P, SUSP, LIVE): 경기 진행 중
+     * - **Live** (1H, HT, 2H, ET, BT, P, SUSP, INT, LIVE): 경기 진행 중
      * - **PostMatch** (FT, AET, PEN): 경기 종료 후
      *   - shouldStopPolling: 경기 종료 후 60분 경과
+     * - **NotPlayed** (PST, CANC, ABD, AWD, WO): 정상 진행되지 않은 경기
      *
      * @param dto Match 데이터 DTO
      * @param lineupDto 라인업 데이터
@@ -114,12 +119,13 @@ class ApiSportsMatchEntitySyncFacadeImpl(
         lineupDto: MatchLineupPlanDto,
     ): MatchDataSyncResult {
         val statusShort = dto.fixture.status.short
+        val statusCode = FixtureStatusCode.fromString(statusShort)
         val kickoffTime = dto.fixture.date?.toInstant()
         val elapsedMin = dto.fixture.status.elapsed
+        val now = Instant.now()
 
-        return when {
-            // 경기 종료 상태
-            isMatchFinished(statusShort) -> {
+        return when (fixtureStatusClassifier.determineSyncPhase(statusCode, kickoffTime, now)) {
+            FixtureSyncPhase.POST_MATCH -> {
                 val minutesSinceFinish = calculateMinutesSinceFinish(kickoffTime, elapsedMin)
                 val shouldStopPolling = minutesSinceFinish > POST_MATCH_POLLING_CUTOFF_MINUTES
 
@@ -137,8 +143,7 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 )
             }
 
-            // 경기 진행 중 (명시적 Live 상태 코드)
-            isMatchLive(statusShort) -> {
+            FixtureSyncPhase.LIVE -> {
                 log.info("Match is live - status={}, elapsed={}", statusShort, elapsedMin)
 
                 MatchDataSyncResult.Live(
@@ -149,25 +154,16 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 )
             }
 
-            // NS 상태이지만 킥오프 시간이 지났으면 Live로 간주 (API 응답 지연 고려)
-            statusShort == "NS" && isKickoffPassed(kickoffTime) -> {
-                log.info(
-                    "Match status is NS but kickoff passed, treating as Live - status={}, kickoff={}, now={}",
-                    statusShort,
-                    kickoffTime,
-                    Instant.now(),
-                )
+            FixtureSyncPhase.NOT_PLAYED -> {
+                log.info("Match was not played - status={}, kickoff={}", statusShort, kickoffTime)
 
-                MatchDataSyncResult.Live(
+                MatchDataSyncResult.NotPlayed(
+                    statusCode = statusCode,
                     kickoffTime = kickoffTime,
-                    isMatchFinished = false,
-                    elapsedMin = elapsedMin,
-                    statusShort = statusShort,
                 )
             }
 
-            // 경기 전 단계
-            else -> {
+            FixtureSyncPhase.PRE_MATCH -> {
                 val hasLineup = !lineupDto.isEmpty()
                 val hasCompleteLineup = hasLineup && lineupDto.hasCompleteLineup()
                 val isKickoffImminent = isKickoffWithinMinutes(kickoffTime, KICKOFF_IMMINENT_THRESHOLD_MINUTES)
@@ -189,27 +185,6 @@ class ApiSportsMatchEntitySyncFacadeImpl(
                 )
             }
         }
-    }
-
-    /**
-     * 경기 종료 상태인지 확인
-     */
-    private fun isMatchFinished(statusShort: String): Boolean = statusShort in FINISHED_STATUSES
-
-    /**
-     * 경기 진행 중 상태인지 확인
-     */
-    private fun isMatchLive(statusShort: String): Boolean = statusShort in LIVE_STATUSES
-
-    /**
-     * 킥오프 시간이 지났는지 확인
-     *
-     * @param kickoffTime 킥오프 시각
-     * @return 현재 시각이 킥오프 시각을 지났으면 true
-     */
-    private fun isKickoffPassed(kickoffTime: Instant?): Boolean {
-        if (kickoffTime == null) return false
-        return Instant.now().isAfter(kickoffTime)
     }
 
     /**
@@ -243,13 +218,5 @@ class ApiSportsMatchEntitySyncFacadeImpl(
         val now = Instant.now()
         val matchEndTime = kickoffTime.plusSeconds(elapsedMin.toLong() * 60)
         return Duration.between(matchEndTime, now).toMinutes().coerceAtLeast(0)
-    }
-
-    companion object {
-        // 경기 종료 상태 코드
-        private val FINISHED_STATUSES = setOf("FT", "AET", "PEN", "AWD", "WO", "CANC", "PST", "ABD")
-
-        // 경기 진행 중 상태 코드
-        private val LIVE_STATUSES = setOf("1H", "HT", "2H", "ET", "BT", "P", "SUSP", "LIVE")
     }
 }

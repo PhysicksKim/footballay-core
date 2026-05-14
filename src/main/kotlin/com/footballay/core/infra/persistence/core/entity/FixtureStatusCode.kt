@@ -46,9 +46,6 @@ enum class FixtureStatusCode(
                     P,
                     SUSP,
                     INT,
-                    FT,
-                    AET,
-                    PEN,
                     LIVE,
                 )
     }
