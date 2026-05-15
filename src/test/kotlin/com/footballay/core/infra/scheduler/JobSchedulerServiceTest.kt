@@ -107,6 +107,25 @@ class JobSchedulerServiceTest {
     }
 
     @Test
+    fun `startAt 비교를 끄면 trigger start time이 달라도 같은 spec으로 본다`() {
+        val service = JobSchedulerService(scheduler)
+        val identity = availableIdentity(MatchJobPhase.POST)
+        val schedule =
+            preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
+                .copy(jobClass = PostMatchJob::class.java, compareStartAt = false)
+        val oldSchedule = schedule.copy(startAt = Instant.parse("2026-05-14T09:00:00Z"))
+        whenever(scheduler.checkExists(identity.jobKey)).thenReturn(true)
+        whenever(scheduler.getJobDetail(identity.jobKey)).thenReturn(existingJob(identity, schedule))
+        whenever(scheduler.getTriggersOfJob(identity.jobKey)).thenReturn(listOf(existingTrigger(identity, oldSchedule)))
+
+        val result = service.registerOrReplaceDetailed(identity, schedule)
+
+        assertThat(result).isEqualTo(MatchJobRegistrationResult.Unchanged)
+        verify(scheduler, never()).deleteJob(any())
+        verify(scheduler, never()).scheduleJob(any<JobDetail>(), any<Trigger>())
+    }
+
+    @Test
     fun `available pre live post job을 fixture 기준으로 삭제한다`() {
         val service = JobSchedulerService(scheduler)
         whenever(scheduler.deleteJob(any())).thenReturn(true)

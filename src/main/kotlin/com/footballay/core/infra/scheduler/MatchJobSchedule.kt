@@ -8,6 +8,7 @@ data class MatchJobSchedule(
     val startAt: Instant,
     val repeatIntervalSeconds: Int,
     val repeatCount: Int,
+    val compareStartAt: Boolean = true,
 ) {
     val repeatIntervalMillis: Long = repeatIntervalSeconds * 1000L
 }

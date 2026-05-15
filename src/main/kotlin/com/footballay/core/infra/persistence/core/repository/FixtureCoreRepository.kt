@@ -11,6 +11,31 @@ import java.time.Instant
 interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     fun findByUid(fixtureUid: String): FixtureCore
 
+    @Query(
+        """
+        SELECT f
+        FROM FixtureCore f
+        JOIN FETCH f.league
+        WHERE f.uid = :fixtureUid
+    """,
+    )
+    fun findNullableByUid(
+        @Param("fixtureUid") fixtureUid: String,
+    ): FixtureCore?
+
+    @Query(
+        """
+        SELECT f
+        FROM FixtureCore f
+        JOIN FETCH f.league
+        WHERE f.league.uid = :leagueUid
+          AND f.available = true
+    """,
+    )
+    fun findAvailableFixturesByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+    ): List<FixtureCore>
+
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.
      *

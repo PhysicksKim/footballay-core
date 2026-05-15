@@ -29,6 +29,12 @@ data class MatchJobIdentity(
     val triggerKey: TriggerKey = TriggerKey.triggerKey("$jobName:trigger", groupName)
 
     companion object {
+        /*
+         * Keep available and matchCollect jobs in the same league-level group so a league reconcile
+         * can inspect every match-related job with one group query. Ownership is separated by the
+         * job-name prefix (`available:*` vs `matchcollect:*`), so cleanup/reconcile code must filter
+         * by owner before deleting or replacing jobs.
+         */
         private const val GROUP_PREFIX = "league:match:"
 
         fun groupName(leagueUid: String): String = "$GROUP_PREFIX$leagueUid"

@@ -1,0 +1,348 @@
+package com.footballay.core.infra.scheduler
+
+import com.footballay.core.infra.match.FixtureStatusClassifier
+import com.footballay.core.infra.match.FixtureStatusGroup
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.logger
+import org.quartz.JobKey
+import org.springframework.stereotype.Component
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+
+data class ReconcileError(
+    val fixtureUid: String?,
+    val leagueUid: String?,
+    val phase: MatchJobPhase?,
+    val operation: String,
+    val message: String,
+)
+
+data class ReconcileResult(
+    val fixtureUid: String?,
+    val leagueUid: String?,
+    val success: Boolean,
+    val planned: Int,
+    val registered: Int,
+    val replaced: Int,
+    val deleted: Int,
+    val skipped: Int,
+    val errors: List<ReconcileError>,
+) {
+    companion object {
+        fun empty(
+            fixtureUid: String?,
+            leagueUid: String?,
+        ): ReconcileResult =
+            ReconcileResult(
+                fixtureUid = fixtureUid,
+                leagueUid = leagueUid,
+                success = true,
+                planned = 0,
+                registered = 0,
+                replaced = 0,
+                deleted = 0,
+                skipped = 0,
+                errors = emptyList(),
+            )
+    }
+}
+
+@Component
+class AvailableFixtureJobReconciler(
+    private val fixtureCoreRepository: FixtureCoreRepository,
+    private val jobSchedulerService: JobSchedulerService,
+    private val fixtureStatusClassifier: FixtureStatusClassifier,
+    private val clock: Clock = Clock.systemUTC(),
+) {
+    private val log = logger()
+
+    /**
+     * Fixture uid 를 받아 DB 에서 fixture 와 league 를 조회한 뒤, 해당 fixture 의 available polling job 을
+     * 현재 DB 상태에서 계산한 desired state 에 맞춰 생성/수정/삭제하고 결과를 반환합니다.
+     */
+    fun reconcileFixture(fixtureUid: String): ReconcileResult {
+        val fixture = fixtureCoreRepository.findNullableByUid(fixtureUid)
+        if (fixture == null) {
+            val error =
+                ReconcileError(
+                    fixtureUid = fixtureUid,
+                    leagueUid = null,
+                    phase = null,
+                    operation = "load-fixture",
+                    message = "FixtureCore not found",
+                )
+            return ReconcileResult.empty(fixtureUid, null).copy(success = false, errors = listOf(error))
+        }
+
+        return reconcileFixture(fixture)
+    }
+
+    /**
+     * League uid 를 받아 해당 리그의 available fixture 들을 조회하고, 각 fixture 의 available polling job 을
+     * desired state 에 맞춰 생성/수정/삭제 하고 fixture 별 적용 결과를 하나로 합산해 반환합니다.
+     */
+    fun reconcileLeague(leagueUid: String): ReconcileResult {
+        val fixtures = fixtureCoreRepository.findAvailableFixturesByLeagueUid(leagueUid)
+        if (fixtures.isEmpty()) {
+            return ReconcileResult.empty(fixtureUid = null, leagueUid = leagueUid)
+        }
+
+        return combineResults(
+            fixtureUid = null,
+            leagueUid = leagueUid,
+            results = fixtures.map(::reconcileFixture),
+        )
+    }
+
+    /**
+     * FixtureCore 를 받아 그 객체의 현재 필드 값으로 desired available job 을 계산하고, Quartz actual state 를
+     * 등록/교체/삭제해 맞춘 뒤 적용 결과를 반환합니다.
+     */
+    fun reconcileFixture(fixture: FixtureCore): ReconcileResult {
+        val leagueUid = fixture.league.uid
+        val desired = desiredJobs(fixture, Instant.now(clock))
+        val accumulator =
+            ReconcileAccumulator(
+                fixtureUid = fixture.uid,
+                leagueUid = leagueUid,
+                planned = desired.size,
+            )
+
+        MatchJobPhase.entries.forEach { phase ->
+            val desiredJob = desired[phase]
+            if (desiredJob == null) {
+                deleteActualIfPresent(fixture.uid, leagueUid, phase, accumulator)
+            } else {
+                applyDesired(fixture.uid, leagueUid, desiredJob, accumulator)
+            }
+        }
+
+        return accumulator.toResult()
+    }
+
+    /**
+     * FixtureCore 와 기준 시각을 받아 Quartz 에 있어야 할 available job 목록을 계산합니다.
+     * Quartz 에는 접근하지 않고, `available`, `kickoff`, status group, collection window 만으로 desired phase 를 정합니다.
+     */
+    private fun desiredJobs(
+        fixture: FixtureCore,
+        now: Instant,
+    ): Map<MatchJobPhase, DesiredAvailableJob> {
+        val kickoff = fixture.kickoff
+        if (!fixture.available || kickoff == null) {
+            return emptyMap()
+        }
+
+        val statusGroup = fixtureStatusClassifier.groupOf(fixture.statusCode)
+        if (statusGroup == FixtureStatusGroup.UNKNOWN) {
+            log.warn("Available fixture has unknown status - fixtureUid={}, status={}", fixture.uid, fixture.statusCode)
+            return emptyMap()
+        }
+        if (statusGroup == FixtureStatusGroup.NOT_PLAYED) {
+            return emptyMap()
+        }
+
+        val liveWindowEnd = kickoff.plus(AVAILABLE_LIVE_COLLECTION_WINDOW)
+        val matchWindowEnd = liveWindowEnd.plus(AVAILABLE_POST_COLLECTION_WINDOW)
+
+        return when {
+            now.isBefore(kickoff) -> {
+                mapOf(
+                    MatchJobPhase.PRE to
+                        DesiredAvailableJob(
+                            phase = MatchJobPhase.PRE,
+                            startAt = kickoff.minus(AVAILABLE_PRE_COLLECTION_LEAD_TIME),
+                            compareStartAt = true,
+                        ),
+                    MatchJobPhase.LIVE to
+                        DesiredAvailableJob(
+                            phase = MatchJobPhase.LIVE,
+                            startAt = kickoff,
+                            compareStartAt = true,
+                        ),
+                )
+            }
+
+            now.isBefore(liveWindowEnd) -> {
+                when (statusGroup) {
+                    FixtureStatusGroup.PENDING,
+                    FixtureStatusGroup.LIVE,
+                    -> {
+                        mapOf(MatchJobPhase.LIVE to DesiredAvailableJob(MatchJobPhase.LIVE, kickoff, true))
+                    }
+
+                    FixtureStatusGroup.NORMAL_FINISHED -> {
+                        mapOf(MatchJobPhase.POST to DesiredAvailableJob(MatchJobPhase.POST, now, false))
+                    }
+
+                    FixtureStatusGroup.NOT_PLAYED,
+                    FixtureStatusGroup.UNKNOWN,
+                    -> {
+                        emptyMap()
+                    }
+                }
+            }
+
+            now.isBefore(matchWindowEnd) -> {
+                if (statusGroup == FixtureStatusGroup.NORMAL_FINISHED) {
+                    mapOf(MatchJobPhase.POST to DesiredAvailableJob(MatchJobPhase.POST, now, false))
+                } else {
+                    emptyMap()
+                }
+            }
+
+            else -> {
+                emptyMap()
+            }
+        }
+    }
+
+    /**
+     * Desired job 하나를 받아 Quartz 등록/교체를 요청하고, 그 결과를 ReconcileResult 집계를 위한
+     * counter 또는 error 로 기록합니다.
+     */
+    private fun applyDesired(
+        fixtureUid: String,
+        leagueUid: String,
+        desired: DesiredAvailableJob,
+        accumulator: ReconcileAccumulator,
+    ) {
+        when (
+            val result =
+                jobSchedulerService.registerOrReplaceAvailableJob(
+                    phase = desired.phase,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                    startTime = desired.startAt,
+                    compareStartAt = desired.compareStartAt,
+                )
+        ) {
+            MatchJobRegistrationResult.Registered -> {
+                accumulator.registered++
+            }
+
+            MatchJobRegistrationResult.Replaced -> {
+                accumulator.replaced++
+            }
+
+            MatchJobRegistrationResult.Unchanged -> {
+                accumulator.skipped++
+            }
+
+            is MatchJobRegistrationResult.Failed -> {
+                accumulator.errors +=
+                    ReconcileError(
+                        fixtureUid = fixtureUid,
+                        leagueUid = leagueUid,
+                        phase = desired.phase,
+                        operation = "register-or-replace",
+                        message = result.message,
+                    )
+            }
+        }
+    }
+
+    /**
+     * Desired state 에 없는 available phase 를 받아 해당 actual job 이 존재하면 삭제하고, 삭제 결과를
+     * ReconcileResult 집계를 위한 counter 또는 error 로 기록합니다.
+     */
+    private fun deleteActualIfPresent(
+        fixtureUid: String,
+        leagueUid: String,
+        phase: MatchJobPhase,
+        accumulator: ReconcileAccumulator,
+    ) {
+        val jobKey = availableJobKey(leagueUid, fixtureUid, phase)
+        if (!jobSchedulerService.jobExists(jobKey)) {
+            return
+        }
+
+        if (jobSchedulerService.removeJob(jobKey)) {
+            accumulator.deleted++
+        } else {
+            accumulator.errors +=
+                ReconcileError(
+                    fixtureUid = fixtureUid,
+                    leagueUid = leagueUid,
+                    phase = phase,
+                    operation = "delete",
+                    message = "Failed to delete existing available fixture job: $jobKey",
+                )
+        }
+    }
+
+    /**
+     * League uid, fixture uid, phase 를 받아 available owner prefix 를 가진 Quartz JobKey 를 생성합니다.
+     * 이 key 만 사용해 같은 league group 안의 matchCollect job 과 수정 범위를 분리합니다.
+     */
+    private fun availableJobKey(
+        leagueUid: String,
+        fixtureUid: String,
+        phase: MatchJobPhase,
+    ): JobKey =
+        MatchJobIdentity(
+            owner = MatchJobOwner.AVAILABLE,
+            phase = phase,
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+        ).jobKey
+
+    /**
+     * 여러 fixture reconcile 결과를 받아 성공 여부, counter, error 목록을 합산한 리그 단위 결과를 반환합니다.
+     * 일부 fixture 가 실패해도 나머지 fixture 의 적용 결과는 버리지 않습니다.
+     */
+    private fun combineResults(
+        fixtureUid: String?,
+        leagueUid: String?,
+        results: List<ReconcileResult>,
+    ): ReconcileResult =
+        ReconcileResult(
+            fixtureUid = fixtureUid,
+            leagueUid = leagueUid,
+            success = results.all { it.success },
+            planned = results.sumOf { it.planned },
+            registered = results.sumOf { it.registered },
+            replaced = results.sumOf { it.replaced },
+            deleted = results.sumOf { it.deleted },
+            skipped = results.sumOf { it.skipped },
+            errors = results.flatMap { it.errors },
+        )
+
+    private data class DesiredAvailableJob(
+        val phase: MatchJobPhase,
+        val startAt: Instant,
+        val compareStartAt: Boolean,
+    )
+
+    private data class ReconcileAccumulator(
+        val fixtureUid: String,
+        val leagueUid: String,
+        val planned: Int,
+        var registered: Int = 0,
+        var replaced: Int = 0,
+        var deleted: Int = 0,
+        var skipped: Int = 0,
+        var errors: List<ReconcileError> = emptyList(),
+    ) {
+        fun toResult(): ReconcileResult =
+            ReconcileResult(
+                fixtureUid = fixtureUid,
+                leagueUid = leagueUid,
+                success = errors.isEmpty(),
+                planned = planned,
+                registered = registered,
+                replaced = replaced,
+                deleted = deleted,
+                skipped = skipped,
+                errors = errors,
+            )
+    }
+
+    companion object {
+        val AVAILABLE_PRE_COLLECTION_LEAD_TIME: Duration = Duration.ofHours(1)
+        val AVAILABLE_LIVE_COLLECTION_WINDOW: Duration = Duration.ofHours(5)
+        val AVAILABLE_POST_COLLECTION_WINDOW: Duration = Duration.ofHours(1)
+    }
+}

@@ -48,22 +48,12 @@ class JobSchedulerService(
         fixtureUid: String,
         startTime: Instant,
     ): Boolean =
-        registerOrReplace(
-            identity =
-                MatchJobIdentity(
-                    owner = MatchJobOwner.AVAILABLE,
-                    phase = MatchJobPhase.PRE,
-                    leagueUid = leagueUid,
-                    fixtureUid = fixtureUid,
-                ),
-            schedule =
-                MatchJobSchedule(
-                    jobClass = PreMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = PRE_MATCH_INTERVAL_SECONDS,
-                    repeatCount = PRE_MATCH_MAX_EXECUTIONS,
-                ),
-        )
+        registerOrReplaceAvailableJob(
+            phase = MatchJobPhase.PRE,
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            startTime = startTime,
+        ).success
 
     @Deprecated("Use addPreMatchJob(leagueUid, fixtureUid, startTime)")
     fun addPreMatchJob(
@@ -123,22 +113,12 @@ class JobSchedulerService(
         fixtureUid: String,
         startTime: Instant,
     ): Boolean =
-        registerOrReplace(
-            identity =
-                MatchJobIdentity(
-                    owner = MatchJobOwner.AVAILABLE,
-                    phase = MatchJobPhase.LIVE,
-                    leagueUid = leagueUid,
-                    fixtureUid = fixtureUid,
-                ),
-            schedule =
-                MatchJobSchedule(
-                    jobClass = LiveMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = LIVE_MATCH_INTERVAL_SECONDS,
-                    repeatCount = LIVE_MATCH_MAX_EXECUTIONS,
-                ),
-        )
+        registerOrReplaceAvailableJob(
+            phase = MatchJobPhase.LIVE,
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            startTime = startTime,
+        ).success
 
     @Deprecated("Use addLiveMatchJob(leagueUid, fixtureUid, startTime)")
     fun addLiveMatchJob(
@@ -198,22 +178,12 @@ class JobSchedulerService(
         fixtureUid: String,
         startTime: Instant = Instant.now(),
     ): Boolean =
-        registerOrReplace(
-            identity =
-                MatchJobIdentity(
-                    owner = MatchJobOwner.AVAILABLE,
-                    phase = MatchJobPhase.POST,
-                    leagueUid = leagueUid,
-                    fixtureUid = fixtureUid,
-                ),
-            schedule =
-                MatchJobSchedule(
-                    jobClass = PostMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = POST_MATCH_INTERVAL_SECONDS,
-                    repeatCount = POST_MATCH_MAX_EXECUTIONS,
-                ),
-        )
+        registerOrReplaceAvailableJob(
+            phase = MatchJobPhase.POST,
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            startTime = startTime,
+        ).success
 
     @Deprecated("Use addPostMatchJob(leagueUid, fixtureUid, startTime)")
     fun addPostMatchJob(
@@ -348,45 +318,56 @@ class JobSchedulerService(
     fun registerOrReplace(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,
-    ): Boolean {
+    ): Boolean = registerOrReplaceDetailed(identity, schedule).success
+
+    fun registerOrReplaceAvailableJob(
+        phase: MatchJobPhase,
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant,
+        compareStartAt: Boolean = true,
+    ): MatchJobRegistrationResult =
+        registerOrReplaceDetailed(
+            identity =
+                MatchJobIdentity(
+                    owner = MatchJobOwner.AVAILABLE,
+                    phase = phase,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                ),
+            schedule =
+                availableJobSchedule(
+                    phase = phase,
+                    startTime = startTime,
+                    compareStartAt = compareStartAt,
+                ),
+        )
+
+    fun registerOrReplaceDetailed(
+        identity: MatchJobIdentity,
+        schedule: MatchJobSchedule,
+    ): MatchJobRegistrationResult {
         try {
             if (scheduler.checkExists(identity.jobKey)) {
                 if (matchesDesiredSpec(identity, schedule)) {
                     log.info("Match job already matches desired spec - jobKey={}", identity.jobKey)
-                    return true
+                    return MatchJobRegistrationResult.Unchanged
                 }
 
                 log.info("Match job spec changed - replacing jobKey={}", identity.jobKey)
-                removeJob(identity.jobKey)
+                if (!removeJob(identity.jobKey)) {
+                    return MatchJobRegistrationResult.Failed("Failed to remove existing job: ${identity.jobKey}")
+                }
+
+                register(identity, schedule)
+                return MatchJobRegistrationResult.Replaced
             }
 
-            val job =
-                JobBuilder
-                    .newJob(schedule.jobClass)
-                    .withIdentity(identity.jobKey)
-                    .usingJobData(KEY_FIXTURE_UID, identity.fixtureUid)
-                    .build()
-
-            val trigger =
-                TriggerBuilder
-                    .newTrigger()
-                    .withIdentity(identity.triggerKey)
-                    .forJob(identity.jobKey)
-                    .startAt(Date.from(schedule.startAt))
-                    .withSchedule(
-                        SimpleScheduleBuilder
-                            .simpleSchedule()
-                            .withIntervalInSeconds(schedule.repeatIntervalSeconds)
-                            .withRepeatCount(schedule.repeatCount)
-                            .withMisfireHandlingInstructionNowWithRemainingCount(),
-                    ).build()
-
-            scheduler.scheduleJob(job, trigger)
-            log.info("Registered match job - jobKey={}, triggerKey={}", identity.jobKey, identity.triggerKey)
-            return true
+            register(identity, schedule)
+            return MatchJobRegistrationResult.Registered
         } catch (e: Exception) {
             log.error("Failed to register match job - identity={}", identity, e)
-            return false
+            return MatchJobRegistrationResult.Failed(e.message ?: e::class.simpleName.orEmpty())
         }
     }
 
@@ -400,6 +381,9 @@ class JobSchedulerService(
             emptySet()
         }
 
+    /**
+     * Match Job이 일치하는지 검사
+     */
     private fun matchesDesiredSpec(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,
@@ -411,9 +395,75 @@ class JobSchedulerService(
 
         val trigger = scheduler.getTriggersOfJob(identity.jobKey).singleOrNull() as? SimpleTrigger ?: return false
 
-        return trigger.startTime == Date.from(schedule.startAt) &&
+        return (!schedule.compareStartAt || trigger.startTime == Date.from(schedule.startAt)) &&
             trigger.repeatInterval == schedule.repeatIntervalMillis &&
             trigger.repeatCount == schedule.repeatCount
+    }
+
+    private fun availableJobSchedule(
+        phase: MatchJobPhase,
+        startTime: Instant,
+        compareStartAt: Boolean,
+    ): MatchJobSchedule =
+        when (phase) {
+            MatchJobPhase.PRE -> {
+                MatchJobSchedule(
+                    jobClass = PreMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = PRE_MATCH_INTERVAL_SECONDS,
+                    repeatCount = PRE_MATCH_MAX_EXECUTIONS,
+                    compareStartAt = compareStartAt,
+                )
+            }
+
+            MatchJobPhase.LIVE -> {
+                MatchJobSchedule(
+                    jobClass = LiveMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = LIVE_MATCH_INTERVAL_SECONDS,
+                    repeatCount = LIVE_MATCH_MAX_EXECUTIONS,
+                    compareStartAt = compareStartAt,
+                )
+            }
+
+            MatchJobPhase.POST -> {
+                MatchJobSchedule(
+                    jobClass = PostMatchJob::class.java,
+                    startAt = startTime,
+                    repeatIntervalSeconds = POST_MATCH_INTERVAL_SECONDS,
+                    repeatCount = POST_MATCH_MAX_EXECUTIONS,
+                    compareStartAt = compareStartAt,
+                )
+            }
+        }
+
+    private fun register(
+        identity: MatchJobIdentity,
+        schedule: MatchJobSchedule,
+    ) {
+        val job =
+            JobBuilder
+                .newJob(schedule.jobClass)
+                .withIdentity(identity.jobKey)
+                .usingJobData(KEY_FIXTURE_UID, identity.fixtureUid)
+                .build()
+
+        val trigger =
+            TriggerBuilder
+                .newTrigger()
+                .withIdentity(identity.triggerKey)
+                .forJob(identity.jobKey)
+                .startAt(Date.from(schedule.startAt))
+                .withSchedule(
+                    SimpleScheduleBuilder
+                        .simpleSchedule()
+                        .withIntervalInSeconds(schedule.repeatIntervalSeconds)
+                        .withRepeatCount(schedule.repeatCount)
+                        .withMisfireHandlingInstructionNowWithRemainingCount(),
+                ).build()
+
+        scheduler.scheduleJob(job, trigger)
+        log.info("Registered match job - jobKey={}, triggerKey={}", identity.jobKey, identity.triggerKey)
     }
 
     /**
@@ -443,5 +493,27 @@ class JobSchedulerService(
         // PostMatch Job 설정 (60초 간격, 최대 1시간 = 60회)
         private const val POST_MATCH_INTERVAL_SECONDS = 60
         private const val POST_MATCH_MAX_EXECUTIONS = 60
+    }
+}
+
+sealed class MatchJobRegistrationResult {
+    abstract val success: Boolean
+
+    data object Registered : MatchJobRegistrationResult() {
+        override val success: Boolean = true
+    }
+
+    data object Replaced : MatchJobRegistrationResult() {
+        override val success: Boolean = true
+    }
+
+    data object Unchanged : MatchJobRegistrationResult() {
+        override val success: Boolean = true
+    }
+
+    data class Failed(
+        val message: String,
+    ) : MatchJobRegistrationResult() {
+        override val success: Boolean = false
     }
 }

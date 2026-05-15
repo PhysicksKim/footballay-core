@@ -6,13 +6,11 @@ import com.footballay.core.infra.persistence.apisports.entity.FixtureApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.infra.scheduler.JobSchedulerService
-import com.footballay.core.infra.scheduler.MatchJobOwner
+import com.footballay.core.infra.scheduler.AvailableFixtureJobReconciler
+import com.footballay.core.infra.scheduler.ReconcileResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.Instant
 
 /**
  * Available Fixture 관리 Facade
@@ -21,7 +19,7 @@ import java.time.Instant
  *
  * **동작 흐름:**
  * 1. Fixture available = true 설정
- * 2. PreMatchJob 등록 (킥오프 1시간 전부터 시작 권장)
+ * 2. AvailableFixtureJobReconciler 로 desired Quartz Job 적용
  * 3. PreMatchJob → LiveMatchJob → PostMatchJob 자동 전환
  * 4. Fixture available = false 설정 → 모든 Job 삭제
  */
@@ -29,8 +27,7 @@ import java.time.Instant
 class AvailableFixtureFacade(
     private val fixtureCoreRepository: FixtureCoreRepository,
     private val fixtureApiSportsRepository: FixtureApiSportsRepository,
-    private val jobSchedulerService: JobSchedulerService,
-    private val clock: Clock = Clock.systemUTC(),
+    private val availableFixtureJobReconciler: AvailableFixtureJobReconciler,
 ) {
     private val log = logger()
 
@@ -43,8 +40,8 @@ class AvailableFixtureFacade(
      * - 추후 kickoff 시간이 확정되면 다시 available 설정 시도 가능
      *
      * **Job 등록 전략:**
-     * - PreMatchJob: kickoff 1시간 전 시작 (최소 킥오프 1분 전 종료)
-     * - LiveMatchJob: kickoff 시간에 시작 (사전 등록)
+     * - DB 상태를 먼저 available=true 로 바꾼 뒤 reconciler 가 desired Job 을 계산/적용
+     * - Quartz apply 실패 시 available flag 를 rollback 하고 best-effort compensation 수행
      *
      * **개선 가능성:**
      * - 추후 kickoff 시간 변경 이벤트 처리
@@ -96,69 +93,29 @@ class AvailableFixtureFacade(
             )
         }
 
-        val now = Instant.now(clock)
-        val leagueUid = fixtureCore.league.uid
-
         // 5. FixtureCore available 플래그 설정
         setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
         log.info(
-            "FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true, kickoff={}, now={}",
+            "FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true, kickoff={}",
             fixtureApiId,
             fixtureCore.uid,
             kickoff,
-            now,
         )
 
-        // 6. PreMatchJob 조건부 등록 (킥오프 이전인 경우에만)
-        if (kickoff.isAfter(now)) {
-            val preMatchStartTime = calculatePreMatchJobStartTime(kickoff)
-            val preJobAdded = jobSchedulerService.addPreMatchJob(leagueUid, fixtureCore.uid, preMatchStartTime)
-
-            if (!preJobAdded) {
-                log.error(
-                    "Failed to add PreMatchJob - fixtureApiId={}, uid={}, kickoff={}, preMatchStart={}",
-                    fixtureApiId,
-                    fixtureCore.uid,
-                    kickoff,
-                    preMatchStartTime,
-                )
-
-                // available 플래그 롤백
-                setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
-
-                return DomainResult.Fail(
-                    DomainFail.Validation.single(
-                        code = "PRE_MATCH_JOB_REGISTRATION_FAILED",
-                        message = "Failed to register PreMatchJob for fixture ${fixtureCore.uid}",
-                        field = "fixtureApiId",
-                    ),
-                )
-            }
-        } else {
-            log.info(
-                "Kickoff already passed, skipping PreMatchJob - fixtureApiId={}, uid={}, kickoff={}, now={}",
+        val reconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
+        if (!reconcileResult.success) {
+            log.error(
+                "Available fixture job reconcile failed - fixtureApiId={}, uid={}, result={}",
                 fixtureApiId,
                 fixtureCore.uid,
-                kickoff,
-                now,
+                reconcileResult,
             )
-        }
-
-        // 7. LiveMatchJob 사전 등록 (킥오프 시간에 시작)
-        val liveJobAdded = jobSchedulerService.addLiveMatchJob(leagueUid, fixtureCore.uid, kickoff)
-
-        if (!liveJobAdded) {
-            log.error("Failed to add LiveMatchJob - fixtureApiId={}, uid={}, rolling back PreMatchJob", fixtureApiId, fixtureCore.uid)
-            // PreMatchJob 롤백
-            jobSchedulerService.deleteFixtureJobs(leagueUid, fixtureCore.uid, MatchJobOwner.AVAILABLE)
-
-            // available 플래그 롤백
             setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
-
+            compensateAfterAvailableFlagRollback(fixtureCore.uid, reconcileResult)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
-                    code = "LIVE_MATCH_JOB_REGISTRATION_FAILED",
-                    message = "Failed to register LiveMatchJob for fixture ${fixtureCore.uid}",
+                    code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
+                    message = "Failed to reconcile available fixture jobs for fixture ${fixtureCore.uid}",
                     field = "fixtureApiId",
                 ),
             )
@@ -224,38 +181,48 @@ class AvailableFixtureFacade(
         setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
         log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
 
-        // 6. 모든 Job 삭제
-        val deletedCount = jobSchedulerService.deleteFixtureJobs(fixtureCore.league.uid, fixtureCore.uid, MatchJobOwner.AVAILABLE)
+        // 5. 모든 available fixture Job 정리
+        val reconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
+        if (!reconcileResult.success) {
+            log.error(
+                "Available fixture job cleanup reconcile failed - fixtureApiId={}, uid={}, result={}",
+                fixtureApiId,
+                fixtureCore.uid,
+                reconcileResult,
+            )
+            setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
+            compensateAfterAvailableFlagRollback(fixtureCore.uid, reconcileResult)
+            return DomainResult.Fail(
+                DomainFail.Validation.single(
+                    code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
+                    message = "Failed to reconcile available fixture jobs for fixture ${fixtureCore.uid}",
+                    field = "fixtureApiId",
+                ),
+            )
+        }
 
         log.info(
-            "Available fixture removed successfully - fixtureApiId={}, uid={}, deletedJobs={}",
+            "Available fixture removed successfully - fixtureApiId={}, uid={}, reconcileResult={}",
             fixtureApiId,
             fixtureCore.uid,
-            deletedCount,
+            reconcileResult,
         )
 
         return DomainResult.Success(fixtureCore.uid)
     }
 
-    /**
-     * PreMatchJob 시작 시각 계산
-     *
-     * - 킥오프 1시간 전부터 시작 (권장)
-     * - 이미 킥오프 1시간 전이 지났으면 즉시 시작
-     *
-     * @param kickoff 경기 킥오프 시각 (UTC, non-null, addAvailableFixture에서 이미 검증됨)
-     * @return PreMatchJob 시작 시각 (Instant, UTC)
-     */
-    private fun calculatePreMatchJobStartTime(kickoff: Instant): Instant {
-        val oneHourBeforeKickoff = kickoff.minusSeconds(3600) // 1시간 = 3600초
-        val now = Instant.now(clock)
-
-        return if (oneHourBeforeKickoff.isBefore(now)) {
-            // 이미 킥오프 1시간 전이 지났으면 즉시 시작
-            now
-        } else {
-            // 킥오프 1시간 전부터 시작
-            oneHourBeforeKickoff
+    private fun compensateAfterAvailableFlagRollback(
+        fixtureUid: String,
+        originalFailure: ReconcileResult,
+    ) {
+        val compensationResult = availableFixtureJobReconciler.reconcileFixture(fixtureUid)
+        if (!compensationResult.success) {
+            log.error(
+                "Best-effort available fixture job compensation failed - fixtureUid={}, originalFailure={}, compensationResult={}",
+                fixtureUid,
+                originalFailure,
+                compensationResult,
+            )
         }
     }
 }
