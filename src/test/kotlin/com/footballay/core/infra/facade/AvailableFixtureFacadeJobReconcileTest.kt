@@ -22,7 +22,7 @@ import org.mockito.kotlin.whenever
 import java.time.Instant
 
 @ExtendWith(MockitoExtension::class)
-class AvailableFixtureFacadeR5Test {
+class AvailableFixtureFacadeJobReconcileTest {
     @Mock
     private lateinit var fixtureCoreRepository: FixtureCoreRepository
 
@@ -162,17 +162,18 @@ class AvailableFixtureFacadeR5Test {
         ReconcileResult.empty(
             fixtureUid = fixtureUid,
             leagueUid = "league-1",
-        ).copy(
-            success = false,
-            errors =
-                listOf(
-                    ReconcileError(
-                        fixtureUid = fixtureUid,
-                        leagueUid = "league-1",
-                        phase = null,
-                        operation = "register-or-replace",
-                        message = "failed",
-                    ),
-                ),
         )
+            .copy(
+                success = false,
+                errors =
+                    listOf(
+                        ReconcileError(
+                            fixtureUid = fixtureUid,
+                            leagueUid = "league-1",
+                            phase = null,
+                            operation = "register-or-replace",
+                            message = "failed",
+                        ),
+                    ),
+            )
 }

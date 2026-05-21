@@ -5,6 +5,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
 import com.footballay.core.infra.facade.ApiSportsBackboneSyncFacade
 import com.footballay.core.infra.facade.AvailableLeagueFacade
+import com.footballay.core.infra.fixture.schedule.FixtureScheduleUpdater
 import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.PlayersSyncResultDto
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service
 class AdminApiSportsWebService(
     private val apiSportsBackboneSyncFacade: ApiSportsBackboneSyncFacade,
     private val availableLeagueFacade: AvailableLeagueFacade,
+    private val fixtureScheduleUpdater: FixtureScheduleUpdater,
 ) {
     private val log = logger()
 
@@ -102,7 +104,7 @@ class AdminApiSportsWebService(
     @PreAuthorize("hasRole('ADMIN')")
     fun syncFixturesOfLeague(leagueApiId: Long): DomainResult<Int, DomainFail> {
         log.info("Starting fixtures sync request for leagueId=$leagueApiId")
-        return apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueApiId)
+        return fixtureScheduleUpdater.updateCurrentSeason(leagueApiId)
     }
 
     /**
