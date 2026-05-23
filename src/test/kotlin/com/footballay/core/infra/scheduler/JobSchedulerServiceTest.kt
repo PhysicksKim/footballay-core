@@ -169,6 +169,63 @@ class JobSchedulerServiceTest {
         assertThat(jobCaptor.firstValue.key).isEqualTo(JobKey.jobKey("available:pre:fixture-1", "league:match:league-1"))
     }
 
+    @Test
+    fun `startup cleanup은 old available group과 current available owner job만 삭제한다`() {
+        val service = JobSchedulerService(scheduler)
+        val oldPreJob = JobKey.jobKey("pre-match-fixture-1", "pre-match")
+        val oldLiveJob = JobKey.jobKey("live-match-fixture-1", "live-match")
+        val currentAvailableJob = JobKey.jobKey("available:pre:fixture-2", "league:match:league-1")
+        val currentMatchCollectJob = JobKey.jobKey("matchcollect:live:fixture-3", "league:match:league-1")
+        val legacyFootballJob = JobKey.jobKey("live-match-100", "football-fixture")
+
+        whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>()))
+            .thenReturn(setOf(oldPreJob))
+            .thenReturn(setOf(oldLiveJob))
+            .thenReturn(emptySet())
+            .thenReturn(setOf(currentAvailableJob, currentMatchCollectJob))
+        whenever(scheduler.getJobGroupNames()).thenReturn(listOf("league:match:league-1", "football-fixture"))
+        whenever(scheduler.deleteJob(any())).thenReturn(true)
+
+        val result = service.deleteStartupAvailableMatchJobs()
+
+        assertThat(result.success).isTrue()
+        assertThat(result.deleted).isEqualTo(3)
+        assertThat(result.skipped).isEqualTo(1)
+        verify(scheduler).deleteJob(oldPreJob)
+        verify(scheduler).deleteJob(oldLiveJob)
+        verify(scheduler).deleteJob(currentAvailableJob)
+        verify(scheduler, never()).deleteJob(currentMatchCollectJob)
+        verify(scheduler, never()).deleteJob(legacyFootballJob)
+    }
+
+    @Test
+    fun `startup cleanup은 삭제할 job이 없어도 성공한다`() {
+        val service = JobSchedulerService(scheduler)
+        whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>())).thenReturn(emptySet())
+        whenever(scheduler.getJobGroupNames()).thenReturn(emptyList())
+
+        val result = service.deleteStartupAvailableMatchJobs()
+
+        assertThat(result.success).isTrue()
+        assertThat(result.deleted).isZero()
+        assertThat(result.skipped).isZero()
+        verify(scheduler, never()).deleteJob(any())
+    }
+
+    @Test
+    fun `startup cleanup은 group 조회 실패를 error로 기록한다`() {
+        val service = JobSchedulerService(scheduler)
+        whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>()))
+            .thenThrow(RuntimeException("quartz failed"))
+        whenever(scheduler.getJobGroupNames()).thenReturn(emptyList())
+
+        val result = service.deleteStartupAvailableMatchJobs()
+
+        assertThat(result.success).isFalse()
+        assertThat(result.errors).isNotEmpty
+        assertThat(result.errors.first().operation).isEqualTo("list-jobs:legacy-available-group")
+    }
+
     private fun availableIdentity(phase: MatchJobPhase): MatchJobIdentity =
         MatchJobIdentity(
             owner = MatchJobOwner.AVAILABLE,

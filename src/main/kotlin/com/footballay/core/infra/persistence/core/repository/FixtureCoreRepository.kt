@@ -36,6 +36,15 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         @Param("leagueUid") leagueUid: String,
     ): List<FixtureCore>
 
+    @Query(
+        """
+        SELECT DISTINCT f.league.uid
+        FROM FixtureCore f
+        WHERE f.available = true
+    """,
+    )
+    fun findDistinctLeagueUidsWithAvailableFixtures(): List<String>
+
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.
      *

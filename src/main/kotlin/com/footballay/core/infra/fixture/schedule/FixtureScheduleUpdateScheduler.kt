@@ -10,6 +10,7 @@ import org.quartz.TriggerKey
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 /**
@@ -28,6 +29,7 @@ class FixtureScheduleUpdateScheduler(
 ) {
     private val log = logger()
 
+    @Order(100)
     @EventListener(ApplicationReadyEvent::class)
     fun registerAndTriggerOnStartup() {
         val registered = registerHourlyJob()

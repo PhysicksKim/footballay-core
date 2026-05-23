@@ -375,11 +375,51 @@ class JobSchedulerService(
 
     fun listLeagueMatchJobs(leagueUid: String): Set<JobKey> =
         try {
-            scheduler.getJobKeys(GroupMatcher.jobGroupEquals(MatchJobIdentity.groupName(leagueUid)))
+            findJobKeysOf(MatchJobIdentity.groupName(leagueUid))
         } catch (e: Exception) {
             log.error("Failed to list league match jobs - leagueUid={}", leagueUid, e)
             emptySet()
         }
+
+    fun deleteStartupAvailableMatchJobs(): MatchJobCleanupResult {
+        val accumulator = MatchJobCleanupAccumulator()
+
+        LEGACY_AVAILABLE_JOB_GROUPS.forEach { groupName ->
+            deleteJobsInGroup(
+                groupName = groupName,
+                scope = "legacy-available-group",
+                accumulator = accumulator,
+            )
+        }
+
+        val currentGroups =
+            try {
+                scheduler.getJobGroupNames().filter(MatchJobIdentity::isLeagueMatchGroup)
+            } catch (e: Exception) {
+                accumulator.addCurrentGroupError(e)
+                emptyList()
+            }
+
+        currentGroups.forEach { groupName ->
+            deleteJobsInGroup(
+                groupName = groupName,
+                scope = "current-available-owner",
+                accumulator = accumulator,
+            ) { jobKey ->
+                MatchJobIdentity.isOwnerJobName(MatchJobOwner.AVAILABLE, jobKey.name)
+            }
+        }
+
+        val result = accumulator.toResult()
+        log.info(
+            "Startup available match job cleanup finished - deleted={}, skipped={}, success={}, errors={}",
+            result.deleted,
+            result.skipped,
+            result.success,
+            result.errors.size,
+        )
+        return result
+    }
 
     /**
      * Match Job이 일치하는지 검사
@@ -466,6 +506,46 @@ class JobSchedulerService(
         log.info("Registered match job - jobKey={}, triggerKey={}", identity.jobKey, identity.triggerKey)
     }
 
+    private fun deleteJobsInGroup(
+        groupName: String,
+        scope: String,
+        accumulator: MatchJobCleanupAccumulator,
+        shouldDelete: (JobKey) -> Boolean = { true },
+    ) {
+        val jobKeys =
+            try {
+                findJobKeysOf(groupName)
+            } catch (e: Exception) {
+                val operation = "list-jobs:$scope"
+                val message = e.message ?: e::class.simpleName.orEmpty()
+                accumulator.addCleanupError(groupName, operation, message)
+                return
+            }
+
+        jobKeys.forEach { jobKey ->
+            if (!shouldDelete(jobKey)) {
+                accumulator.skipped++
+                return@forEach
+            }
+
+            try {
+                if (scheduler.deleteJob(jobKey)) {
+                    accumulator.deleted++
+                } else {
+                    val operation = "delete:$scope"
+                    val message = "Quartz returned false while deleting job"
+                    accumulator.addCleanupError(groupName, operation, message, jobKey)
+                }
+            } catch (e: Exception) {
+                val operation = "delete:$scope"
+                val message = e.message ?: e::class.simpleName.orEmpty()
+                accumulator.addCleanupError(groupName, operation, message, jobKey)
+            }
+        }
+    }
+
+    private fun findJobKeysOf(groupName: String): Set<JobKey> = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(groupName))
+
     /**
      * JobKey 생성 헬퍼
      */
@@ -481,6 +561,12 @@ class JobSchedulerService(
         private const val JOB_GROUP_PRE_MATCH = "pre-match"
         private const val JOB_GROUP_LIVE_MATCH = "live-match"
         private const val JOB_GROUP_POST_MATCH = "post-match"
+        private val LEGACY_AVAILABLE_JOB_GROUPS =
+            listOf(
+                JOB_GROUP_PRE_MATCH,
+                JOB_GROUP_LIVE_MATCH,
+                JOB_GROUP_POST_MATCH,
+            )
 
         // PreMatch Job 설정 (60초 간격, 최대 5시간 = 300회)
         private const val PRE_MATCH_INTERVAL_SECONDS = 60
@@ -493,6 +579,60 @@ class JobSchedulerService(
         // PostMatch Job 설정 (60초 간격, 최대 1시간 = 60회)
         private const val POST_MATCH_INTERVAL_SECONDS = 60
         private const val POST_MATCH_MAX_EXECUTIONS = 60
+    }
+}
+
+data class MatchJobCleanupError(
+    val groupName: String?,
+    val jobKey: JobKey?,
+    val operation: String,
+    val message: String,
+)
+
+data class MatchJobCleanupResult(
+    val deleted: Int,
+    val skipped: Int,
+    val errors: List<MatchJobCleanupError>,
+) {
+    val success: Boolean
+        get() = errors.isEmpty()
+}
+
+private data class MatchJobCleanupAccumulator(
+    var deleted: Int = 0,
+    var skipped: Int = 0,
+    var errors: List<MatchJobCleanupError> = emptyList(),
+) {
+    fun toResult(): MatchJobCleanupResult =
+        MatchJobCleanupResult(
+            deleted = deleted,
+            skipped = skipped,
+            errors = errors,
+        )
+
+    fun addCurrentGroupError(e: Exception) {
+        this.errors +=
+            MatchJobCleanupError(
+                groupName = null,
+                jobKey = null,
+                operation = "list-current-groups",
+                message = e.message ?: e::class.simpleName.orEmpty(),
+            )
+    }
+
+    fun addCleanupError(
+        groupName: String,
+        operation: String,
+        message: String,
+        jobKey: JobKey? = null,
+    ) {
+        this.errors +=
+            MatchJobCleanupError(
+                groupName = groupName,
+                jobKey = jobKey,
+                operation = operation,
+                message = message,
+            )
     }
 }
 

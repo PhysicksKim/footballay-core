@@ -44,5 +44,12 @@ data class MatchJobIdentity(
                 .takeIf { it.startsWith(GROUP_PREFIX) }
                 ?.removePrefix(GROUP_PREFIX)
                 ?.takeIf { it.isNotBlank() }
+
+        fun isLeagueMatchGroup(groupName: String): Boolean = leagueUidFromGroup(groupName) != null
+
+        fun isOwnerJobName(
+            owner: MatchJobOwner,
+            jobName: String,
+        ): Boolean = jobName.startsWith("${owner.key}:")
     }
 }
