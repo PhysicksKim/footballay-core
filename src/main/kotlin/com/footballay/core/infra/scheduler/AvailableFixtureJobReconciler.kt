@@ -281,13 +281,16 @@ class AvailableFixtureJobReconciler(
         leagueUid: String,
         fixtureUid: String,
         phase: MatchJobPhase,
-    ): JobKey =
-        MatchJobIdentity(
-            owner = MatchJobOwner.AVAILABLE,
-            phase = phase,
-            leagueUid = leagueUid,
-            fixtureUid = fixtureUid,
-        ).jobKey
+    ): JobKey {
+        val identity =
+            MatchJobIdentity(
+                owner = MatchJobOwner.AVAILABLE,
+                phase = phase,
+                leagueUid = leagueUid,
+                fixtureUid = fixtureUid,
+            )
+        return MatchJobKeyFactory.jobKey(identity)
+    }
 
     /**
      * 여러 fixture reconcile 결과를 받아 성공 여부, counter, error 목록을 합산한 리그 단위 결과를 반환합니다.

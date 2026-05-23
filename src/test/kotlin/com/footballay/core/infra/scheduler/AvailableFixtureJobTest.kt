@@ -102,11 +102,14 @@ class AvailableFixtureJobTest {
     private fun availableJobKey(
         phase: MatchJobPhase,
         fixtureUid: String,
-    ): JobKey =
-        MatchJobIdentity(
-            owner = MatchJobOwner.AVAILABLE,
-            phase = phase,
-            leagueUid = "league-1",
-            fixtureUid = fixtureUid,
-        ).jobKey
+    ): JobKey {
+        val identity =
+            MatchJobIdentity(
+                owner = MatchJobOwner.AVAILABLE,
+                phase = phase,
+                leagueUid = "league-1",
+                fixtureUid = fixtureUid,
+            )
+        return MatchJobKeyFactory.jobKey(identity)
+    }
 }

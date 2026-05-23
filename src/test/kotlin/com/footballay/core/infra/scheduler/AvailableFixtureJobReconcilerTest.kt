@@ -209,11 +209,14 @@ class AvailableFixtureJobReconcilerTest {
             available = available,
         )
 
-    private fun availableJobKey(phase: MatchJobPhase): JobKey =
-        MatchJobIdentity(
-            owner = MatchJobOwner.AVAILABLE,
-            phase = phase,
-            leagueUid = leagueUid,
-            fixtureUid = fixtureUid,
-        ).jobKey
+    private fun availableJobKey(phase: MatchJobPhase): JobKey {
+        val identity =
+            MatchJobIdentity(
+                owner = MatchJobOwner.AVAILABLE,
+                phase = phase,
+                leagueUid = leagueUid,
+                fixtureUid = fixtureUid,
+            )
+        return MatchJobKeyFactory.jobKey(identity)
+    }
 }

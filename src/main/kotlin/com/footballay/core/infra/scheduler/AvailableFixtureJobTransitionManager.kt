@@ -97,7 +97,7 @@ class AvailableFixtureJobTransitionManager(
     ) {
         log.info("LiveMatch to PostMatch transition - fixtureUid={}", fixtureUid)
         jobSchedulerService.removeJob(context.jobKey)
-        val leagueUid = MatchJobIdentity.leagueUidFromGroup(context.jobKey.group)
+        val leagueUid = MatchJobKeyFactory.leagueUidFromGroup(context.jobKey.group)
         if (leagueUid != null) {
             jobSchedulerService.addPostMatchJob(
                 leagueUid = leagueUid,
@@ -123,7 +123,7 @@ class AvailableFixtureJobTransitionManager(
             fixtureUid,
             result.statusCode,
         )
-        val leagueUid = MatchJobIdentity.leagueUidFromGroup(context.jobKey.group)
+        val leagueUid = MatchJobKeyFactory.leagueUidFromGroup(context.jobKey.group)
         if (leagueUid != null) {
             jobSchedulerService.deleteFixtureJobs(
                 leagueUid = leagueUid,

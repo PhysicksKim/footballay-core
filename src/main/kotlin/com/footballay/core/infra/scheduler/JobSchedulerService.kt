@@ -62,7 +62,7 @@ class JobSchedulerService(
     ): Boolean {
         try {
             log.info("Adding PreMatchJob fixtures for $fixtureUid")
-            val jobKey = createJobKey(JOB_GROUP_PRE_MATCH, fixtureUid)
+            val jobKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_PRE_MATCH_GROUP, fixtureUid)
 
             // 이미 존재하면 삭제
             if (scheduler.checkExists(jobKey)) {
@@ -80,13 +80,13 @@ class JobSchedulerService(
             val trigger =
                 TriggerBuilder
                     .newTrigger()
-                    .withIdentity("pre-match-trigger-$fixtureUid", JOB_GROUP_PRE_MATCH)
+                    .withIdentity("pre-match-trigger-$fixtureUid", LEGACY_PRE_MATCH_GROUP)
                     .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()
-                            .withIntervalInSeconds(PRE_MATCH_INTERVAL_SECONDS)
-                            .withRepeatCount(PRE_MATCH_MAX_EXECUTIONS)
+                            .withIntervalInSeconds(LEGACY_PRE_MATCH_INTERVAL_SECONDS)
+                            .withRepeatCount(LEGACY_PRE_MATCH_MAX_EXECUTIONS)
                             .withMisfireHandlingInstructionNowWithRemainingCount(),
                     ).build()
 
@@ -127,7 +127,7 @@ class JobSchedulerService(
     ): Boolean {
         try {
             log.info("Adding LiveMatchJob fixtures for $fixtureUid")
-            val jobKey = createJobKey(JOB_GROUP_LIVE_MATCH, fixtureUid)
+            val jobKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_LIVE_MATCH_GROUP, fixtureUid)
 
             // 이미 존재하면 삭제
             if (scheduler.checkExists(jobKey)) {
@@ -145,13 +145,13 @@ class JobSchedulerService(
             val trigger =
                 TriggerBuilder
                     .newTrigger()
-                    .withIdentity("live-match-trigger-$fixtureUid", JOB_GROUP_LIVE_MATCH)
+                    .withIdentity("live-match-trigger-$fixtureUid", LEGACY_LIVE_MATCH_GROUP)
                     .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()
-                            .withIntervalInSeconds(LIVE_MATCH_INTERVAL_SECONDS)
-                            .withRepeatCount(LIVE_MATCH_MAX_EXECUTIONS)
+                            .withIntervalInSeconds(LEGACY_LIVE_MATCH_INTERVAL_SECONDS)
+                            .withRepeatCount(LEGACY_LIVE_MATCH_MAX_EXECUTIONS)
                             .withMisfireHandlingInstructionNowWithRemainingCount(),
                     ).build()
 
@@ -192,7 +192,7 @@ class JobSchedulerService(
     ): Boolean {
         try {
             log.info("Adding PostMatchJob fixtures for $fixtureUid")
-            val jobKey = createJobKey(JOB_GROUP_POST_MATCH, fixtureUid)
+            val jobKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_POST_MATCH_GROUP, fixtureUid)
 
             // 이미 존재하면 삭제
             if (scheduler.checkExists(jobKey)) {
@@ -210,13 +210,13 @@ class JobSchedulerService(
             val trigger =
                 TriggerBuilder
                     .newTrigger()
-                    .withIdentity("post-match-trigger-$fixtureUid", JOB_GROUP_POST_MATCH)
+                    .withIdentity("post-match-trigger-$fixtureUid", LEGACY_POST_MATCH_GROUP)
                     .startAt(Date.from(startTime))
                     .withSchedule(
                         SimpleScheduleBuilder
                             .simpleSchedule()
-                            .withIntervalInSeconds(POST_MATCH_INTERVAL_SECONDS)
-                            .withRepeatCount(POST_MATCH_MAX_EXECUTIONS)
+                            .withIntervalInSeconds(LEGACY_POST_MATCH_INTERVAL_SECONDS)
+                            .withRepeatCount(LEGACY_POST_MATCH_MAX_EXECUTIONS)
                             .withMisfireHandlingInstructionNowWithRemainingCount(),
                     ).build()
 
@@ -262,9 +262,9 @@ class JobSchedulerService(
     fun removeAllJobsForFixture(fixtureUid: String): Int {
         var deletedCount = 0
 
-        val preMatchKey = createJobKey(JOB_GROUP_PRE_MATCH, fixtureUid)
-        val liveMatchKey = createJobKey(JOB_GROUP_LIVE_MATCH, fixtureUid)
-        val postMatchKey = createJobKey(JOB_GROUP_POST_MATCH, fixtureUid)
+        val preMatchKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_PRE_MATCH_GROUP, fixtureUid)
+        val liveMatchKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_LIVE_MATCH_GROUP, fixtureUid)
+        val postMatchKey = MatchJobKeyFactory.legacyAvailableJobKey(LEGACY_POST_MATCH_GROUP, fixtureUid)
 
         if (removeJob(preMatchKey)) deletedCount++
         if (removeJob(liveMatchKey)) deletedCount++
@@ -336,9 +336,9 @@ class JobSchedulerService(
                     fixtureUid = fixtureUid,
                 ),
             schedule =
-                availableJobSchedule(
+                AvailableMatchJobSchedulePolicy.schedule(
                     phase = phase,
-                    startTime = startTime,
+                    startAt = startTime,
                     compareStartAt = compareStartAt,
                 ),
         )
@@ -347,16 +347,17 @@ class JobSchedulerService(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,
     ): MatchJobRegistrationResult {
+        val jobKey = MatchJobKeyFactory.jobKey(identity)
         try {
-            if (scheduler.checkExists(identity.jobKey)) {
-                if (matchesDesiredSpec(identity, schedule)) {
-                    log.info("Match job already matches desired spec - jobKey={}", identity.jobKey)
+            if (scheduler.checkExists(jobKey)) {
+                if (matchesDesiredSpec(jobKey, schedule)) {
+                    log.info("Match job already matches desired spec - jobKey={}", jobKey)
                     return MatchJobRegistrationResult.Unchanged
                 }
 
-                log.info("Match job spec changed - replacing jobKey={}", identity.jobKey)
-                if (!removeJob(identity.jobKey)) {
-                    return MatchJobRegistrationResult.Failed("Failed to remove existing job: ${identity.jobKey}")
+                log.info("Match job spec changed - replacing jobKey={}", jobKey)
+                if (!removeJob(jobKey)) {
+                    return MatchJobRegistrationResult.Failed("Failed to remove existing job: $jobKey")
                 }
 
                 register(identity, schedule)
@@ -371,11 +372,11 @@ class JobSchedulerService(
         }
     }
 
-    fun delete(identity: MatchJobIdentity): Boolean = removeJob(identity.jobKey)
+    fun delete(identity: MatchJobIdentity): Boolean = removeJob(MatchJobKeyFactory.jobKey(identity))
 
     fun listLeagueMatchJobs(leagueUid: String): Set<JobKey> =
         try {
-            findJobKeysOf(MatchJobIdentity.groupName(leagueUid))
+            findJobKeysOf(MatchJobKeyFactory.leagueMatchGroup(leagueUid))
         } catch (e: Exception) {
             log.error("Failed to list league match jobs - leagueUid={}", leagueUid, e)
             emptySet()
@@ -384,7 +385,7 @@ class JobSchedulerService(
     fun deleteStartupAvailableMatchJobs(): MatchJobCleanupResult {
         val accumulator = MatchJobCleanupAccumulator()
 
-        LEGACY_AVAILABLE_JOB_GROUPS.forEach { groupName ->
+        MatchJobKeyFactory.legacyAvailableJobGroups.forEach { groupName ->
             deleteJobsInGroup(
                 groupName = groupName,
                 scope = "legacy-available-group",
@@ -394,7 +395,7 @@ class JobSchedulerService(
 
         val currentGroups =
             try {
-                scheduler.getJobGroupNames().filter(MatchJobIdentity::isLeagueMatchGroup)
+                scheduler.getJobGroupNames().filter(MatchJobKeyFactory::isLeagueMatchGroup)
             } catch (e: Exception) {
                 accumulator.addCurrentGroupError(e)
                 emptyList()
@@ -406,7 +407,7 @@ class JobSchedulerService(
                 scope = "current-available-owner",
                 accumulator = accumulator,
             ) { jobKey ->
-                MatchJobIdentity.isOwnerJobName(MatchJobOwner.AVAILABLE, jobKey.name)
+                MatchJobKeyFactory.parseJobKey(jobKey)?.owner == MatchJobOwner.AVAILABLE
             }
         }
 
@@ -425,74 +426,39 @@ class JobSchedulerService(
      * Match Job이 일치하는지 검사
      */
     private fun matchesDesiredSpec(
-        identity: MatchJobIdentity,
+        jobKey: JobKey,
         schedule: MatchJobSchedule,
     ): Boolean {
-        val jobDetail = scheduler.getJobDetail(identity.jobKey) ?: return false
+        val jobDetail = scheduler.getJobDetail(jobKey) ?: return false
         if (jobDetail.jobClass != schedule.jobClass) {
             return false
         }
 
-        val trigger = scheduler.getTriggersOfJob(identity.jobKey).singleOrNull() as? SimpleTrigger ?: return false
+        val trigger = scheduler.getTriggersOfJob(jobKey).singleOrNull() as? SimpleTrigger ?: return false
 
         return (!schedule.compareStartAt || trigger.startTime == Date.from(schedule.startAt)) &&
             trigger.repeatInterval == schedule.repeatIntervalMillis &&
             trigger.repeatCount == schedule.repeatCount
     }
 
-    private fun availableJobSchedule(
-        phase: MatchJobPhase,
-        startTime: Instant,
-        compareStartAt: Boolean,
-    ): MatchJobSchedule =
-        when (phase) {
-            MatchJobPhase.PRE -> {
-                MatchJobSchedule(
-                    jobClass = PreMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = PRE_MATCH_INTERVAL_SECONDS,
-                    repeatCount = PRE_MATCH_MAX_EXECUTIONS,
-                    compareStartAt = compareStartAt,
-                )
-            }
-
-            MatchJobPhase.LIVE -> {
-                MatchJobSchedule(
-                    jobClass = LiveMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = LIVE_MATCH_INTERVAL_SECONDS,
-                    repeatCount = LIVE_MATCH_MAX_EXECUTIONS,
-                    compareStartAt = compareStartAt,
-                )
-            }
-
-            MatchJobPhase.POST -> {
-                MatchJobSchedule(
-                    jobClass = PostMatchJob::class.java,
-                    startAt = startTime,
-                    repeatIntervalSeconds = POST_MATCH_INTERVAL_SECONDS,
-                    repeatCount = POST_MATCH_MAX_EXECUTIONS,
-                    compareStartAt = compareStartAt,
-                )
-            }
-        }
-
     private fun register(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,
     ) {
+        val jobKey = MatchJobKeyFactory.jobKey(identity)
+        val triggerKey = MatchJobKeyFactory.triggerKey(identity)
         val job =
             JobBuilder
                 .newJob(schedule.jobClass)
-                .withIdentity(identity.jobKey)
+                .withIdentity(jobKey)
                 .usingJobData(KEY_FIXTURE_UID, identity.fixtureUid)
                 .build()
 
         val trigger =
             TriggerBuilder
                 .newTrigger()
-                .withIdentity(identity.triggerKey)
-                .forJob(identity.jobKey)
+                .withIdentity(triggerKey)
+                .forJob(jobKey)
                 .startAt(Date.from(schedule.startAt))
                 .withSchedule(
                     SimpleScheduleBuilder
@@ -503,7 +469,7 @@ class JobSchedulerService(
                 ).build()
 
         scheduler.scheduleJob(job, trigger)
-        log.info("Registered match job - jobKey={}, triggerKey={}", identity.jobKey, identity.triggerKey)
+        log.info("Registered match job - jobKey={}, triggerKey={}", jobKey, triggerKey)
     }
 
     private fun deleteJobsInGroup(
@@ -546,39 +512,19 @@ class JobSchedulerService(
 
     private fun findJobKeysOf(groupName: String): Set<JobKey> = scheduler.getJobKeys(GroupMatcher.jobGroupEquals(groupName))
 
-    /**
-     * JobKey 생성 헬퍼
-     */
-    private fun createJobKey(
-        groupName: String,
-        fixtureUid: String,
-    ): JobKey = JobKey.jobKey("$groupName-$fixtureUid", groupName)
-
     companion object {
         const val KEY_FIXTURE_UID = "fixtureUid"
 
-        // Job Group 이름
-        private const val JOB_GROUP_PRE_MATCH = "pre-match"
-        private const val JOB_GROUP_LIVE_MATCH = "live-match"
-        private const val JOB_GROUP_POST_MATCH = "post-match"
-        private val LEGACY_AVAILABLE_JOB_GROUPS =
-            listOf(
-                JOB_GROUP_PRE_MATCH,
-                JOB_GROUP_LIVE_MATCH,
-                JOB_GROUP_POST_MATCH,
-            )
+        private const val LEGACY_PRE_MATCH_GROUP = "pre-match"
+        private const val LEGACY_LIVE_MATCH_GROUP = "live-match"
+        private const val LEGACY_POST_MATCH_GROUP = "post-match"
 
-        // PreMatch Job 설정 (60초 간격, 최대 5시간 = 300회)
-        private const val PRE_MATCH_INTERVAL_SECONDS = 60
-        private const val PRE_MATCH_MAX_EXECUTIONS = 300
-
-        // LiveMatch Job 설정 (17초 간격, 최대 5시간 = 1058회)
-        private const val LIVE_MATCH_INTERVAL_SECONDS = 17
-        private const val LIVE_MATCH_MAX_EXECUTIONS = 1058
-
-        // PostMatch Job 설정 (60초 간격, 최대 1시간 = 60회)
-        private const val POST_MATCH_INTERVAL_SECONDS = 60
-        private const val POST_MATCH_MAX_EXECUTIONS = 60
+        private const val LEGACY_PRE_MATCH_INTERVAL_SECONDS = 60
+        private const val LEGACY_PRE_MATCH_MAX_EXECUTIONS = 300
+        private const val LEGACY_LIVE_MATCH_INTERVAL_SECONDS = 17
+        private const val LEGACY_LIVE_MATCH_MAX_EXECUTIONS = 1058
+        private const val LEGACY_POST_MATCH_INTERVAL_SECONDS = 60
+        private const val LEGACY_POST_MATCH_MAX_EXECUTIONS = 60
     }
 }
 

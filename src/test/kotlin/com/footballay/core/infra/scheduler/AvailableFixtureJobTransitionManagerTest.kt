@@ -146,11 +146,14 @@ class AvailableFixtureJobTransitionManagerTest {
         verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
 
-    private fun availableJobKey(phase: MatchJobPhase): JobKey =
-        MatchJobIdentity(
-            owner = MatchJobOwner.AVAILABLE,
-            phase = phase,
-            leagueUid = "league-1",
-            fixtureUid = fixtureUid,
-        ).jobKey
+    private fun availableJobKey(phase: MatchJobPhase): JobKey {
+        val identity =
+            MatchJobIdentity(
+                owner = MatchJobOwner.AVAILABLE,
+                phase = phase,
+                leagueUid = "league-1",
+                fixtureUid = fixtureUid,
+            )
+        return MatchJobKeyFactory.jobKey(identity)
+    }
 }

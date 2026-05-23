@@ -28,7 +28,7 @@ class JobSchedulerServiceTest {
     private lateinit var scheduler: Scheduler
 
     @Test
-    fun `MatchJobIdentity는 group job trigger key를 생성한다`() {
+    fun `MatchJobKeyFactory는 identity를 Quartz key로 변환하고 다시 identity로 파싱한다`() {
         val identity =
             MatchJobIdentity(
                 owner = MatchJobOwner.AVAILABLE,
@@ -36,13 +36,49 @@ class JobSchedulerServiceTest {
                 leagueUid = "league-1",
                 fixtureUid = "fixture-1",
             )
+        val jobKey = MatchJobKeyFactory.jobKey(identity)
+        val triggerKey = MatchJobKeyFactory.triggerKey(identity)
 
-        assertThat(identity.groupName).isEqualTo("league:match:league-1")
-        assertThat(identity.jobName).isEqualTo("available:pre:fixture-1")
-        assertThat(identity.jobKey).isEqualTo(JobKey.jobKey("available:pre:fixture-1", "league:match:league-1"))
-        assertThat(identity.triggerKey.name).isEqualTo("available:pre:fixture-1:trigger")
-        assertThat(identity.triggerKey.group).isEqualTo("league:match:league-1")
-        assertThat(MatchJobIdentity.leagueUidFromGroup(identity.groupName)).isEqualTo("league-1")
+        assertThat(jobKey).isEqualTo(JobKey.jobKey("available:pre:fixture-1", "league:match:league-1"))
+        assertThat(triggerKey.name).isEqualTo("available:pre:fixture-1:trigger")
+        assertThat(triggerKey.group).isEqualTo("league:match:league-1")
+        assertThat(MatchJobKeyFactory.parseJobKey(jobKey)).isEqualTo(identity)
+        assertThat(MatchJobKeyFactory.parseTriggerKey(triggerKey)).isEqualTo(identity)
+    }
+
+    @Test
+    fun `MatchJobKeyFactory은 current와 legacy naming 규칙을 한곳에서 제공한다`() {
+        assertThat(MatchJobKeyFactory.leagueMatchGroup("league-1")).isEqualTo("league:match:league-1")
+        assertThat(MatchJobKeyFactory.jobName(MatchJobOwner.AVAILABLE, MatchJobPhase.LIVE, "fixture-1"))
+            .isEqualTo("available:live:fixture-1")
+        assertThat(MatchJobKeyFactory.triggerName("available:live:fixture-1"))
+            .isEqualTo("available:live:fixture-1:trigger")
+        assertThat(MatchJobKeyFactory.isLeagueMatchGroup("league:match:league-1")).isTrue()
+        assertThat(MatchJobKeyFactory.legacyAvailableJobGroups).containsExactly("pre-match", "live-match", "post-match")
+        assertThat(MatchJobKeyFactory.legacyAvailableJobKey("pre-match", "fixture-1"))
+            .isEqualTo(JobKey.jobKey("pre-match-fixture-1", "pre-match"))
+        assertThat(MatchJobKeyFactory.parseJobKey(JobKey.jobKey("pre-match-fixture-1", "pre-match"))).isNull()
+        assertThat(MatchJobKeyFactory.parseJobKey(JobKey.jobKey("invalid", "league:match:league-1"))).isNull()
+    }
+
+    @Test
+    fun `AvailableMatchJobSchedulePolicy는 phase별 job class와 반복 정책을 제공한다`() {
+        val startAt = Instant.parse("2026-05-14T10:00:00Z")
+
+        val pre = AvailableMatchJobSchedulePolicy.schedule(MatchJobPhase.PRE, startAt)
+        val live = AvailableMatchJobSchedulePolicy.schedule(MatchJobPhase.LIVE, startAt)
+        val post = AvailableMatchJobSchedulePolicy.schedule(MatchJobPhase.POST, startAt, compareStartAt = false)
+
+        assertThat(pre.jobClass).isEqualTo(PreMatchJob::class.java)
+        assertThat(pre.repeatIntervalSeconds).isEqualTo(60)
+        assertThat(pre.repeatCount).isEqualTo(300)
+        assertThat(live.jobClass).isEqualTo(LiveMatchJob::class.java)
+        assertThat(live.repeatIntervalSeconds).isEqualTo(17)
+        assertThat(live.repeatCount).isEqualTo(1058)
+        assertThat(post.jobClass).isEqualTo(PostMatchJob::class.java)
+        assertThat(post.repeatIntervalSeconds).isEqualTo(60)
+        assertThat(post.repeatCount).isEqualTo(60)
+        assertThat(post.compareStartAt).isFalse()
     }
 
     @Test
@@ -52,7 +88,7 @@ class JobSchedulerServiceTest {
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
         val jobCaptor = argumentCaptor<JobDetail>()
         val triggerCaptor = argumentCaptor<Trigger>()
-        whenever(scheduler.checkExists(identity.jobKey)).thenReturn(false)
+        whenever(scheduler.checkExists(MatchJobKeyFactory.jobKey(identity))).thenReturn(false)
         whenever(scheduler.scheduleJob(any<JobDetail>(), any<Trigger>())).thenReturn(Date.from(schedule.startAt))
 
         val result = service.registerOrReplace(identity, schedule)
@@ -62,10 +98,10 @@ class JobSchedulerServiceTest {
 
         val job = jobCaptor.firstValue
         val trigger = triggerCaptor.firstValue as SimpleTrigger
-        assertThat(job.key).isEqualTo(identity.jobKey)
+        assertThat(job.key).isEqualTo(MatchJobKeyFactory.jobKey(identity))
         assertThat(job.jobClass).isEqualTo(PreMatchJob::class.java)
         assertThat(job.jobDataMap.getString(JobSchedulerService.KEY_FIXTURE_UID)).isEqualTo(identity.fixtureUid)
-        assertThat(trigger.key).isEqualTo(identity.triggerKey)
+        assertThat(trigger.key).isEqualTo(MatchJobKeyFactory.triggerKey(identity))
         assertThat(trigger.startTime).isEqualTo(Date.from(schedule.startAt))
         assertThat(trigger.repeatInterval).isEqualTo(schedule.repeatIntervalMillis)
         assertThat(trigger.repeatCount).isEqualTo(schedule.repeatCount)
@@ -76,9 +112,9 @@ class JobSchedulerServiceTest {
         val service = JobSchedulerService(scheduler)
         val identity = availableIdentity(MatchJobPhase.PRE)
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
-        whenever(scheduler.checkExists(identity.jobKey)).thenReturn(true)
-        whenever(scheduler.getJobDetail(identity.jobKey)).thenReturn(existingJob(identity, schedule))
-        whenever(scheduler.getTriggersOfJob(identity.jobKey)).thenReturn(listOf(existingTrigger(identity, schedule)))
+        whenever(scheduler.checkExists(MatchJobKeyFactory.jobKey(identity))).thenReturn(true)
+        whenever(scheduler.getJobDetail(MatchJobKeyFactory.jobKey(identity))).thenReturn(existingJob(identity, schedule))
+        whenever(scheduler.getTriggersOfJob(MatchJobKeyFactory.jobKey(identity))).thenReturn(listOf(existingTrigger(identity, schedule)))
 
         val result = service.registerOrReplace(identity, schedule)
 
@@ -93,16 +129,16 @@ class JobSchedulerServiceTest {
         val identity = availableIdentity(MatchJobPhase.PRE)
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
         val oldSchedule = schedule.copy(repeatIntervalSeconds = 30)
-        whenever(scheduler.checkExists(identity.jobKey)).thenReturn(true)
-        whenever(scheduler.getJobDetail(identity.jobKey)).thenReturn(existingJob(identity, schedule))
-        whenever(scheduler.getTriggersOfJob(identity.jobKey)).thenReturn(listOf(existingTrigger(identity, oldSchedule)))
-        whenever(scheduler.deleteJob(identity.jobKey)).thenReturn(true)
+        whenever(scheduler.checkExists(MatchJobKeyFactory.jobKey(identity))).thenReturn(true)
+        whenever(scheduler.getJobDetail(MatchJobKeyFactory.jobKey(identity))).thenReturn(existingJob(identity, schedule))
+        whenever(scheduler.getTriggersOfJob(MatchJobKeyFactory.jobKey(identity))).thenReturn(listOf(existingTrigger(identity, oldSchedule)))
+        whenever(scheduler.deleteJob(MatchJobKeyFactory.jobKey(identity))).thenReturn(true)
         whenever(scheduler.scheduleJob(any<JobDetail>(), any<Trigger>())).thenReturn(Date.from(schedule.startAt))
 
         val result = service.registerOrReplace(identity, schedule)
 
         assertThat(result).isTrue()
-        verify(scheduler).deleteJob(identity.jobKey)
+        verify(scheduler).deleteJob(MatchJobKeyFactory.jobKey(identity))
         verify(scheduler).scheduleJob(any<JobDetail>(), any<Trigger>())
     }
 
@@ -114,9 +150,9 @@ class JobSchedulerServiceTest {
             preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
                 .copy(jobClass = PostMatchJob::class.java, compareStartAt = false)
         val oldSchedule = schedule.copy(startAt = Instant.parse("2026-05-14T09:00:00Z"))
-        whenever(scheduler.checkExists(identity.jobKey)).thenReturn(true)
-        whenever(scheduler.getJobDetail(identity.jobKey)).thenReturn(existingJob(identity, schedule))
-        whenever(scheduler.getTriggersOfJob(identity.jobKey)).thenReturn(listOf(existingTrigger(identity, oldSchedule)))
+        whenever(scheduler.checkExists(MatchJobKeyFactory.jobKey(identity))).thenReturn(true)
+        whenever(scheduler.getJobDetail(MatchJobKeyFactory.jobKey(identity))).thenReturn(existingJob(identity, schedule))
+        whenever(scheduler.getTriggersOfJob(MatchJobKeyFactory.jobKey(identity))).thenReturn(listOf(existingTrigger(identity, oldSchedule)))
 
         val result = service.registerOrReplaceDetailed(identity, schedule)
 
@@ -146,7 +182,11 @@ class JobSchedulerServiceTest {
     @Test
     fun `리그 match job 목록을 조회한다`() {
         val service = JobSchedulerService(scheduler)
-        val jobs = setOf(availableIdentity(MatchJobPhase.PRE).jobKey, availableIdentity(MatchJobPhase.LIVE).jobKey)
+        val jobs =
+            setOf(
+                MatchJobKeyFactory.jobKey(availableIdentity(MatchJobPhase.PRE)),
+                MatchJobKeyFactory.jobKey(availableIdentity(MatchJobPhase.LIVE)),
+            )
         whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>())).thenReturn(jobs)
 
         val result = service.listLeagueMatchJobs("league-1")
@@ -248,7 +288,7 @@ class JobSchedulerServiceTest {
     ): JobDetail =
         org.quartz.JobBuilder
             .newJob(schedule.jobClass)
-            .withIdentity(identity.jobKey)
+            .withIdentity(MatchJobKeyFactory.jobKey(identity))
             .usingJobData(JobSchedulerService.KEY_FIXTURE_UID, identity.fixtureUid)
             .build()
 
@@ -258,8 +298,8 @@ class JobSchedulerServiceTest {
     ): SimpleTrigger =
         TriggerBuilder
             .newTrigger()
-            .withIdentity(identity.triggerKey)
-            .forJob(identity.jobKey)
+            .withIdentity(MatchJobKeyFactory.triggerKey(identity))
+            .forJob(MatchJobKeyFactory.jobKey(identity))
             .startAt(Date.from(schedule.startAt))
             .withSchedule(
                 SimpleScheduleBuilder
