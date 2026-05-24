@@ -1,4 +1,4 @@
-package com.footballay.core.infra.scheduler
+package com.footballay.core.infra.scheduler.matchjob
 
 import org.quartz.Job
 import java.time.Instant

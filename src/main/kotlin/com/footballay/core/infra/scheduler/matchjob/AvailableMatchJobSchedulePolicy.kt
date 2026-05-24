@@ -1,5 +1,8 @@
-package com.footballay.core.infra.scheduler
+package com.footballay.core.infra.scheduler.matchjob
 
+import com.footballay.core.infra.scheduler.LiveMatchJob
+import com.footballay.core.infra.scheduler.PostMatchJob
+import com.footballay.core.infra.scheduler.PreMatchJob
 import java.time.Instant
 
 object AvailableMatchJobSchedulePolicy {

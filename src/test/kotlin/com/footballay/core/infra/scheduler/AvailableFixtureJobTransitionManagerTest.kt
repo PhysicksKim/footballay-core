@@ -2,6 +2,10 @@ package com.footballay.core.infra.scheduler
 
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
+import com.footballay.core.infra.scheduler.matchjob.MatchJobPhase
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
@@ -128,7 +132,7 @@ class AvailableFixtureJobTransitionManagerTest {
         )
 
         verify(jobSchedulerService, never()).removeJob(any())
-        verify(jobSchedulerService, never()).removeAllJobsForFixture(any())
+        verify(jobSchedulerService, never()).deleteLegacyAvailableFixtureJobs(any())
         verify(jobSchedulerService, never()).addPostMatchJob(any<String>(), any<String>(), any<Instant>())
     }
 

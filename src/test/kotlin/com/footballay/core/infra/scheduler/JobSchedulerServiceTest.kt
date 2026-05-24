@@ -1,5 +1,16 @@
 package com.footballay.core.infra.scheduler
 
+import com.footballay.core.infra.scheduler.cleanup.StartupMatchJobCleanupService
+import com.footballay.core.infra.scheduler.matchjob.AvailableMatchJobSchedulePolicy
+import com.footballay.core.infra.scheduler.matchjob.LegacyAvailableMatchJobRegistrar
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
+import com.footballay.core.infra.scheduler.matchjob.MatchJobPhase
+import com.footballay.core.infra.scheduler.matchjob.MatchJobQueryService
+import com.footballay.core.infra.scheduler.matchjob.MatchJobRegistrar
+import com.footballay.core.infra.scheduler.matchjob.MatchJobRegistrationResult
+import com.footballay.core.infra.scheduler.matchjob.MatchJobSchedule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -83,7 +94,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `신규 match job을 등록한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val identity = availableIdentity(MatchJobPhase.PRE)
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
         val jobCaptor = argumentCaptor<JobDetail>()
@@ -109,7 +120,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `기존 job spec이 같으면 재등록하지 않는다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val identity = availableIdentity(MatchJobPhase.PRE)
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
         whenever(scheduler.checkExists(MatchJobKeyFactory.jobKey(identity))).thenReturn(true)
@@ -125,7 +136,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `기존 job spec이 다르면 삭제 후 재등록한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val identity = availableIdentity(MatchJobPhase.PRE)
         val schedule = preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
         val oldSchedule = schedule.copy(repeatIntervalSeconds = 30)
@@ -144,7 +155,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `startAt 비교를 끄면 trigger start time이 달라도 같은 spec으로 본다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val identity = availableIdentity(MatchJobPhase.POST)
         val schedule =
             preSchedule(Instant.parse("2026-05-14T10:00:00Z"))
@@ -163,7 +174,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `available pre live post job을 fixture 기준으로 삭제한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         whenever(scheduler.deleteJob(any())).thenReturn(true)
 
         val deletedCount =
@@ -181,7 +192,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `리그 match job 목록을 조회한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val jobs =
             setOf(
                 MatchJobKeyFactory.jobKey(availableIdentity(MatchJobPhase.PRE)),
@@ -196,7 +207,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `available pre wrapper는 새 identity 규칙으로 등록한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val startAt = Instant.parse("2026-05-14T10:00:00Z")
         val jobCaptor = argumentCaptor<JobDetail>()
         whenever(scheduler.checkExists(any<JobKey>())).thenReturn(false)
@@ -211,7 +222,7 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `startup cleanup은 old available group과 current available owner job만 삭제한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         val oldPreJob = JobKey.jobKey("pre-match-fixture-1", "pre-match")
         val oldLiveJob = JobKey.jobKey("live-match-fixture-1", "live-match")
         val currentAvailableJob = JobKey.jobKey("available:pre:fixture-2", "league:match:league-1")
@@ -226,7 +237,7 @@ class JobSchedulerServiceTest {
         whenever(scheduler.getJobGroupNames()).thenReturn(listOf("league:match:league-1", "football-fixture"))
         whenever(scheduler.deleteJob(any())).thenReturn(true)
 
-        val result = service.deleteStartupAvailableMatchJobs()
+        val result = service.deleteAvailableMatchJobsForStartupRebuild()
 
         assertThat(result.success).isTrue()
         assertThat(result.deleted).isEqualTo(3)
@@ -240,11 +251,11 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `startup cleanup은 삭제할 job이 없어도 성공한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>())).thenReturn(emptySet())
         whenever(scheduler.getJobGroupNames()).thenReturn(emptyList())
 
-        val result = service.deleteStartupAvailableMatchJobs()
+        val result = service.deleteAvailableMatchJobsForStartupRebuild()
 
         assertThat(result.success).isTrue()
         assertThat(result.deleted).isZero()
@@ -254,16 +265,26 @@ class JobSchedulerServiceTest {
 
     @Test
     fun `startup cleanup은 group 조회 실패를 error로 기록한다`() {
-        val service = JobSchedulerService(scheduler)
+        val service = service()
         whenever(scheduler.getJobKeys(any<GroupMatcher<JobKey>>()))
             .thenThrow(RuntimeException("quartz failed"))
         whenever(scheduler.getJobGroupNames()).thenReturn(emptyList())
 
-        val result = service.deleteStartupAvailableMatchJobs()
+        val result = service.deleteAvailableMatchJobsForStartupRebuild()
 
         assertThat(result.success).isFalse()
         assertThat(result.errors).isNotEmpty
         assertThat(result.errors.first().operation).isEqualTo("list-jobs:legacy-available-group")
+    }
+
+    private fun service(): JobSchedulerService {
+        val registrar = MatchJobRegistrar(scheduler)
+        return JobSchedulerService(
+            matchJobRegistrar = registrar,
+            matchJobQueryService = MatchJobQueryService(scheduler),
+            startupMatchJobCleanupService = StartupMatchJobCleanupService(scheduler),
+            legacyAvailableMatchJobRegistrar = LegacyAvailableMatchJobRegistrar(scheduler, registrar),
+        )
     }
 
     private fun availableIdentity(phase: MatchJobPhase): MatchJobIdentity =

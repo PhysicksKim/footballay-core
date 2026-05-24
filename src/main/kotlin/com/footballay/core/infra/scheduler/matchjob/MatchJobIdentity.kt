@@ -1,4 +1,4 @@
-package com.footballay.core.infra.scheduler
+package com.footballay.core.infra.scheduler.matchjob
 
 enum class MatchJobOwner(
     val key: String,

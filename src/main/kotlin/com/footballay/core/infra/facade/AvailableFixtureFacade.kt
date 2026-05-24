@@ -56,22 +56,18 @@ class AvailableFixtureFacade(
 
         // 1. FixtureApiSports 조회
         val fixtureApiSports =
-            fixtureApiSportsRepository.findByApiId(fixtureApiId)
-                ?: return DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "FIXTURE_API_SPORTS",
-                        id = fixtureApiId.toString(),
-                    ),
+            findFixtureOfApiSports(fixtureApiId)
+                ?: return ofNotFoundResult(
+                    id = fixtureApiId.toString(),
+                    resource = "FIXTURE_API_SPORTS",
                 )
 
         // 2. FixtureCore 조회 (연관관계로 접근)
         val fixtureCore =
             fixtureApiSports.core
-                ?: return DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = "core not linked to apiId=$fixtureApiId",
-                    ),
+                ?: return ofNotFoundResult(
+                    id = "core not linked to apiId=$fixtureApiId",
+                    resource = "FIXTURE_CORE",
                 )
 
         // 3. 이미 available인지 확인
@@ -94,7 +90,7 @@ class AvailableFixtureFacade(
         }
 
         // 5. FixtureCore available 플래그 설정
-        setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
+        setFixtureAvailableFlag(available = true, fixtureCore, fixtureApiSports)
         log.info(
             "FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true, kickoff={}",
             fixtureApiId,
@@ -102,16 +98,16 @@ class AvailableFixtureFacade(
             kickoff,
         )
 
-        val reconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
-        if (!reconcileResult.success) {
+        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
+        if (isNotSuccess(reconcileResult)) {
             log.error(
                 "Available fixture job reconcile failed - fixtureApiId={}, uid={}, result={}",
                 fixtureApiId,
                 fixtureCore.uid,
                 reconcileResult,
             )
-            setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
-            compensateAfterAvailableFlagRollback(fixtureCore.uid, reconcileResult)
+            setFixtureAvailableFlag(available = false, fixtureCore, fixtureApiSports)
+            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
@@ -130,17 +126,6 @@ class AvailableFixtureFacade(
         return DomainResult.Success(fixtureCore.uid)
     }
 
-    private fun setFixtureAvailableFlag(
-        fixtureCore: FixtureCore,
-        fixtureApiSports: FixtureApiSports,
-        available: Boolean,
-    ) {
-        fixtureCore.available = available
-        fixtureApiSports.available = available
-        fixtureCoreRepository.save(fixtureCore)
-        fixtureApiSportsRepository.save(fixtureApiSports)
-    }
-
     /**
      * Fixture를 Unavailable로 설정하고 모든 Job 삭제
      *
@@ -153,22 +138,18 @@ class AvailableFixtureFacade(
 
         // 1. FixtureApiSports 조회
         val fixtureApiSports =
-            fixtureApiSportsRepository.findByApiId(fixtureApiId)
-                ?: return DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "FIXTURE_API_SPORTS",
-                        id = fixtureApiId.toString(),
-                    ),
+            findFixtureOfApiSports(fixtureApiId)
+                ?: return ofNotFoundResult(
+                    id = fixtureApiId.toString(),
+                    resource = "FIXTURE_API_SPORTS",
                 )
 
         // 2. FixtureCore 조회 (연관관계로 접근)
         val fixtureCore =
             fixtureApiSports.core
-                ?: return DomainResult.Fail(
-                    DomainFail.NotFound(
-                        resource = "FIXTURE_CORE",
-                        id = "core not linked to apiId=$fixtureApiId",
-                    ),
+                ?: return ofNotFoundResult(
+                    id = "core not linked to apiId=$fixtureApiId",
+                    resource = "FIXTURE_CORE",
                 )
 
         // 3. 이미 unavailable인지 확인
@@ -178,20 +159,20 @@ class AvailableFixtureFacade(
         }
 
         // 4. FixtureCore available 플래그 해제
-        setFixtureAvailableFlag(fixtureCore, fixtureApiSports, false)
+        setFixtureAvailableFlag(available = false, fixtureCore, fixtureApiSports)
         log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
 
         // 5. 모든 available fixture Job 정리
-        val reconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
-        if (!reconcileResult.success) {
+        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
+        if (isNotSuccess(reconcileResult)) {
             log.error(
                 "Available fixture job cleanup reconcile failed - fixtureApiId={}, uid={}, result={}",
                 fixtureApiId,
                 fixtureCore.uid,
                 reconcileResult,
             )
-            setFixtureAvailableFlag(fixtureCore, fixtureApiSports, true)
-            compensateAfterAvailableFlagRollback(fixtureCore.uid, reconcileResult)
+            setFixtureAvailableFlag(available = true, fixtureCore, fixtureApiSports)
+            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
             return DomainResult.Fail(
                 DomainFail.Validation.single(
                     code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
@@ -211,12 +192,41 @@ class AvailableFixtureFacade(
         return DomainResult.Success(fixtureCore.uid)
     }
 
-    private fun compensateAfterAvailableFlagRollback(
+    private fun reconcileAvailableFixtureJobs(fixtureCore: FixtureCore): ReconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
+
+    private fun ofNotFoundResult(
+        id: String,
+        resource: String,
+    ): DomainResult.Fail<DomainFail.NotFound> =
+        DomainResult.Fail(
+            DomainFail.NotFound(
+                resource = resource,
+                id = id,
+            ),
+        )
+
+    private fun setFixtureAvailableFlag(
+        available: Boolean,
+        fixtureCore: FixtureCore,
+        fixtureApiSports: FixtureApiSports,
+    ) {
+        fixtureCore.available = available
+        fixtureApiSports.available = available
+        fixtureCoreRepository.save(fixtureCore)
+        fixtureApiSportsRepository.save(fixtureApiSports)
+    }
+
+    private fun findFixtureOfApiSports(fixtureApiId: Long): FixtureApiSports? = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+
+    /**
+     * Quartz Job 등록 실패 시 다시 올바르게 맞추기 위한 조치
+     */
+    private fun restoreAvailableFixtureJobState(
         fixtureUid: String,
         originalFailure: ReconcileResult,
     ) {
         val compensationResult = availableFixtureJobReconciler.reconcileFixture(fixtureUid)
-        if (!compensationResult.success) {
+        if (isNotSuccess(compensationResult)) {
             log.error(
                 "Best-effort available fixture job compensation failed - fixtureUid={}, originalFailure={}, compensationResult={}",
                 fixtureUid,
@@ -225,4 +235,6 @@ class AvailableFixtureFacade(
             )
         }
     }
+
+    private fun isNotSuccess(reconcileResult: ReconcileResult): Boolean = !reconcileResult.success
 }

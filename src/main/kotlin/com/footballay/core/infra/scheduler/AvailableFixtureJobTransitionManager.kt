@@ -1,6 +1,9 @@
 package com.footballay.core.infra.scheduler
 
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
 import com.footballay.core.logger
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -17,10 +20,22 @@ class AvailableFixtureJobTransitionManager(
         context: AvailableFixtureJobContext,
     ) {
         when (result) {
-            is MatchDataSyncResult.PreMatch -> handlePreMatch(fixtureUid, result, context)
-            is MatchDataSyncResult.Live -> handleLive(fixtureUid, context)
-            is MatchDataSyncResult.PostMatch -> handlePostMatch(fixtureUid, result, context)
-            is MatchDataSyncResult.NotPlayed -> handleNotPlayed(fixtureUid, result, context)
+            is MatchDataSyncResult.PreMatch -> {
+                handlePreMatch(fixtureUid, result, context)
+            }
+
+            is MatchDataSyncResult.Live -> {
+                handleLive(fixtureUid, context)
+            }
+
+            is MatchDataSyncResult.PostMatch -> {
+                handlePostMatch(fixtureUid, result, context)
+            }
+
+            is MatchDataSyncResult.NotPlayed -> {
+                handleNotPlayed(fixtureUid, result, context)
+            }
+
             is MatchDataSyncResult.Error -> {
                 log.error(
                     "Available fixture match sync error - fixtureUid={}, phase={}, message={}",
@@ -97,10 +112,10 @@ class AvailableFixtureJobTransitionManager(
     ) {
         log.info("LiveMatch to PostMatch transition - fixtureUid={}", fixtureUid)
         jobSchedulerService.removeJob(context.jobKey)
-        val leagueUid = MatchJobKeyFactory.leagueUidFromGroup(context.jobKey.group)
-        if (leagueUid != null) {
+        val currentJobIdentity = currentMatchJobIdentityOf(context)
+        if (currentJobIdentity != null) {
             jobSchedulerService.addPostMatchJob(
-                leagueUid = leagueUid,
+                leagueUid = currentJobIdentity.leagueUid,
                 fixtureUid = fixtureUid,
                 startTime = Instant.now(),
             )
@@ -123,15 +138,23 @@ class AvailableFixtureJobTransitionManager(
             fixtureUid,
             result.statusCode,
         )
-        val leagueUid = MatchJobKeyFactory.leagueUidFromGroup(context.jobKey.group)
-        if (leagueUid != null) {
+        val currentJobIdentity = currentMatchJobIdentityOf(context)
+        if (currentJobIdentity != null) {
             jobSchedulerService.deleteFixtureJobs(
-                leagueUid = leagueUid,
+                leagueUid = currentJobIdentity.leagueUid,
                 fixtureUid = fixtureUid,
                 owner = MatchJobOwner.AVAILABLE,
             )
         } else {
-            jobSchedulerService.removeAllJobsForFixture(fixtureUid)
+            jobSchedulerService.deleteLegacyAvailableFixtureJobs(fixtureUid)
         }
     }
+
+    /**
+     * 현재 naming 규칙의 jobKey 는 `league:match:{leagueUid}` group 과 `{owner}:{phase}:{fixtureUid}` name 을 가집니다.
+     *
+     * naming이 현재 지원하는 방식과 다르다면 (예를 들어 legacy) null을 반환합니다.
+     * 파싱에 실패하면 이전 `pre-match/live-match/post-match` group 으로 등록된 legacy job 으로 보고 fallback 경로를 사용합니다.
+     */
+    private fun currentMatchJobIdentityOf(context: AvailableFixtureJobContext): MatchJobIdentity? = MatchJobKeyFactory.parseJobKey(context.jobKey)
 }

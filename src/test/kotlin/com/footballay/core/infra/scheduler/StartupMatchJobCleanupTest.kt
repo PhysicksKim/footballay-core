@@ -1,6 +1,8 @@
 package com.footballay.core.infra.scheduler
 
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.scheduler.cleanup.MatchJobCleanupError
+import com.footballay.core.infra.scheduler.cleanup.MatchJobCleanupResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,7 +25,7 @@ class StartupMatchJobCleanupTest {
     @Test
     fun `startup cleanup은 old job 삭제 후 available fixture가 있는 리그를 reconcile한다`() {
         val service = service()
-        whenever(jobSchedulerService.deleteStartupAvailableMatchJobs())
+        whenever(jobSchedulerService.deleteAvailableMatchJobsForStartupRebuild())
             .thenReturn(MatchJobCleanupResult(deleted = 2, skipped = 1, errors = emptyList()))
         whenever(fixtureCoreRepository.findDistinctLeagueUidsWithAvailableFixtures())
             .thenReturn(listOf("league-1", "league-2"))
@@ -39,7 +41,7 @@ class StartupMatchJobCleanupTest {
         assertThat(result.reconcileResults).hasSize(2)
 
         inOrder(jobSchedulerService, fixtureCoreRepository, availableFixtureJobReconciler) {
-            verify(jobSchedulerService).deleteStartupAvailableMatchJobs()
+            verify(jobSchedulerService).deleteAvailableMatchJobsForStartupRebuild()
             verify(fixtureCoreRepository).findDistinctLeagueUidsWithAvailableFixtures()
             verify(availableFixtureJobReconciler).reconcileLeague("league-1")
             verify(availableFixtureJobReconciler).reconcileLeague("league-2")
@@ -49,7 +51,7 @@ class StartupMatchJobCleanupTest {
     @Test
     fun `cleanup 또는 reconcile 실패가 있으면 startup cleanup 결과는 실패다`() {
         val service = service()
-        whenever(jobSchedulerService.deleteStartupAvailableMatchJobs())
+        whenever(jobSchedulerService.deleteAvailableMatchJobsForStartupRebuild())
             .thenReturn(
                 MatchJobCleanupResult(
                     deleted = 0,
@@ -94,7 +96,7 @@ class StartupMatchJobCleanupTest {
     @Test
     fun `available fixture 리그 조회 실패는 앱 시작을 막지 않고 실패 결과로 남긴다`() {
         val service = service()
-        whenever(jobSchedulerService.deleteStartupAvailableMatchJobs())
+        whenever(jobSchedulerService.deleteAvailableMatchJobsForStartupRebuild())
             .thenReturn(MatchJobCleanupResult(deleted = 1, skipped = 0, errors = emptyList()))
         whenever(fixtureCoreRepository.findDistinctLeagueUidsWithAvailableFixtures())
             .thenThrow(RuntimeException("db failed"))

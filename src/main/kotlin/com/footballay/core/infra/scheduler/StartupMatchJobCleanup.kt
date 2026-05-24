@@ -1,5 +1,6 @@
 package com.footballay.core.infra.scheduler
 
+import com.footballay.core.infra.scheduler.cleanup.MatchJobCleanupResult
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.logger
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -40,7 +41,7 @@ class StartupMatchJobCleanup(
     }
 
     fun cleanupAndReconcile(): StartupMatchJobCleanupResult {
-        val cleanupResult = jobSchedulerService.deleteStartupAvailableMatchJobs()
+        val cleanupResult = jobSchedulerService.deleteAvailableMatchJobsForStartupRebuild()
         val reconcileResults =
             when (val loadResult = loadAvailableFixtureLeagueUids()) {
                 is AvailableFixtureLeagueUidLoadResult.Success -> loadResult.leagueUids.map(::reconcileLeague)

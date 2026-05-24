@@ -17,6 +17,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.time.Instant
@@ -66,6 +68,22 @@ class AvailableFixtureFacadeJobReconcileTest {
     }
 
     @Test
+    fun `이미 available true인 fixture는 저장이나 reconcile 없이 성공 반환한다`() {
+        val fixture = fixture(available = true, kickoff = Instant.parse("2026-05-15T12:00:00Z"))
+        val fixtureApi = fixtureApi(fixture, available = true)
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApi)
+
+        val result = facade.addAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        assertThat((result as DomainResult.Success).value).isEqualTo(fixtureUid)
+        verify(fixtureCoreRepository, never()).save(any())
+        verify(fixtureApiSportsRepository, never()).save(any())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<String>())
+    }
+
+    @Test
     fun `available true toggle에서 reconcile 실패 시 flag rollback 후 best effort compensation을 시도한다`() {
         val fixture = fixture(available = false, kickoff = Instant.parse("2026-05-15T12:00:00Z"))
         val fixtureApi = fixtureApi(fixture)
@@ -104,6 +122,40 @@ class AvailableFixtureFacadeJobReconcileTest {
     }
 
     @Test
+    fun `available false toggle은 flag 저장 후 reconciler를 호출한다`() {
+        val fixture = fixture(available = true, kickoff = Instant.parse("2026-05-15T12:00:00Z"))
+        val fixtureApi = fixtureApi(fixture, available = true)
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApi)
+        whenever(fixtureCoreRepository.save(fixture)).thenReturn(fixture)
+        whenever(fixtureApiSportsRepository.save(fixtureApi)).thenReturn(fixtureApi)
+        whenever(availableFixtureJobReconciler.reconcileFixture(fixture)).thenReturn(successResult())
+
+        val result = facade.removeAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        assertThat((result as DomainResult.Success).value).isEqualTo(fixtureUid)
+        assertThat(fixture.available).isFalse()
+        assertThat(fixtureApi.available).isFalse()
+        verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+    }
+
+    @Test
+    fun `이미 available false인 fixture는 저장이나 reconcile 없이 성공 반환한다`() {
+        val fixture = fixture(available = false, kickoff = Instant.parse("2026-05-15T12:00:00Z"))
+        val fixtureApi = fixtureApi(fixture, available = false)
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApi)
+
+        val result = facade.removeAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        assertThat((result as DomainResult.Success).value).isEqualTo(fixtureUid)
+        verify(fixtureCoreRepository, never()).save(any())
+        verify(fixtureApiSportsRepository, never()).save(any())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<String>())
+    }
+
+    @Test
     fun `kickoff null fixture는 available true toggle을 실패 처리한다`() {
         val fixture = fixture(available = false, kickoff = null)
         val fixtureApi = fixtureApi(fixture)
@@ -115,6 +167,56 @@ class AvailableFixtureFacadeJobReconcileTest {
         val validation = (result as DomainResult.Fail).error as DomainFail.Validation
         assertThat(validation.errors.first().code).isEqualTo("KICKOFF_TIME_NOT_SET")
         assertThat(fixture.available).isFalse()
+    }
+
+    @Test
+    fun `FixtureApiSports가 없으면 available true toggle은 NotFound를 반환한다`() {
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(null)
+
+        val result = facade.addAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
+        val notFound = (result as DomainResult.Fail).error as DomainFail.NotFound
+        assertThat(notFound.resource).isEqualTo("FIXTURE_API_SPORTS")
+        assertThat(notFound.id).isEqualTo(fixtureApiId.toString())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
+    }
+
+    @Test
+    fun `FixtureApiSports core가 없으면 available true toggle은 NotFound를 반환한다`() {
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApiWithoutCore())
+
+        val result = facade.addAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
+        val notFound = (result as DomainResult.Fail).error as DomainFail.NotFound
+        assertThat(notFound.resource).isEqualTo("FIXTURE_CORE")
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
+    }
+
+    @Test
+    fun `FixtureApiSports가 없으면 available false toggle은 NotFound를 반환한다`() {
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(null)
+
+        val result = facade.removeAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
+        val notFound = (result as DomainResult.Fail).error as DomainFail.NotFound
+        assertThat(notFound.resource).isEqualTo("FIXTURE_API_SPORTS")
+        assertThat(notFound.id).isEqualTo(fixtureApiId.toString())
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
+    }
+
+    @Test
+    fun `FixtureApiSports core가 없으면 available false toggle은 NotFound를 반환한다`() {
+        whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApiWithoutCore())
+
+        val result = facade.removeAvailableFixture(fixtureApiId)
+
+        assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
+        val notFound = (result as DomainResult.Fail).error as DomainFail.NotFound
+        assertThat(notFound.resource).isEqualTo("FIXTURE_CORE")
+        verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
     }
 
     private fun fixture(
@@ -149,6 +251,15 @@ class AvailableFixtureFacadeJobReconcileTest {
             core = fixture,
             apiId = fixtureApiId,
             available = available,
+            season = null,
+        )
+
+    private fun fixtureApiWithoutCore(): FixtureApiSports =
+        FixtureApiSports(
+            id = 1L,
+            core = null,
+            apiId = fixtureApiId,
+            available = false,
             season = null,
         )
 

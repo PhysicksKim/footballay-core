@@ -3,6 +3,10 @@ package com.footballay.core.infra.scheduler
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
 import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
+import com.footballay.core.infra.scheduler.matchjob.MatchJobPhase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

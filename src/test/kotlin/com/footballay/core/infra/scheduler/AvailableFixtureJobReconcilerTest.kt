@@ -5,6 +5,11 @@ import com.footballay.core.infra.match.FixtureStatusClassifier
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
+import com.footballay.core.infra.scheduler.matchjob.MatchJobPhase
+import com.footballay.core.infra.scheduler.matchjob.MatchJobRegistrationResult
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

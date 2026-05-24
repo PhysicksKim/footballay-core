@@ -1,4 +1,4 @@
-package com.footballay.core.infra.scheduler
+package com.footballay.core.infra.scheduler.matchjob
 
 import org.quartz.JobKey
 import org.quartz.TriggerKey

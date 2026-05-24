@@ -4,6 +4,11 @@ import com.footballay.core.infra.match.FixtureStatusClassifier
 import com.footballay.core.infra.match.FixtureStatusGroup
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
+import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
+import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
+import com.footballay.core.infra.scheduler.matchjob.MatchJobPhase
+import com.footballay.core.infra.scheduler.matchjob.MatchJobRegistrationResult
 import com.footballay.core.logger
 import org.quartz.JobKey
 import org.springframework.stereotype.Component
@@ -20,7 +25,14 @@ data class ReconcileError(
 )
 
 data class ReconcileResult(
+    /**
+     * 단일 경기에 대해 Reconcile한 경우 fixtureUid가 제공됩니다
+     */
     val fixtureUid: String?,
+    /**
+     * 리그의 경기에 대해서 Reconcile한 경우 leagueUid가 제공됩니다.
+     * 단일 경기 Reconcile 시에는 fixtureUid로 충분하므로 null로 제공됩니다.
+     */
     val leagueUid: String?,
     val success: Boolean,
     val planned: Int,
@@ -59,8 +71,10 @@ class AvailableFixtureJobReconciler(
     private val log = logger()
 
     /**
-     * Fixture uid 를 받아 DB 에서 fixture 와 league 를 조회한 뒤, 해당 fixture 의 available polling job 을
-     * 현재 DB 상태에서 계산한 desired state 에 맞춰 생성/수정/삭제하고 결과를 반환합니다.
+     * [fixtureUid] 를 받아서 해당 `Fixture`의 설정값에 맞게 Job을 등록 삭제 해줍니다.
+     *
+     * Fixture uid 를 받아 DB 에서 fixture 와 league 를 조회하고,
+     * 해당 fixture 의 available job 을 현재 DB 상태에서 계산한 state 에 맞춰서 생성/수정/삭제하고 결과를 반환합니다.
      */
     fun reconcileFixture(fixtureUid: String): ReconcileResult {
         val fixture = fixtureCoreRepository.findNullableByUid(fixtureUid)
@@ -80,8 +94,10 @@ class AvailableFixtureJobReconciler(
     }
 
     /**
-     * League uid 를 받아 해당 리그의 available fixture 들을 조회하고, 각 fixture 의 available polling job 을
-     * desired state 에 맞춰 생성/수정/삭제 하고 fixture 별 적용 결과를 하나로 합산해 반환합니다.
+     * [leagueUid] 를 받아서 해당 `League`의 `List<Fixture>`의 설정값에 맞게 Job을 등록 삭제 해줍니다.
+     *
+     * League uid 를 받아 해당 리그의 available fixture 들을 조회하고,
+     * 각 fixture 의 available job 을 현재 DB 상태에서 계산한 state 에 맞춰서 생성/수정/삭제하고 결과를 반환합니다.
      */
     fun reconcileLeague(leagueUid: String): ReconcileResult {
         val fixtures = fixtureCoreRepository.findAvailableFixturesByLeagueUid(leagueUid)
@@ -97,8 +113,9 @@ class AvailableFixtureJobReconciler(
     }
 
     /**
-     * FixtureCore 를 받아 그 객체의 현재 필드 값으로 desired available job 을 계산하고, Quartz actual state 를
-     * 등록/교체/삭제해 맞춘 뒤 적용 결과를 반환합니다.
+     * [FixtureCore] 를 받아서 해당 객체 `Fixture`의 설정값에 맞게 Job을 등록 삭제 해줍니다.
+     *
+     * Schedule Job을 등록/교체/삭제해 맞춘 뒤 적용 결과를 반환합니다.
      */
     fun reconcileFixture(fixture: FixtureCore): ReconcileResult {
         val leagueUid = fixture.league.uid
