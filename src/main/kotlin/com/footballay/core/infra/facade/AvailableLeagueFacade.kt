@@ -2,11 +2,13 @@ package com.footballay.core.infra.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
+import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 
 /**
  * Available League 관리 Facade
@@ -18,6 +20,7 @@ import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSports
 @Service
 class AvailableLeagueFacade(
     private val leagueApiSportsRepository: LeagueApiSportsRepository,
+    private val leagueCoreRepository: LeagueCoreRepository,
 ) {
     private val log = logger()
 
@@ -38,36 +41,82 @@ class AvailableLeagueFacade(
     ): DomainResult<String, DomainFail> {
         log.info("Setting leagueApiSports available with Core - leagueApiId={}, available={}", apiId, available)
 
-        val leagueApiSports = leagueApiSportsRepository.findByApiId(apiId)
-        if (leagueApiSports == null) {
-            log.warn("LeagueApiSports not found - leagueApiId={}", apiId)
-            return DomainResult.Fail(
-                DomainFail.NotFound(
-                    resource = "LEAGUE_API_SPORTS",
-                    id = apiId.toString(),
-                ),
-            )
-        }
-        val core = leagueApiSports.leagueCore
-        if (core == null) {
-            log.warn("LeagueCore not found for LeagueApiSports - leagueApiId={}", apiId)
-            return DomainResult.Fail(
-                DomainFail.NotFound(
-                    resource = "LEAGUE_CORE_FOR_API_SPORTS",
-                    id = apiId.toString(),
-                ),
-            )
-        }
+        val leagueApiSports =
+            leagueApiSportsRepository.findByApiId(apiId)
+                ?: return leagueApiSportsNotFound(apiId)
+
+        val core =
+            leagueApiSports.leagueCore
+                ?: return leagueCoreNotLinked(apiId)
 
         leagueApiSports.available = available
+        setAvailableFlag(core, available)
+
+        return DomainResult.Success(core.uid)
+    }
+
+    /**
+     * [LeagueCore.uid] 를 기준으로 available 상태를 설정합니다.
+     *
+     * MockBackbone 처럼 provider id 가 없는 리그도 같은 available 정책을 사용할 수 있도록 둔 provider-neutral entrypoint 입니다.
+     */
+    @Transactional
+    fun setLeagueAvailableByCoreUid(
+        leagueCoreUid: String,
+        available: Boolean,
+    ): DomainResult<String, DomainFail> {
+        log.info("Setting leagueCore available - leagueCoreUid={}, available={}", leagueCoreUid, available)
+
+        val core =
+            leagueCoreRepository.findByUid(leagueCoreUid)
+                ?: return leagueCoreNotFound(leagueCoreUid)
+
+        setAvailableFlag(core, available)
+
+        return DomainResult.Success(core.uid)
+    }
+
+    private fun setAvailableFlag(
+        core: LeagueCore,
+        available: Boolean,
+    ) {
         core.available = available
+        core.apiSportsLeague?.available = available
         log.info(
-            "LeagueApiSports and LeagueCore available updated - coreUid={}, apiId={}, available={}",
+            "League available updated - coreUid={}, apiId={}, available={}",
             core.uid,
-            leagueApiSports.apiId,
+            core.apiSportsLeague?.apiId,
             available,
         )
+    }
 
-        return DomainResult.Success(apiId.toString())
+    private fun leagueApiSportsNotFound(apiId: Long): DomainResult.Fail<DomainFail.NotFound> {
+        log.warn("LeagueApiSports not found - leagueApiId={}", apiId)
+        return DomainResult.Fail(
+            DomainFail.NotFound(
+                resource = "LEAGUE_API_SPORTS",
+                id = apiId.toString(),
+            ),
+        )
+    }
+
+    private fun leagueCoreNotLinked(apiId: Long): DomainResult.Fail<DomainFail.NotFound> {
+        log.warn("LeagueCore not found for LeagueApiSports - leagueApiId={}", apiId)
+        return DomainResult.Fail(
+            DomainFail.NotFound(
+                resource = "LEAGUE_CORE_FOR_API_SPORTS",
+                id = apiId.toString(),
+            ),
+        )
+    }
+
+    private fun leagueCoreNotFound(leagueCoreUid: String): DomainResult.Fail<DomainFail.NotFound> {
+        log.warn("LeagueCore not found - leagueCoreUid={}", leagueCoreUid)
+        return DomainResult.Fail(
+            DomainFail.NotFound(
+                resource = "LEAGUE_CORE",
+                id = leagueCoreUid,
+            ),
+        )
     }
 }

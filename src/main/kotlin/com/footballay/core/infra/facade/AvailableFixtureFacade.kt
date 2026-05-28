@@ -54,76 +54,28 @@ class AvailableFixtureFacade(
     fun addAvailableFixture(fixtureApiId: Long): DomainResult<String, DomainFail> {
         log.info("Adding available fixture - fixtureApiId={}", fixtureApiId)
 
-        // 1. FixtureApiSports 조회
         val fixtureApiSports =
             findFixtureOfApiSports(fixtureApiId)
-                ?: return ofNotFoundResult(
-                    id = fixtureApiId.toString(),
-                    resource = "FIXTURE_API_SPORTS",
-                )
+                ?: return fixtureApiSportsNotFound(fixtureApiId)
 
-        // 2. FixtureCore 조회 (연관관계로 접근)
         val fixtureCore =
             fixtureApiSports.core
-                ?: return ofNotFoundResult(
-                    id = "core not linked to apiId=$fixtureApiId",
-                    resource = "FIXTURE_CORE",
-                )
+                ?: return fixtureCoreNotLinked(fixtureApiId)
 
-        // 3. 이미 available인지 확인
-        if (fixtureCore.available) {
-            log.warn("Fixture is already available - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
-            return DomainResult.Success(fixtureCore.uid)
-        }
+        return enableAvailableFixtureLifecycle(fixtureCore)
+            .syncApiSportsAvailableOnSuccess(available = true, fixtureApiSports)
+    }
 
-        // 4. kickoff 시간이 확정되지 않은 경우 Job 등록 불가
-        val kickoff = fixtureCore.kickoff
-        if (kickoff == null) {
-            log.warn("Cannot make fixture available - kickoff time is not set - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
-            return DomainResult.Fail(
-                DomainFail.Validation.single(
-                    code = "KICKOFF_TIME_NOT_SET",
-                    message = "경기 시작 시간이 미정입니다. 킥오프 시간 확정 후 다시 시도해주세요.",
-                    field = "kickoff",
-                ),
-            )
-        }
+    @Transactional
+    fun addAvailableFixtureByCoreUid(fixtureCoreUid: String): DomainResult<String, DomainFail> {
+        log.info("Adding available fixture - fixtureCoreUid={}", fixtureCoreUid)
 
-        // 5. FixtureCore available 플래그 설정
-        setFixtureAvailableFlag(available = true, fixtureCore, fixtureApiSports)
-        log.info(
-            "FixtureApiSports available updated - fixtureApiId={}, uid={}, available=true, kickoff={}",
-            fixtureApiId,
-            fixtureCore.uid,
-            kickoff,
-        )
+        val fixtureCore =
+            findFixtureCore(fixtureCoreUid)
+                ?: return fixtureCoreNotFound(fixtureCoreUid)
 
-        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
-        if (isNotSuccess(reconcileResult)) {
-            log.error(
-                "Available fixture job reconcile failed - fixtureApiId={}, uid={}, result={}",
-                fixtureApiId,
-                fixtureCore.uid,
-                reconcileResult,
-            )
-            setFixtureAvailableFlag(available = false, fixtureCore, fixtureApiSports)
-            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
-            return DomainResult.Fail(
-                DomainFail.Validation.single(
-                    code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
-                    message = "Failed to reconcile available fixture jobs for fixture ${fixtureCore.uid}",
-                    field = "fixtureApiId",
-                ),
-            )
-        }
-
-        log.info(
-            "Available fixture added successfully - fixtureApiId={}, uid={}, kickoff={}",
-            fixtureApiId,
-            fixtureCore.uid,
-            kickoff,
-        )
-        return DomainResult.Success(fixtureCore.uid)
+        return enableAvailableFixtureLifecycle(fixtureCore)
+            .syncLinkedBackboneAvailableOnSuccess(available = true, fixtureCore)
     }
 
     /**
@@ -136,87 +88,77 @@ class AvailableFixtureFacade(
     fun removeAvailableFixture(fixtureApiId: Long): DomainResult<String, DomainFail> {
         log.info("Removing available fixture - fixtureApiId={}", fixtureApiId)
 
-        // 1. FixtureApiSports 조회
         val fixtureApiSports =
             findFixtureOfApiSports(fixtureApiId)
-                ?: return ofNotFoundResult(
-                    id = fixtureApiId.toString(),
-                    resource = "FIXTURE_API_SPORTS",
-                )
+                ?: return fixtureApiSportsNotFound(fixtureApiId)
 
-        // 2. FixtureCore 조회 (연관관계로 접근)
         val fixtureCore =
             fixtureApiSports.core
-                ?: return ofNotFoundResult(
-                    id = "core not linked to apiId=$fixtureApiId",
-                    resource = "FIXTURE_CORE",
-                )
+                ?: return fixtureCoreNotLinked(fixtureApiId)
 
-        // 3. 이미 unavailable인지 확인
-        if (!fixtureCore.available) {
-            log.warn("Fixture is already unavailable - fixtureApiId={}, uid={}", fixtureApiId, fixtureCore.uid)
-            return DomainResult.Success(fixtureCore.uid)
-        }
+        return disableAvailableFixtureLifecycle(fixtureCore)
+            .syncApiSportsAvailableOnSuccess(available = false, fixtureApiSports)
+    }
 
-        // 4. FixtureCore available 플래그 해제
-        setFixtureAvailableFlag(available = false, fixtureCore, fixtureApiSports)
-        log.info("FixtureApiSports available updated - fixtureApiId={}, uid={}, available=false", fixtureApiId, fixtureCore.uid)
+    @Transactional
+    fun removeAvailableFixtureByCoreUid(fixtureCoreUid: String): DomainResult<String, DomainFail> {
+        log.info("Removing available fixture - fixtureCoreUid={}", fixtureCoreUid)
 
-        // 5. 모든 available fixture Job 정리
+        val fixtureCore =
+            findFixtureCore(fixtureCoreUid)
+                ?: return fixtureCoreNotFound(fixtureCoreUid)
+
+        return disableAvailableFixtureLifecycle(fixtureCore)
+            .syncLinkedBackboneAvailableOnSuccess(available = false, fixtureCore)
+    }
+
+    private fun enableAvailableFixtureLifecycle(fixtureCore: FixtureCore): DomainResult<String, DomainFail> {
+        resultIfAlreadyAvailable(fixtureCore)?.let { return it }
+
+        val kickoff = fixtureCore.kickoff ?: return kickoffNotSet(fixtureCore)
+
+        setFixtureCoreAvailableFlag(available = true, fixtureCore)
+        log.info("Fixture available updated - uid={}, available=true, kickoff={}", fixtureCore.uid, kickoff)
+
         val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
         if (isNotSuccess(reconcileResult)) {
-            log.error(
-                "Available fixture job cleanup reconcile failed - fixtureApiId={}, uid={}, result={}",
-                fixtureApiId,
-                fixtureCore.uid,
-                reconcileResult,
-            )
-            setFixtureAvailableFlag(available = true, fixtureCore, fixtureApiSports)
+            log.error("Available fixture job reconcile failed - uid={}, result={}", fixtureCore.uid, reconcileResult)
+            setFixtureCoreAvailableFlag(available = false, fixtureCore)
             restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
-            return DomainResult.Fail(
-                DomainFail.Validation.single(
-                    code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
-                    message = "Failed to reconcile available fixture jobs for fixture ${fixtureCore.uid}",
-                    field = "fixtureApiId",
-                ),
-            )
+            return resultOfReconcileFail(fixtureCore.uid)
         }
 
-        log.info(
-            "Available fixture removed successfully - fixtureApiId={}, uid={}, reconcileResult={}",
-            fixtureApiId,
-            fixtureCore.uid,
-            reconcileResult,
-        )
-
+        log.info("Available fixture added successfully - uid={}, kickoff={}", fixtureCore.uid, kickoff)
         return DomainResult.Success(fixtureCore.uid)
     }
 
-    private fun reconcileAvailableFixtureJobs(fixtureCore: FixtureCore): ReconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
+    private fun disableAvailableFixtureLifecycle(fixtureCore: FixtureCore): DomainResult<String, DomainFail> {
+        resultIfAlreadyUnavailable(fixtureCore)?.let { return it }
 
-    private fun ofNotFoundResult(
-        id: String,
-        resource: String,
-    ): DomainResult.Fail<DomainFail.NotFound> =
-        DomainResult.Fail(
-            DomainFail.NotFound(
-                resource = resource,
-                id = id,
-            ),
-        )
+        setFixtureCoreAvailableFlag(available = false, fixtureCore)
+        log.info("Fixture available updated - uid={}, available=false", fixtureCore.uid)
 
-    private fun setFixtureAvailableFlag(
-        available: Boolean,
-        fixtureCore: FixtureCore,
-        fixtureApiSports: FixtureApiSports,
-    ) {
-        fixtureCore.available = available
-        fixtureApiSports.available = available
-        fixtureCoreRepository.save(fixtureCore)
-        fixtureApiSportsRepository.save(fixtureApiSports)
+        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
+        if (isNotSuccess(reconcileResult)) {
+            log.error("Available fixture job cleanup reconcile failed - uid={}, result={}", fixtureCore.uid, reconcileResult)
+            setFixtureCoreAvailableFlag(available = true, fixtureCore)
+            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
+            return resultOfReconcileFail(fixtureCore.uid)
+        }
+
+        log.info("Available fixture removed successfully - uid={}, reconcileResult={}", fixtureCore.uid, reconcileResult)
+        return DomainResult.Success(fixtureCore.uid)
     }
 
-    private fun findFixtureOfApiSports(fixtureApiId: Long): FixtureApiSports? = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+    private fun setFixtureCoreAvailableFlag(
+        available: Boolean,
+        fixtureCore: FixtureCore,
+    ) {
+        fixtureCore.available = available
+        fixtureCoreRepository.save(fixtureCore)
+    }
+
+    private fun reconcileAvailableFixtureJobs(fixtureCore: FixtureCore): ReconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
 
     /**
      * Quartz Job 등록 실패 시 다시 올바르게 맞추기 위한 조치
@@ -235,6 +177,115 @@ class AvailableFixtureFacade(
             )
         }
     }
+
+    private fun setFixtureApiSportsAvailableFlag(
+        available: Boolean,
+        fixtureApiSports: FixtureApiSports,
+    ) {
+        if (fixtureApiSports.available == available) {
+            return
+        }
+        fixtureApiSports.available = available
+        fixtureApiSportsRepository.save(fixtureApiSports)
+    }
+
+    private fun syncLinkedBackboneAvailableFlags(
+        available: Boolean,
+        fixtureCore: FixtureCore,
+    ) {
+        fixtureCore.apiSports?.let {
+            setFixtureApiSportsAvailableFlag(available, it)
+        }
+    }
+
+    private fun DomainResult<String, DomainFail>.syncApiSportsAvailableOnSuccess(
+        available: Boolean,
+        fixtureApiSports: FixtureApiSports,
+    ): DomainResult<String, DomainFail> {
+        if (this is DomainResult.Success) {
+            setFixtureApiSportsAvailableFlag(available, fixtureApiSports)
+        }
+        return this
+    }
+
+    private fun DomainResult<String, DomainFail>.syncLinkedBackboneAvailableOnSuccess(
+        available: Boolean,
+        fixtureCore: FixtureCore,
+    ): DomainResult<String, DomainFail> {
+        if (this is DomainResult.Success) {
+            syncLinkedBackboneAvailableFlags(available, fixtureCore)
+        }
+        return this
+    }
+
+    private fun findFixtureOfApiSports(fixtureApiId: Long): FixtureApiSports? = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+
+    private fun findFixtureCore(fixtureCoreUid: String): FixtureCore? = fixtureCoreRepository.findNullableByUid(fixtureCoreUid)
+
+    private fun resultIfAlreadyAvailable(fixtureCore: FixtureCore): DomainResult<String, DomainFail>? {
+        if (!fixtureCore.available) {
+            return null
+        }
+        log.warn("Fixture is already available - uid={}", fixtureCore.uid)
+        return DomainResult.Success(fixtureCore.uid)
+    }
+
+    private fun resultIfAlreadyUnavailable(fixtureCore: FixtureCore): DomainResult<String, DomainFail>? {
+        if (fixtureCore.available) {
+            return null
+        }
+        log.warn("Fixture is already unavailable - uid={}", fixtureCore.uid)
+        return DomainResult.Success(fixtureCore.uid)
+    }
+
+    private fun kickoffNotSet(fixtureCore: FixtureCore): DomainResult.Fail<DomainFail.Validation> {
+        log.warn("Cannot make fixture available - kickoff time is not set - uid={}", fixtureCore.uid)
+        return DomainResult.Fail(
+            DomainFail.Validation.single(
+                code = "KICKOFF_TIME_NOT_SET",
+                message = "경기 시작 시간이 미정입니다. 킥오프 시간 확정 후 다시 시도해주세요.",
+                field = "kickoff",
+            ),
+        )
+    }
+
+    private fun resultOfReconcileFail(fixtureUid: String): DomainResult.Fail<DomainFail.Validation> =
+        DomainResult.Fail(
+            DomainFail.Validation.single(
+                code = "AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED",
+                message = "Failed to reconcile available fixture jobs for fixture $fixtureUid",
+                field = "fixtureUid",
+            ),
+        )
+
+    private fun fixtureApiSportsNotFound(fixtureApiId: Long): DomainResult.Fail<DomainFail.NotFound> =
+        ofNotFoundResult(
+            id = fixtureApiId.toString(),
+            resource = "FIXTURE_API_SPORTS",
+        )
+
+    private fun fixtureCoreNotLinked(fixtureApiId: Long): DomainResult.Fail<DomainFail.NotFound> =
+        ofNotFoundResult(
+            id = "core not linked to apiId=$fixtureApiId",
+            resource = "FIXTURE_CORE",
+        )
+
+    private fun fixtureCoreNotFound(fixtureCoreUid: String): DomainResult.Fail<DomainFail.NotFound> =
+        ofNotFoundResult(
+            id = fixtureCoreUid,
+            resource = "FIXTURE_CORE",
+        )
+
+    private fun ofNotFoundResult(
+        id: String,
+        resource: String,
+    ): DomainResult.Fail<DomainFail.NotFound> =
+        DomainResult.Fail(
+            DomainFail.NotFound(
+                resource = resource,
+                id = id,
+            ),
+        )
 
     private fun isNotSuccess(reconcileResult: ReconcileResult): Boolean = !reconcileResult.success
 }

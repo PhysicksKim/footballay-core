@@ -2,6 +2,12 @@ package com.footballay.core.common.result
 
 /**
  * 퍼사드/도메인 유즈케이스의 표준 결과 타입.
+ *
+ * 이 클래스는 경계 간에서 리턴 값을 감싸는 데 사용합니다.
+ * DomainResult 를 리턴 타입으로 사용했다면 해당 함수의 반환 값은 항상 외부로 전달되어도
+ * 상관없는 성공 페이로드 또는 실패 정보를 담고 있어야 합니다.
+ * 내부 helper 간 제어 흐름을 표현하기 위한 타입으로는 사용하지 않는 것을 권장합니다.
+ *
  * S: 성공 페이로드(대부분 Int/Unit, 필요 시 도메인 전용 DTO)
  * F: 실패 타입(초기에는 DomainFail.Validation, DomainFail.NotFound만 사용)
  */
