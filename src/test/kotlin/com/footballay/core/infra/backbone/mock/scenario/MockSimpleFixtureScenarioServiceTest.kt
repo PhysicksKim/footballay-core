@@ -91,13 +91,15 @@ class MockSimpleFixtureScenarioServiceTest {
         }
         whenever(fixtureService.createFixture(any())).thenAnswer {
             val command = it.arguments[0] as MockFixtureCreateCommand
+            val homeTeamCoreUid = requireNotNull(command.homeTeamCoreUid)
+            val awayTeamCoreUid = requireNotNull(command.awayTeamCoreUid)
             DomainResult.Success(
                 FixtureModel(
                     uid = "fixture-1",
                     leagueUid = command.leagueCoreUid,
                     schedule = FixtureModel.FixtureSchedule(kickoffAt = command.kickoff, round = ""),
-                    homeTeam = FixtureModel.TeamSide(command.homeTeamCoreUid, command.homeTeamCoreUid, null, null),
-                    awayTeam = FixtureModel.TeamSide(command.awayTeamCoreUid, command.awayTeamCoreUid, null, null),
+                    homeTeam = FixtureModel.TeamSide(homeTeamCoreUid, homeTeamCoreUid, null, null),
+                    awayTeam = FixtureModel.TeamSide(awayTeamCoreUid, awayTeamCoreUid, null, null),
                     status = FixtureModel.Status("Not Started", FixtureModel.StatusCode.NS, null, null),
                     score = FixtureModel.Score(null, null),
                     available = command.fixtureAvailable,
