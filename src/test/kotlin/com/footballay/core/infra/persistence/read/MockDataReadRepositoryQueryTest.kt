@@ -26,7 +26,7 @@ import java.time.Instant
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
-class ReadVisibilityRepositoryQueryTest {
+class MockDataReadRepositoryQueryTest {
     @Autowired
     private lateinit var leagueCoreRepository: LeagueCoreRepository
 
@@ -116,7 +116,7 @@ class ReadVisibilityRepositoryQueryTest {
     }
 
     @Test
-    fun `min max kickoff query는 provider visibility별 후보만 사용한다`() {
+    fun `min max kickoff query는 provider backing별 후보만 사용한다`() {
         val apiFixture = saveFixture("api-kickoff", apiSportsLeague, Instant.parse("2026-06-10T10:00:00Z"))
         val mockFixture = saveFixture("mock-kickoff", mockLeague, Instant.parse("2026-06-05T10:00:00Z"))
         saveFixture("core-only-kickoff", coreOnlyLeague, Instant.parse("2026-06-03T10:00:00Z"))
