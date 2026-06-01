@@ -85,7 +85,7 @@ class AdminValidationExceptionHandler {
     @ExceptionHandler(HandlerMethodValidationException::class)
     fun handleHandlerMethodValidation(ex: HandlerMethodValidationException): ResponseEntity<ValidationErrorResponse> {
         val errors =
-            ex.allValidationResults.flatMap { result ->
+            ex.parameterValidationResults.flatMap { result ->
                 result.resolvableErrors.map { error ->
                     FieldErrorResponse(
                         field = result.methodParameter?.parameterName ?: "unknown",
