@@ -119,6 +119,33 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     ): List<FixtureCore>
 
     /**
+     * 특정 리그(UID 기반)의 킥오프 시간 범위 내 ApiSports-backed Fixture들을 조회합니다.
+     *
+     * Public/Desktop 기본 조회에서 Core-only 또는 MockBackbone fixture 가 섞이지 않도록
+     * FixtureApiSports 연결이 있는 FixtureCore 만 대상으로 합니다.
+     */
+    @Query(
+        """
+        SELECT f
+        FROM FixtureCore f
+        JOIN FETCH f.apiSports AS fas
+        LEFT JOIN FETCH f.homeTeam AS ht
+        LEFT JOIN FETCH f.awayTeam AS at
+        LEFT JOIN FETCH ht.teamApiSports
+        LEFT JOIN FETCH at.teamApiSports
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :startInclusive
+          AND f.kickoff < :endExclusive
+        ORDER BY f.kickoff ASC
+    """,
+    )
+    fun findApiSportsBackedFixturesByLeagueUidInKickoffRange(
+        @Param("leagueUid") leagueUid: String,
+        @Param("startInclusive") startInclusive: Instant,
+        @Param("endExclusive") endExclusive: Instant,
+    ): List<FixtureCore>
+
+    /**
      * 특정 리그(UID 기반)에서 from 이후 가장 가까운 kickoff 시각을 조회합니다.
      *
      * @param leagueUid 리그 UID
@@ -134,6 +161,23 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     """,
     )
     fun findMinKickoffAfterByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+        @Param("from") from: Instant,
+    ): Instant?
+
+    /**
+     * 특정 리그(UID 기반)에서 from 이후 가장 가까운 ApiSports-backed kickoff 시각을 조회합니다.
+     */
+    @Query(
+        """
+        SELECT MIN(f.kickoff)
+        FROM FixtureCore f
+        JOIN f.apiSports fas
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :from
+    """,
+    )
+    fun findMinApiSportsBackedKickoffAfterByLeagueUid(
         @Param("leagueUid") leagueUid: String,
         @Param("from") from: Instant,
     ): Instant?
@@ -155,6 +199,23 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     """,
     )
     fun findMaxKickoffBeforeByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+        @Param("before") before: Instant,
+    ): Instant?
+
+    /**
+     * 특정 리그(UID 기반)에서 before 이전 가장 가까운 ApiSports-backed kickoff 시각을 조회합니다.
+     */
+    @Query(
+        """
+        SELECT MAX(f.kickoff)
+        FROM FixtureCore f
+        JOIN f.apiSports fas
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff < :before
+    """,
+    )
+    fun findMaxApiSportsBackedKickoffBeforeByLeagueUid(
         @Param("leagueUid") leagueUid: String,
         @Param("before") before: Instant,
     ): Instant?

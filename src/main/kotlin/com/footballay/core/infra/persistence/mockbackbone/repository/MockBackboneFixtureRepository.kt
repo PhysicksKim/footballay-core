@@ -1,10 +1,12 @@
 package com.footballay.core.infra.persistence.mockbackbone.repository
 
 import com.footballay.core.infra.persistence.mockbackbone.entity.MockBackboneFixture
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import java.time.Instant
 
 @Repository
 interface MockBackboneFixtureRepository : JpaRepository<MockBackboneFixture, Long> {
@@ -24,6 +26,56 @@ interface MockBackboneFixtureRepository : JpaRepository<MockBackboneFixture, Lon
     fun findByFixtureCoreUid(
         @Param("fixtureCoreUid") fixtureCoreUid: String,
     ): MockBackboneFixture?
+
+    @Query(
+        """
+        SELECT f
+        FROM MockBackboneFixture mf
+        JOIN mf.fixture f
+        JOIN FETCH f.league
+        LEFT JOIN FETCH f.homeTeam AS ht
+        LEFT JOIN FETCH f.awayTeam AS at
+        LEFT JOIN FETCH ht.teamApiSports
+        LEFT JOIN FETCH at.teamApiSports
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :startInclusive
+          AND f.kickoff < :endExclusive
+        ORDER BY f.kickoff ASC
+    """,
+    )
+    fun findMockBackedFixturesByLeagueUidInKickoffRange(
+        @Param("leagueUid") leagueUid: String,
+        @Param("startInclusive") startInclusive: Instant,
+        @Param("endExclusive") endExclusive: Instant,
+    ): List<FixtureCore>
+
+    @Query(
+        """
+        SELECT MIN(f.kickoff)
+        FROM MockBackboneFixture mf
+        JOIN mf.fixture f
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :from
+    """,
+    )
+    fun findMinMockBackedKickoffAfterByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+        @Param("from") from: Instant,
+    ): Instant?
+
+    @Query(
+        """
+        SELECT MAX(f.kickoff)
+        FROM MockBackboneFixture mf
+        JOIN mf.fixture f
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff < :before
+    """,
+    )
+    fun findMaxMockBackedKickoffBeforeByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+        @Param("before") before: Instant,
+    ): Instant?
 
     fun findByScenarioUid(scenarioUid: String): List<MockBackboneFixture>
 }
