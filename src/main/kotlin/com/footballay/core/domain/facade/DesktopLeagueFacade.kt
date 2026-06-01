@@ -11,5 +11,7 @@ interface DesktopLeagueFacade {
     /**
      * Available한 모든 리그를 조회합니다.
      */
-    fun getAvailableLeagues(): DomainResult<List<LeagueModel>, DomainFail>
+    fun getAvailableLeagues(
+        option: MockDataReadOption = MockDataReadOption.DEFAULT,
+    ): DomainResult<List<LeagueModel>, DomainFail>
 }

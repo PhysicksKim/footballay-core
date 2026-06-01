@@ -17,6 +17,7 @@ interface DesktopFixtureFacade {
      * @param at 기준 시각 (null이면 현재 시각)
      * @param mode "previous" | "exact" | "nearest"
      * @param zoneId 날짜 계산 기준 타임존
+     * @param option mock data 포함 여부
      * @return 경기 목록
      */
     fun getFixturesByLeague(
@@ -24,5 +25,6 @@ interface DesktopFixtureFacade {
         at: Instant?,
         mode: String,
         zoneId: ZoneId,
+        option: MockDataReadOption = MockDataReadOption.DEFAULT,
     ): DomainResult<List<FixtureModel>, DomainFail>
 }
