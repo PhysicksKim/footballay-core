@@ -220,6 +220,78 @@ class MockDataReadQueryServiceTest {
         assertThat(fixtures.map { it.uid }).containsExactly("mock-previous")
     }
 
+    @Test
+    fun `fixture mode matrix는 날짜와 backbone별 후보를 올바르게 선택한다`() {
+        saveApiFixture("api-prev-matrix", sharedLeague, Instant.parse("2026-06-09T10:00:00Z"))
+        saveMockFixture("mock-prev-matrix", sharedLeague, Instant.parse("2026-06-09T12:00:00Z"))
+        saveApiFixture("api-exact-matrix", sharedLeague, Instant.parse("2026-06-10T10:00:00Z"))
+        saveMockFixture("mock-exact-matrix", sharedLeague, Instant.parse("2026-06-10T12:00:00Z"))
+        saveApiFixture("api-next-matrix", sharedLeague, Instant.parse("2026-06-11T10:00:00Z"))
+        saveMockFixture("mock-next-matrix", sharedLeague, Instant.parse("2026-06-11T12:00:00Z"))
+        entityManager.flush()
+        entityManager.clear()
+
+        assertFixtureModeRead(
+            mode = "exact",
+            at = Instant.parse("2026-06-10T00:00:00Z"),
+            defaultUids = listOf("api-exact-matrix"),
+            includeMockUids = listOf("api-exact-matrix", "mock-exact-matrix"),
+        )
+        assertFixtureModeRead(
+            mode = "nearest",
+            at = Instant.parse("2026-06-10T23:00:00Z"),
+            defaultUids = listOf("api-next-matrix"),
+            includeMockUids = listOf("api-next-matrix", "mock-next-matrix"),
+        )
+        assertFixtureModeRead(
+            mode = "previous",
+            at = Instant.parse("2026-06-09T23:00:00Z"),
+            defaultUids = listOf("api-prev-matrix"),
+            includeMockUids = listOf("api-prev-matrix", "mock-prev-matrix"),
+        )
+    }
+
+    private fun assertFixtureModeRead(
+        mode: String,
+        at: Instant,
+        defaultUids: List<String>,
+        includeMockUids: List<String>,
+    ) {
+        assertThat(
+            findFixtureUids(
+                at = at,
+                mode = mode,
+                option = MockDataReadOption.DEFAULT,
+            ),
+        ).containsExactlyElementsOf(defaultUids)
+
+        assertThat(
+            findFixtureUids(
+                at = at,
+                mode = mode,
+                option = MockDataReadOption(includeMockData = true),
+            ),
+        ).containsExactlyElementsOf(includeMockUids)
+    }
+
+    private fun findFixtureUids(
+        at: Instant,
+        mode: String,
+        option: MockDataReadOption,
+    ): List<String> {
+        val result =
+            fixtureScheduleReadQueryService.findFixturesByLeague(
+                leagueUid = sharedLeague.uid,
+                at = at,
+                mode = mode,
+                zoneId = ZoneOffset.UTC,
+                option = option,
+            )
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        return (result as DomainResult.Success).value.map { it.uid }
+    }
+
     private fun saveLeague(
         uid: String,
         name: String,
