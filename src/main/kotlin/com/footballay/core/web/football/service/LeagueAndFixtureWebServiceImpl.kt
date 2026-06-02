@@ -5,6 +5,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
 import com.footballay.core.domain.facade.DesktopFixtureFacade
 import com.footballay.core.domain.facade.DesktopLeagueFacade
+import com.footballay.core.domain.facade.MockDataReadOption
 import com.footballay.core.domain.model.FixtureModel
 import com.footballay.core.domain.model.LeagueModel
 import com.footballay.core.logger
@@ -25,8 +26,8 @@ class LeagueAndFixtureWebServiceImpl(
 ) : LeagueAndFixtureWebService {
     val log = logger()
 
-    override fun getAvailableLeagues(): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
-        desktopLeagueFacade.getAvailableLeagues().map { leagues ->
+    override fun getAvailableLeagues(option: MockDataReadOption): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
+        desktopLeagueFacade.getAvailableLeagues(option).map { leagues ->
             leagues.map { toAvailableLeagueResponse(it) }
         }
 
@@ -35,8 +36,9 @@ class LeagueAndFixtureWebServiceImpl(
         at: Instant?,
         mode: String,
         zoneId: ZoneId,
+        option: MockDataReadOption,
     ): DomainResult<List<FixtureByLeagueResponse>, DomainFail> =
-        desktopFixtureFacade.getFixturesByLeague(leagueUid, at, mode, zoneId).map { fixtures ->
+        desktopFixtureFacade.getFixturesByLeague(leagueUid, at, mode, zoneId, option).map { fixtures ->
             fixtures.map { toFixtureByLeagueResponse(it) }
         }
 

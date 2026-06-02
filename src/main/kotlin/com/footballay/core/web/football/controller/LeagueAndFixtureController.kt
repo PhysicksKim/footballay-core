@@ -5,6 +5,7 @@ import com.footballay.core.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.service.LeagueAndFixtureWebService
+import com.footballay.core.web.football.service.MockDataReadOptionResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -15,6 +16,7 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDate
@@ -36,7 +38,14 @@ class LeagueAndFixtureController(
     @Operation(summary = "가용 리그 목록 조회", description = "Available한 모든 리그를 조회합니다.")
     @ApiResponse(responseCode = "200")
     @GetMapping("/available")
-    fun availableLeagues(): ResponseEntity<List<AvailableLeagueResponse>> = leagueAndFixtureWebService.getAvailableLeagues().toResponseEntity()
+    fun availableLeagues(
+        @Parameter(description = "mock data 포함 옵션. include이면 mock data를 포함합니다.", example = "include")
+        @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
+        devData: String?,
+    ): ResponseEntity<List<AvailableLeagueResponse>> =
+        leagueAndFixtureWebService
+            .getAvailableLeagues(MockDataReadOptionResolver.resolve(devData))
+            .toResponseEntity()
 
     /**
      * 리그의 경기 일정을 모드에 따라 조회합니다.
@@ -69,6 +78,9 @@ class LeagueAndFixtureController(
         @Parameter(description = "Timezone (IANA format, default: UTC)", example = "Asia/Seoul")
         @RequestParam(required = false, defaultValue = "UTC")
         timezone: String,
+        @Parameter(description = "mock data 포함 옵션. include이면 mock data를 포함합니다.", example = "include")
+        @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
+        devData: String?,
     ): ResponseEntity<List<FixtureByLeagueResponse>> {
         val zoneId =
             try {
@@ -85,7 +97,7 @@ class LeagueAndFixtureController(
         val atInstant = localDate?.atStartOfDay(zoneId)?.toInstant()
 
         return leagueAndFixtureWebService
-            .getFixturesByLeague(leagueUid, atInstant, mode, zoneId)
+            .getFixturesByLeague(leagueUid, atInstant, mode, zoneId, MockDataReadOptionResolver.resolve(devData))
             .toResponseEntity()
     }
 }
