@@ -251,6 +251,62 @@ class MockDataReadQueryServiceTest {
         )
     }
 
+    @Test
+    fun `nearest previous 후보가 없으면 빈 리스트를 반환한다`() {
+        entityManager.flush()
+        entityManager.clear()
+
+        assertThat(
+            findFixtureUids(
+                at = Instant.parse("2026-06-10T00:00:00Z"),
+                mode = "nearest",
+                option = MockDataReadOption.DEFAULT,
+            ),
+        ).isEmpty()
+        assertThat(
+            findFixtureUids(
+                at = Instant.parse("2026-06-10T00:00:00Z"),
+                mode = "nearest",
+                option = MockDataReadOption(includeMockData = true),
+            ),
+        ).isEmpty()
+        assertThat(
+            findFixtureUids(
+                at = Instant.parse("2026-06-10T00:00:00Z"),
+                mode = "previous",
+                option = MockDataReadOption.DEFAULT,
+            ),
+        ).isEmpty()
+        assertThat(
+            findFixtureUids(
+                at = Instant.parse("2026-06-10T00:00:00Z"),
+                mode = "previous",
+                option = MockDataReadOption(includeMockData = true),
+            ),
+        ).isEmpty()
+    }
+
+    @Test
+    fun `nearest previous mock 후보만 있으면 기본 조회는 empty, mock 포함 조회는 not-empty 반환한다`() {
+        saveMockFixture("mock-only-nearest", sharedLeague, Instant.parse("2026-06-11T10:00:00Z"))
+        saveMockFixture("mock-only-previous", sharedLeague, Instant.parse("2026-06-09T10:00:00Z"))
+        entityManager.flush()
+        entityManager.clear()
+
+        assertFixtureModeRead(
+            mode = "nearest",
+            at = Instant.parse("2026-06-10T00:00:00Z"),
+            defaultUids = emptyList(),
+            includeMockUids = listOf("mock-only-nearest"),
+        )
+        assertFixtureModeRead(
+            mode = "previous",
+            at = Instant.parse("2026-06-10T00:00:00Z"),
+            defaultUids = emptyList(),
+            includeMockUids = listOf("mock-only-previous"),
+        )
+    }
+
     private fun assertFixtureModeRead(
         mode: String,
         at: Instant,
