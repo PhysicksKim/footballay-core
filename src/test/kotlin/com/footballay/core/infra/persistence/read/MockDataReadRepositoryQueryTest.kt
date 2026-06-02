@@ -51,24 +51,21 @@ class MockDataReadRepositoryQueryTest {
     private lateinit var apiSportsLeague: LeagueCore
     private lateinit var mockLeague: LeagueCore
     private lateinit var coreOnlyLeague: LeagueCore
+    private lateinit var sharedLeague: LeagueCore
 
     @BeforeEach
     fun setUp() {
         apiSportsLeague = saveLeague("api-league", "ApiSports League", available = true)
         mockLeague = saveLeague("mock-league", "Mock League", available = true)
         coreOnlyLeague = saveLeague("core-only-league", "Core Only League", available = true)
+        sharedLeague = saveLeague("shared-league", "Shared League", available = true)
         saveLeague("unavailable-mock-league", "Unavailable Mock League", available = false)
             .also(::saveMockBackboneLeague)
 
-        leagueApiSportsRepository.save(
-            LeagueApiSports(
-                apiId = 39L,
-                name = "ApiSports League",
-                leagueCore = apiSportsLeague,
-                available = true,
-            ),
-        )
+        saveApiSportsLeague(apiSportsLeague, 39L)
         saveMockBackboneLeague(mockLeague)
+        saveApiSportsLeague(sharedLeague, 140L)
+        saveMockBackboneLeague(sharedLeague)
 
         entityManager.flush()
         entityManager.clear()
@@ -79,8 +76,8 @@ class MockDataReadRepositoryQueryTest {
         val apiSportsLeagues = leagueCoreRepository.findApiSportsBackedAvailableLeagues()
         val mockLeagues = mockBackboneLeagueRepository.findMockBackedAvailableLeagues()
 
-        assertThat(apiSportsLeagues.map { it.uid }).containsExactly("api-league")
-        assertThat(mockLeagues.map { it.uid }).containsExactly("mock-league")
+        assertThat(apiSportsLeagues.map { it.uid }).containsExactlyInAnyOrder("api-league", "shared-league")
+        assertThat(mockLeagues.map { it.uid }).containsExactlyInAnyOrder("mock-league", "shared-league")
         assertThat(apiSportsLeagues.map { it.uid }).doesNotContain("core-only-league", "mock-league")
         assertThat(mockLeagues.map { it.uid }).doesNotContain("core-only-league", "api-league", "unavailable-mock-league")
     }
@@ -152,6 +149,95 @@ class MockDataReadRepositoryQueryTest {
         ).isEqualTo(Instant.parse("2026-06-05T10:00:00Z"))
     }
 
+    @Test
+    fun `같은 리그에 여러 backing fixture가 섞여도 range min max query는 provider 범위를 지킨다`() {
+        val apiPrevious = saveFixture("shared-api-previous", sharedLeague, Instant.parse("2026-06-01T10:00:00Z"))
+        val apiNext = saveFixture("shared-api-next", sharedLeague, Instant.parse("2026-06-03T10:00:00Z"))
+        val mockPrevious = saveFixture("shared-mock-previous", sharedLeague, Instant.parse("2026-06-01T20:00:00Z"))
+        val mockNext = saveFixture("shared-mock-next", sharedLeague, Instant.parse("2026-06-02T09:00:00Z"))
+        saveFixture("shared-core-only-previous", sharedLeague, Instant.parse("2026-06-01T22:00:00Z"))
+        saveFixture("shared-core-only-next", sharedLeague, Instant.parse("2026-06-02T12:00:00Z"))
+        saveApiSportsFixture(apiPrevious)
+        saveApiSportsFixture(apiNext)
+        saveMockBackboneFixture(mockPrevious)
+        saveMockBackboneFixture(mockNext)
+
+        entityManager.flush()
+        entityManager.clear()
+
+        val start = Instant.parse("2026-06-01T00:00:00Z")
+        val end = Instant.parse("2026-06-04T00:00:00Z")
+        val pivot = Instant.parse("2026-06-02T00:00:00Z")
+
+        val apiSportsFixtures =
+            fixtureCoreRepository.findApiSportsBackedFixturesByLeagueUidInKickoffRange(sharedLeague.uid, start, end)
+        val mockFixtures =
+            mockBackboneFixtureRepository.findMockBackedFixturesByLeagueUidInKickoffRange(sharedLeague.uid, start, end)
+
+        assertThat(apiSportsFixtures.map { it.uid }).containsExactly("shared-api-previous", "shared-api-next")
+        assertThat(mockFixtures.map { it.uid }).containsExactly("shared-mock-previous", "shared-mock-next")
+        assertThat(fixtureCoreRepository.findMinApiSportsBackedKickoffAfterByLeagueUid(sharedLeague.uid, pivot))
+            .isEqualTo(Instant.parse("2026-06-03T10:00:00Z"))
+        assertThat(fixtureCoreRepository.findMaxApiSportsBackedKickoffBeforeByLeagueUid(sharedLeague.uid, pivot))
+            .isEqualTo(Instant.parse("2026-06-01T10:00:00Z"))
+        assertThat(mockBackboneFixtureRepository.findMinMockBackedKickoffAfterByLeagueUid(sharedLeague.uid, pivot))
+            .isEqualTo(Instant.parse("2026-06-02T09:00:00Z"))
+        assertThat(mockBackboneFixtureRepository.findMaxMockBackedKickoffBeforeByLeagueUid(sharedLeague.uid, pivot))
+            .isEqualTo(Instant.parse("2026-06-01T20:00:00Z"))
+    }
+
+    @Test
+    fun `provider-backed fixture query는 fixture available 여부로 필터링하지 않는다`() {
+        val apiFixture =
+            saveFixture(
+                uid = "unavailable-api-fixture",
+                league = sharedLeague,
+                kickoff = Instant.parse("2026-06-05T10:00:00Z"),
+                available = false,
+            )
+        val mockFixture =
+            saveFixture(
+                uid = "unavailable-mock-fixture",
+                league = sharedLeague,
+                kickoff = Instant.parse("2026-06-05T11:00:00Z"),
+                available = false,
+            )
+        saveApiSportsFixture(apiFixture)
+        saveMockBackboneFixture(mockFixture)
+
+        entityManager.flush()
+        entityManager.clear()
+
+        val start = Instant.parse("2026-06-05T00:00:00Z")
+        val end = Instant.parse("2026-06-06T00:00:00Z")
+
+        val apiSportsFixtures =
+            fixtureCoreRepository.findApiSportsBackedFixturesByLeagueUidInKickoffRange(sharedLeague.uid, start, end)
+        val mockFixtures =
+            mockBackboneFixtureRepository.findMockBackedFixturesByLeagueUidInKickoffRange(sharedLeague.uid, start, end)
+
+        assertThat(apiSportsFixtures.map { it.uid }).containsExactly("unavailable-api-fixture")
+        assertThat(mockFixtures.map { it.uid }).containsExactly("unavailable-mock-fixture")
+        assertThat(fixtureCoreRepository.findMinApiSportsBackedKickoffAfterByLeagueUid(sharedLeague.uid, start))
+            .isEqualTo(Instant.parse("2026-06-05T10:00:00Z"))
+        assertThat(mockBackboneFixtureRepository.findMinMockBackedKickoffAfterByLeagueUid(sharedLeague.uid, start))
+            .isEqualTo(Instant.parse("2026-06-05T11:00:00Z"))
+    }
+
+    private fun saveApiSportsLeague(
+        league: LeagueCore,
+        apiId: Long,
+    ) {
+        leagueApiSportsRepository.save(
+            LeagueApiSports(
+                apiId = apiId,
+                name = league.name,
+                leagueCore = league,
+                available = true,
+            ),
+        )
+    }
+
     private fun saveLeague(
         uid: String,
         name: String,
@@ -170,6 +256,7 @@ class MockDataReadRepositoryQueryTest {
         uid: String,
         league: LeagueCore,
         kickoff: Instant,
+        available: Boolean = true,
     ): FixtureCore =
         fixtureCoreRepository.save(
             FixtureCore(
@@ -181,7 +268,7 @@ class MockDataReadRepositoryQueryTest {
                 homeTeam = null,
                 awayTeam = null,
                 finished = false,
-                available = true,
+                available = available,
                 autoGenerated = false,
             ),
         )
