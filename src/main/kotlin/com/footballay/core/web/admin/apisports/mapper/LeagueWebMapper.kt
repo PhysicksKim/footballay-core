@@ -13,6 +13,7 @@ object LeagueWebMapper {
             photo = apiSports.logo,
             uid = core.uid,
             name = core.name,
+            matchCollect = core.matchCollect,
             apiSports =
                 AvailableLeagueDto.LeagueApiSportsDto(
                     apiId = apiSports.apiId,
