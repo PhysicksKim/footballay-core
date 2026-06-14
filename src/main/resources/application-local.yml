@@ -120,6 +120,9 @@ aws:
 
 # Mock API 설정 (기본값, devrealapi 프로파일로 오버라이드 가능)
 footballay:
+  mock-backbone:
+    admin-api:
+      enabled: true
   apisports:
     scheme: https
     host: mock.api-sports.io

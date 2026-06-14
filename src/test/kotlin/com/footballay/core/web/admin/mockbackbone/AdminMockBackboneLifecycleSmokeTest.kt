@@ -86,7 +86,21 @@ class AdminMockBackboneLifecycleSmokeTest(
         assertAvailableJobs(
             leagueUid = leagueUid,
             fixtureUid = fixtureUid,
-            expectedPhases = setOf("PRE", "LIVE"),
+            expectedPhaseIntervalsMillis = mapOf(
+                "PRE" to 60_000L,
+                "LIVE" to 17_000L,
+            ),
+        )
+
+        setFixtureAvailable(fixtureUid, true)
+
+        assertAvailableJobs(
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            expectedPhaseIntervalsMillis = mapOf(
+                "PRE" to 60_000L,
+                "LIVE" to 17_000L,
+            ),
         )
 
         setFixtureAvailable(fixtureUid, false)
@@ -94,7 +108,37 @@ class AdminMockBackboneLifecycleSmokeTest(
         assertAvailableJobs(
             leagueUid = leagueUid,
             fixtureUid = fixtureUid,
-            expectedPhases = emptySet(),
+            expectedPhaseIntervalsMillis = emptyMap(),
+        )
+
+        deleteScenario(fixtureUid)
+    }
+
+    /**
+     * NotPlayed 계열 fixture 는 available=true 로 변경되더라도 polling 대상이 아니어야 한다.
+     *
+     * reconciler 단위 테스트가 desired job 계산을 검증하고, 여기서는 admin mock 생성 API와
+     * Core UID available API를 실제로 조합했을 때 같은 정책이 유지되는지 확인한다.
+     */
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("NotPlayed MockBackbone scenario는 available=true여도 Quartz available job을 만들지 않는다")
+    fun notPlayedMockScenario_doesNotCreateAvailableJobs() {
+        val scenario =
+            createScenario(
+                scenarioName = "not-played",
+                statusCode = FixtureStatusCode.CANC,
+            )
+        val leagueUid = scenario["league"]["uid"].asText()
+        val fixtureUid = scenario["fixture"]["uid"].asText()
+
+        setLeagueAvailable(leagueUid, true)
+        setFixtureAvailable(fixtureUid, true)
+
+        assertAvailableJobs(
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            expectedPhaseIntervalsMillis = emptyMap(),
         )
 
         deleteScenario(fixtureUid)
@@ -276,14 +320,17 @@ class AdminMockBackboneLifecycleSmokeTest(
         return objectMapper.readTree(result.response.contentAsString).toList()
     }
 
-    private fun createScenario(scenarioName: String): com.fasterxml.jackson.databind.JsonNode {
+    private fun createScenario(
+        scenarioName: String,
+        statusCode: FixtureStatusCode = FixtureStatusCode.NS,
+    ): com.fasterxml.jackson.databind.JsonNode {
         val request =
             MockSimpleFixtureScenarioCreateRequest(
                 leagueName = "Smoke Mock League $scenarioName",
                 homeTeamName = "Smoke Home $scenarioName",
                 awayTeamName = "Smoke Away $scenarioName",
                 kickoffOffsetMinutes = 120,
-                statusCode = FixtureStatusCode.NS,
+                statusCode = statusCode,
                 leagueAvailable = false,
                 scenarioName = scenarioName,
             )
@@ -412,7 +459,7 @@ class AdminMockBackboneLifecycleSmokeTest(
     private fun assertAvailableJobs(
         leagueUid: String,
         fixtureUid: String,
-        expectedPhases: Set<String>,
+        expectedPhaseIntervalsMillis: Map<String, Long>,
     ) {
         val result =
             mockMvc
@@ -423,15 +470,22 @@ class AdminMockBackboneLifecycleSmokeTest(
                 }.andReturn()
 
         val jobs = objectMapper.readTree(result.response.contentAsString)
-        val actualPhases =
+        val availableJobs =
             jobs
                 .filter { node ->
                     node["parsedIdentity"]?.get("owner")?.asText() == "AVAILABLE" &&
                         node["parsedIdentity"]?.get("fixtureUid")?.asText() == fixtureUid
-                }.map { node -> node["parsedIdentity"]["phase"].asText() }
-                .toSet()
+                }
+        val actualPhaseIntervalsMillis =
+            availableJobs
+                .associate { node ->
+                    val phase = node["parsedIdentity"]["phase"].asText()
+                    val trigger = node["triggers"].first()
+                    phase to trigger["repeatIntervalMillis"].asLong()
+                }
 
-        assertThat(actualPhases).isEqualTo(expectedPhases)
+        assertThat(availableJobs).hasSize(expectedPhaseIntervalsMillis.size)
+        assertThat(actualPhaseIntervalsMillis).isEqualTo(expectedPhaseIntervalsMillis)
     }
 
     private fun deleteScenario(fixtureUid: String) {
