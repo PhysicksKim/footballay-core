@@ -1,6 +1,9 @@
 package com.footballay.core.infra.persistence.core.repository
 
+import com.footballay.core.domain.league.MatchCollect
+import com.footballay.core.domain.matchcollect.MatchCollectStatus
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -44,6 +47,30 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     """,
     )
     fun findDistinctLeagueUidsWithAvailableFixtures(): List<String>
+
+    @Query(
+        """
+        SELECT f
+        FROM FixtureCore f
+        JOIN FETCH f.league l
+        LEFT JOIN FETCH f.matchCollectState s
+        WHERE l.available = true
+          AND l.matchCollect = :matchCollect
+          AND f.available = false
+          AND f.kickoff IS NOT NULL
+          AND f.kickoff >= :kickoffFromInclusive
+          AND f.kickoff < :kickoffToExclusive
+          AND (s IS NULL OR s.matchCollectStatus NOT IN :excludedStatuses)
+        ORDER BY f.kickoff ASC, f.id ASC
+    """,
+    )
+    fun findFinishedCollectCandidateFixtures(
+        @Param("kickoffFromInclusive") kickoffFromInclusive: Instant,
+        @Param("kickoffToExclusive") kickoffToExclusive: Instant,
+        @Param("excludedStatuses") excludedStatuses: Collection<MatchCollectStatus>,
+        @Param("matchCollect") matchCollect: MatchCollect,
+        pageable: Pageable,
+    ): List<FixtureCore>
 
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.
