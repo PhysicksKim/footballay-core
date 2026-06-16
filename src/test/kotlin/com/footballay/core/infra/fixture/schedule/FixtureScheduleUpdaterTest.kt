@@ -8,6 +8,8 @@ import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSport
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.scheduler.AvailableFixtureJobReconciler
+import com.footballay.core.infra.scheduler.FixtureMatchCollectStateReconciler
+import com.footballay.core.infra.scheduler.MatchCollectLiveJobReconciler
 import com.footballay.core.infra.scheduler.ReconcileError
 import com.footballay.core.infra.scheduler.ReconcileResult
 import org.assertj.core.api.Assertions.assertThat
@@ -35,6 +37,12 @@ class FixtureScheduleUpdaterTest {
     @Mock
     private lateinit var availableFixtureJobReconciler: AvailableFixtureJobReconciler
 
+    @Mock
+    private lateinit var fixtureMatchCollectStateReconciler: FixtureMatchCollectStateReconciler
+
+    @Mock
+    private lateinit var matchCollectLiveJobReconciler: MatchCollectLiveJobReconciler
+
     private lateinit var updater: FixtureScheduleUpdater
 
     @BeforeEach
@@ -45,6 +53,8 @@ class FixtureScheduleUpdaterTest {
                 leagueApiSportsRepository = leagueApiSportsRepository,
                 leagueCoreRepository = leagueCoreRepository,
                 availableFixtureJobReconciler = availableFixtureJobReconciler,
+                fixtureMatchCollectStateReconciler = fixtureMatchCollectStateReconciler,
+                matchCollectLiveJobReconciler = matchCollectLiveJobReconciler,
             )
     }
 
@@ -55,11 +65,15 @@ class FixtureScheduleUpdaterTest {
             .thenReturn(DomainResult.Success(20))
         whenever(leagueApiSportsRepository.findByApiId(39L)).thenReturn(league.apiSportsLeague)
         whenever(availableFixtureJobReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
+        whenever(fixtureMatchCollectStateReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
+        whenever(matchCollectLiveJobReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
 
         val result = updater.updateCurrentSeason(39L)
 
         assertThat(result).isEqualTo(DomainResult.Success(20))
         verify(availableFixtureJobReconciler).reconcileLeague("league-1")
+        verify(fixtureMatchCollectStateReconciler).reconcileLeague("league-1")
+        verify(matchCollectLiveJobReconciler).reconcileLeague("league-1")
     }
 
     @Test
@@ -72,6 +86,8 @@ class FixtureScheduleUpdaterTest {
 
         assertThat(result).isEqualTo(DomainResult.Fail(fail))
         verify(availableFixtureJobReconciler, never()).reconcileLeague(any())
+        verify(fixtureMatchCollectStateReconciler, never()).reconcileLeague(any())
+        verify(matchCollectLiveJobReconciler, never()).reconcileLeague(any())
     }
 
     @Test
@@ -81,11 +97,15 @@ class FixtureScheduleUpdaterTest {
             .thenReturn(DomainResult.Success(20))
         whenever(leagueApiSportsRepository.findByApiId(39L)).thenReturn(league.apiSportsLeague)
         whenever(availableFixtureJobReconciler.reconcileLeague("league-1")).thenReturn(failedResult("league-1"))
+        whenever(fixtureMatchCollectStateReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
+        whenever(matchCollectLiveJobReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
 
         val result = updater.updateCurrentSeason(39L)
 
         assertThat(result).isEqualTo(DomainResult.Success(20))
         verify(availableFixtureJobReconciler).reconcileLeague("league-1")
+        verify(fixtureMatchCollectStateReconciler).reconcileLeague("league-1")
+        verify(matchCollectLiveJobReconciler).reconcileLeague("league-1")
     }
 
     @Test
@@ -114,6 +134,10 @@ class FixtureScheduleUpdaterTest {
         whenever(leagueApiSportsRepository.findByApiId(140L)).thenReturn(warningLeague.apiSportsLeague)
         whenever(availableFixtureJobReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
         whenever(availableFixtureJobReconciler.reconcileLeague("league-2")).thenReturn(warningResult)
+        whenever(fixtureMatchCollectStateReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
+        whenever(fixtureMatchCollectStateReconciler.reconcileLeague("league-2")).thenReturn(successResult("league-2"))
+        whenever(matchCollectLiveJobReconciler.reconcileLeague("league-1")).thenReturn(successResult("league-1"))
+        whenever(matchCollectLiveJobReconciler.reconcileLeague("league-2")).thenReturn(successResult("league-2"))
 
         val result = updater.updateAvailableLeagues()
 

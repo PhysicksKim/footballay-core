@@ -72,6 +72,20 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         pageable: Pageable,
     ): List<FixtureCore>
 
+    @Query(
+        """
+        SELECT f
+        FROM FixtureCore f
+        JOIN FETCH f.league l
+        LEFT JOIN FETCH f.matchCollectState s
+        WHERE l.uid = :leagueUid
+        ORDER BY f.kickoff ASC, f.id ASC
+    """,
+    )
+    fun findMatchCollectStateReconcileFixturesByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+    ): List<FixtureCore>
+
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.
      *

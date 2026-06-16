@@ -8,6 +8,8 @@ import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSport
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.scheduler.AvailableFixtureJobReconciler
+import com.footballay.core.infra.scheduler.FixtureMatchCollectStateReconciler
+import com.footballay.core.infra.scheduler.MatchCollectLiveJobReconciler
 import com.footballay.core.infra.scheduler.ReconcileResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
@@ -52,6 +54,8 @@ class FixtureScheduleUpdater(
     private val leagueApiSportsRepository: LeagueApiSportsRepository,
     private val leagueCoreRepository: LeagueCoreRepository,
     private val availableFixtureJobReconciler: AvailableFixtureJobReconciler,
+    private val fixtureMatchCollectStateReconciler: FixtureMatchCollectStateReconciler,
+    private val matchCollectLiveJobReconciler: MatchCollectLiveJobReconciler,
 ) {
     private val log = logger()
 
@@ -133,21 +137,46 @@ class FixtureScheduleUpdater(
     private fun syncFixtureSchedule(leagueApiId: Long): FixturesSyncResult = apiSportsBackboneSyncFacade.syncFixturesOfLeagueWithCurrentSeason(leagueApiId)
 
     /**
-     * League ApiSports id 로 연결된 LeagueCore 를 찾고, available fixture job reconciler 에 리그 단위 reconcile 을 요청합니다.
+     * League ApiSports id 로 연결된 LeagueCore 를 찾고, schedule 변경에 영향받는 파생 상태와 jobs 를 reconcile 합니다.
      */
     private fun reconcileFixtureSchedule(leagueApiId: Long): ReconcileResult? {
         val leagueCore = leagueApiSportsRepository.findByApiId(leagueApiId)?.leagueCore
         if (leagueCore == null) {
-            log.warn("Skipping available fixture job reconcile because LeagueCore is not linked - leagueApiId={}", leagueApiId)
+            log.warn("Skipping fixture schedule reconcile because LeagueCore is not linked - leagueApiId={}", leagueApiId)
             return null
         }
 
-        val result = availableFixtureJobReconciler.reconcileLeague(leagueCore.uid)
+        val result =
+            combineReconcileResults(
+                leagueUid = leagueCore.uid,
+                results =
+                    listOf(
+                        availableFixtureJobReconciler.reconcileLeague(leagueCore.uid),
+                        fixtureMatchCollectStateReconciler.reconcileLeague(leagueCore.uid),
+                        matchCollectLiveJobReconciler.reconcileLeague(leagueCore.uid),
+                    ),
+            )
         if (!result.success) {
-            log.warn("Available fixture job reconcile failed after fixture schedule sync - leagueUid={}, result={}", leagueCore.uid, result)
+            log.warn("Fixture schedule reconcile failed after fixture schedule sync - leagueUid={}, result={}", leagueCore.uid, result)
         }
         return result
     }
+
+    private fun combineReconcileResults(
+        leagueUid: String,
+        results: List<ReconcileResult>,
+    ): ReconcileResult =
+        ReconcileResult(
+            fixtureUid = null,
+            leagueUid = leagueUid,
+            success = results.all { it.success },
+            planned = results.sumOf { it.planned },
+            registered = results.sumOf { it.registered },
+            replaced = results.sumOf { it.replaced },
+            deleted = results.sumOf { it.deleted },
+            skipped = results.sumOf { it.skipped },
+            errors = results.flatMap { it.errors },
+        )
 }
 
 private data class FixtureScheduleUpdateOutcome(
