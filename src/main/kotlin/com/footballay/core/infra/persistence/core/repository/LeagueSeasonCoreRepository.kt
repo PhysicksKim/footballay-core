@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface LeagueSeasonCoreRepository : JpaRepository<LeagueSeasonCore, Long> {
+    fun findAllByLeague(league: LeagueCore): List<LeagueSeasonCore>
+
     fun findByLeagueAndSeasonYear(
         league: LeagueCore,
         seasonYear: Int,

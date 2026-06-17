@@ -11,6 +11,8 @@ import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSea
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsSeasonRepository
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
+import com.footballay.core.infra.persistence.core.repository.LeagueSeasonCoreRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Component
 import java.time.LocalDate
@@ -51,6 +53,7 @@ class LeagueApiSportsWithCoreSyncer(
     // ApiSports repositories
     private val leagueApiRepository: LeagueApiSportsRepository,
     private val leagueSeasonRepository: LeagueApiSportsSeasonRepository,
+    private val leagueSeasonCoreRepository: LeagueSeasonCoreRepository,
     // Core service
     private val leagueCoreSyncService: LeagueCoreSyncService,
 ) : LeagueApiSportsSyncer {
@@ -81,7 +84,7 @@ class LeagueApiSportsWithCoreSyncer(
             case1Dtos.map { dto ->
                 val apiEntity = apiIdEntityMap[dto.apiId]!!
                 updateApiEntity(apiEntity, dto)
-                apiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity))
+                apiEntity.seasons = saveSeasonEntities(dto, apiEntity)
                 apiEntity
             }
         leagueApiRepository.saveAll(case1Entities)
@@ -94,7 +97,7 @@ class LeagueApiSportsWithCoreSyncer(
                 // Core 저장을 Service를 통해 처리 (영속성 보장)
                 val newCore = leagueCoreSyncService.saveLeagueCore(createLeagueCoreDto(dto))
                 apiEntity.leagueCore = newCore
-                apiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity))
+                apiEntity.seasons = saveSeasonEntities(dto, apiEntity)
                 apiEntity
             }
         leagueApiRepository.saveAll(newLeagueCoresForCase2)
@@ -104,29 +107,105 @@ class LeagueApiSportsWithCoreSyncer(
             case3Dtos.map { dto ->
                 // Core 저장을 Service를 통해 처리 (영속성 보장)
                 val newCore = leagueCoreSyncService.saveLeagueCore(createLeagueCoreDto(dto))
-                val newApiEntity = createApiEntity(newCore, dto)
-                newApiEntity.seasons = leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, newApiEntity))
+                val newApiEntity = leagueApiRepository.save(createApiEntity(newCore, dto))
+                newApiEntity.seasons = saveSeasonEntities(dto, newApiEntity)
                 newApiEntity
             }
         leagueApiRepository.saveAll(newLeagueApiSportsForCase3)
     }
 
+    private fun saveSeasonEntities(
+        dto: LeagueApiSportsCreateDto,
+        apiEntity: LeagueApiSports,
+    ): List<LeagueApiSportsSeason> {
+        val leagueCore =
+            requireNotNull(apiEntity.leagueCore) {
+                "LeagueCore must be linked before saving ApiSports seasons. leagueApiId=${apiEntity.apiId}"
+            }
+        alignCurrentSeasonFlags(leagueCore, dto.currentSeason)
+        val existingSeasonsByYear =
+            leagueSeasonRepository
+                .findAllByLeagueApiSports(apiEntity)
+                .mapNotNull { season -> season.seasonYear?.let { it to season } }
+                .toMap()
+        return leagueSeasonRepository.saveAll(createSeasonEntities(dto.seasons, apiEntity, leagueCore, dto.currentSeason, existingSeasonsByYear))
+    }
+
     private fun createSeasonEntities(
         seasonDtos: List<LeagueApiSportsSeasonCreateDto>,
         apiEntity: LeagueApiSports,
+        leagueCore: LeagueCore,
+        currentSeason: Int?,
+        existingSeasonsByYear: Map<Int, LeagueApiSportsSeason>,
     ): List<LeagueApiSportsSeason> =
         seasonDtos.map { seasonDto ->
-            LeagueApiSportsSeason(
-                seasonYear = seasonDto.seasonYear,
-                seasonStart = seasonDto.seasonStart?.let { LocalDate.parse(it) },
-                seasonEnd = seasonDto.seasonEnd?.let { LocalDate.parse(it) },
-                coverage =
-                    seasonDto.coverage?.let {
-                        createLeagueApiSportsCoverage(it)
-                    },
-                leagueApiSports = apiEntity,
-            )
+            val seasonStart = seasonDto.seasonStart?.let { LocalDate.parse(it) }
+            val seasonEnd = seasonDto.seasonEnd?.let { LocalDate.parse(it) }
+            val seasonEntity =
+                seasonDto.seasonYear
+                    ?.let { existingSeasonsByYear[it] }
+                    ?: LeagueApiSportsSeason(
+                        seasonYear = seasonDto.seasonYear,
+                        leagueApiSports = apiEntity,
+                    )
+
+            seasonEntity.seasonStart = seasonStart
+            seasonEntity.seasonEnd = seasonEnd
+            seasonEntity.coverage =
+                seasonDto.coverage?.let {
+                    createLeagueApiSportsCoverage(it)
+                }
+            seasonEntity.leagueApiSports = apiEntity
+            seasonEntity.leagueSeasonCore =
+                resolveLeagueSeasonCore(
+                    leagueCore = leagueCore,
+                    seasonDto = seasonDto,
+                    seasonStart = seasonStart,
+                    seasonEnd = seasonEnd,
+                    currentSeason = currentSeason,
+                )
+            seasonEntity
         }
+
+    private fun resolveLeagueSeasonCore(
+        leagueCore: LeagueCore,
+        seasonDto: LeagueApiSportsSeasonCreateDto,
+        seasonStart: LocalDate?,
+        seasonEnd: LocalDate?,
+        currentSeason: Int?,
+    ): LeagueSeasonCore? {
+        val seasonYear = seasonDto.seasonYear ?: return null
+        val leagueSeason =
+            leagueSeasonCoreRepository.findByLeagueAndSeasonYear(leagueCore, seasonYear)
+                ?: LeagueSeasonCore(
+                    league = leagueCore,
+                    seasonYear = seasonYear,
+                    autoGenerated = true,
+                )
+
+        leagueSeason.seasonStart = seasonStart
+        leagueSeason.seasonEnd = seasonEnd
+        leagueSeason.current = seasonYear == currentSeason
+
+        return leagueSeasonCoreRepository.save(leagueSeason)
+    }
+
+    private fun alignCurrentSeasonFlags(
+        leagueCore: LeagueCore,
+        currentSeason: Int?,
+    ) {
+        val existingSeasons = leagueSeasonCoreRepository.findAllByLeague(leagueCore)
+        if (existingSeasons.isEmpty()) {
+            return
+        }
+
+        val updatedSeasons =
+            existingSeasons.map { season ->
+                season.current = season.seasonYear == currentSeason
+                season
+            }
+        leagueSeasonCoreRepository.saveAll(updatedSeasons)
+    }
 
     private fun createLeagueApiSportsCoverage(it: LeagueApiSportsCoverageCreateDto) =
         LeagueApiSportsCoverage(
