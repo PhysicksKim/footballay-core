@@ -1,0 +1,159 @@
+package com.footballay.core.infra.matchcollect
+
+import com.footballay.core.domain.league.MatchCollect
+import com.footballay.core.domain.matchcollect.FinishedMatchCollectPolicy
+import com.footballay.core.domain.matchcollect.MatchCollectStatus
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncDispatcher
+import com.footballay.core.infra.dispatcher.match.MatchDataSyncResult
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import com.footballay.core.infra.persistence.core.entity.FixtureMatchCollectState
+import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.persistence.core.repository.FixtureMatchCollectStateRepository
+import com.footballay.core.logger
+import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+
+interface MatchCollectSyncExecutor {
+    fun collectFinished(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult
+
+    fun collectPre(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult
+
+    fun collectLive(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult
+
+    fun collectPost(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult
+}
+
+@Component
+class MatchCollectSyncExecutorImpl(
+    private val fixtureCoreRepository: FixtureCoreRepository,
+    private val stateRepository: FixtureMatchCollectStateRepository,
+    private val dispatcher: MatchDataSyncDispatcher,
+) : MatchCollectSyncExecutor {
+    private val log = logger()
+    private val finishedPolicy = FinishedMatchCollectPolicy()
+
+    @Transactional
+    override fun collectFinished(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult {
+        val fixture =
+            fixtureCoreRepository.findNullableByUid(fixtureUid)
+                ?: return MatchCollectExecutionResult.Failed(fixtureUid, "FixtureCore not found")
+
+        val skipReason = finishedSkipReason(fixture, now)
+        if (skipReason != null) {
+            return MatchCollectExecutionResult.Skipped(fixtureUid, skipReason)
+        }
+
+        val kickoff = requireNotNull(fixture.kickoff)
+        val state = stateRepository.findByFixture_Uid(fixtureUid)
+        if (!finishedPolicy.shouldCollect(kickoff, state?.lastCollectedAt, now)) {
+            return MatchCollectExecutionResult.Skipped(fixtureUid, "No finished checkpoint to collect")
+        }
+
+        return when (val syncResult = dispatcher.syncByFixtureUid(fixtureUid)) {
+            is MatchDataSyncResult.Error -> {
+                log.warn("Match collect FINISHED sync failed - fixtureUid={}, message={}", fixtureUid, syncResult.message)
+                MatchCollectExecutionResult.Failed(fixtureUid, syncResult.message)
+            }
+
+            is MatchDataSyncResult.NotPlayed -> {
+                val updatedState = upsertState(fixture, state, MatchCollectStatus.NOT_PLAYED, now)
+                MatchCollectExecutionResult.Collected(fixtureUid, updatedState.matchCollectStatus, now, syncResult)
+            }
+
+            is MatchDataSyncResult.PreMatch,
+            is MatchDataSyncResult.Live,
+            is MatchDataSyncResult.PostMatch,
+            -> {
+                val status = finishedSuccessStatus(kickoff, now)
+                val updatedState = upsertState(fixture, state, status, now)
+                MatchCollectExecutionResult.Collected(fixtureUid, updatedState.matchCollectStatus, now, syncResult)
+            }
+        }
+    }
+
+    override fun collectPre(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE pre is not implemented yet")
+
+    override fun collectLive(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE polling is not implemented yet")
+
+    override fun collectPost(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE post is not implemented yet")
+
+    private fun finishedSkipReason(
+        fixture: FixtureCore,
+        now: Instant,
+    ): String? {
+        val leagueSeason = fixture.leagueSeason ?: return "Fixture leagueSeason is null"
+        val league = leagueSeason.league
+        return when {
+            !league.available -> "League is not available"
+            league.matchCollect != MatchCollect.FINISHED -> "League matchCollect is not FINISHED"
+            !leagueSeason.current -> "Fixture is not in current season"
+            fixture.available -> "Fixture is available fixture"
+            fixture.kickoff == null -> "Fixture kickoff is null"
+            finishedPolicy.requiredCheckpointAt(fixture.kickoff!!, now) == null -> "No reached finished checkpoint"
+            else -> null
+        }
+    }
+
+    private fun finishedSuccessStatus(
+        kickoff: Instant,
+        now: Instant,
+    ): MatchCollectStatus {
+        val reachedCheckpointAt = requireNotNull(finishedPolicy.requiredCheckpointAt(kickoff, now))
+        val finalCheckpointAt =
+            finishedPolicy.checkpointOffsets
+                .maxOrNull()
+                ?.let(kickoff::plus)
+
+        return if (reachedCheckpointAt == finalCheckpointAt) {
+            MatchCollectStatus.SUCCESS
+        } else {
+            MatchCollectStatus.EARLY_SYNCED
+        }
+    }
+
+    private fun upsertState(
+        fixture: FixtureCore,
+        state: FixtureMatchCollectState?,
+        status: MatchCollectStatus,
+        collectedAt: Instant,
+    ): FixtureMatchCollectState {
+        if (state != null) {
+            state.matchCollectStatus = status
+            state.lastCollectedAt = collectedAt
+            return state
+        }
+
+        return stateRepository.save(
+            FixtureMatchCollectState(
+                fixture = fixture,
+                matchCollectStatus = status,
+                lastCollectedAt = collectedAt,
+            ),
+        )
+    }
+}
