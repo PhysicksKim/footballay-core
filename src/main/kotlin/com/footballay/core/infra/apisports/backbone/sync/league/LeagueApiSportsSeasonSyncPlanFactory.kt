@@ -132,6 +132,7 @@ class LeagueApiSportsSeasonSyncPlanFactory {
         if (updateProviderSeasonFields(providerSeason, leagueApiSports, providerSeasonValues, coreSeason)) {
             providerSeasonsToSave[providerIdentity] = providerSeason
         }
+        syncLeagueSeasonCollection(leagueApiSports, providerSeason)
 
         return ResolvedSeasonPair(
             coreIdentity = coreIdentity,
@@ -209,6 +210,32 @@ class LeagueApiSportsSeasonSyncPlanFactory {
         }
 
         return changed
+    }
+
+    private fun syncLeagueSeasonCollection(
+        leagueApiSports: LeagueApiSports,
+        providerSeason: LeagueApiSportsSeason,
+    ) {
+        if (leagueApiSports.seasons.none { sameProviderSeason(it, providerSeason) }) {
+            leagueApiSports.seasons = leagueApiSports.seasons + providerSeason
+        }
+    }
+
+    private fun sameProviderSeason(
+        left: LeagueApiSportsSeason,
+        right: LeagueApiSportsSeason,
+    ): Boolean {
+        val leftId = left.id
+        val rightId = right.id
+        return if (leftId != null && rightId != null) {
+            leftId == rightId
+        } else {
+            left === right ||
+                (
+                    left.leagueApiSports?.id == right.leagueApiSports?.id &&
+                        left.seasonYear == right.seasonYear
+                )
+        }
     }
 
     private fun readProviderSeasonValues(
