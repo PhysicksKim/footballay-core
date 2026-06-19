@@ -53,9 +53,11 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         SELECT f
         FROM FixtureCore f
         JOIN FETCH f.league l
+        JOIN f.leagueSeason ls
         LEFT JOIN FETCH f.matchCollectState s
         WHERE l.available = true
           AND l.matchCollect = :matchCollect
+          AND ls.current = true
           AND f.available = false
           AND f.kickoff IS NOT NULL
           AND f.kickoff >= :kickoffFromInclusive
@@ -77,8 +79,10 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         SELECT f
         FROM FixtureCore f
         JOIN FETCH f.league l
+        JOIN f.leagueSeason ls
         LEFT JOIN FETCH f.matchCollectState s
         WHERE l.uid = :leagueUid
+          AND ls.current = true
         ORDER BY f.kickoff ASC, f.id ASC
     """,
     )
