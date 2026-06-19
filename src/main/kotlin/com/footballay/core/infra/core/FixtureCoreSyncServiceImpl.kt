@@ -68,6 +68,7 @@ class FixtureCoreSyncServiceImpl(
             statusCode = createDto.statusShort ?: FixtureStatusCode.NS,
             elapsedMin = createDto.elapsedMin,
             league = createDto.leagueCore,
+            leagueSeason = createDto.leagueSeason,
             homeTeam = createDto.homeTeam,
             awayTeam = createDto.awayTeam,
             goalsHome = createDto.goalsHome,
@@ -85,6 +86,7 @@ class FixtureCoreSyncServiceImpl(
         fixtureCore.statusText = updateDto.status
         fixtureCore.statusCode = updateDto.statusShort
         fixtureCore.elapsedMin = updateDto.elapsedMin
+        fixtureCore.leagueSeason = updateDto.leagueSeason
         fixtureCore.homeTeam = updateDto.homeTeam
         fixtureCore.awayTeam = updateDto.awayTeam
         fixtureCore.goalsHome = updateDto.goalsHome

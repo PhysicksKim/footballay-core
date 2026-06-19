@@ -22,4 +22,21 @@ interface LeagueApiSportsSeasonRepository : JpaRepository<LeagueApiSportsSeason,
     fun findAllByLeagueApiSportsInWithLeagueSeasonCore(
         @Param("leagues") leagues: Collection<LeagueApiSports>,
     ): List<LeagueApiSportsSeason>
+
+    @Query(
+        """
+        SELECT s
+        FROM LeagueApiSportsSeason s
+        JOIN FETCH s.leagueApiSports l
+        LEFT JOIN FETCH l.leagueCore
+        LEFT JOIN FETCH s.leagueSeasonCore c
+        LEFT JOIN FETCH c.league
+        WHERE l.apiId = :leagueApiId
+          AND s.seasonYear = :seasonYear
+    """,
+    )
+    fun findByLeagueApiIdAndSeasonYearWithCoreSeason(
+        @Param("leagueApiId") leagueApiId: Long,
+        @Param("seasonYear") seasonYear: Int,
+    ): LeagueApiSportsSeason?
 }
