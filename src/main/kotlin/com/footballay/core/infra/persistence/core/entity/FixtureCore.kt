@@ -16,6 +16,8 @@ import java.time.Instant
     name = "fixture_core",
     indexes = [
         Index(name = "idx_fixture_core_match_collect_scan", columnList = "available,kickoff,league_id"),
+        Index(name = "idx_fixture_core_league_season_kickoff", columnList = "league_season_id,kickoff"),
+        Index(name = "idx_fixture_core_league_season_available_kickoff", columnList = "league_season_id,available,kickoff"),
     ],
 )
 data class FixtureCore(
@@ -55,8 +57,12 @@ data class FixtureCore(
      * 예: 90, 45, 30 등
      */
     var elapsedMin: Int? = null,
+    @Deprecated("Use leagueSeason.league for season-aware paths. Legacy read paths may keep using this during migration.")
     @ManyToOne(fetch = FetchType.LAZY)
     var league: LeagueCore,
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "league_season_id")
+    var leagueSeason: LeagueSeasonCore? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     var homeTeam: TeamCore?,
     @ManyToOne(fetch = FetchType.LAZY, optional = true)

@@ -19,10 +19,12 @@ import com.footballay.core.infra.persistence.apisports.entity.TeamApiSports
 import com.footballay.core.infra.persistence.apisports.entity.VenueApiSports
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
+import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsSeasonRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.VenueApiSportsRepository
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.core.dto.FixtureCoreUpdateDto
 import com.footballay.core.logger
@@ -62,6 +64,7 @@ import org.springframework.transaction.annotation.Transactional
 class FixtureApiSportsWithCoreSyncer(
     private val fixtureApiSportsRepository: FixtureApiSportsRepository,
     private val leagueApiSportsRepository: LeagueApiSportsRepository,
+    private val leagueApiSportsSeasonRepository: LeagueApiSportsSeasonRepository,
     private val teamApiSportsRepository: TeamApiSportsRepository,
     private val venueApiSportsRepository: VenueApiSportsRepository,
     private val fixtureCoreSyncService: FixtureCoreSyncService,
@@ -131,7 +134,7 @@ class FixtureApiSportsWithCoreSyncer(
         val coreMap = existingCoreMap + newCoreMap + updatedCoreMap
 
         // FixtureApiSports 생성/업데이트
-        val fixtureApiSportsMap = saveFixtures(fixtureCases, fixtureData, venueMap, coreMap, seasonYear)
+        val fixtureApiSportsMap = saveFixtures(fixtureCases, fixtureData, venueMap, coreMap)
 
         log.info("All phases completed successfully. {}", fixtureApiSportsMap.keys)
         return fixtureApiSportsMap
@@ -270,6 +273,20 @@ class FixtureApiSportsWithCoreSyncer(
                 ?: throw IllegalStateException("League not found with apiId: $leagueApiId and season: $seasonYear")
         log.info("Found league: {} with {} seasons", league.name, league.seasons.size)
 
+        val providerSeason = findRequiredProviderSeason(leagueApiId, seasonYear)
+        val coreSeason =
+            requireNotNull(providerSeason.leagueSeasonCore) {
+                "LeagueApiSportsSeason must be linked to LeagueSeasonCore before fixture sync. leagueApiId=$leagueApiId, seasonYear=$seasonYear"
+            }
+        val leagueCore =
+            requireNotNull(league.leagueCore) {
+                "LeagueCore must not be null for fixture sync. leagueApiId=$leagueApiId"
+            }
+        require(coreSeason.league.id == leagueCore.id) {
+            "LeagueApiSportsSeason core season is linked to a different LeagueCore. " +
+                "leagueApiId=$leagueApiId, seasonYear=$seasonYear, leagueCoreId=${leagueCore.id}, coreSeasonLeagueId=${coreSeason.league.id}"
+        }
+
         // Fixture Entity 수집
         // 기본은 리그+시즌만 조회하고, 리그+시즌 조회에서 누락된 dto apiId가 있으면 그때만 id기반 보강 조회를 수행합니다.
         val fixturesBySeason = fixtureApiSportsRepository.findFixturesByLeagueAndSeason(leagueApiId, seasonYear)
@@ -312,10 +329,19 @@ class FixtureApiSportsWithCoreSyncer(
 
         return FixtureDataCollection(
             league = league,
+            providerSeason = providerSeason,
+            coreSeason = coreSeason,
             fixtures = fixtures,
             teams = teams,
         )
     }
+
+    private fun findRequiredProviderSeason(
+        leagueApiId: Long,
+        seasonYear: Int,
+    ): LeagueApiSportsSeason =
+        leagueApiSportsSeasonRepository.findByLeagueApiIdAndSeasonYearWithCoreSeason(leagueApiId, seasonYear)
+            ?: throw IllegalStateException("League season not found with apiId: $leagueApiId and season: $seasonYear")
 
     /**
      * League+Season 조회에서 누락된 Fixture를 ApiId 기반으로 보강 조회
@@ -705,7 +731,7 @@ class FixtureApiSportsWithCoreSyncer(
                 ?: throw IllegalStateException("LeagueCore must not be null for core creation")
         // Map<Team ApiId, TeamApiSports>
         val teamEntityFromApiId = fixtureData.teams.filter { it.apiId != null }.associateBy { it.apiId!! }
-        val savedUidToCoreMap = saveFixtureCoreAndGetMap(uidFixtureApiSyncDtoPairs, teamEntityFromApiId, leagueCore)
+        val savedUidToCoreMap = saveFixtureCoreAndGetMap(uidFixtureApiSyncDtoPairs, teamEntityFromApiId, leagueCore, fixtureData.coreSeason)
         log.info("Successfully created {} FixtureCores", savedUidToCoreMap.size)
 
         // Map<ApiId, FixtureCore>
@@ -743,6 +769,7 @@ class FixtureApiSportsWithCoreSyncer(
         uidPairs: List<Pair<String, FixtureApiSportsSyncDto>>,
         teamEntityFromApiId: Map<Long, TeamApiSports>,
         leagueCore: LeagueCore,
+        coreSeason: LeagueSeasonCore,
     ): Map<String, FixtureCore> {
         val fixtureCoreCreatePairs =
             uidPairs.map { (uid, dto) ->
@@ -757,7 +784,7 @@ class FixtureApiSportsWithCoreSyncer(
                         ?.let { teamEntityFromApiId[it] }
                         ?.teamCore
 
-                val coreDto = fixtureDataMapper.toFixtureCoreCreateDto(uid, dto, leagueCore, homeTeam, awayTeam)
+                val coreDto = fixtureDataMapper.toFixtureCoreCreateDto(uid, dto, leagueCore, coreSeason, homeTeam, awayTeam)
                 uid to coreDto
             }
 
@@ -796,6 +823,7 @@ class FixtureApiSportsWithCoreSyncer(
                 val updateDto: FixtureCoreUpdateDto =
                     fixtureDataMapper.toFixtureCoreUpdateDto(
                         dto = fixtureWithDto.dto,
+                        leagueSeason = fixtureData.coreSeason,
                         homeTeam = homeTeam,
                         awayTeam = awayTeam,
                     )
@@ -837,7 +865,6 @@ class FixtureApiSportsWithCoreSyncer(
         fixtureData: FixtureDataCollection,
         venueMap: Map<Long, VenueApiSports>,
         coreMap: Map<Long, FixtureCore>,
-        seasonYear: Int,
     ): Map<Long, FixtureApiSports> {
         log.info("Starting FixtureApiSports save & update")
 
@@ -853,12 +880,10 @@ class FixtureApiSportsWithCoreSyncer(
         // 2) FixtureApiSports 배치 저장/업데이트
         val fixtureApiSportsMap = saveFixtureApiSportsBatch(fixtureApiSportsCases, fixtureData, venueMap, coreMap)
 
-        // 시즌 강제 바인딩: 생성/업데이트 후 season이 비어있을 수 있는 엔티티에 공통 시즌 연결
-        val season = fixtureData.league.seasons.find { it.seasonYear == seasonYear }
-        if (season != null) {
-            fixtureApiSportsMap.values.forEach { fas ->
-                if (fas.season == null) fas.season = season
-            }
+        // 시즌 강제 바인딩: preventUpdate fixture 포함, 이번 요청의 provider/core season 을 같은 객체 그래프에 맞춘다.
+        fixtureApiSportsMap.values.forEach { fixture ->
+            fixture.season = fixtureData.providerSeason
+            fixture.core?.leagueSeason = fixtureData.coreSeason
         }
 
         // 3) 상세 로깅

@@ -5,6 +5,7 @@ import com.footballay.core.infra.core.dto.FixtureCoreUpdateDto
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.util.UidGenerator
@@ -34,6 +35,7 @@ class FixtureCoreSyncServiceTest {
     private lateinit var fixtureCoreSyncService: FixtureCoreSyncServiceImpl
 
     private lateinit var leagueCore: LeagueCore
+    private lateinit var leagueSeasonCore: LeagueSeasonCore
     private lateinit var homeTeamCore: TeamCore
     private lateinit var awayTeamCore: TeamCore
 
@@ -43,6 +45,11 @@ class FixtureCoreSyncServiceTest {
             LeagueCore(
                 uid = "league-uid",
                 name = "Test League",
+            )
+        leagueSeasonCore =
+            LeagueSeasonCore(
+                league = leagueCore,
+                seasonYear = 2024,
             )
 
         homeTeamCore =
@@ -82,6 +89,7 @@ class FixtureCoreSyncServiceTest {
                 goalsHome = 2,
                 goalsAway = 1,
                 leagueCore = leagueCore,
+                leagueSeason = leagueSeasonCore,
                 homeTeam = homeTeamCore,
                 awayTeam = awayTeamCore,
                 finished = true,
@@ -99,6 +107,7 @@ class FixtureCoreSyncServiceTest {
                 goalsHome = null,
                 goalsAway = null,
                 leagueCore = leagueCore,
+                leagueSeason = leagueSeasonCore,
                 homeTeam = homeTeamCore,
                 awayTeam = awayTeamCore,
                 finished = false,
@@ -120,6 +129,7 @@ class FixtureCoreSyncServiceTest {
                 statusCode = createDto1.statusShort!!,
                 elapsedMin = createDto1.elapsedMin,
                 league = createDto1.leagueCore,
+                leagueSeason = createDto1.leagueSeason,
                 homeTeam = createDto1.homeTeam,
                 awayTeam = createDto1.awayTeam,
                 goalsHome = createDto1.goalsHome,
@@ -137,6 +147,7 @@ class FixtureCoreSyncServiceTest {
                 statusCode = createDto2.statusShort!!,
                 elapsedMin = createDto2.elapsedMin,
                 league = createDto2.leagueCore,
+                leagueSeason = createDto2.leagueSeason,
                 homeTeam = createDto2.homeTeam,
                 awayTeam = createDto2.awayTeam,
                 goalsHome = createDto2.goalsHome,
@@ -219,6 +230,7 @@ class FixtureCoreSyncServiceTest {
                 status = "Match Finished",
                 statusShort = FixtureStatusCode.FT,
                 elapsedMin = 90,
+                leagueSeason = leagueSeasonCore,
                 homeTeam = awayTeamCore,
                 awayTeam = homeTeamCore,
                 goalsHome = 3,
@@ -233,6 +245,7 @@ class FixtureCoreSyncServiceTest {
                 status = "First Half",
                 statusShort = FixtureStatusCode.FIRST_HALF,
                 elapsedMin = 45,
+                leagueSeason = leagueSeasonCore,
                 homeTeam = null,
                 awayTeam = awayTeamCore,
                 goalsHome = 1,
@@ -253,6 +266,7 @@ class FixtureCoreSyncServiceTest {
                 statusText = updateDto1.status,
                 statusCode = updateDto1.statusShort,
                 elapsedMin = updateDto1.elapsedMin,
+                leagueSeason = updateDto1.leagueSeason,
                 homeTeam = updateDto1.homeTeam,
                 awayTeam = updateDto1.awayTeam,
                 goalsHome = updateDto1.goalsHome,
@@ -267,6 +281,7 @@ class FixtureCoreSyncServiceTest {
                 statusText = updateDto2.status,
                 statusCode = updateDto2.statusShort,
                 elapsedMin = updateDto2.elapsedMin,
+                leagueSeason = updateDto2.leagueSeason,
                 homeTeam = updateDto2.homeTeam,
                 awayTeam = updateDto2.awayTeam,
                 goalsHome = updateDto2.goalsHome,

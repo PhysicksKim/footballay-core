@@ -2,6 +2,7 @@ package com.footballay.core.infra.core.dto
 
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import java.time.Instant
 
@@ -19,6 +20,7 @@ data class FixtureCoreCreateDto(
     val goalsHome: Int?,
     val goalsAway: Int?,
     val leagueCore: LeagueCore,
+    val leagueSeason: LeagueSeasonCore?,
     val homeTeam: TeamCore?,
     val awayTeam: TeamCore?,
     val finished: Boolean = false,

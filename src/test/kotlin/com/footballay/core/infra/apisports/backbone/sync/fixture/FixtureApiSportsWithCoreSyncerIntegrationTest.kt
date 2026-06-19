@@ -324,6 +324,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture).isNotNull
         assertThat(savedFixture!!.apiId).isEqualTo(9999L)
         assertThat(savedFixture.core).isNotNull() // FixtureCore가 생성되었는지 확인
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -363,6 +364,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(updatedFixture!!.date).isEqualTo(expectedKickoff)
         assertThat(updatedFixture.core!!.id).isEqualTo(originalCoreId)
         assertThat(updatedCore.kickoff).isEqualTo(expectedKickoff)
+        assertFixtureSeasonBound(fixtureApiId)
     }
 
     @Test
@@ -423,6 +425,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         savedFixtures.forEach { fixture ->
             assertThat(fixture.core).isNotNull() // 모든 Fixture에 Core가 생성되었는지 확인
+            assertFixtureSeasonBound(fixture.apiId)
         }
     }
 
@@ -445,6 +448,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture).isNotNull
         assertThat(savedFixture!!.venue).isNull() // Venue가 null인지 확인
         assertThat(savedFixture.core).isNotNull() // Core는 정상 생성되었는지 확인
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -471,6 +475,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture).isNotNull
         assertThat(savedFixture!!.venue).isNull()
         assertThat(savedFixture.core).isNotNull()
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -494,6 +499,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture!!.homeTeam).isNull()
         assertThat(savedFixture.awayTeam).isNull()
         assertThat(savedFixture.core).isNotNull() // Core는 정상 생성되었는지 확인
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -511,6 +517,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture).isNotNull
         assertThat(savedFixture!!.core).isNotNull()
         assertThat(savedFixture.core!!.uid).isNotBlank() // UID가 생성되고 비어있지 않은지 확인
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -531,7 +538,8 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         // Core 엔티티가 정상적으로 저장되었는지 확인
         val core = savedFixture.core!!
         assertThat(core.uid).isNotNull()
-        assertThat(core.league).isNotNull() // League가 설정되었는지 확인
+        assertThat(core.leagueSeason).isNotNull() // Season-aware League 경로가 설정되었는지 확인
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -585,6 +593,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         assertThat(savedFixture.core!!.homeTeam).isNull()
         assertThat(savedFixture.core!!.awayTeam).isNotNull
         assertThat(savedFixture.core!!.awayTeam!!.id).isEqualTo(teamApiSportsRepository.findByApiId(42L)!!.teamCore!!.id)
+        assertFixtureSeasonBound(savedFixture.apiId)
     }
 
     @Test
@@ -605,6 +614,16 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val savedFixture = fixtureApiSportsRepository.findByApiId(1111L)
         assertThat(savedFixture).isNotNull
         assertThat(savedFixture!!.date).isNull() // 잘못된 날짜는 null로 처리
+        assertFixtureSeasonBound(savedFixture.apiId)
+    }
+
+    private fun assertFixtureSeasonBound(fixtureApiId: Long) {
+        val savedFixture = fixtureApiSportsRepository.findByApiId(fixtureApiId)
+        assertThat(savedFixture).isNotNull
+        assertThat(savedFixture!!.season).isNotNull
+        assertThat(savedFixture.core).isNotNull
+        assertThat(savedFixture.core!!.leagueSeason).isNotNull
+        assertThat(savedFixture.core!!.leagueSeason!!.id).isEqualTo(savedFixture.season!!.leagueSeasonCore!!.id)
     }
 
     /**

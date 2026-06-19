@@ -50,19 +50,11 @@ class FixtureApiSportsFactory(
         // Venue FK 설정 (nullable)
         val venue = dto.venue?.apiId?.let { venueMap[it] }
 
-        // Season 설정 (정수 비교로 엄격 매칭)
-        val season =
-            fixtureData.league.seasons.find {
-                it.seasonYear != null &&
-                    dto.seasonYear != null &&
-                    it.seasonYear == dto.seasonYear!!.toInt()
-            }
-
         return FixtureApiSports(
             apiId = apiId,
             core = core,
             venue = venue,
-            season = season,
+            season = fixtureData.providerSeason,
             referee = dto.referee,
             date = parseInstant(dto.date),
             round = dto.round,
@@ -102,18 +94,10 @@ class FixtureApiSportsFactory(
         // Venue FK 설정 (nullable)
         val venue = dto.venue?.apiId?.let { venueMap[it] }
 
-        // Season 설정 (정수 비교로 엄격 매칭)
-        val season =
-            fixtureData.league.seasons.find {
-                it.seasonYear != null &&
-                    dto.seasonYear != null &&
-                    it.seasonYear == dto.seasonYear!!.toInt()
-            }
-
         return existingFixture.apply {
             this.core = core
             this.venue = venue
-            this.season = season
+            this.season = fixtureData.providerSeason
             this.referee = dto.referee
             this.date = parseInstant(dto.date)
             this.round = dto.round

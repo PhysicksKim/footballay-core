@@ -9,6 +9,7 @@ import com.footballay.core.infra.persistence.apisports.entity.ApiSportsScore
 import com.footballay.core.infra.persistence.apisports.entity.ApiSportsStatus
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import org.springframework.stereotype.Component
 import java.time.Instant
@@ -58,6 +59,7 @@ interface FixtureDataMapper {
         uid: String,
         dto: FixtureApiSportsSyncDto,
         leagueCore: LeagueCore,
+        leagueSeason: LeagueSeasonCore?,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?,
     ): FixtureCoreCreateDto
@@ -72,6 +74,7 @@ interface FixtureDataMapper {
      */
     fun toFixtureCoreUpdateDto(
         dto: FixtureApiSportsSyncDto,
+        leagueSeason: LeagueSeasonCore?,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?,
     ): FixtureCoreUpdateDto
@@ -157,6 +160,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
         uid: String,
         dto: FixtureApiSportsSyncDto,
         leagueCore: LeagueCore,
+        leagueSeason: LeagueSeasonCore?,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?,
     ): FixtureCoreCreateDto {
@@ -171,6 +175,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
             goalsHome = dto.score?.fulltimeHome,
             goalsAway = dto.score?.fulltimeAway,
             leagueCore = leagueCore,
+            leagueSeason = leagueSeason,
             homeTeam = homeTeam,
             awayTeam = awayTeam,
             finished = isFinishedStatus(mapStatusToCore(dto.status)),
@@ -182,12 +187,14 @@ class FixtureDataMapperImpl : FixtureDataMapper {
     override fun toFixtureCoreUpdateDto(dto: FixtureApiSportsSyncDto): FixtureCoreUpdateDto =
         toFixtureCoreUpdateDto(
             dto = dto,
+            leagueSeason = null,
             homeTeam = null,
             awayTeam = null,
         )
 
     override fun toFixtureCoreUpdateDto(
         dto: FixtureApiSportsSyncDto,
+        leagueSeason: LeagueSeasonCore?,
         homeTeam: TeamCore?,
         awayTeam: TeamCore?,
     ): FixtureCoreUpdateDto =
@@ -196,6 +203,7 @@ class FixtureDataMapperImpl : FixtureDataMapper {
             status = dto.status?.longStatus ?: "Unknown",
             statusShort = mapStatusToCore(dto.status) ?: FixtureStatusCode.NS,
             elapsedMin = dto.status?.elapsed,
+            leagueSeason = leagueSeason,
             homeTeam = homeTeam,
             awayTeam = awayTeam,
             goalsHome = dto.score?.fulltimeHome,

@@ -9,9 +9,11 @@ import com.footballay.core.infra.apisports.shared.dto.VenueOfFixtureApiSportsCre
 import com.footballay.core.infra.persistence.apisports.entity.*
 import com.footballay.core.infra.persistence.apisports.repository.*
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
 import com.footballay.core.infra.persistence.core.entity.TeamCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
+import com.footballay.core.infra.persistence.core.repository.LeagueSeasonCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.logger
 import jakarta.persistence.EntityManager
@@ -68,6 +70,9 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
     // Core Repositories
     @Autowired
     private lateinit var leagueCoreRepository: LeagueCoreRepository
+
+    @Autowired
+    private lateinit var leagueSeasonCoreRepository: LeagueSeasonCoreRepository
 
     @Autowired
     private lateinit var teamCoreRepository: TeamCoreRepository
@@ -281,6 +286,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         teamApiSportsRepository.deleteAll()
         teamCoreRepository.deleteAll()
         leagueApiSportsRepository.deleteAll()
+        leagueSeasonCoreRepository.deleteAll()
         leagueCoreRepository.deleteAll()
     }
 
@@ -289,11 +295,12 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
 
         // 1. Core Entities 생성
         val leagueCore = createAndSaveLeagueCore()
+        val leagueSeasonCore = createAndSaveLeagueSeasonCore(leagueCore)
         val arsenalCore = createAndSaveTeamCore("Arsenal")
         val chelseaCore = createAndSaveTeamCore("Chelsea")
 
         // 2. ApiSports Entities 생성 (Core와 연결)
-        createAndSaveLeagueApiSports(leagueCore)
+        createAndSaveLeagueApiSports(leagueCore, leagueSeasonCore)
         createAndSaveTeamApiSports(TEST_ARSENAL_API_ID, "Arsenal", arsenalCore)
         createAndSaveTeamApiSports(TEST_CHELSEA_API_ID, "Chelsea", chelseaCore)
 
@@ -309,6 +316,15 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         return leagueCoreRepository.save(leagueCore)
     }
 
+    private fun createAndSaveLeagueSeasonCore(leagueCore: LeagueCore): LeagueSeasonCore {
+        val leagueSeasonCore =
+            LeagueSeasonCore(
+                league = leagueCore,
+                seasonYear = TEST_SEASON_YEAR,
+            )
+        return leagueSeasonCoreRepository.save(leagueSeasonCore)
+    }
+
     private fun createAndSaveTeamCore(teamName: String): TeamCore {
         val teamCore =
             TeamCore(
@@ -318,7 +334,10 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         return teamCoreRepository.save(teamCore)
     }
 
-    private fun createAndSaveLeagueApiSports(leagueCore: LeagueCore) {
+    private fun createAndSaveLeagueApiSports(
+        leagueCore: LeagueCore,
+        leagueSeasonCore: LeagueSeasonCore,
+    ) {
         val leagueApiSports =
             LeagueApiSports(
                 leagueCore = leagueCore,
@@ -334,6 +353,7 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
             LeagueApiSportsSeason(
                 leagueApiSports = leagueApiSports,
                 seasonYear = TEST_SEASON_YEAR,
+                leagueSeasonCore = leagueSeasonCore,
             )
         leagueApiSportsSeasonRepository.save(season)
     }
@@ -365,6 +385,8 @@ class FixtureApiSportsWithCoreSyncerIntegrationTest {
         val savedFixture = fixtureApiSportsRepository.findByApiId(fixtureApiId)
         assertNotNull(savedFixture, "FixtureApiSports가 존재해야 합니다: $fixtureApiId")
         assertNotNull(savedFixture!!.core, "FixtureCore가 생성되어야 합니다: $fixtureApiId")
+        assertNotNull(savedFixture.core!!.leagueSeason, "FixtureCore.leagueSeason이 설정되어야 합니다: $fixtureApiId")
+        assertEquals(savedFixture.season!!.leagueSeasonCore!!.id, savedFixture.core!!.leagueSeason!!.id)
     }
 
     private fun verifyVenueCreated(
