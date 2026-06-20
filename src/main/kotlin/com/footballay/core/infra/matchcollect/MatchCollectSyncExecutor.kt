@@ -68,6 +68,9 @@ class MatchCollectSyncExecutorImpl(
         return when (val syncResult = dispatcher.syncByFixtureUid(fixtureUid)) {
             is MatchDataSyncResult.Error -> {
                 log.warn("Match collect FINISHED sync failed - fixtureUid={}, message={}", fixtureUid, syncResult.message)
+                if (isFinalCheckpointReached(kickoff, now)) {
+                    upsertState(fixture, state, MatchCollectStatus.FAIL_END, now)
+                }
                 MatchCollectExecutionResult.Failed(fixtureUid, syncResult.message)
             }
 
@@ -134,6 +137,20 @@ class MatchCollectSyncExecutorImpl(
         } else {
             MatchCollectStatus.EARLY_SYNCED
         }
+    }
+
+    private fun isFinalCheckpointReached(
+        kickoff: Instant,
+        now: Instant,
+    ): Boolean {
+        val reachedCheckpointAt = finishedPolicy.requiredCheckpointAt(kickoff, now) ?: return false
+        val finalCheckpointAt =
+            finishedPolicy.checkpointOffsets
+                .maxOrNull()
+                ?.let(kickoff::plus)
+                ?: return false
+
+        return reachedCheckpointAt == finalCheckpointAt
     }
 
     private fun upsertState(

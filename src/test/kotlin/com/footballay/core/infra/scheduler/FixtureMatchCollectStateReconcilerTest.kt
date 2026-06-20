@@ -84,6 +84,20 @@ class FixtureMatchCollectStateReconcilerTest {
     }
 
     @Test
+    fun `pending fixture는 FAIL_END state도 PENDING으로 되돌린다`() {
+        val fixture = saveFixture(uid = "fixture-fail-end-rescheduled", statusCode = FixtureStatusCode.NS)
+        stateRepository.save(FixtureMatchCollectState(fixture = fixture, matchCollectStatus = MatchCollectStatus.FAIL_END))
+        em.flush()
+        em.clear()
+
+        val result = reconciler.reconcileLeague("league-fixture-fail-end-rescheduled")
+
+        assertThat(result.replaced).isEqualTo(1)
+        assertThat(stateRepository.findByFixture_Uid(fixture.uid)?.matchCollectStatus).isEqualTo(MatchCollectStatus.PENDING)
+    }
+
+
+    @Test
     fun `match collect 대상이 아니면 state를 생성하지 않는다`() {
         saveFixture(uid = "fixture-none", statusCode = FixtureStatusCode.CANC, matchCollect = MatchCollect.NONE)
         saveFixture(uid = "fixture-unavailable-league", statusCode = FixtureStatusCode.CANC, leagueAvailable = false)

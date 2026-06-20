@@ -1,11 +1,13 @@
 package com.footballay.core.infra.matchcollect
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.quartz.DisallowConcurrentExecution
 import org.quartz.JobExecutionContext
 
 @ExtendWith(MockitoExtension::class)
@@ -15,6 +17,11 @@ class MatchCollectFinishedScannerJobTest {
 
     @Mock
     private lateinit var context: JobExecutionContext
+
+    @Test
+    fun `scanner job은 동시 실행을 허용하지 않는다`() {
+        assertThat(MatchCollectFinishedScannerJob::class.java.getAnnotation(DisallowConcurrentExecution::class.java)).isNotNull()
+    }
 
     @Test
     fun `execute는 due FINISHED fixture collect batch를 실행한다`() {

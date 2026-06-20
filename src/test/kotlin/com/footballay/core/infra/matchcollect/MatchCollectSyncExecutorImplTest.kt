@@ -107,7 +107,7 @@ class MatchCollectSyncExecutorImplTest {
     }
 
     @Test
-    fun `sync error는 state를 변경하지 않는다`() {
+    fun `final checkpoint 이전 sync error는 state를 변경하지 않는다`() {
         val fixture = fixture("fixture-error")
         val existingState =
             FixtureMatchCollectState(
@@ -126,6 +126,51 @@ class MatchCollectSyncExecutorImplTest {
         assertThat(existingState.matchCollectStatus).isEqualTo(MatchCollectStatus.EARLY_SYNCED)
         assertThat(existingState.lastCollectedAt).isEqualTo(kickoff.plusSeconds(3 * 60 * 60))
         verify(stateRepository, never()).save(any())
+    }
+
+    @Test
+    fun `final checkpoint sync error는 FAIL_END state를 저장한다`() {
+        val fixture = fixture("fixture-final-error")
+        val existingState =
+            FixtureMatchCollectState(
+                fixture = fixture,
+                matchCollectStatus = MatchCollectStatus.EARLY_SYNCED,
+                lastCollectedAt = kickoff.plusSeconds(5 * 60 * 60),
+            )
+        val now = kickoff.plusSeconds(12 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(existingState)
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.Error("provider failed", kickoff))
+
+        val result = executor.collectFinished(fixture.uid, now)
+
+        assertThat(result).isEqualTo(MatchCollectExecutionResult.Failed(fixture.uid, "provider failed"))
+        assertThat(existingState.matchCollectStatus).isEqualTo(MatchCollectStatus.FAIL_END)
+        assertThat(existingState.lastCollectedAt).isEqualTo(now)
+        verify(stateRepository, never()).save(any())
+    }
+
+    @Test
+    fun `state가 없는 final checkpoint sync error는 FAIL_END state를 생성한다`() {
+        val fixture = fixture("fixture-final-error-no-state")
+        val now = kickoff.plusSeconds(12 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(null)
+        whenever(stateRepository.save(any())).thenAnswer { it.arguments[0] }
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.Error("provider failed", kickoff))
+
+        val result = executor.collectFinished(fixture.uid, now)
+
+        assertThat(result).isEqualTo(MatchCollectExecutionResult.Failed(fixture.uid, "provider failed"))
+        verify(stateRepository).save(
+            org.mockito.kotlin.argThat {
+                fixture.uid == "fixture-final-error-no-state" &&
+                    matchCollectStatus == MatchCollectStatus.FAIL_END &&
+                    lastCollectedAt == now
+            },
+        )
     }
 
     @Test

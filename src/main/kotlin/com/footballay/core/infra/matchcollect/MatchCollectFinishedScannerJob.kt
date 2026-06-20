@@ -1,9 +1,11 @@
 package com.footballay.core.infra.matchcollect
 
 import com.footballay.core.logger
+import org.quartz.DisallowConcurrentExecution
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 
+@DisallowConcurrentExecution
 class MatchCollectFinishedScannerJob(
     private val leagueMatchCollectManager: LeagueMatchCollectManager,
 ) : Job {

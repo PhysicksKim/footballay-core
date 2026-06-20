@@ -6,4 +6,5 @@ enum class MatchCollectStatus {
     SUCCESS,
     NOT_PLAYED,
     DATA_INCOMPLETE_NEEDS_ADMIN,
+    FAIL_END,
 }

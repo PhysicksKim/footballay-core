@@ -48,6 +48,7 @@ class FixtureCoreMatchCollectCandidateRepositoryTest {
         state("success", lastCollectedAt = null, status = MatchCollectStatus.SUCCESS)
         state("not-played", lastCollectedAt = null, status = MatchCollectStatus.NOT_PLAYED)
         state("data-incomplete", lastCollectedAt = null, status = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
+        state("fail-end", lastCollectedAt = null, status = MatchCollectStatus.FAIL_END)
         state("available-fixture", lastCollectedAt = null, fixtureAvailable = true)
         state("live-league", lastCollectedAt = null, matchCollect = MatchCollect.LIVE)
         state("unavailable-league", lastCollectedAt = null, leagueAvailable = false)
@@ -99,6 +100,7 @@ class FixtureCoreMatchCollectCandidateRepositoryTest {
                     MatchCollectStatus.SUCCESS,
                     MatchCollectStatus.NOT_PLAYED,
                     MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
+                    MatchCollectStatus.FAIL_END,
                 ),
             matchCollect = MatchCollect.FINISHED,
             pageable = PageRequest.of(0, 100),

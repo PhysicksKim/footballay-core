@@ -81,6 +81,7 @@ class LeagueMatchCollectManager(
                 MatchCollectStatus.SUCCESS,
                 MatchCollectStatus.NOT_PLAYED,
                 MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
+                MatchCollectStatus.FAIL_END,
             )
     }
 }
