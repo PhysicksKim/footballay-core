@@ -3,6 +3,7 @@ package com.footballay.core.infra.scheduler
 import com.footballay.core.infra.scheduler.cleanup.StartupMatchJobCleanupService
 import com.footballay.core.infra.scheduler.matchjob.AvailableMatchJobSchedulePolicy
 import com.footballay.core.infra.scheduler.matchjob.LegacyAvailableMatchJobRegistrar
+import com.footballay.core.infra.scheduler.matchjob.MatchCollectMatchJobSchedulePolicy
 import com.footballay.core.infra.scheduler.matchjob.MatchJobIdentity
 import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
 import com.footballay.core.infra.scheduler.matchjob.MatchJobOwner
@@ -55,6 +56,11 @@ class JobSchedulerServiceTest {
         assertThat(triggerKey.group).isEqualTo("league:match:league-1")
         assertThat(MatchJobKeyFactory.parseJobKey(jobKey)).isEqualTo(identity)
         assertThat(MatchJobKeyFactory.parseTriggerKey(triggerKey)).isEqualTo(identity)
+
+        val matchCollectIdentity = identity.copy(owner = MatchJobOwner.MATCHCOLLECT)
+        val matchCollectJobKey = MatchJobKeyFactory.jobKey(matchCollectIdentity)
+        assertThat(matchCollectJobKey).isEqualTo(JobKey.jobKey("matchcollect:pre:fixture-1", "league:match:league-1"))
+        assertThat(MatchJobKeyFactory.parseJobKey(matchCollectJobKey)).isEqualTo(matchCollectIdentity)
     }
 
     @Test
@@ -89,6 +95,26 @@ class JobSchedulerServiceTest {
         assertThat(post.jobClass).isEqualTo(PostMatchJob::class.java)
         assertThat(post.repeatIntervalSeconds).isEqualTo(60)
         assertThat(post.repeatCount).isEqualTo(60)
+        assertThat(post.compareStartAt).isFalse()
+    }
+
+    @Test
+    fun `MatchCollectMatchJobSchedulePolicy는 available보다 느린 phase별 반복 정책을 제공한다`() {
+        val startAt = Instant.parse("2026-05-14T10:00:00Z")
+
+        val pre = MatchCollectMatchJobSchedulePolicy.schedule(MatchJobPhase.PRE, startAt)
+        val live = MatchCollectMatchJobSchedulePolicy.schedule(MatchJobPhase.LIVE, startAt)
+        val post = MatchCollectMatchJobSchedulePolicy.schedule(MatchJobPhase.POST, startAt, compareStartAt = false)
+
+        assertThat(pre.jobClass).isEqualTo(MatchCollectPreFixtureJob::class.java)
+        assertThat(pre.repeatIntervalSeconds).isEqualTo(120)
+        assertThat(pre.repeatCount).isEqualTo(30)
+        assertThat(live.jobClass).isEqualTo(MatchCollectLiveFixtureJob::class.java)
+        assertThat(live.repeatIntervalSeconds).isEqualTo(60)
+        assertThat(live.repeatCount).isEqualTo(240)
+        assertThat(post.jobClass).isEqualTo(MatchCollectPostFixtureJob::class.java)
+        assertThat(post.repeatIntervalSeconds).isEqualTo(300)
+        assertThat(post.repeatCount).isEqualTo(12)
         assertThat(post.compareStartAt).isFalse()
     }
 
@@ -188,6 +214,24 @@ class JobSchedulerServiceTest {
         verify(scheduler).deleteJob(JobKey.jobKey("available:pre:fixture-1", "league:match:league-1"))
         verify(scheduler).deleteJob(JobKey.jobKey("available:live:fixture-1", "league:match:league-1"))
         verify(scheduler).deleteJob(JobKey.jobKey("available:post:fixture-1", "league:match:league-1"))
+    }
+
+    @Test
+    fun `matchcollect pre live post job을 fixture 기준으로 삭제한다`() {
+        val service = service()
+        whenever(scheduler.deleteJob(any())).thenReturn(true)
+
+        val deletedCount =
+            service.deleteFixtureJobs(
+                leagueUid = "league-1",
+                fixtureUid = "fixture-1",
+                owner = MatchJobOwner.MATCHCOLLECT,
+            )
+
+        assertThat(deletedCount).isEqualTo(3)
+        verify(scheduler).deleteJob(JobKey.jobKey("matchcollect:pre:fixture-1", "league:match:league-1"))
+        verify(scheduler).deleteJob(JobKey.jobKey("matchcollect:live:fixture-1", "league:match:league-1"))
+        verify(scheduler).deleteJob(JobKey.jobKey("matchcollect:post:fixture-1", "league:match:league-1"))
     }
 
     @Test

@@ -90,6 +90,22 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         @Param("leagueUid") leagueUid: String,
     ): List<FixtureCore>
 
+    @Query(
+        """
+        SELECT f
+        FROM LeagueSeasonCore ls
+        JOIN ls.league l
+        JOIN FixtureCore f ON f.leagueSeason = ls
+        LEFT JOIN FETCH f.matchCollectState s
+        WHERE l.uid = :leagueUid
+          AND ls.current = true
+        ORDER BY f.kickoff ASC, f.id ASC
+    """,
+    )
+    fun findMatchCollectLiveJobReconcileFixturesByLeagueUid(
+        @Param("leagueUid") leagueUid: String,
+    ): List<FixtureCore>
+
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.
      *

@@ -100,6 +100,21 @@ class JobSchedulerService(
             compareStartAt = compareStartAt,
         )
 
+    fun registerOrReplaceMatchCollectJob(
+        phase: MatchJobPhase,
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant,
+        compareStartAt: Boolean = true,
+    ): MatchJobRegistrationResult =
+        matchJobRegistrar.registerOrReplaceMatchCollectJob(
+            phase = phase,
+            leagueUid = leagueUid,
+            fixtureUid = fixtureUid,
+            startTime = startTime,
+            compareStartAt = compareStartAt,
+        )
+
     fun registerOrReplaceDetailed(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,

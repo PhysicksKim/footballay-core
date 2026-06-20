@@ -82,6 +82,29 @@ class MatchJobRegistrar(
                 ),
         )
 
+    fun registerOrReplaceMatchCollectJob(
+        phase: MatchJobPhase,
+        leagueUid: String,
+        fixtureUid: String,
+        startTime: Instant,
+        compareStartAt: Boolean = true,
+    ): MatchJobRegistrationResult =
+        registerOrReplaceDetailed(
+            identity =
+                MatchJobIdentity(
+                    owner = MatchJobOwner.MATCHCOLLECT,
+                    phase = phase,
+                    leagueUid = leagueUid,
+                    fixtureUid = fixtureUid,
+                ),
+            schedule =
+                MatchCollectMatchJobSchedulePolicy.schedule(
+                    phase = phase,
+                    startAt = startTime,
+                    compareStartAt = compareStartAt,
+                ),
+        )
+
     fun registerOrReplaceDetailed(
         identity: MatchJobIdentity,
         schedule: MatchJobSchedule,

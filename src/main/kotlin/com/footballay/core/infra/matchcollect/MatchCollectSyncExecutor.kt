@@ -90,20 +90,59 @@ class MatchCollectSyncExecutorImpl(
         }
     }
 
+    @Transactional
     override fun collectPre(
         fixtureUid: String,
         now: Instant,
-    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE pre is not implemented yet")
+    ): MatchCollectExecutionResult = collectLivePhase(fixtureUid, now, MatchCollectLivePhase.PRE)
 
+    @Transactional
     override fun collectLive(
         fixtureUid: String,
         now: Instant,
-    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE polling is not implemented yet")
+    ): MatchCollectExecutionResult = collectLivePhase(fixtureUid, now, MatchCollectLivePhase.LIVE)
 
+    @Transactional
     override fun collectPost(
         fixtureUid: String,
         now: Instant,
-    ): MatchCollectExecutionResult = MatchCollectExecutionResult.Skipped(fixtureUid, "Match collect LIVE post is not implemented yet")
+    ): MatchCollectExecutionResult = collectLivePhase(fixtureUid, now, MatchCollectLivePhase.POST)
+
+    private fun collectLivePhase(
+        fixtureUid: String,
+        now: Instant,
+        phase: MatchCollectLivePhase,
+    ): MatchCollectExecutionResult {
+        val fixture =
+            fixtureCoreRepository.findNullableByUid(fixtureUid)
+                ?: return MatchCollectExecutionResult.Failed(fixtureUid, "FixtureCore not found")
+
+        val state = stateRepository.findByFixture_Uid(fixtureUid)
+        val skipReason = liveSkipReason(fixture, state)
+        if (skipReason != null) {
+            return MatchCollectExecutionResult.Skipped(fixtureUid, skipReason)
+        }
+
+        return when (val syncResult = dispatcher.syncByFixtureUid(fixtureUid)) {
+            is MatchDataSyncResult.Error -> {
+                log.warn("Match collect LIVE sync failed - fixtureUid={}, phase={}, message={}", fixtureUid, phase, syncResult.message)
+                MatchCollectExecutionResult.Failed(fixtureUid, syncResult.message)
+            }
+
+            is MatchDataSyncResult.NotPlayed -> {
+                val updatedState = upsertState(fixture, state, MatchCollectStatus.NOT_PLAYED, now)
+                MatchCollectExecutionResult.Collected(fixtureUid, updatedState.matchCollectStatus, now, syncResult)
+            }
+
+            is MatchDataSyncResult.PreMatch,
+            is MatchDataSyncResult.Live,
+            is MatchDataSyncResult.PostMatch,
+            -> {
+                val updatedState = upsertState(fixture, state, liveSuccessStatus(phase, syncResult), now)
+                MatchCollectExecutionResult.Collected(fixtureUid, updatedState.matchCollectStatus, now, syncResult)
+            }
+        }
+    }
 
     private fun finishedSkipReason(
         fixture: FixtureCore,
@@ -121,6 +160,35 @@ class MatchCollectSyncExecutorImpl(
             else -> null
         }
     }
+
+    private fun liveSkipReason(
+        fixture: FixtureCore,
+        state: FixtureMatchCollectState?,
+    ): String? {
+        val leagueSeason = fixture.leagueSeason ?: return "Fixture leagueSeason is null"
+        val league = leagueSeason.league
+        return when {
+            !league.available -> "League is not available"
+            league.matchCollect != MatchCollect.LIVE -> "League matchCollect is not LIVE"
+            !leagueSeason.current -> "Fixture is not in current season"
+            fixture.available -> "Fixture is available fixture"
+            fixture.kickoff == null -> "Fixture kickoff is null"
+            state?.matchCollectStatus == MatchCollectStatus.SUCCESS -> "Match collect already succeeded"
+            state?.matchCollectStatus == MatchCollectStatus.NOT_PLAYED -> "Fixture is not played"
+            state?.matchCollectStatus == MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN -> "Fixture match data incomplete needs admin"
+            else -> null
+        }
+    }
+
+    private fun liveSuccessStatus(
+        phase: MatchCollectLivePhase,
+        syncResult: MatchDataSyncResult,
+    ): MatchCollectStatus =
+        if (phase == MatchCollectLivePhase.POST && syncResult is MatchDataSyncResult.PostMatch) {
+            MatchCollectStatus.SUCCESS
+        } else {
+            MatchCollectStatus.EARLY_SYNCED
+        }
 
     private fun finishedSuccessStatus(
         kickoff: Instant,
@@ -173,4 +241,10 @@ class MatchCollectSyncExecutorImpl(
             ),
         )
     }
+}
+
+enum class MatchCollectLivePhase {
+    PRE,
+    LIVE,
+    POST,
 }

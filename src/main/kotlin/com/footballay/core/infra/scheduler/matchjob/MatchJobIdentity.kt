@@ -4,6 +4,7 @@ enum class MatchJobOwner(
     val key: String,
 ) {
     AVAILABLE("available"),
+    MATCHCOLLECT("matchcollect"),
 }
 
 enum class MatchJobPhase(
