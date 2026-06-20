@@ -9,6 +9,7 @@ import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.AvailableFixtureJobReconciler
+import com.footballay.core.infra.scheduler.MatchCollectLiveFixtureReconciler
 import com.footballay.core.infra.scheduler.ReconcileError
 import com.footballay.core.infra.scheduler.ReconcileResult
 import org.assertj.core.api.Assertions.assertThat
@@ -16,9 +17,11 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
+import org.mockito.Mockito.lenient
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import java.time.Instant
@@ -34,6 +37,9 @@ class AvailableFixtureFacadeJobReconcileTest {
     @Mock
     private lateinit var availableFixtureJobReconciler: AvailableFixtureJobReconciler
 
+    @Mock
+    private lateinit var matchCollectLiveFixtureReconciler: MatchCollectLiveFixtureReconciler
+
     private lateinit var facade: AvailableFixtureFacade
 
     private val fixtureApiId = 100L
@@ -46,7 +52,10 @@ class AvailableFixtureFacadeJobReconcileTest {
                 fixtureCoreRepository = fixtureCoreRepository,
                 fixtureApiSportsRepository = fixtureApiSportsRepository,
                 availableFixtureJobReconciler = availableFixtureJobReconciler,
+                matchCollectLiveFixtureReconciler = matchCollectLiveFixtureReconciler,
             )
+        lenient().`when`(availableFixtureJobReconciler.reconcileFixture(any<FixtureCore>())).thenReturn(successResult())
+        lenient().`when`(matchCollectLiveFixtureReconciler.reconcileFixture(any<FixtureCore>())).thenReturn(successResult())
     }
 
     @Test
@@ -65,6 +74,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixture.available).isTrue()
         assertThat(fixtureApi.available).isTrue()
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -81,6 +91,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixture.available).isTrue()
         verify(fixtureApiSportsRepository, never()).save(any())
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -100,6 +111,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixtureApi.available).isTrue()
         verify(fixtureApiSportsRepository).save(fixtureApi)
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -116,6 +128,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixture.available).isFalse()
         verify(fixtureApiSportsRepository, never()).save(any())
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -135,6 +148,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixtureApi.available).isFalse()
         verify(fixtureApiSportsRepository).save(fixtureApi)
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -151,6 +165,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         verify(fixtureApiSportsRepository, never()).save(any())
         verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
         verify(availableFixtureJobReconciler, never()).reconcileFixture(any<String>())
+        verify(matchCollectLiveFixtureReconciler, never()).reconcileFixture(any<FixtureCore>())
     }
 
     @Test
@@ -160,7 +175,6 @@ class AvailableFixtureFacadeJobReconcileTest {
         whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApi)
         whenever(fixtureCoreRepository.save(fixture)).thenReturn(fixture)
         whenever(availableFixtureJobReconciler.reconcileFixture(fixture)).thenReturn(failedResult())
-        whenever(availableFixtureJobReconciler.reconcileFixture(fixtureUid)).thenReturn(successResult())
 
         val result = facade.addAvailableFixture(fixtureApiId)
 
@@ -169,7 +183,8 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(validation.errors.first().code).isEqualTo("AVAILABLE_FIXTURE_JOB_RECONCILE_FAILED")
         assertThat(fixture.available).isFalse()
         assertThat(fixtureApi.available).isFalse()
-        verify(availableFixtureJobReconciler).reconcileFixture(fixtureUid)
+        verify(availableFixtureJobReconciler, times(2)).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler, times(2)).reconcileFixture(fixture)
     }
 
     @Test
@@ -179,14 +194,14 @@ class AvailableFixtureFacadeJobReconcileTest {
         whenever(fixtureApiSportsRepository.findByApiId(fixtureApiId)).thenReturn(fixtureApi)
         whenever(fixtureCoreRepository.save(fixture)).thenReturn(fixture)
         whenever(availableFixtureJobReconciler.reconcileFixture(fixture)).thenReturn(failedResult())
-        whenever(availableFixtureJobReconciler.reconcileFixture(fixtureUid)).thenReturn(successResult())
 
         val result = facade.removeAvailableFixture(fixtureApiId)
 
         assertThat(result).isInstanceOf(DomainResult.Fail::class.java)
         assertThat(fixture.available).isTrue()
         assertThat(fixtureApi.available).isTrue()
-        verify(availableFixtureJobReconciler).reconcileFixture(fixtureUid)
+        verify(availableFixtureJobReconciler, times(2)).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler, times(2)).reconcileFixture(fixture)
     }
 
     @Test
@@ -205,6 +220,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         assertThat(fixture.available).isFalse()
         assertThat(fixtureApi.available).isFalse()
         verify(availableFixtureJobReconciler).reconcileFixture(fixture)
+        verify(matchCollectLiveFixtureReconciler).reconcileFixture(fixture)
     }
 
     @Test
@@ -221,6 +237,7 @@ class AvailableFixtureFacadeJobReconcileTest {
         verify(fixtureApiSportsRepository, never()).save(any())
         verify(availableFixtureJobReconciler, never()).reconcileFixture(any<FixtureCore>())
         verify(availableFixtureJobReconciler, never()).reconcileFixture(any<String>())
+        verify(matchCollectLiveFixtureReconciler, never()).reconcileFixture(any<FixtureCore>())
     }
 
     @Test

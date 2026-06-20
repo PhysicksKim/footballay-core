@@ -272,6 +272,22 @@ class MatchCollectSyncExecutorImplTest {
     }
 
     @Test
+    fun `LIVE post 수집이 아직 polling 중이면 EARLY_SYNCED state를 저장한다`() {
+        val fixture = fixture("fixture-live-post-polling", matchCollect = MatchCollect.LIVE)
+        val now = kickoff.plusSeconds(4 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(null)
+        whenever(stateRepository.save(any())).thenAnswer { it.arguments[0] }
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.PostMatch(kickoffTime = kickoff, shouldStopPolling = false, minutesSinceFinish = 20))
+
+        val result = executor.collectPost(fixture.uid, now)
+
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Collected::class.java)
+        assertThat((result as MatchCollectExecutionResult.Collected).status).isEqualTo(MatchCollectStatus.EARLY_SYNCED)
+    }
+
+    @Test
     fun `LIVE 수집에서 not played 결과는 NOT_PLAYED state를 저장한다`() {
         val fixture = fixture("fixture-live-not-played", matchCollect = MatchCollect.LIVE)
         val now = kickoff.plusSeconds(60 * 60)

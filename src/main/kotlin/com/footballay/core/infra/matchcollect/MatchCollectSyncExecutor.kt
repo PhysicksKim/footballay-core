@@ -184,7 +184,10 @@ class MatchCollectSyncExecutorImpl(
         phase: MatchCollectLivePhase,
         syncResult: MatchDataSyncResult,
     ): MatchCollectStatus =
-        if (phase == MatchCollectLivePhase.POST && syncResult is MatchDataSyncResult.PostMatch) {
+        if (phase == MatchCollectLivePhase.POST &&
+            syncResult is MatchDataSyncResult.PostMatch &&
+            syncResult.shouldStopPolling
+        ) {
             MatchCollectStatus.SUCCESS
         } else {
             MatchCollectStatus.EARLY_SYNCED

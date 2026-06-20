@@ -46,17 +46,22 @@ class MatchCollectLiveJobReconcilerTest {
     private val leagueUid = "league-1"
     private val fixtureUid = "fixture-1"
 
-    private lateinit var reconciler: MatchCollectLiveJobReconcilerImpl
+    private lateinit var fixtureReconciler: MatchCollectLiveFixtureReconciler
+    private lateinit var leagueReconciler: MatchCollectLiveJobReconcilerImpl
 
     @BeforeEach
     fun setUp() {
-        reconciler =
-            MatchCollectLiveJobReconcilerImpl(
-                fixtureCoreRepository = fixtureCoreRepository,
+        fixtureReconciler =
+            MatchCollectLiveFixtureReconciler(
                 stateRepository = stateRepository,
                 jobSchedulerService = jobSchedulerService,
                 fixtureStatusClassifier = FixtureStatusClassifier(),
                 clock = clock,
+            )
+        leagueReconciler =
+            MatchCollectLiveJobReconcilerImpl(
+                fixtureCoreRepository = fixtureCoreRepository,
+                fixtureReconciler = fixtureReconciler,
             )
         lenient().`when`(jobSchedulerService.jobExists(any())).thenReturn(false)
     }
@@ -68,7 +73,7 @@ class MatchCollectLiveJobReconcilerTest {
         whenever(jobSchedulerService.registerOrReplaceMatchCollectJob(any(), any(), any(), any(), any()))
             .thenReturn(MatchJobRegistrationResult.Registered)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isEqualTo(2)
@@ -77,7 +82,7 @@ class MatchCollectLiveJobReconcilerTest {
             MatchJobPhase.PRE,
             leagueUid,
             fixtureUid,
-            kickoff.minus(MatchCollectLiveJobReconcilerImpl.PRE_COLLECTION_LEAD_TIME),
+            kickoff.minus(MatchCollectLiveFixtureReconciler.PRE_COLLECTION_LEAD_TIME),
             true,
         )
         verify(jobSchedulerService).registerOrReplaceMatchCollectJob(
@@ -91,10 +96,10 @@ class MatchCollectLiveJobReconcilerTest {
 
     @Test
     fun `kickoff 이전 fixture가 lookahead 밖이면 matchcollect job을 등록하지 않는다`() {
-        val kickoff = now.plus(MatchCollectLiveJobReconcilerImpl.MATCH_COLLECT_LIVE_LOOKAHEAD_WINDOW).plusSeconds(1)
+        val kickoff = now.plus(MatchCollectLiveFixtureReconciler.MATCH_COLLECT_LIVE_LOOKAHEAD_WINDOW).plusSeconds(1)
         val fixture = fixture(kickoff = kickoff, statusCode = FixtureStatusCode.NS)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isZero()
@@ -108,7 +113,7 @@ class MatchCollectLiveJobReconcilerTest {
         whenever(jobSchedulerService.registerOrReplaceMatchCollectJob(any(), any(), any(), any(), any()))
             .thenReturn(MatchJobRegistrationResult.Unchanged)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isEqualTo(1)
@@ -124,12 +129,12 @@ class MatchCollectLiveJobReconcilerTest {
 
     @Test
     fun `normal finished fixture가 post window 안이면 post job을 startAt 비교 없이 등록한다`() {
-        val kickoff = now.minus(MatchCollectLiveJobReconcilerImpl.LIVE_COLLECTION_WINDOW).plusSeconds(60)
+        val kickoff = now.minus(MatchCollectLiveFixtureReconciler.LIVE_COLLECTION_WINDOW).plusSeconds(60)
         val fixture = fixture(kickoff = kickoff, statusCode = FixtureStatusCode.FT)
         whenever(jobSchedulerService.registerOrReplaceMatchCollectJob(any(), any(), any(), any(), any()))
             .thenReturn(MatchJobRegistrationResult.Registered)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isEqualTo(1)
@@ -145,13 +150,13 @@ class MatchCollectLiveJobReconcilerTest {
 
     @Test
     fun `NONE에서 LIVE로 바뀐 리그의 이미 종료된 current season fixture는 post job 대상이다`() {
-        val kickoff = now.minus(MatchCollectLiveJobReconcilerImpl.LIVE_COLLECTION_WINDOW).plusSeconds(60)
+        val kickoff = now.minus(MatchCollectLiveFixtureReconciler.LIVE_COLLECTION_WINDOW).plusSeconds(60)
         val fixture = fixture(kickoff = kickoff, statusCode = FixtureStatusCode.FT, matchCollect = MatchCollect.LIVE)
         whenever(fixtureCoreRepository.findMatchCollectLiveJobReconcileFixturesByLeagueUid(leagueUid)).thenReturn(listOf(fixture))
         whenever(jobSchedulerService.registerOrReplaceMatchCollectJob(any(), any(), any(), any(), any()))
             .thenReturn(MatchJobRegistrationResult.Registered)
 
-        val result = reconciler.reconcileLeague(leagueUid)
+        val result = leagueReconciler.reconcileLeague(leagueUid)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isEqualTo(1)
@@ -170,7 +175,7 @@ class MatchCollectLiveJobReconcilerTest {
         whenever(jobSchedulerService.jobExists(any())).thenReturn(true)
         whenever(jobSchedulerService.removeJob(any())).thenReturn(true)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isZero()
@@ -186,7 +191,7 @@ class MatchCollectLiveJobReconcilerTest {
         whenever(jobSchedulerService.jobExists(any())).thenReturn(true)
         whenever(jobSchedulerService.removeJob(any())).thenReturn(true)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isZero()
@@ -200,7 +205,7 @@ class MatchCollectLiveJobReconcilerTest {
         whenever(jobSchedulerService.jobExists(any())).thenReturn(true)
         whenever(jobSchedulerService.removeJob(any())).thenReturn(true)
 
-        val result = reconciler.reconcileFixture(fixture)
+        val result = fixtureReconciler.reconcileFixture(fixture)
 
         assertThat(result.success).isTrue()
         assertThat(result.planned).isZero()
@@ -211,26 +216,6 @@ class MatchCollectLiveJobReconcilerTest {
                     matchCollectStatus == MatchCollectStatus.NOT_PLAYED
             },
         )
-    }
-
-    @Test
-    fun `matchcollect desired가 있으면 lingering available jobs를 삭제한다`() {
-        val kickoff = now.plusSeconds(60 * 60)
-        val fixture = fixture(kickoff = kickoff, statusCode = FixtureStatusCode.NS)
-        whenever(jobSchedulerService.jobExists(availableJobKey(MatchJobPhase.PRE))).thenReturn(true)
-        whenever(jobSchedulerService.jobExists(availableJobKey(MatchJobPhase.LIVE))).thenReturn(true)
-        whenever(jobSchedulerService.jobExists(availableJobKey(MatchJobPhase.POST))).thenReturn(false)
-        whenever(jobSchedulerService.removeJob(any())).thenReturn(true)
-        whenever(jobSchedulerService.registerOrReplaceMatchCollectJob(any(), any(), any(), any(), any()))
-            .thenReturn(MatchJobRegistrationResult.Registered)
-
-        val result = reconciler.reconcileFixture(fixture)
-
-        assertThat(result.success).isTrue()
-        assertThat(result.planned).isEqualTo(2)
-        assertThat(result.deleted).isEqualTo(2)
-        verify(jobSchedulerService).removeJob(availableJobKey(MatchJobPhase.PRE))
-        verify(jobSchedulerService).removeJob(availableJobKey(MatchJobPhase.LIVE))
     }
 
     private fun fixture(
@@ -279,16 +264,6 @@ class MatchCollectLiveJobReconcilerTest {
         MatchJobKeyFactory.jobKey(
             MatchJobIdentity(
                 owner = MatchJobOwner.MATCHCOLLECT,
-                phase = phase,
-                leagueUid = leagueUid,
-                fixtureUid = fixtureUid,
-            ),
-        )
-
-    private fun availableJobKey(phase: MatchJobPhase) =
-        MatchJobKeyFactory.jobKey(
-            MatchJobIdentity(
-                owner = MatchJobOwner.AVAILABLE,
                 phase = phase,
                 leagueUid = leagueUid,
                 fixtureUid = fixtureUid,

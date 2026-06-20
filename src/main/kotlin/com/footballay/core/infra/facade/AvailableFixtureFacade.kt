@@ -7,6 +7,8 @@ import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSpor
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.scheduler.AvailableFixtureJobReconciler
+import com.footballay.core.infra.scheduler.MatchCollectLiveFixtureReconciler
+import com.footballay.core.infra.scheduler.ReconcileError
 import com.footballay.core.infra.scheduler.ReconcileResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
@@ -19,15 +21,16 @@ import org.springframework.transaction.annotation.Transactional
  *
  * **동작 흐름:**
  * 1. Fixture available = true 설정
- * 2. AvailableFixtureJobReconciler 로 desired Quartz Job 적용
+ * 2. AvailableFixtureJobReconciler 와 MatchCollectLiveFixtureReconciler 로 desired Quartz Job 적용
  * 3. PreMatchJob → LiveMatchJob → PostMatchJob 자동 전환
- * 4. Fixture available = false 설정 → 모든 Job 삭제
+ * 4. Fixture available = false 설정 → available job 삭제 및 match collect live job 재조정
  */
 @Service
 class AvailableFixtureFacade(
     private val fixtureCoreRepository: FixtureCoreRepository,
     private val fixtureApiSportsRepository: FixtureApiSportsRepository,
     private val availableFixtureJobReconciler: AvailableFixtureJobReconciler,
+    private val matchCollectLiveFixtureReconciler: MatchCollectLiveFixtureReconciler,
 ) {
     private val log = logger()
 
@@ -120,11 +123,11 @@ class AvailableFixtureFacade(
         setFixtureCoreAvailableFlag(available = true, fixtureCore)
         log.info("Fixture available updated - uid={}, available=true, kickoff={}", fixtureCore.uid, kickoff)
 
-        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
+        val reconcileResult = reconcileFixtureJobs(fixtureCore)
         if (isNotSuccess(reconcileResult)) {
-            log.error("Available fixture job reconcile failed - uid={}, result={}", fixtureCore.uid, reconcileResult)
+            log.error("Fixture job reconcile failed while enabling available fixture - uid={}, result={}", fixtureCore.uid, reconcileResult)
             setFixtureCoreAvailableFlag(available = false, fixtureCore)
-            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
+            restoreFixtureJobState(fixtureCore, reconcileResult)
             return resultOfReconcileFail(fixtureCore.uid)
         }
 
@@ -138,11 +141,11 @@ class AvailableFixtureFacade(
         setFixtureCoreAvailableFlag(available = false, fixtureCore)
         log.info("Fixture available updated - uid={}, available=false", fixtureCore.uid)
 
-        val reconcileResult = reconcileAvailableFixtureJobs(fixtureCore)
+        val reconcileResult = reconcileFixtureJobs(fixtureCore)
         if (isNotSuccess(reconcileResult)) {
-            log.error("Available fixture job cleanup reconcile failed - uid={}, result={}", fixtureCore.uid, reconcileResult)
+            log.error("Fixture job reconcile failed while disabling available fixture - uid={}, result={}", fixtureCore.uid, reconcileResult)
             setFixtureCoreAvailableFlag(available = true, fixtureCore)
-            restoreAvailableFixtureJobState(fixtureCore.uid, reconcileResult)
+            restoreFixtureJobState(fixtureCore, reconcileResult)
             return resultOfReconcileFail(fixtureCore.uid)
         }
 
@@ -158,25 +161,68 @@ class AvailableFixtureFacade(
         fixtureCoreRepository.save(fixtureCore)
     }
 
-    private fun reconcileAvailableFixtureJobs(fixtureCore: FixtureCore): ReconcileResult = availableFixtureJobReconciler.reconcileFixture(fixtureCore)
+    private fun reconcileFixtureJobs(fixtureCore: FixtureCore): ReconcileResult =
+        combineReconcileResults(
+            fixtureUid = fixtureCore.uid,
+            leagueUid = fixtureCore.league.uid,
+            results =
+                listOf(
+                    availableFixtureJobReconciler.reconcileFixture(fixtureCore),
+                    matchCollectLiveFixtureReconciler.reconcileFixture(fixtureCore),
+                ),
+        )
 
     /**
      * Quartz Job 등록 실패 시 다시 올바르게 맞추기 위한 조치
      */
-    private fun restoreAvailableFixtureJobState(
-        fixtureUid: String,
+    private fun restoreFixtureJobState(
+        fixtureCore: FixtureCore,
         originalFailure: ReconcileResult,
     ) {
-        val compensationResult = availableFixtureJobReconciler.reconcileFixture(fixtureUid)
+        val compensationResult = reconcileFixtureJobs(fixtureCore)
         if (isNotSuccess(compensationResult)) {
             log.error(
-                "Best-effort available fixture job compensation failed - fixtureUid={}, originalFailure={}, compensationResult={}",
-                fixtureUid,
+                "Best-effort fixture job compensation failed - fixtureUid={}, originalFailure={}, compensationResult={}",
+                fixtureCore.uid,
                 originalFailure,
                 compensationResult,
             )
         }
     }
+
+    private fun combineReconcileResults(
+        fixtureUid: String,
+        leagueUid: String?,
+        results: List<ReconcileResult>,
+    ): ReconcileResult =
+        ReconcileResult(
+            fixtureUid = fixtureUid,
+            leagueUid = leagueUid,
+            success = results.all { it.success },
+            planned = results.sumOf { it.planned },
+            registered = results.sumOf { it.registered },
+            replaced = results.sumOf { it.replaced },
+            deleted = results.sumOf { it.deleted },
+            skipped = results.sumOf { it.skipped },
+            errors =
+                results.flatMap { result ->
+                    result.errors.ifEmpty {
+                        if (result.success) {
+                            emptyList()
+                        } else {
+                            listOf(
+                                ReconcileError(
+                                    fixtureUid = result.fixtureUid,
+                                    leagueUid = result.leagueUid,
+                                    phase = null,
+                                    operation = "reconcile",
+                                    message = "Fixture job reconcile failed without detail",
+                                ),
+                            )
+                        }
+                    }
+                },
+        )
 
     private fun setFixtureApiSportsAvailableFlag(
         available: Boolean,

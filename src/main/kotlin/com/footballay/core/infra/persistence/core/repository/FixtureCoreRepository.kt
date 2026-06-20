@@ -99,6 +99,7 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         LEFT JOIN FETCH f.matchCollectState s
         WHERE l.uid = :leagueUid
           AND ls.current = true
+          AND f.available = false
         ORDER BY f.kickoff ASC, f.id ASC
     """,
     )
