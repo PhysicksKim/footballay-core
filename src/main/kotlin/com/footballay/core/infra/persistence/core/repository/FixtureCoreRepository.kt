@@ -3,6 +3,7 @@ package com.footballay.core.infra.persistence.core.repository
 import com.footballay.core.domain.league.MatchCollect
 import com.footballay.core.domain.matchcollect.MatchCollectStatus
 import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
@@ -106,6 +107,45 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
     fun findMatchCollectLiveJobReconcileFixturesByLeagueUid(
         @Param("leagueUid") leagueUid: String,
     ): List<FixtureCore>
+
+    @Query(
+        value = """
+            SELECT f
+            FROM LeagueSeasonCore ls
+            JOIN ls.league l
+            JOIN FixtureCore f ON f.leagueSeason = ls
+            LEFT JOIN FETCH f.matchCollectState s
+            LEFT JOIN FETCH f.homeTeam ht
+            LEFT JOIN FETCH f.awayTeam at
+            WHERE l.uid = :leagueUid
+              AND ls.current = true
+              AND f.available = false
+              AND (:fixtureUid IS NULL OR f.uid = :fixtureUid)
+              AND (:status IS NULL OR s.matchCollectStatus = :status)
+              AND (:incompleteOnly = false OR s.matchCollectStatus = com.footballay.core.domain.matchcollect.MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
+            ORDER BY f.kickoff ASC NULLS LAST, f.id ASC
+        """,
+        countQuery = """
+            SELECT COUNT(f)
+            FROM LeagueSeasonCore ls
+            JOIN ls.league l
+            JOIN FixtureCore f ON f.leagueSeason = ls
+            LEFT JOIN f.matchCollectState s
+            WHERE l.uid = :leagueUid
+              AND ls.current = true
+              AND f.available = false
+              AND (:fixtureUid IS NULL OR f.uid = :fixtureUid)
+              AND (:status IS NULL OR s.matchCollectStatus = :status)
+              AND (:incompleteOnly = false OR s.matchCollectStatus = com.footballay.core.domain.matchcollect.MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
+        """,
+    )
+    fun findAdminMatchCollectLeagueFixtures(
+        @Param("leagueUid") leagueUid: String,
+        @Param("fixtureUid") fixtureUid: String?,
+        @Param("status") status: MatchCollectStatus?,
+        @Param("incompleteOnly") incompleteOnly: Boolean,
+        pageable: Pageable,
+    ): Page<FixtureCore>
 
     /**
      * 특정 리그의 킥오프 시간 범위 내 Fixture들을 조회합니다.

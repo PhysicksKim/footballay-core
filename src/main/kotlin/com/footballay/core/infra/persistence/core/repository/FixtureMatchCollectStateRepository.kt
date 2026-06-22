@@ -16,7 +16,7 @@ interface FixtureMatchCollectStateRepository : JpaRepository<FixtureMatchCollect
 
     fun existsByFixture_Uid(fixtureUid: String): Boolean
 
-    @EntityGraph(attributePaths = ["fixture", "fixture.league", "fixture.leagueSeason", "fixture.leagueSeason.league"])
+    @EntityGraph(attributePaths = ["fixture", "fixture.league", "fixture.leagueSeason", "fixture.leagueSeason.league", "fixture.homeTeam", "fixture.awayTeam"])
     @Query(
         """
         SELECT s

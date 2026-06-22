@@ -2,6 +2,7 @@ package com.footballay.core.web.admin.core.controller
 
 import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.domain.matchcollect.MatchCollectStatus
+import com.footballay.core.web.admin.core.dto.MatchCollectLeagueStatePageResponse
 import com.footballay.core.web.admin.core.dto.MatchCollectStatePageResponse
 import com.footballay.core.web.admin.core.dto.MatchCollectUpdateRequest
 import com.footballay.core.web.admin.core.dto.MatchCollectUpdateResponse
@@ -44,9 +45,9 @@ class AdminMatchCollectController(
         @RequestParam(required = false, defaultValue = "false") incompleteOnly: Boolean,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int,
-    ): ResponseEntity<MatchCollectStatePageResponse> =
+    ): ResponseEntity<MatchCollectLeagueStatePageResponse> =
         ResponseEntity.ok(
-            adminMatchCollectQueryWebService.findStates(
+            adminMatchCollectQueryWebService.findLeagueStates(
                 leagueUid = leagueCoreUid,
                 fixtureUid = fixtureUid,
                 status = status,
@@ -62,9 +63,9 @@ class AdminMatchCollectController(
         @RequestParam(required = false) fixtureUid: String?,
         @RequestParam(required = false, defaultValue = "0") page: Int,
         @RequestParam(required = false, defaultValue = "50") size: Int,
-    ): ResponseEntity<MatchCollectStatePageResponse> =
+    ): ResponseEntity<MatchCollectLeagueStatePageResponse> =
         ResponseEntity.ok(
-            adminMatchCollectQueryWebService.findIncompleteStates(
+            adminMatchCollectQueryWebService.findLeagueIncompleteStates(
                 leagueUid = leagueCoreUid,
                 fixtureUid = fixtureUid,
                 page = page,

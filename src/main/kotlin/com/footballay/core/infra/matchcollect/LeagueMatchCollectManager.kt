@@ -33,6 +33,13 @@ class LeagueMatchCollectManager(
         batchSize: Int = DEFAULT_BATCH_SIZE,
     ): FinishedMatchCollectBatchResult {
         val now = Instant.now(clock)
+        return collectDueFinishedFixtures(now, batchSize)
+    }
+
+    fun collectDueFinishedFixtures(
+        now: Instant,
+        batchSize: Int = DEFAULT_BATCH_SIZE,
+    ): FinishedMatchCollectBatchResult {
         val candidates = findFinishedCandidates(now, batchSize)
         val dueFixtures =
             candidates.filter { fixture ->
