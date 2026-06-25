@@ -145,7 +145,7 @@ data class FullMatchSyncDto(
     data class LineupDto(
         val team: LineupTeamDto,
         val coach: CoachDto,
-        val formation: String,
+        val formation: String?,
         val startXI: List<LineupPlayerDto>,
         val substitutes: List<LineupPlayerDto>,
     ) {

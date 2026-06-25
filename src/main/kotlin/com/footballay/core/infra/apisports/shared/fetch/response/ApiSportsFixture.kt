@@ -153,7 +153,7 @@ object ApiSportsFixture {
         data class Lineup(
             val team: LineupTeam,
             val coach: Coach,
-            val formation: String,
+            val formation: String?,
             val startXI: List<LineupPlayer>,
             val substitutes: List<LineupPlayer>,
         ) {

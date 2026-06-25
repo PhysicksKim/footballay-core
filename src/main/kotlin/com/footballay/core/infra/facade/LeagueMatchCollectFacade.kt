@@ -3,12 +3,16 @@ package com.footballay.core.infra.facade
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.league.MatchCollect
+import com.footballay.core.infra.matchcollect.MatchCollectExecutionResult
+import com.footballay.core.infra.matchcollect.MatchCollectSyncExecutor
+import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.scheduler.MatchCollectLiveJobReconciler
 import com.footballay.core.infra.scheduler.ReconcileResult
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 
 data class LeagueMatchCollectUpdateResult(
     val leagueCoreUid: String,
@@ -19,7 +23,9 @@ data class LeagueMatchCollectUpdateResult(
 @Service
 class LeagueMatchCollectFacade(
     private val leagueCoreRepository: LeagueCoreRepository,
+    private val fixtureCoreRepository: FixtureCoreRepository,
     private val matchCollectLiveJobReconciler: MatchCollectLiveJobReconciler,
+    private val matchCollectSyncExecutor: MatchCollectSyncExecutor,
 ) {
     private val log = logger()
 
@@ -57,6 +63,25 @@ class LeagueMatchCollectFacade(
                 reconcileResult = reconcileResult,
             ),
         )
+    }
+
+    fun collectMatchByFixtureUidIgnoringSchedule(
+        fixtureUid: String,
+        now: Instant,
+    ): DomainResult<MatchCollectExecutionResult, DomainFail> {
+        if (fixtureCoreRepository.findNullableByUid(fixtureUid) == null) {
+            log.warn("FixtureCore not found for admin match collect - fixtureUid={}", fixtureUid)
+            return DomainResult.Fail(
+                DomainFail.NotFound(
+                    resource = "FIXTURE_CORE",
+                    id = fixtureUid,
+                ),
+            )
+        }
+
+        val result = matchCollectSyncExecutor.collectFinishedIgnoringSchedule(fixtureUid, now)
+        log.info("Admin single match collect executed - fixtureUid={}, result={}", fixtureUid, result)
+        return DomainResult.Success(result)
     }
 
     private fun restoreMatchCollectJobState(leagueCoreUid: String) {

@@ -3,6 +3,8 @@
 # 사용법: ./gradlew bootRun --args='--spring.profiles.active=local'
 
 spring:
+  flyway.enabled: false
+
   # JPA 설정
   jpa:
     properties:

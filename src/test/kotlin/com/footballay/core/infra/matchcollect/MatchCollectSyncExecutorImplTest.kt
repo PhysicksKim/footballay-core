@@ -214,6 +214,76 @@ class MatchCollectSyncExecutorImplTest {
     }
 
     @Test
+    fun `schedule 무시 FINISHED 수집은 이미 FAIL_END여도 dispatcher를 호출하고 state를 갱신한다`() {
+        val fixture = fixture("fixture-manual-fail-end")
+        val existingState =
+            FixtureMatchCollectState(
+                fixture = fixture,
+                matchCollectStatus = MatchCollectStatus.FAIL_END,
+                lastCollectedAt = kickoff.plusSeconds(12 * 60 * 60),
+            )
+        val now = kickoff.plusSeconds(24 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(existingState)
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.PostMatch(kickoffTime = kickoff, shouldStopPolling = true, minutesSinceFinish = 1200))
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, now)
+
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Collected::class.java)
+        assertThat((result as MatchCollectExecutionResult.Collected).status).isEqualTo(MatchCollectStatus.SUCCESS)
+        assertThat(existingState.matchCollectStatus).isEqualTo(MatchCollectStatus.SUCCESS)
+        assertThat(existingState.lastCollectedAt).isEqualTo(now)
+        verify(dispatcher).syncByFixtureUid(fixture.uid)
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 checkpoint 전이면 EARLY_SYNCED로 저장한다`() {
+        val fixture = fixture("fixture-manual-before-checkpoint")
+        val now = kickoff.plusSeconds(60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(null)
+        whenever(stateRepository.save(any())).thenAnswer { it.arguments[0] }
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.PostMatch(kickoffTime = kickoff, shouldStopPolling = false, minutesSinceFinish = 0))
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, now)
+
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Collected::class.java)
+        assertThat((result as MatchCollectExecutionResult.Collected).status).isEqualTo(MatchCollectStatus.EARLY_SYNCED)
+        verify(dispatcher).syncByFixtureUid(fixture.uid)
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 LIVE matchCollect 리그도 허용한다`() {
+        val fixture = fixture("fixture-manual-live-league", matchCollect = MatchCollect.LIVE)
+        val now = kickoff.plusSeconds(12 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(null)
+        whenever(stateRepository.save(any())).thenAnswer { it.arguments[0] }
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.PostMatch(kickoffTime = kickoff, shouldStopPolling = true, minutesSinceFinish = 120))
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, now)
+
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Collected::class.java)
+        assertThat((result as MatchCollectExecutionResult.Collected).status).isEqualTo(MatchCollectStatus.SUCCESS)
+        verify(dispatcher).syncByFixtureUid(fixture.uid)
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 NONE matchCollect 리그면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-manual-none-league", matchCollect = MatchCollect.NONE)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Skipped::class.java)
+        assertThat((result as MatchCollectExecutionResult.Skipped).reason).isEqualTo("League matchCollect is NONE")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
     fun `LIVE pre 수집은 dispatcher를 호출하고 EARLY_SYNCED state를 저장한다`() {
         val fixture = fixture("fixture-live-pre", matchCollect = MatchCollect.LIVE)
         val now = kickoff.minusSeconds(30 * 60)

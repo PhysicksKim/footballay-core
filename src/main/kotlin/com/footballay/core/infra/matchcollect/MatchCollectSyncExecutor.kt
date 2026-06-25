@@ -20,6 +20,11 @@ interface MatchCollectSyncExecutor {
         now: Instant,
     ): MatchCollectExecutionResult
 
+    fun collectFinishedIgnoringSchedule(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult
+
     fun collectPre(
         fixtureUid: String,
         now: Instant,
@@ -65,6 +70,35 @@ class MatchCollectSyncExecutorImpl(
             return MatchCollectExecutionResult.Skipped(fixtureUid, "No finished checkpoint to collect")
         }
 
+        return collectFinishedFixture(fixture, state, kickoff, now)
+    }
+
+    @Transactional
+    override fun collectFinishedIgnoringSchedule(
+        fixtureUid: String,
+        now: Instant,
+    ): MatchCollectExecutionResult {
+        val fixture =
+            fixtureCoreRepository.findNullableByUid(fixtureUid)
+                ?: return MatchCollectExecutionResult.Failed(fixtureUid, "FixtureCore not found")
+
+        val skipReason = finishedManualSkipReason(fixture)
+        if (skipReason != null) {
+            return MatchCollectExecutionResult.Skipped(fixtureUid, skipReason)
+        }
+
+        val kickoff = requireNotNull(fixture.kickoff)
+        val state = stateRepository.findByFixture_Uid(fixtureUid)
+        return collectFinishedFixture(fixture, state, kickoff, now)
+    }
+
+    private fun collectFinishedFixture(
+        fixture: FixtureCore,
+        state: FixtureMatchCollectState?,
+        kickoff: Instant,
+        now: Instant,
+    ): MatchCollectExecutionResult {
+        val fixtureUid = fixture.uid
         return when (val syncResult = dispatcher.syncByFixtureUid(fixtureUid)) {
             is MatchDataSyncResult.Error -> {
                 log.warn("Match collect FINISHED sync failed - fixtureUid={}, message={}", fixtureUid, syncResult.message)
@@ -161,6 +195,19 @@ class MatchCollectSyncExecutorImpl(
         }
     }
 
+    private fun finishedManualSkipReason(fixture: FixtureCore): String? {
+        val leagueSeason = fixture.leagueSeason ?: return "Fixture leagueSeason is null"
+        val league = leagueSeason.league
+        return when {
+            !league.available -> "League is not available"
+            league.matchCollect == MatchCollect.NONE -> "League matchCollect is NONE"
+            !leagueSeason.current -> "Fixture is not in current season"
+            fixture.available -> "Fixture is available fixture"
+            fixture.kickoff == null -> "Fixture kickoff is null"
+            else -> null
+        }
+    }
+
     private fun liveSkipReason(
         fixture: FixtureCore,
         state: FixtureMatchCollectState?,
@@ -197,7 +244,7 @@ class MatchCollectSyncExecutorImpl(
         kickoff: Instant,
         now: Instant,
     ): MatchCollectStatus {
-        val reachedCheckpointAt = requireNotNull(finishedPolicy.requiredCheckpointAt(kickoff, now))
+        val reachedCheckpointAt = finishedPolicy.requiredCheckpointAt(kickoff, now) ?: return MatchCollectStatus.EARLY_SYNCED
         val finalCheckpointAt =
             finishedPolicy.checkpointOffsets
                 .maxOrNull()

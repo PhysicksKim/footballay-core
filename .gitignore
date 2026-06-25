@@ -64,6 +64,7 @@ local-config/
 **/.DS_Store
 
 /monitoring/
+/logs/
 
 **/prometheus/credentials.yml
 **/prometheus/secrets/*
