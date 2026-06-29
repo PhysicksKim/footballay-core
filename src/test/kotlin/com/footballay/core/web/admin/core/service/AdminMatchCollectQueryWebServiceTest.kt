@@ -2,15 +2,11 @@ package com.footballay.core.web.admin.core.service
 
 import com.footballay.core.domain.fixture.FixtureStatusCode
 import com.footballay.core.domain.league.MatchCollect
+import com.footballay.core.domain.matchcollect.AdminMatchCollectLeagueModel
+import com.footballay.core.domain.matchcollect.AdminMatchCollectLeagueStatePage
+import com.footballay.core.domain.matchcollect.AdminMatchCollectQueryFacade
+import com.footballay.core.domain.matchcollect.AdminMatchCollectStateModel
 import com.footballay.core.domain.matchcollect.MatchCollectStatus
-import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureMatchCollectState
-import com.footballay.core.infra.persistence.core.entity.LeagueCore
-import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
-import com.footballay.core.infra.persistence.core.entity.TeamCore
-import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.infra.persistence.core.repository.FixtureMatchCollectStateRepository
-import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -28,32 +24,25 @@ import java.time.Instant
 @ExtendWith(MockitoExtension::class)
 class AdminMatchCollectQueryWebServiceTest {
     @Mock
-    private lateinit var leagueCoreRepository: LeagueCoreRepository
-
-    @Mock
-    private lateinit var fixtureCoreRepository: FixtureCoreRepository
-
-    @Mock
-    private lateinit var stateRepository: FixtureMatchCollectStateRepository
+    private lateinit var adminMatchCollectQueryFacade: AdminMatchCollectQueryFacade
 
     @Test
     fun `global match collect state page를 admin response로 변환한다`() {
         val service = service()
-        val state =
-            FixtureMatchCollectState(
-                fixture = fixture(),
-                matchCollectStatus = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
-                lastCollectedAt = Instant.parse("2026-06-20T12:00:00Z"),
-            )
+        val state = stateModel()
         whenever(
-            stateRepository.findAdminStates(
+            adminMatchCollectQueryFacade.findLeagueStatePage(
                 leagueUid = eq("league-1"),
-                fixtureUid = eq(null),
                 status = eq(null),
                 incompleteOnly = eq(true),
                 pageable = org.mockito.kotlin.any(),
             ),
-        ).thenReturn(PageImpl(listOf(state), PageRequest.of(0, 50), 1))
+        ).thenReturn(
+            AdminMatchCollectLeagueStatePage(
+                league = leagueModel(),
+                states = PageImpl(listOf(state), PageRequest.of(0, 50), 1),
+            ),
+        )
 
         val result =
             service.findStates(
@@ -83,9 +72,7 @@ class AdminMatchCollectQueryWebServiceTest {
         val service = service()
         val pageableCaptor = argumentCaptor<Pageable>()
         whenever(
-            stateRepository.findAdminStates(
-                leagueUid = eq(null),
-                fixtureUid = eq(null),
+            adminMatchCollectQueryFacade.findAllStatePage(
                 status = eq(MatchCollectStatus.FAIL_END),
                 incompleteOnly = eq(false),
                 pageable = org.mockito.kotlin.any(),
@@ -101,9 +88,7 @@ class AdminMatchCollectQueryWebServiceTest {
             size = 999,
         )
 
-        verify(stateRepository).findAdminStates(
-            leagueUid = eq(null),
-            fixtureUid = eq(null),
+        verify(adminMatchCollectQueryFacade).findAllStatePage(
             status = eq(MatchCollectStatus.FAIL_END),
             incompleteOnly = eq(false),
             pageable = pageableCaptor.capture(),
@@ -115,29 +100,25 @@ class AdminMatchCollectQueryWebServiceTest {
     @Test
     fun `league scoped state page는 리그 정보와 현재 시즌 대상 fixture state를 함께 반환한다`() {
         val service = service()
-        val league = league()
-        val fixture = fixture()
-        fixture.matchCollectState =
-            FixtureMatchCollectState(
-                fixture = fixture,
-                matchCollectStatus = MatchCollectStatus.EARLY_SYNCED,
-                lastCollectedAt = Instant.parse("2026-06-20T11:00:00Z"),
-            )
-        whenever(leagueCoreRepository.findByUid("league-1")).thenReturn(league)
+        val league = leagueModel()
+        val fixture = fixtureStateModel()
         whenever(
-            fixtureCoreRepository.findAdminMatchCollectLeagueFixtures(
+            adminMatchCollectQueryFacade.findLeagueStatePage(
                 leagueUid = eq("league-1"),
-                fixtureUid = eq(null),
                 status = eq(null),
                 incompleteOnly = eq(false),
                 pageable = org.mockito.kotlin.any(),
             ),
-        ).thenReturn(PageImpl(listOf(fixture), PageRequest.of(0, 50), 1))
+        ).thenReturn(
+            AdminMatchCollectLeagueStatePage(
+                league = league,
+                states = PageImpl(listOf(fixture), PageRequest.of(0, 50), 1),
+            ),
+        )
 
         val result =
             service.findLeagueStates(
                 leagueUid = "league-1",
-                fixtureUid = null,
                 status = null,
                 incompleteOnly = false,
                 page = 0,
@@ -151,16 +132,15 @@ class AdminMatchCollectQueryWebServiceTest {
         assertThat(result.content.first().fixtureUid).isEqualTo("fixture-1")
         assertThat(result.content.first().homeTeamName).isEqualTo("Home Team")
         assertThat(result.content.first().awayTeamName).isEqualTo("Away Team")
-        assertThat(result.content.first().matchCollectStatus).isEqualTo(MatchCollectStatus.EARLY_SYNCED)
-        assertThat(result.content.first().lastCollectedAt).isEqualTo(Instant.parse("2026-06-20T11:00:00Z"))
+        assertThat(result.content.first().matchCollectStatus).isEqualTo(MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
+        assertThat(result.content.first().lastCollectedAt).isEqualTo(Instant.parse("2026-06-20T12:00:00Z"))
     }
 
     @Test
-    fun `incomplete 조회는 self invocation 없이 repository를 직접 호출한다`() {
+    fun `global state 조회는 incompleteOnly true를 facade에 전달한다`() {
         val service = service()
         whenever(
-            stateRepository.findAdminStates(
-                leagueUid = eq("league-1"),
+            adminMatchCollectQueryFacade.findStatePageByFixtureUid(
                 fixtureUid = eq("fixture-1"),
                 status = eq(null),
                 incompleteOnly = eq(true),
@@ -168,15 +148,16 @@ class AdminMatchCollectQueryWebServiceTest {
             ),
         ).thenReturn(PageImpl(emptyList(), PageRequest.of(0, 50), 0))
 
-        service.findIncompleteStates(
+        service.findStates(
             leagueUid = "league-1",
             fixtureUid = "fixture-1",
+            status = null,
+            incompleteOnly = true,
             page = 0,
             size = 50,
         )
 
-        verify(stateRepository).findAdminStates(
-            leagueUid = eq("league-1"),
+        verify(adminMatchCollectQueryFacade).findStatePageByFixtureUid(
             fixtureUid = eq("fixture-1"),
             status = eq(null),
             incompleteOnly = eq(true),
@@ -186,59 +167,35 @@ class AdminMatchCollectQueryWebServiceTest {
 
     private fun service() =
         AdminMatchCollectQueryWebService(
-            leagueCoreRepository = leagueCoreRepository,
-            fixtureCoreRepository = fixtureCoreRepository,
-            stateRepository = stateRepository,
+            adminMatchCollectQueryFacade = adminMatchCollectQueryFacade,
         )
 
-    private fun league() =
-        LeagueCore(
-            id = 1L,
-            uid = "league-1",
+    private fun leagueModel() =
+        AdminMatchCollectLeagueModel(
+            leagueUid = "league-1",
             name = "League",
+            nameKo = null,
             available = true,
             matchCollect = MatchCollect.LIVE,
-            autoGenerated = false,
         )
 
-    private fun fixture(): FixtureCore {
-        val league = league()
-        val season =
-            LeagueSeasonCore(
-                id = 1L,
-                league = league,
-                seasonYear = 2026,
-                current = true,
-                autoGenerated = false,
-            )
-        val homeTeam =
-            TeamCore(
-                id = 1L,
-                uid = "team-home",
-                name = "Home Team",
-                nameKo = "홈팀",
-                autoGenerated = false,
-            )
-        val awayTeam =
-            TeamCore(
-                id = 2L,
-                uid = "team-away",
-                name = "Away Team",
-                nameKo = "원정팀",
-                autoGenerated = false,
-            )
-        return FixtureCore(
-            id = 1L,
-            uid = "fixture-1",
+    private fun stateModel() =
+        AdminMatchCollectStateModel(
+            fixtureUid = "fixture-1",
+            leagueUid = "league-1",
+            seasonYear = 2026,
+            currentSeason = true,
             kickoff = Instant.parse("2026-06-20T09:00:00Z"),
-            statusText = FixtureStatusCode.FT.code,
-            statusCode = FixtureStatusCode.FT,
-            league = league,
-            leagueSeason = season,
-            homeTeam = homeTeam,
-            awayTeam = awayTeam,
-            available = false,
-            autoGenerated = false,
+            fixtureStatusCode = FixtureStatusCode.FT,
+            fixtureAvailable = false,
+            homeTeamName = "Home Team",
+            homeTeamNameKo = "홈팀",
+            awayTeamName = "Away Team",
+            awayTeamNameKo = "원정팀",
+            leagueMatchCollect = MatchCollect.LIVE,
+            matchCollectStatus = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
+            lastCollectedAt = Instant.parse("2026-06-20T12:00:00Z"),
         )
-    }
+
+    private fun fixtureStateModel() = stateModel()
 }

@@ -5,12 +5,6 @@ import com.footballay.core.infra.matchcollect.FinishedMatchCollectBatchResult
 import com.footballay.core.infra.matchcollect.LeagueMatchCollectManager
 import com.footballay.core.infra.matchcollect.MatchCollectExecutionResult
 import com.footballay.core.infra.matchcollect.MatchCollectSyncExecutor
-import com.footballay.core.infra.persistence.core.entity.FixtureCore
-import com.footballay.core.infra.persistence.core.entity.FixtureMatchCollectState
-import com.footballay.core.infra.persistence.core.entity.LeagueCore
-import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.infra.persistence.core.repository.FixtureMatchCollectStateRepository
-import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.scheduler.MatchCollectLiveJobReconciler
 import com.footballay.core.infra.scheduler.ReconcileResult
 import com.footballay.core.infra.scheduler.matchjob.MatchJobKeyFactory
@@ -21,18 +15,14 @@ import org.quartz.SimpleTrigger
 import org.quartz.Trigger
 import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.context.annotation.Profile
-import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Instant
 
 @Service
 @Profile("local")
 class LocalMatchCollectTestService(
-    private val leagueCoreRepository: LeagueCoreRepository,
-    private val fixtureCoreRepository: FixtureCoreRepository,
-    private val stateRepository: FixtureMatchCollectStateRepository,
+    private val localMatchCollectTestQueryFacade: LocalMatchCollectTestQueryFacade,
     private val matchCollectLiveJobReconciler: MatchCollectLiveJobReconciler,
     private val leagueMatchCollectManager: LeagueMatchCollectManager,
     private val matchCollectSyncExecutor: MatchCollectSyncExecutor,
@@ -41,36 +31,25 @@ class LocalMatchCollectTestService(
 ) {
     private val log = logger()
 
-    @Transactional(readOnly = true)
     fun diagnostics(
         leagueUid: String?,
         fixtureUid: String?,
         includeQuartz: Boolean,
         includeState: Boolean,
     ): LocalMatchCollectDiagnosticsResponse {
-        val fixture = fixtureUid?.let(fixtureCoreRepository::findNullableByUid)
-        val league = resolveLeague(leagueUid, fixture)
-        val recentStates =
-            if (includeState && league != null) {
-                stateRepository
-                    .findAdminStates(
-                        leagueUid = league.uid,
-                        fixtureUid = fixtureUid,
-                        status = null,
-                        incompleteOnly = false,
-                        pageable = PageRequest.of(0, 50),
-                    ).content
-                    .map(::toStateSnapshot)
-            } else {
-                emptyList()
-            }
+        val query =
+            localMatchCollectTestQueryFacade.diagnostics(
+                leagueUid = leagueUid,
+                fixtureUid = fixtureUid,
+                includeState = includeState,
+            )
 
         return LocalMatchCollectDiagnosticsResponse(
-            league = league?.let(::toLeagueSnapshot),
-            fixture = fixture?.let(::toFixtureSnapshot),
-            state = if (includeState && fixtureUid != null) stateRepository.findByFixture_Uid(fixtureUid)?.let(::toStateSnapshot) else null,
-            recentStates = recentStates,
-            quartzJobs = if (includeQuartz) quartzJobs(league?.uid) else emptyList(),
+            league = query.league,
+            fixture = query.fixture,
+            state = query.state,
+            recentStates = query.recentStates,
+            quartzJobs = if (includeQuartz) quartzJobs(query.league?.leagueCoreUid) else emptyList(),
         )
     }
 
@@ -135,19 +114,6 @@ class LocalMatchCollectTestService(
         )
     }
 
-    private fun resolveLeague(
-        leagueUid: String?,
-        fixture: FixtureCore?,
-    ): LeagueCore? =
-        when {
-            !leagueUid.isNullOrBlank() -> leagueCoreRepository.findByUid(leagueUid)
-            fixture != null -> {
-                @Suppress("DEPRECATION")
-                fixture.leagueSeason?.league ?: fixture.league
-            }
-            else -> null
-        }
-
     private fun quartzJobs(leagueUid: String?): List<LocalQuartzJobSnapshot> {
         val groupNames =
             scheduler.jobGroupNames
@@ -194,37 +160,6 @@ class LocalMatchCollectTestService(
             timesTriggered = simpleTrigger?.timesTriggered,
         )
     }
-
-    private fun toLeagueSnapshot(league: LeagueCore): LocalMatchCollectLeagueSnapshot =
-        LocalMatchCollectLeagueSnapshot(
-            leagueCoreUid = league.uid,
-            name = league.name,
-            available = league.available,
-            matchCollect = league.matchCollect,
-        )
-
-    private fun toFixtureSnapshot(fixture: FixtureCore): LocalMatchCollectFixtureSnapshot {
-        val season = fixture.leagueSeason
-        @Suppress("DEPRECATION")
-        val league = season?.league ?: fixture.league
-        return LocalMatchCollectFixtureSnapshot(
-            fixtureUid = fixture.uid,
-            leagueCoreUid = league.uid,
-            seasonYear = season?.seasonYear,
-            currentSeason = season?.current,
-            kickoff = fixture.kickoff,
-            statusCode = fixture.statusCode,
-            available = fixture.available,
-            apiSportsFixtureId = fixture.apiSports?.apiId,
-        )
-    }
-
-    private fun toStateSnapshot(state: FixtureMatchCollectState): LocalMatchCollectStateSnapshot =
-        LocalMatchCollectStateSnapshot(
-            fixtureUid = state.fixture.uid,
-            matchCollectStatus = state.matchCollectStatus,
-            lastCollectedAt = state.lastCollectedAt,
-        )
 
     private fun toExecutionResponse(result: MatchCollectExecutionResult): LocalMatchCollectExecutionResponse =
         when (result) {

@@ -22,21 +22,35 @@ interface FixtureMatchCollectStateRepository : JpaRepository<FixtureMatchCollect
         SELECT s
         FROM FixtureMatchCollectState s
         JOIN s.fixture f
-        LEFT JOIN f.league legacyLeague
-        LEFT JOIN f.leagueSeason ls
-        LEFT JOIN ls.league l
-        WHERE (:leagueUid IS NULL OR l.uid = :leagueUid OR legacyLeague.uid = :leagueUid)
-          AND (:fixtureUid IS NULL OR f.uid = :fixtureUid)
-          AND (:status IS NULL OR s.matchCollectStatus = :status)
-          AND (:incompleteOnly = false OR s.matchCollectStatus = com.footballay.core.domain.matchcollect.MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
+        WHERE s.matchCollectStatus IN :statuses
         ORDER BY f.kickoff DESC NULLS LAST, f.id DESC
     """,
     )
-    fun findAdminStates(
-        @Param("leagueUid") leagueUid: String?,
-        @Param("fixtureUid") fixtureUid: String?,
-        @Param("status") status: MatchCollectStatus?,
-        @Param("incompleteOnly") incompleteOnly: Boolean,
+    fun findAdminStatesByStatuses(
+        @Param("statuses") statuses: Collection<MatchCollectStatus>,
         pageable: Pageable,
     ): Page<FixtureMatchCollectState>
+
+    @EntityGraph(attributePaths = ["fixture", "fixture.league", "fixture.leagueSeason", "fixture.leagueSeason.league", "fixture.homeTeam", "fixture.awayTeam"])
+    @Query(
+        """
+        SELECT s
+        FROM FixtureMatchCollectState s
+        JOIN s.fixture f
+        LEFT JOIN f.league legacyLeague
+        LEFT JOIN f.leagueSeason ls
+        LEFT JOIN ls.league l
+        WHERE (l.uid = :leagueUid OR legacyLeague.uid = :leagueUid)
+          AND s.matchCollectStatus IN :statuses
+        ORDER BY f.kickoff DESC NULLS LAST, f.id DESC
+    """,
+    )
+    fun findAdminStatesByLeagueUidAndStatuses(
+        @Param("leagueUid") leagueUid: String,
+        @Param("statuses") statuses: Collection<MatchCollectStatus>,
+        pageable: Pageable,
+    ): Page<FixtureMatchCollectState>
+
+    @EntityGraph(attributePaths = ["fixture", "fixture.league", "fixture.leagueSeason", "fixture.leagueSeason.league", "fixture.homeTeam", "fixture.awayTeam"])
+    fun findAdminStateByFixture_Uid(fixtureUid: String): FixtureMatchCollectState?
 }

@@ -86,12 +86,19 @@ class FixtureMatchCollectStateRepositoryTest {
     fun `admin state 조회는 league fixture status incomplete 필터를 적용한다`() {
         val leagueUid = "league-admin-filter"
         val target = saveFixture("fixture-admin-target", leagueUid = leagueUid)
+        val failEnd = saveFixture("fixture-admin-fail-end", leagueUid = leagueUid)
         val otherFixture = saveFixture("fixture-admin-other", leagueUid = leagueUid)
         val otherLeague = saveFixture("fixture-admin-other-league", leagueUid = "league-admin-other")
         stateRepository.save(
             FixtureMatchCollectState(
                 fixture = target,
                 matchCollectStatus = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
+            ),
+        )
+        stateRepository.save(
+            FixtureMatchCollectState(
+                fixture = failEnd,
+                matchCollectStatus = MatchCollectStatus.FAIL_END,
             ),
         )
         stateRepository.save(
@@ -110,16 +117,14 @@ class FixtureMatchCollectStateRepositoryTest {
         em.clear()
 
         val result =
-            stateRepository.findAdminStates(
+            stateRepository.findAdminStatesByLeagueUidAndStatuses(
                 leagueUid = leagueUid,
-                fixtureUid = null,
-                status = null,
-                incompleteOnly = true,
+                statuses = listOf(MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN, MatchCollectStatus.FAIL_END),
                 pageable = PageRequest.of(0, 20),
             )
 
-        assertThat(result.content.map { it.fixture.uid }).containsExactly(target.uid)
-        assertThat(result.totalElements).isEqualTo(1)
+        assertThat(result.content.map { it.fixture.uid }).containsExactlyInAnyOrder(target.uid, failEnd.uid)
+        assertThat(result.totalElements).isEqualTo(2)
     }
 
     @Test
@@ -140,17 +145,10 @@ class FixtureMatchCollectStateRepositoryTest {
         em.flush()
         em.clear()
 
-        val result =
-            stateRepository.findAdminStates(
-                leagueUid = null,
-                fixtureUid = target.uid,
-                status = MatchCollectStatus.FAIL_END,
-                incompleteOnly = false,
-                pageable = PageRequest.of(0, 20),
-            )
+        val result = stateRepository.findAdminStateByFixture_Uid(target.uid)
 
-        assertThat(result.content.map { it.fixture.uid }).containsExactly(target.uid)
-        assertThat(result.content.first().matchCollectStatus).isEqualTo(MatchCollectStatus.FAIL_END)
+        assertThat(result?.fixture?.uid).isEqualTo(target.uid)
+        assertThat(result?.matchCollectStatus).isEqualTo(MatchCollectStatus.FAIL_END)
     }
 
     private fun saveFixture(

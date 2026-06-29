@@ -55,17 +55,13 @@ class AdminMatchCollectController(
 
         private const val OP_LEAGUE_STATES =
             "특정 리그의 current season fixture MatchCollect 상태를 조회합니다. " +
-                "state row 가 아직 없는 fixture 도 league scoped 목록에는 포함될 수 있습니다."
-
-        private const val OP_LEAGUE_INCOMPLETE_STATES =
-            "특정 리그에서 운영자 확인이 필요한 MatchCollect 상태만 조회합니다."
+                "state row 가 아직 없는 fixture 도 league scoped 목록에는 포함될 수 있습니다. " +
+                "incompleteOnly=true 이면 운영자 확인이 필요한 상태만 조회합니다."
 
         private const val OP_GLOBAL_STATES =
             "전체 리그의 MatchCollect state row 를 flat page 로 조회합니다. " +
-                "이미 FixtureMatchCollectState row 가 생성된 fixture 중심의 운영 모니터링 API 입니다."
-
-        private const val OP_GLOBAL_INCOMPLETE_STATES =
-            "전체 리그에서 운영자 확인이 필요한 MatchCollect state row 만 조회합니다."
+                "이미 FixtureMatchCollectState row 가 생성된 fixture 중심의 운영 모니터링 API 입니다. " +
+                "incompleteOnly=true 이면 운영자 확인이 필요한 상태만 조회합니다."
     }
 
     @Operation(summary = "리그 MatchCollect 정책 변경", description = OP_SET_LEAGUE_MATCH_COLLECT)
@@ -101,10 +97,9 @@ class AdminMatchCollectController(
     fun collectMatchFixture(
         @Parameter(description = "FixtureCore UID", example = "fixture_core_abcd1234")
         @PathVariable fixtureUid: String,
-    ) =
-        adminLeagueMatchCollectWebService
-            .collectMatchByFixtureUid(fixtureUid)
-            .toResponseEntity()
+    ) = adminLeagueMatchCollectWebService
+        .collectMatchByFixtureUid(fixtureUid)
+        .toResponseEntity()
 
     @Operation(summary = "리그별 MatchCollect 상태 조회", description = OP_LEAGUE_STATES)
     @ApiResponse(responseCode = "200", description = "리그별 MatchCollect 상태 page")
@@ -112,8 +107,6 @@ class AdminMatchCollectController(
     fun getLeagueStates(
         @Parameter(description = "LeagueCore UID", example = "league_core_abcd1234")
         @PathVariable leagueCoreUid: String,
-        @Parameter(description = "FixtureCore UID filter", example = "fixture_core_abcd1234")
-        @RequestParam(required = false) fixtureUid: String?,
         @Parameter(description = "MatchCollectStatus filter", example = "FAIL_END")
         @RequestParam(required = false) status: MatchCollectStatus?,
         @Parameter(description = "true 이면 DATA_INCOMPLETE_NEEDS_ADMIN, FAIL_END 만 조회", example = "false")
@@ -126,31 +119,8 @@ class AdminMatchCollectController(
         ResponseEntity.ok(
             adminMatchCollectQueryWebService.findLeagueStates(
                 leagueUid = leagueCoreUid,
-                fixtureUid = fixtureUid,
                 status = status,
                 incompleteOnly = incompleteOnly,
-                page = page,
-                size = size,
-            ),
-        )
-
-    @Operation(summary = "리그별 MatchCollect incomplete 상태 조회", description = OP_LEAGUE_INCOMPLETE_STATES)
-    @ApiResponse(responseCode = "200", description = "리그별 incomplete MatchCollect 상태 page")
-    @GetMapping("/leagues/{leagueCoreUid}/match-collect/states/incomplete")
-    fun getLeagueIncompleteStates(
-        @Parameter(description = "LeagueCore UID", example = "league_core_abcd1234")
-        @PathVariable leagueCoreUid: String,
-        @Parameter(description = "FixtureCore UID filter", example = "fixture_core_abcd1234")
-        @RequestParam(required = false) fixtureUid: String?,
-        @Parameter(description = "0-based page", example = "0")
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @Parameter(description = "page size", example = "50")
-        @RequestParam(required = false, defaultValue = "50") size: Int,
-    ): ResponseEntity<MatchCollectLeagueStatePageResponse> =
-        ResponseEntity.ok(
-            adminMatchCollectQueryWebService.findLeagueIncompleteStates(
-                leagueUid = leagueCoreUid,
-                fixtureUid = fixtureUid,
                 page = page,
                 size = size,
             ),
@@ -179,28 +149,6 @@ class AdminMatchCollectController(
                 fixtureUid = fixtureUid,
                 status = status,
                 incompleteOnly = incompleteOnly,
-                page = page,
-                size = size,
-            ),
-        )
-
-    @Operation(summary = "전체 MatchCollect incomplete 상태 조회", description = OP_GLOBAL_INCOMPLETE_STATES)
-    @ApiResponse(responseCode = "200", description = "전체 incomplete MatchCollect 상태 page")
-    @GetMapping("/match-collect/states/incomplete")
-    fun getIncompleteStates(
-        @Parameter(description = "LeagueCore UID filter", example = "league_core_abcd1234")
-        @RequestParam(required = false) leagueUid: String?,
-        @Parameter(description = "FixtureCore UID filter", example = "fixture_core_abcd1234")
-        @RequestParam(required = false) fixtureUid: String?,
-        @Parameter(description = "0-based page", example = "0")
-        @RequestParam(required = false, defaultValue = "0") page: Int,
-        @Parameter(description = "page size", example = "50")
-        @RequestParam(required = false, defaultValue = "50") size: Int,
-    ): ResponseEntity<MatchCollectStatePageResponse> =
-        ResponseEntity.ok(
-            adminMatchCollectQueryWebService.findIncompleteStates(
-                leagueUid = leagueUid,
-                fixtureUid = fixtureUid,
                 page = page,
                 size = size,
             ),
