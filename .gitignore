@@ -64,6 +64,7 @@ local-config/
 **/.DS_Store
 
 /monitoring/
+/logs/
 
 **/prometheus/credentials.yml
 **/prometheus/secrets/*
@@ -74,6 +75,7 @@ local-config/
 lombok.config
 
 docs/**
+docs
 
 .claude/settings.local.json
 /docker/dev/logs/

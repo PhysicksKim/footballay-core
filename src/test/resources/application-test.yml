@@ -103,3 +103,7 @@ footballay:
   fixture-cache-refresh:
     redis-pubsub:
       enabled: false
+  fixture-schedule-update:
+    enabled: false
+  startup-match-job-cleanup:
+    enabled: false

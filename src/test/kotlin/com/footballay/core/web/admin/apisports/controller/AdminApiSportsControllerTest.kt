@@ -2,7 +2,7 @@ package com.footballay.core.web.admin.apisports.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.common.result.DomainResult
-import com.footballay.core.common.logging.logger
+import com.footballay.core.logger
 import com.footballay.core.web.admin.apisports.dto.LeagueSeasonRequest
 import com.footballay.core.web.admin.apisports.dto.LeaguesSyncResultDto
 import com.footballay.core.web.admin.apisports.dto.TeamsSyncResultDto

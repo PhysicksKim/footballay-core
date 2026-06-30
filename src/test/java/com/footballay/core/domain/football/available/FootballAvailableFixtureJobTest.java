@@ -9,6 +9,7 @@ import com.footballay.core.domain.football.scheduler.live.LiveMatchTask;
 import com.footballay.core.domain.football.service.FootballAvailableService;
 import com.footballay.core.util.QuartzConnectionResetListener;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +40,7 @@ import static org.mockito.Mockito.when;
 /**
  * AvailableFixture 추가/제거 시 Job 이 제대로 추가/제거되는지 테스트
  */
+@Disabled("Java version football services are not used no more")
 @SpringBootTest
 @ActiveProfiles({"test","mockapi"})
 @ExtendWith(QuartzConnectionResetListener.class)

@@ -1,23 +1,24 @@
 <configuration>
-    <springProfile name="local">
-        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-            <encoder>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
-            </encoder>
-        </appender>
-        <root level="DEBUG">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
+    <timestamp key="runTime" datePattern="yyyyMMdd-HHmmss"/>
 
-    <springProfile name="dev">
+    <springProfile name="local | dev">
         <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
             <encoder>
                 <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
             </encoder>
         </appender>
+
+        <appender name="LOCAL_DEV_FILE" class="ch.qos.logback.core.FileAppender">
+            <file>logs/footballay-core-${runTime}.log</file>
+            <append>true</append>
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+
         <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="LOCAL_DEV_FILE"/>
         </root>
     </springProfile>
 

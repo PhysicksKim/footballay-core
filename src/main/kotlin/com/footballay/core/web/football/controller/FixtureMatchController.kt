@@ -2,8 +2,8 @@ package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.toHttpStatus
 import com.footballay.core.common.result.toResponseEntity
-import com.footballay.core.common.logging.logger
-import com.footballay.core.cache.matchdata.polling.hash.FixtureHttpEtagHelper
+import com.footballay.core.logger
+import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.dto.*
 import com.footballay.core.web.football.service.FixtureWebResult
 import com.footballay.core.web.football.service.FixtureWebService

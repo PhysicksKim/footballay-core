@@ -1,6 +1,6 @@
 package com.footballay.core.web.football.mapper
 
-import com.footballay.core.domain.football.match.*
+import com.footballay.core.domain.model.match.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

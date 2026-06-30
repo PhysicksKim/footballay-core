@@ -27,6 +27,16 @@ interface LeagueApiSportsRepository : JpaRepository<LeagueApiSports, Long> {
     )
     fun findLeagueApiSportsInApiId(apiIds: List<Long>): List<LeagueApiSports>
 
+    @Query(
+        """
+        SELECT l
+        FROM LeagueApiSports l
+        LEFT JOIN FETCH l.leagueCore
+        WHERE l.id IN :ids
+    """,
+    )
+    fun findAllByIdInWithLeagueCore(@Param("ids") ids: Collection<Long>): List<LeagueApiSports>
+
     fun findLeagueApiSportsByApiId(apiId: Long): LeagueApiSports?
 
     /**

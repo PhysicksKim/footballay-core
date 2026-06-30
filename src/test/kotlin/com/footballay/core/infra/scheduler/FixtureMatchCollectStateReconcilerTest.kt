@@ -1,0 +1,166 @@
+package com.footballay.core.infra.scheduler
+
+import com.footballay.core.domain.fixture.FixtureStatusCode
+import com.footballay.core.domain.league.MatchCollect
+import com.footballay.core.domain.matchcollect.MatchCollectStatus
+import com.footballay.core.infra.persistence.core.entity.FixtureCore
+import com.footballay.core.infra.persistence.core.entity.FixtureMatchCollectState
+import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueSeasonCore
+import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.persistence.core.repository.FixtureMatchCollectStateRepository
+import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
+import com.footballay.core.infra.persistence.core.repository.LeagueSeasonCoreRepository
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class FixtureMatchCollectStateReconcilerTest {
+    @Autowired
+    private lateinit var leagueCoreRepository: LeagueCoreRepository
+
+    @Autowired
+    private lateinit var leagueSeasonCoreRepository: LeagueSeasonCoreRepository
+
+    @Autowired
+    private lateinit var fixtureCoreRepository: FixtureCoreRepository
+
+    @Autowired
+    private lateinit var stateRepository: FixtureMatchCollectStateRepository
+
+    @Autowired
+    private lateinit var reconciler: FixtureMatchCollectStateReconciler
+
+    @PersistenceContext
+    private lateinit var em: EntityManager
+
+    @Test
+    fun `not played fixture는 state가 없으면 NOT_PLAYED state를 생성한다`() {
+        val fixture = saveFixture(uid = "fixture-cancelled", statusCode = FixtureStatusCode.CANC)
+        em.flush()
+        em.clear()
+
+        val result = reconciler.reconcileLeague("league-fixture-cancelled")
+
+        assertThat(result.registered).isEqualTo(1)
+        assertThat(result.replaced).isZero()
+        assertThat(stateRepository.findByFixture_Uid(fixture.uid)?.matchCollectStatus).isEqualTo(MatchCollectStatus.NOT_PLAYED)
+    }
+
+    @Test
+    fun `not played fixture는 기존 state를 NOT_PLAYED로 갱신한다`() {
+        val fixture = saveFixture(uid = "fixture-postponed", statusCode = FixtureStatusCode.PST)
+        stateRepository.save(FixtureMatchCollectState(fixture = fixture, matchCollectStatus = MatchCollectStatus.EARLY_SYNCED))
+        em.flush()
+        em.clear()
+
+        val result = reconciler.reconcileLeague("league-fixture-postponed")
+
+        assertThat(result.registered).isZero()
+        assertThat(result.replaced).isEqualTo(1)
+        assertThat(stateRepository.findByFixture_Uid(fixture.uid)?.matchCollectStatus).isEqualTo(MatchCollectStatus.NOT_PLAYED)
+    }
+
+    @Test
+    fun `pending fixture는 terminal state를 PENDING으로 되돌린다`() {
+        val fixture = saveFixture(uid = "fixture-rescheduled", statusCode = FixtureStatusCode.NS)
+        stateRepository.save(FixtureMatchCollectState(fixture = fixture, matchCollectStatus = MatchCollectStatus.SUCCESS))
+        em.flush()
+        em.clear()
+
+        val result = reconciler.reconcileLeague("league-fixture-rescheduled")
+
+        assertThat(result.replaced).isEqualTo(1)
+        assertThat(stateRepository.findByFixture_Uid(fixture.uid)?.matchCollectStatus).isEqualTo(MatchCollectStatus.PENDING)
+    }
+
+    @Test
+    fun `pending fixture는 FAIL_END state도 PENDING으로 되돌린다`() {
+        val fixture = saveFixture(uid = "fixture-fail-end-rescheduled", statusCode = FixtureStatusCode.NS)
+        stateRepository.save(FixtureMatchCollectState(fixture = fixture, matchCollectStatus = MatchCollectStatus.FAIL_END))
+        em.flush()
+        em.clear()
+
+        val result = reconciler.reconcileLeague("league-fixture-fail-end-rescheduled")
+
+        assertThat(result.replaced).isEqualTo(1)
+        assertThat(stateRepository.findByFixture_Uid(fixture.uid)?.matchCollectStatus).isEqualTo(MatchCollectStatus.PENDING)
+    }
+
+
+    @Test
+    fun `match collect 대상이 아니면 state를 생성하지 않는다`() {
+        saveFixture(uid = "fixture-none", statusCode = FixtureStatusCode.CANC, matchCollect = MatchCollect.NONE)
+        saveFixture(uid = "fixture-unavailable-league", statusCode = FixtureStatusCode.CANC, leagueAvailable = false)
+        saveFixture(uid = "fixture-available", statusCode = FixtureStatusCode.CANC, fixtureAvailable = true)
+        saveFixture(uid = "fixture-non-current-season", statusCode = FixtureStatusCode.CANC, currentSeason = false)
+        em.flush()
+        em.clear()
+
+        val noneResult = reconciler.reconcileLeague("league-fixture-none")
+        val unavailableLeagueResult = reconciler.reconcileLeague("league-fixture-unavailable-league")
+        val availableFixtureResult = reconciler.reconcileLeague("league-fixture-available")
+        val nonCurrentSeasonResult = reconciler.reconcileLeague("league-fixture-non-current-season")
+
+        assertThat(noneResult.registered).isZero()
+        assertThat(unavailableLeagueResult.registered).isZero()
+        assertThat(availableFixtureResult.registered).isZero()
+        assertThat(nonCurrentSeasonResult.registered).isZero()
+        assertThat(stateRepository.findByFixture_Uid("fixture-none")).isNull()
+        assertThat(stateRepository.findByFixture_Uid("fixture-unavailable-league")).isNull()
+        assertThat(stateRepository.findByFixture_Uid("fixture-available")).isNull()
+        assertThat(stateRepository.findByFixture_Uid("fixture-non-current-season")).isNull()
+    }
+
+    private fun saveFixture(
+        uid: String,
+        statusCode: FixtureStatusCode,
+        fixtureAvailable: Boolean = false,
+        leagueAvailable: Boolean = true,
+        matchCollect: MatchCollect = MatchCollect.FINISHED,
+        currentSeason: Boolean = true,
+    ): FixtureCore {
+        val league =
+            leagueCoreRepository.save(
+                LeagueCore(
+                    uid = "league-$uid",
+                    name = "League $uid",
+                    available = leagueAvailable,
+                    matchCollect = matchCollect,
+                    autoGenerated = false,
+                ),
+            )
+        val season =
+            leagueSeasonCoreRepository.save(
+                LeagueSeasonCore(
+                    league = league,
+                    seasonYear = 2026,
+                    current = currentSeason,
+                    autoGenerated = false,
+                ),
+            )
+        return fixtureCoreRepository.save(
+            FixtureCore(
+                uid = uid,
+                kickoff = Instant.parse("2026-06-15T09:00:00Z"),
+                statusText = statusCode.code,
+                statusCode = statusCode,
+                league = league,
+                leagueSeason = season,
+                homeTeam = null,
+                awayTeam = null,
+                available = fixtureAvailable,
+                autoGenerated = false,
+            ),
+        )
+    }
+}

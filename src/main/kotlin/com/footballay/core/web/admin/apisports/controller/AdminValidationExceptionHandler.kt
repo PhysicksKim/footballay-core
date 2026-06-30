@@ -1,5 +1,7 @@
 package com.footballay.core.web.admin.apisports.controller
 
+import com.footballay.core.web.admin.match.controller.AdminFixtureMatchController
+import com.footballay.core.web.admin.mockbackbone.controller.AdminMockBackboneController
 import jakarta.validation.ConstraintViolationException
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
@@ -26,7 +28,8 @@ data class ValidationErrorResponse(
     assignableTypes = [
         AdminApiSportsController::class,
         AdminFixtureAvailableController::class,
-        com.footballay.core.web.admin.match.controller.AdminFixtureMatchController::class,
+        AdminMockBackboneController::class,
+        AdminFixtureMatchController::class,
     ],
 )
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -82,7 +85,7 @@ class AdminValidationExceptionHandler {
     @ExceptionHandler(HandlerMethodValidationException::class)
     fun handleHandlerMethodValidation(ex: HandlerMethodValidationException): ResponseEntity<ValidationErrorResponse> {
         val errors =
-            ex.allValidationResults.flatMap { result ->
+            ex.parameterValidationResults.flatMap { result ->
                 result.resolvableErrors.map { error ->
                     FieldErrorResponse(
                         field = result.methodParameter?.parameterName ?: "unknown",

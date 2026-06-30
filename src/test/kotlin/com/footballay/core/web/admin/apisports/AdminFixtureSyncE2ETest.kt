@@ -1,12 +1,12 @@
 package com.footballay.core.web.admin.apisports
 
-import com.footballay.core.infra.client.apisports.fetch.impl.ApiSportsV3MockFetcher
+import com.footballay.core.infra.apisports.shared.fetch.impl.ApiSportsV3MockFetcher
 import com.footballay.core.infra.persistence.apisports.repository.FixtureApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.TeamApiSportsRepository
 import com.footballay.core.infra.persistence.apisports.repository.VenueApiSportsRepository
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
-import com.footballay.core.common.logging.logger
+import com.footballay.core.logger
 import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName

@@ -1,8 +1,8 @@
 package com.footballay.core.web.football.mapper
 
-import com.footballay.core.domain.football.match.*
+import com.footballay.core.domain.model.match.*
 import com.footballay.core.web.football.dto.*
-import com.footballay.core.common.logging.logger
+import com.footballay.core.logger
 import org.springframework.stereotype.Component
 
 /**

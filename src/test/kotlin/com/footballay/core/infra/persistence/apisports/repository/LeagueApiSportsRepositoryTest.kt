@@ -6,8 +6,8 @@ import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsCov
 import com.footballay.core.infra.persistence.apisports.entity.LeagueApiSportsSeason
 import com.footballay.core.infra.persistence.core.entity.LeagueCore
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
-import com.footballay.core.infra.uid.UidGenerator
-import com.footballay.core.common.logging.logger
+import com.footballay.core.infra.util.UidGenerator
+import com.footballay.core.logger
 import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

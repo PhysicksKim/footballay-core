@@ -1,6 +1,10 @@
 package com.footballay.core.web.admin.apisports.service
 
-import com.footballay.core.admin.apisports.query.AdminApiSportsQueryFacade
+import com.footballay.core.domain.admin.apisports.facade.AdminApiSportsQueryFacade
+import com.footballay.core.domain.model.PlayerApiSportsExtension
+import com.footballay.core.domain.model.PlayerModel
+import com.footballay.core.domain.model.TeamApiSportsExtension
+import com.footballay.core.domain.model.TeamModel
 import com.footballay.core.web.admin.apisports.dto.PlayerApiSportsAdminResponse
 import com.footballay.core.web.admin.apisports.dto.TeamApiSportsAdminResponse
 import org.springframework.security.access.prepost.PreAuthorize
@@ -29,14 +33,20 @@ class AdminApiSportsQueryWebService(
         val result = adminApiSportsQueryFacade.findTeamsByLeagueApiId(leagueApiId)
 
         val teams = result.getOrNull() ?: emptyList()
-        return teams.map { view ->
+        val pairList: List<Pair<TeamModel, TeamApiSportsExtension>> =
+            teams.mapNotNull { model ->
+                val ext = model.extension as? TeamApiSportsExtension ?: return@mapNotNull null
+                Pair(model, ext)
+            }
+
+        return pairList.map { (model, ext) ->
             TeamApiSportsAdminResponse(
-                apiId = view.apiId,
-                uid = view.uid,
-                name = view.name,
-                nameKo = view.nameKo,
-                logo = view.logo,
-                code = view.code,
+                apiId = ext.apiId,
+                uid = model.uid,
+                name = model.name,
+                nameKo = model.nameKo,
+                logo = ext.logo,
+                code = model.code,
             )
         }
     }
@@ -52,16 +62,22 @@ class AdminApiSportsQueryWebService(
         val result = adminApiSportsQueryFacade.findPlayersByTeamApiId(teamApiId)
 
         val players = result.getOrNull() ?: emptyList()
-        return players.map { view ->
+        val pairList: List<Pair<PlayerModel, PlayerApiSportsExtension>> =
+            players.mapNotNull { model ->
+                val ext = model.extension as? PlayerApiSportsExtension ?: return@mapNotNull null
+                Pair(model, ext)
+            }
+
+        return pairList.map { (model, ext) ->
             PlayerApiSportsAdminResponse(
-                apiId = view.apiId,
-                uid = view.uid,
-                name = view.name,
-                nameKo = view.nameKo,
-                photo = view.photo,
-                position = view.position,
-                number = view.number,
-                nationality = view.nationality,
+                apiId = ext.apiId,
+                uid = model.uid,
+                name = model.name,
+                nameKo = model.nameKo,
+                photo = model.photo,
+                position = model.position,
+                number = model.number,
+                nationality = ext.nationality,
             )
         }
     }

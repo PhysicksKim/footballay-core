@@ -73,6 +73,9 @@ footballay:
   provider:
     primary: apisports
     secondary: sportmonks
+  mock-backbone:
+    admin-api:
+      enabled: false
 
 # 세션 쿠키 설정
 cookies:

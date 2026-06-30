@@ -1,0 +1,185 @@
+package com.footballay.core.infra.dispatcher.match
+
+import com.footballay.core.domain.fixture.FixtureStatusCode
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.time.Instant
+
+/**
+ * MatchDataSyncResult sealed class 테스트
+ *
+ * Pre/Live/Post 각 단계별 Result가 올바르게 생성되고
+ * 필요한 정보를 제공하는지 검증합니다.
+ */
+class MatchDataSyncResultTest {
+    @Test
+    fun `PreMatch Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now().plusSeconds(2 * 3600)
+
+        // When
+        val result =
+            MatchDataSyncResult.PreMatch(
+                lineupCached = true,
+                kickoffTime = kickoffTime,
+                shouldTerminatePreMatchJob = false,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.PreMatch::class.java)
+        assertThat(result.lineupCached).isTrue()
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+        assertThat(result.shouldTerminatePreMatchJob).isFalse()
+    }
+
+    @Test
+    fun `PreMatch Result - shouldTerminatePreMatchJob이 true인 경우`() {
+        // Given
+        val kickoffTime = Instant.now().plusSeconds(3 * 60)
+
+        // When
+        val result =
+            MatchDataSyncResult.PreMatch(
+                lineupCached = true,
+                kickoffTime = kickoffTime,
+                shouldTerminatePreMatchJob = true,
+            )
+
+        // Then
+        assertThat(result.shouldTerminatePreMatchJob).isTrue()
+        assertThat(result.lineupCached).isTrue()
+    }
+
+    @Test
+    fun `Live Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(30 * 60)
+
+        // When
+        val result =
+            MatchDataSyncResult.Live(
+                kickoffTime = kickoffTime,
+                elapsedMin = 30,
+                statusCode = FixtureStatusCode.FIRST_HALF,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.Live::class.java)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+        assertThat(result.elapsedMin).isEqualTo(30)
+        assertThat(result.statusCode).isEqualTo(FixtureStatusCode.FIRST_HALF)
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `finished factory는 PostMatch Result를 반환한다`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(100 * 60)
+
+        // When
+        val result = MatchDataSyncResult.finished(kickoffTime)
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.PostMatch::class.java)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+    }
+
+    @Test
+    fun `PostMatch Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(2 * 3600)
+
+        // When
+        val result =
+            MatchDataSyncResult.PostMatch(
+                kickoffTime = kickoffTime,
+                shouldStopPolling = false,
+                minutesSinceFinish = 30,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.PostMatch::class.java)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+        assertThat(result.shouldStopPolling).isFalse()
+        assertThat(result.minutesSinceFinish).isEqualTo(30)
+    }
+
+    @Test
+    fun `PostMatch Result - polling 중단 조건`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(3 * 3600)
+
+        // When
+        val result =
+            MatchDataSyncResult.PostMatch(
+                kickoffTime = kickoffTime,
+                shouldStopPolling = true,
+                minutesSinceFinish = 70,
+            )
+
+        // Then
+        assertThat(result.shouldStopPolling).isTrue()
+        assertThat(result.minutesSinceFinish).isGreaterThan(60)
+    }
+
+    @Test
+    fun `Error Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now()
+        val errorMessage = "API call failed"
+
+        // When
+        val result =
+            MatchDataSyncResult.Error(
+                message = errorMessage,
+                kickoffTime = kickoffTime,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.Error::class.java)
+        assertThat(result.message).isEqualTo(errorMessage)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+    }
+
+    @Test
+    fun `NotPlayed Result 생성 및 필드 검증`() {
+        // Given
+        val kickoffTime = Instant.now().minusSeconds(30 * 60)
+
+        // When
+        val result =
+            MatchDataSyncResult.NotPlayed(
+                statusCode = FixtureStatusCode.CANC,
+                kickoffTime = kickoffTime,
+            )
+
+        // Then
+        assertThat(result).isInstanceOf(MatchDataSyncResult.NotPlayed::class.java)
+        assertThat(result.statusCode).isEqualTo(FixtureStatusCode.CANC)
+        assertThat(result.kickoffTime).isEqualTo(kickoffTime)
+    }
+
+    @Test
+    fun `sealed class when 표현식으로 분기 가능`() {
+        // Given
+        val results =
+            listOf<MatchDataSyncResult>(
+                MatchDataSyncResult.PreMatch(true, Instant.now(), false),
+                MatchDataSyncResult.Live(Instant.now(), 30, FixtureStatusCode.FIRST_HALF),
+                MatchDataSyncResult.PostMatch(Instant.now(), false, 30),
+                MatchDataSyncResult.NotPlayed(FixtureStatusCode.PST, Instant.now()),
+                MatchDataSyncResult.Error("Error", Instant.now()),
+            )
+
+        // When & Then
+        results.forEach { result ->
+            when (result) {
+                is MatchDataSyncResult.PreMatch -> assertThat(result.lineupCached).isTrue()
+                is MatchDataSyncResult.Live -> assertThat(result.statusCode).isEqualTo(FixtureStatusCode.FIRST_HALF)
+                is MatchDataSyncResult.PostMatch -> assertThat(result.shouldStopPolling).isFalse()
+                is MatchDataSyncResult.NotPlayed -> assertThat(result.statusCode).isEqualTo(FixtureStatusCode.PST)
+                is MatchDataSyncResult.Error -> assertThat(result.message).isEqualTo("Error")
+            }
+        }
+    }
+}
