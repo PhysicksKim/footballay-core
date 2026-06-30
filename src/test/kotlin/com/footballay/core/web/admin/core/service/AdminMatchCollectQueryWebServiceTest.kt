@@ -8,6 +8,7 @@ import com.footballay.core.domain.matchcollect.AdminMatchCollectQueryFacade
 import com.footballay.core.domain.matchcollect.AdminMatchCollectStateModel
 import com.footballay.core.domain.matchcollect.MatchCollectStatus
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
@@ -19,6 +20,8 @@ import org.mockito.kotlin.whenever
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 
 @ExtendWith(MockitoExtension::class)
@@ -163,6 +166,31 @@ class AdminMatchCollectQueryWebServiceTest {
             incompleteOnly = eq(true),
             pageable = org.mockito.kotlin.any(),
         )
+    }
+
+    @Test
+    fun `없는 leagueUid 조회는 404 ResponseStatusException으로 변환한다`() {
+        val service = service()
+        whenever(
+            adminMatchCollectQueryFacade.findLeagueStatePage(
+                leagueUid = eq("missing-league"),
+                status = eq(null),
+                incompleteOnly = eq(false),
+                pageable = org.mockito.kotlin.any(),
+            ),
+        ).thenThrow(NoSuchElementException("LeagueCore not found: missing-league"))
+
+        assertThatThrownBy {
+            service.findLeagueStates(
+                leagueUid = "missing-league",
+                status = null,
+                incompleteOnly = false,
+                page = 0,
+                size = 50,
+            )
+        }.isInstanceOf(ResponseStatusException::class.java)
+            .extracting("statusCode")
+            .isEqualTo(HttpStatus.NOT_FOUND)
     }
 
     private fun service() =

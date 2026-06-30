@@ -100,4 +100,136 @@ class AdminLeagueMatchCollectWebServiceTest {
         assertThat(response.resultType).isEqualTo("SKIPPED")
         assertThat(response.reason).isEqualTo("League matchCollect is NONE")
     }
+
+    @Test
+    fun `admin 단건 match collect failed 결과를 response로 변환한다`() {
+        val fixtureUid = "fixture-failed"
+        val webService = AdminLeagueMatchCollectWebService(leagueMatchCollectFacade, clock)
+
+        given(leagueMatchCollectFacade.collectMatchByFixtureUidIgnoringSchedule(fixtureUid, now))
+            .willReturn(DomainResult.Success(MatchCollectExecutionResult.Failed(fixtureUid, "provider failed")))
+
+        val result = webService.collectMatchByFixtureUid(fixtureUid)
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        val response = (result as DomainResult.Success).value
+        assertThat(response.resultType).isEqualTo("FAILED")
+        assertThat(response.fixtureUid).isEqualTo(fixtureUid)
+        assertThat(response.status).isNull()
+        assertThat(response.collectedAt).isNull()
+        assertThat(response.reason).isNull()
+        assertThat(response.message).isEqualTo("provider failed")
+        assertThat(response.syncResult).isNull()
+    }
+
+    @Test
+    fun `admin 단건 match collect pre match syncResult를 response로 변환한다`() {
+        val fixtureUid = "fixture-pre"
+        val kickoff = Instant.parse("2026-06-25T12:00:00Z")
+        val webService = AdminLeagueMatchCollectWebService(leagueMatchCollectFacade, clock)
+
+        given(leagueMatchCollectFacade.collectMatchByFixtureUidIgnoringSchedule(fixtureUid, now))
+            .willReturn(
+                collected(
+                    fixtureUid = fixtureUid,
+                    syncResult =
+                        MatchDataSyncResult.PreMatch(
+                            lineupCached = true,
+                            kickoffTime = kickoff,
+                            shouldTerminatePreMatchJob = false,
+                        ),
+                ),
+            )
+
+        val response = (webService.collectMatchByFixtureUid(fixtureUid) as DomainResult.Success).value
+
+        assertThat(response.syncResult?.resultType).isEqualTo("PRE_MATCH")
+        assertThat(response.syncResult?.kickoffTime).isEqualTo(kickoff)
+        assertThat(response.syncResult?.lineupCached).isTrue()
+        assertThat(response.syncResult?.shouldTerminatePreMatchJob).isFalse()
+    }
+
+    @Test
+    fun `admin 단건 match collect live syncResult를 response로 변환한다`() {
+        val fixtureUid = "fixture-live"
+        val kickoff = Instant.parse("2026-06-25T12:00:00Z")
+        val webService = AdminLeagueMatchCollectWebService(leagueMatchCollectFacade, clock)
+
+        given(leagueMatchCollectFacade.collectMatchByFixtureUidIgnoringSchedule(fixtureUid, now))
+            .willReturn(
+                collected(
+                    fixtureUid = fixtureUid,
+                    syncResult =
+                        MatchDataSyncResult.Live(
+                            kickoffTime = kickoff,
+                            elapsedMin = 73,
+                            statusCode = com.footballay.core.domain.fixture.FixtureStatusCode.SECOND_HALF,
+                        ),
+                ),
+            )
+
+        val response = (webService.collectMatchByFixtureUid(fixtureUid) as DomainResult.Success).value
+
+        assertThat(response.syncResult?.resultType).isEqualTo("LIVE")
+        assertThat(response.syncResult?.kickoffTime).isEqualTo(kickoff)
+        assertThat(response.syncResult?.elapsedMin).isEqualTo(73)
+        assertThat(response.syncResult?.statusCode).isEqualTo(com.footballay.core.domain.fixture.FixtureStatusCode.SECOND_HALF)
+    }
+
+    @Test
+    fun `admin 단건 match collect not played syncResult를 response로 변환한다`() {
+        val fixtureUid = "fixture-not-played"
+        val kickoff = Instant.parse("2026-06-25T12:00:00Z")
+        val webService = AdminLeagueMatchCollectWebService(leagueMatchCollectFacade, clock)
+
+        given(leagueMatchCollectFacade.collectMatchByFixtureUidIgnoringSchedule(fixtureUid, now))
+            .willReturn(
+                collected(
+                    fixtureUid = fixtureUid,
+                    status = MatchCollectStatus.NOT_PLAYED,
+                    syncResult = MatchDataSyncResult.NotPlayed(com.footballay.core.domain.fixture.FixtureStatusCode.CANC, kickoff),
+                ),
+            )
+
+        val response = (webService.collectMatchByFixtureUid(fixtureUid) as DomainResult.Success).value
+
+        assertThat(response.syncResult?.resultType).isEqualTo("NOT_PLAYED")
+        assertThat(response.syncResult?.kickoffTime).isEqualTo(kickoff)
+        assertThat(response.syncResult?.statusCode).isEqualTo(com.footballay.core.domain.fixture.FixtureStatusCode.CANC)
+    }
+
+    @Test
+    fun `admin 단건 match collect error syncResult를 response로 변환한다`() {
+        val fixtureUid = "fixture-error"
+        val kickoff = Instant.parse("2026-06-25T12:00:00Z")
+        val webService = AdminLeagueMatchCollectWebService(leagueMatchCollectFacade, clock)
+
+        given(leagueMatchCollectFacade.collectMatchByFixtureUidIgnoringSchedule(fixtureUid, now))
+            .willReturn(
+                collected(
+                    fixtureUid = fixtureUid,
+                    syncResult = MatchDataSyncResult.Error("provider error", kickoff),
+                ),
+            )
+
+        val response = (webService.collectMatchByFixtureUid(fixtureUid) as DomainResult.Success).value
+
+        assertThat(response.syncResult?.resultType).isEqualTo("ERROR")
+        assertThat(response.syncResult?.kickoffTime).isEqualTo(kickoff)
+        assertThat(response.syncResult?.message).isEqualTo("provider error")
+    }
+
+    private fun collected(
+        fixtureUid: String,
+        status: MatchCollectStatus = MatchCollectStatus.EARLY_SYNCED,
+        syncResult: MatchDataSyncResult,
+    ): DomainResult.Success<MatchCollectExecutionResult.Collected> =
+        DomainResult.Success(
+            MatchCollectExecutionResult.Collected(
+                fixtureUid = fixtureUid,
+                status = status,
+                collectedAt = now,
+                syncResult = syncResult,
+            ),
+        )
 }

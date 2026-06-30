@@ -12,6 +12,11 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
+/**
+ * local profile 전용 MatchCollect diagnostics 조회 경계.
+ *
+ * 운영 admin query 와 분리해 local 테스트 화면에서 필요한 league, fixture, state snapshot 만 조합한다.
+ */
 @Component
 @Profile("local")
 class LocalMatchCollectTestQueryFacade(

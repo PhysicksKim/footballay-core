@@ -196,6 +196,61 @@ class MatchCollectSyncExecutorImplTest {
     }
 
     @Test
+    fun `FINISHED 수집은 리그가 unavailable이면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-finished-league-unavailable", leagueAvailable = false)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinished(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "League is not available")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `FINISHED 수집은 matchCollect가 FINISHED가 아니면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-finished-live-league", matchCollect = MatchCollect.LIVE)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinished(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "League matchCollect is not FINISHED")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `FINISHED 수집은 available fixture면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-finished-available", fixtureAvailable = true)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinished(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture is available fixture")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `FINISHED 수집은 kickoff이 없으면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-finished-no-kickoff", fixtureKickoff = null)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinished(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture kickoff is null")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `FINISHED 수집은 leagueSeason이 없으면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-finished-no-season", withLeagueSeason = false)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinished(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture leagueSeason is null")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
     fun `이미 checkpoint 이후 수집된 state가 있으면 sync를 실행하지 않는다`() {
         val fixture = fixture("fixture-already-collected")
         val state =
@@ -281,6 +336,72 @@ class MatchCollectSyncExecutorImplTest {
         assertThat(result).isInstanceOf(MatchCollectExecutionResult.Skipped::class.java)
         assertThat((result as MatchCollectExecutionResult.Skipped).reason).isEqualTo("League matchCollect is NONE")
         verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 current season이 아니면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-manual-old-season", currentSeason = false)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture is not in current season")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 fixture available이면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-manual-available", fixtureAvailable = true)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture is available fixture")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 kickoff이 없으면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-manual-no-kickoff", fixtureKickoff = null)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "Fixture kickoff is null")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED 수집은 league unavailable이면 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-manual-league-unavailable", leagueAvailable = false)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, kickoff.plusSeconds(12 * 60 * 60))
+
+        assertSkipped(result, "League is not available")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `schedule 무시 FINISHED final checkpoint error는 FAIL_END state를 저장한다`() {
+        val fixture = fixture("fixture-manual-final-error")
+        val now = kickoff.plusSeconds(12 * 60 * 60)
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(null)
+        whenever(stateRepository.save(any())).thenAnswer { it.arguments[0] }
+        whenever(dispatcher.syncByFixtureUid(fixture.uid))
+            .thenReturn(MatchDataSyncResult.Error("provider failed", kickoff))
+
+        val result = executor.collectFinishedIgnoringSchedule(fixture.uid, now)
+
+        assertThat(result).isEqualTo(MatchCollectExecutionResult.Failed(fixture.uid, "provider failed"))
+        verify(stateRepository).save(
+            org.mockito.kotlin.argThat {
+                fixture.uid == "fixture-manual-final-error" &&
+                    matchCollectStatus == MatchCollectStatus.FAIL_END &&
+                    lastCollectedAt == now
+            },
+        )
     }
 
     @Test
@@ -425,12 +546,50 @@ class MatchCollectSyncExecutorImplTest {
         verify(dispatcher, never()).syncByFixtureUid(any())
     }
 
+    @Test
+    fun `NOT_PLAYED state인 LIVE fixture는 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-live-not-played-skip", matchCollect = MatchCollect.LIVE)
+        val state =
+            FixtureMatchCollectState(
+                fixture = fixture,
+                matchCollectStatus = MatchCollectStatus.NOT_PLAYED,
+                lastCollectedAt = kickoff.plusSeconds(60 * 60),
+            )
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(state)
+
+        val result = executor.collectLive(fixture.uid, kickoff.plusSeconds(2 * 60 * 60))
+
+        assertSkipped(result, "Fixture is not played")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
+    @Test
+    fun `DATA_INCOMPLETE_NEEDS_ADMIN state인 LIVE fixture는 dispatcher를 호출하지 않는다`() {
+        val fixture = fixture("fixture-live-incomplete-skip", matchCollect = MatchCollect.LIVE)
+        val state =
+            FixtureMatchCollectState(
+                fixture = fixture,
+                matchCollectStatus = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
+                lastCollectedAt = kickoff.plusSeconds(60 * 60),
+            )
+        whenever(fixtureCoreRepository.findNullableByUid(fixture.uid)).thenReturn(fixture)
+        whenever(stateRepository.findByFixture_Uid(fixture.uid)).thenReturn(state)
+
+        val result = executor.collectLive(fixture.uid, kickoff.plusSeconds(2 * 60 * 60))
+
+        assertSkipped(result, "Fixture match data incomplete needs admin")
+        verify(dispatcher, never()).syncByFixtureUid(any())
+    }
+
     private fun fixture(
         uid: String,
         currentSeason: Boolean = true,
         leagueAvailable: Boolean = true,
         matchCollect: MatchCollect = MatchCollect.FINISHED,
         fixtureAvailable: Boolean = false,
+        fixtureKickoff: Instant? = kickoff,
+        withLeagueSeason: Boolean = true,
     ): FixtureCore {
         val league =
             LeagueCore(
@@ -441,15 +600,19 @@ class MatchCollectSyncExecutorImplTest {
                 autoGenerated = false,
             )
         val season =
-            LeagueSeasonCore(
-                league = league,
-                seasonYear = 2026,
-                current = currentSeason,
-                autoGenerated = false,
-            )
+            if (withLeagueSeason) {
+                LeagueSeasonCore(
+                    league = league,
+                    seasonYear = 2026,
+                    current = currentSeason,
+                    autoGenerated = false,
+                )
+            } else {
+                null
+            }
         return FixtureCore(
             uid = uid,
-            kickoff = kickoff,
+            kickoff = fixtureKickoff,
             statusText = "Not Started",
             statusCode = FixtureStatusCode.NS,
             league = league,
@@ -459,5 +622,13 @@ class MatchCollectSyncExecutorImplTest {
             available = fixtureAvailable,
             autoGenerated = false,
         )
+    }
+
+    private fun assertSkipped(
+        result: MatchCollectExecutionResult,
+        reason: String,
+    ) {
+        assertThat(result).isInstanceOf(MatchCollectExecutionResult.Skipped::class.java)
+        assertThat((result as MatchCollectExecutionResult.Skipped).reason).isEqualTo(reason)
     }
 }

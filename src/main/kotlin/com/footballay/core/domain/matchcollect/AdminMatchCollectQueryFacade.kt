@@ -6,6 +6,10 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
+/**
+ * 관리자가 [MatchCollectStatus]를 조회하기 위한 Facade 입니다.
+ * MatchCollect 과정에서 문제가 발생한 내용들을 관리자가 확인하고 조치할 수 있도록 데이터를 제공합니다.
+ */
 @Component
 class AdminMatchCollectQueryFacade(
     private val leagueCoreRepository: LeagueCoreRepository,
