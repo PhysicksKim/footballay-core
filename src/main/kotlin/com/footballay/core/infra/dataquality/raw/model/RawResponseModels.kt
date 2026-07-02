@@ -4,7 +4,7 @@ import java.time.Instant
 
 enum class FootballDataProvider {
     API_SPORTS,
-    SPORTMONKS,
+    // SPORTMONKS, // future plan 추가할 provider 후보
 }
 
 data class RawResponseCollectionCommand(
