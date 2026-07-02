@@ -33,6 +33,8 @@ data class DataQualityProperties(
         val bucket: String = "",
         val region: String = "",
         val rawPrefix: String = "data-quality/raw",
+        val localBaseDir: String = "build/data-quality/raw-storage",
+        val localDownloadUrlTtl: Duration = Duration.ofMinutes(10),
     )
 
     data class Kafka(

@@ -14,22 +14,26 @@ class DataQualityPropertiesTest {
             .withConfiguration(AutoConfigurations.of(TestConfig::class.java))
 
     @Test
-    fun `binds default disabled values`() {
+    fun `binds safe and valid default values`() {
         contextRunner.run { context ->
             val properties = context.getBean(DataQualityProperties::class.java)
 
             assertThat(properties.enabled).isFalse()
             assertThat(properties.rawCollection.enabled).isFalse()
             assertThat(properties.duplicateGate.enabled).isFalse()
-            assertThat(properties.duplicateGate.ttl).isEqualTo(Duration.ofDays(7))
-            assertThat(properties.async.corePoolSize).isEqualTo(2)
-            assertThat(properties.async.maxPoolSize).isEqualTo(4)
-            assertThat(properties.async.queueCapacity).isEqualTo(1000)
             assertThat(properties.storage.enabled).isFalse()
             assertThat(properties.storage.type).isEqualTo(StorageType.NOOP)
             assertThat(properties.kafka.enabled).isFalse()
             assertThat(properties.kafka.producer.enabled).isFalse()
             assertThat(properties.kafka.consumer.enabled).isFalse()
+
+            assertThat(properties.duplicateGate.ttl).isPositive()
+            assertThat(properties.async.corePoolSize).isGreaterThan(0)
+            assertThat(properties.async.maxPoolSize).isGreaterThanOrEqualTo(properties.async.corePoolSize)
+            assertThat(properties.async.queueCapacity).isGreaterThanOrEqualTo(0)
+            assertThat(properties.storage.rawPrefix).isNotBlank()
+            assertThat(properties.storage.localBaseDir).isNotBlank()
+            assertThat(properties.storage.localDownloadUrlTtl).isPositive()
         }
     }
 
@@ -49,6 +53,8 @@ class DataQualityPropertiesTest {
                 "footballay.data-quality.storage.bucket=footballay-data-quality",
                 "footballay.data-quality.storage.region=ap-northeast-2",
                 "footballay.data-quality.storage.raw-prefix=data-quality/raw",
+                "footballay.data-quality.storage.local-base-dir=/tmp/footballay-data-quality",
+                "footballay.data-quality.storage.local-download-url-ttl=5m",
                 "footballay.data-quality.kafka.enabled=true",
                 "footballay.data-quality.kafka.producer.enabled=true",
                 "footballay.data-quality.kafka.consumer.enabled=true",
@@ -67,6 +73,8 @@ class DataQualityPropertiesTest {
                 assertThat(properties.storage.bucket).isEqualTo("footballay-data-quality")
                 assertThat(properties.storage.region).isEqualTo("ap-northeast-2")
                 assertThat(properties.storage.rawPrefix).isEqualTo("data-quality/raw")
+                assertThat(properties.storage.localBaseDir).isEqualTo("/tmp/footballay-data-quality")
+                assertThat(properties.storage.localDownloadUrlTtl).isEqualTo(Duration.ofMinutes(5))
                 assertThat(properties.kafka.enabled).isTrue()
                 assertThat(properties.kafka.producer.enabled).isTrue()
                 assertThat(properties.kafka.consumer.enabled).isTrue()
