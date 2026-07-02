@@ -22,6 +22,9 @@ class DataQualityPropertiesTest {
             assertThat(properties.rawCollection.enabled).isFalse()
             assertThat(properties.duplicateGate.enabled).isFalse()
             assertThat(properties.duplicateGate.ttl).isEqualTo(Duration.ofDays(7))
+            assertThat(properties.async.corePoolSize).isEqualTo(2)
+            assertThat(properties.async.maxPoolSize).isEqualTo(4)
+            assertThat(properties.async.queueCapacity).isEqualTo(1000)
             assertThat(properties.storage.enabled).isFalse()
             assertThat(properties.storage.type).isEqualTo(StorageType.NOOP)
             assertThat(properties.kafka.enabled).isFalse()
@@ -38,6 +41,9 @@ class DataQualityPropertiesTest {
                 "footballay.data-quality.raw-collection.enabled=true",
                 "footballay.data-quality.duplicate-gate.enabled=true",
                 "footballay.data-quality.duplicate-gate.ttl=3d",
+                "footballay.data-quality.async.core-pool-size=3",
+                "footballay.data-quality.async.max-pool-size=6",
+                "footballay.data-quality.async.queue-capacity=500",
                 "footballay.data-quality.storage.enabled=true",
                 "footballay.data-quality.storage.type=s3",
                 "footballay.data-quality.storage.bucket=footballay-data-quality",
@@ -53,6 +59,9 @@ class DataQualityPropertiesTest {
                 assertThat(properties.rawCollection.enabled).isTrue()
                 assertThat(properties.duplicateGate.enabled).isTrue()
                 assertThat(properties.duplicateGate.ttl).isEqualTo(Duration.ofDays(3))
+                assertThat(properties.async.corePoolSize).isEqualTo(3)
+                assertThat(properties.async.maxPoolSize).isEqualTo(6)
+                assertThat(properties.async.queueCapacity).isEqualTo(500)
                 assertThat(properties.storage.enabled).isTrue()
                 assertThat(properties.storage.type).isEqualTo(StorageType.S3)
                 assertThat(properties.storage.bucket).isEqualTo("footballay-data-quality")

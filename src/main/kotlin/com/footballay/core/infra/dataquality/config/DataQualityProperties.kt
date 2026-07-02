@@ -8,6 +8,7 @@ data class DataQualityProperties(
     val enabled: Boolean = false,
     val rawCollection: RawCollection = RawCollection(),
     val duplicateGate: DuplicateGate = DuplicateGate(),
+    val async: Async = Async(),
     val storage: Storage = Storage(),
     val kafka: Kafka = Kafka(),
 ) {
@@ -18,6 +19,12 @@ data class DataQualityProperties(
     data class DuplicateGate(
         val enabled: Boolean = false,
         val ttl: Duration = Duration.ofDays(7),
+    )
+
+    data class Async(
+        val corePoolSize: Int = 2,
+        val maxPoolSize: Int = 4,
+        val queueCapacity: Int = 1000,
     )
 
     data class Storage(
