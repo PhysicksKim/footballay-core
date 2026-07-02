@@ -29,6 +29,14 @@ data class RawResponseDuplicateCheckCommand(
     val canonicalHash: String,
 )
 
+data class RawResponseObjectKeyCommand(
+    val provider: FootballDataProvider,
+    val endpointKey: String,
+    val apiId: String,
+    val collectedAt: Instant,
+    val canonicalHash: String,
+)
+
 sealed interface RawResponseDuplicateCheckResult {
     data object New : RawResponseDuplicateCheckResult
 
