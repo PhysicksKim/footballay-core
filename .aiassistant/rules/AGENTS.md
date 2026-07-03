@@ -1,0 +1,122 @@
+---
+apply: always
+---
+
+# AGENTS.md
+
+## Scope
+
+This repository is `footballay-core`, a Spring Boot Kotlin backend.
+
+Use Korean when explaining work to the user. Korean sentences must end with `.`, `?`, or `!`, not a closing colon.
+
+These rules bias toward caution over speed. For trivial tasks, use judgment.
+
+## Core behavior rules
+
+### 1. Think before coding
+
+* Do not assume. Do not hide confusion. Surface tradeoffs.
+* Before non-trivial implementation, state assumptions, a short plan, and the verification target.
+* If multiple interpretations exist, present them instead of silently choosing one.
+* If a simpler approach exists, say so and prefer it.
+* If something is unclear enough to affect correctness, stop and ask.
+
+### 2. Simplicity first
+
+* Write the minimum code that solves the requested problem.
+* Do not add features beyond what was asked.
+* Do not add abstractions for single-use code.
+* Do not add flexibility, configurability, dependencies, or broad error handling unless requested.
+* If the change becomes much larger than necessary, simplify before continuing.
+* Prefer boring, readable code over clever or highly abstract code.
+
+### 3. Surgical changes
+
+* Touch only files directly related to the task.
+* Every changed line should trace directly to the user request or to fixing a consequence of that change.
+* Match existing style, even if you would write it differently.
+* Do not refactor adjacent code, reformat unrelated files, improve unrelated comments, or delete pre-existing dead code.
+* If you notice unrelated problems, mention them instead of fixing them.
+* Remove only imports, variables, functions, or files made unused by your own change.
+
+### 4. Goal-driven execution
+
+* Convert work into verifiable goals.
+* For bug fixes, reproduce the bug with a failing test or a targeted verification before changing production code.
+* For validation changes, test invalid inputs and make those tests pass.
+* For refactors, verify behavior before and after when practical.
+* Do not mark work complete until the requested behavior is implemented and relevant verification has been run.
+
+## Safety and permission rules
+
+* Do not commit, push, delete files, change deployment/configuration, or install new production dependencies without explicit user approval.
+* If a logical change is ready, suggest a semantic commit message, but do not run `git commit` unless approved.
+* Do not weaken assertions, skip tests, or broaden matchers just to make tests pass.
+
+## Architecture rules
+
+* Football entities follow the Core/Backbone split.
+* Core represents real football domain objects and is the public-facing identity boundary.
+* Backbone represents provider-specific data structures.
+* User-facing requests must use Core UID only.
+* Admin flows may use provider-specific IDs when collecting or reconciling external data.
+* Prefer this layer flow.
+  `Controller -> Web Service -> Domain Facade -> Domain Service -> Repository`.
+* Controller handles web/API concerns and validation.
+* Web Service handles web-adjacent application concerns such as response assembly and caching.
+* Domain Facade is the main entry point for web, scheduler, and batch use cases.
+* Domain Service contains reusable domain logic.
+* Repository only provides persistence access.
+* Simple admin/dev queries may temporarily bypass the facade, but any logic-bearing path must go through a Domain Facade.
+* Duplication is acceptable when admin, scheduler, batch, statistics, or performance needs are conceptually different.
+* JPA Entity must not cross the Domain Facade boundary.
+* Facades must return domain models or use-case DTOs, never DTOs containing JPA entities.
+
+## Testing rules
+
+* Code should be testable. Extract pure or smaller logic when a service method becomes hard to test.
+* One test method should verify one main concern unless the layer is inherently integration-heavy.
+* Test method names should be descriptive English. Use `@DisplayName` for Korean explanation.
+* If a unit test needs excessive mocking, consider an integration test or improve the implementation design.
+* In Spring Boot 3.4+, use `@MockitoBean`, not deprecated `@MockBean`.
+* If code changed, run the smallest relevant test/build check before saying the work is done.
+* If checks fail, read the actual error, stack trace, SQL state, constraint name, and failing test before guessing a fix.
+
+## Command and token discipline
+
+* Prefer targeted commands before full-suite commands.
+* For Gradle tests, prefer.
+  `./gradlew test --tests "fully.qualified.TestName" --console=plain`.
+* For long command output, save the raw log and inspect only relevant slices.
+  `./gradlew test --console=plain 2>&1 | tee /tmp/footballay-test.log`.
+* Do not paste or load huge logs into context.
+* Inspect logs with `rg`, `grep`, `tail`, or `sed`.
+* Do not rely only on LLM-summarized output for test failures, DB errors, transaction issues, duplicate key errors, or flaky suite-only failures.
+* For DB/test failures, preserve and inspect raw evidence such as failing test name, table, constraint, SQLState, transaction boundary, fixture path, and test order.
+* Run the full suite only when needed or explicitly requested.
+
+## Context notes for large tasks
+
+* For multi-step work that spans many files or may continue across sessions, create or update.
+
+    * `checklist.md` for concrete tasks.
+    * `context-notes.md` for decisions and reasoning.
+* Do not create these files for small, local, one-shot changes.
+* Keep notes short and factual.
+
+## New file comments
+
+* For new source files, add a one-line Korean role comment near the top when it improves future navigation.
+* Place it below required directives such as package declarations, shebangs, or framework directives.
+* Skip config files, generated files, simple DTOs, and files where such a comment would violate project style.
+
+## Done criteria
+
+A task is complete only when.
+
+* The requested behavior is implemented or the question is answered.
+* Relevant tests, build, or compile checks were run when code changed.
+* If checks could not run, the exact reason and command to run manually are reported.
+* The diff was reviewed for unrelated changes.
+* The final report lists changed files, verification result, and remaining risks.
