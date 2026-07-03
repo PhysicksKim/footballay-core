@@ -146,8 +146,7 @@ public class FootballApiCacheService {
         savedNewTeams.addAll(otherLeagueExistTeams.values());
         // 새로운 팀에 대해 리그팀 연관관계 추가
         for (Team newTeam : savedNewTeams) {
-            LeagueTeam leagueTeam = LeagueTeam.builder().league(league).team(newTeam).build();
-            leagueTeamRepository.save(leagueTeam);
+            saveLeagueTeamIfAbsent(league, newTeam);
         }
         log.info("CASE 1 ; Both exist teams : {}", bothExistTeams.stream().map(Team::getName).toList());
         log.info("CASE 2 ; DB only exist teams : {}", dbOnlyExistTeams.stream().map(Team::getName).toList());
@@ -186,10 +185,14 @@ public class FootballApiCacheService {
             } else {
                 league = findLeague.get();
             }
-            LeagueTeam leagueTeam = LeagueTeam.builder().league(league).team(team).build();
-            LeagueTeam saveLeagueTeam = leagueTeamRepository.save(leagueTeam);
+            saveLeagueTeamIfAbsent(league, team);
         }
         lastCacheLogService.saveApiCache(ApiCacheType.CURRENT_LEAGUES_OF_TEAM, Map.of("teamId", teamId), ZonedDateTime.now());
+    }
+
+    private LeagueTeam saveLeagueTeamIfAbsent(League league, Team team) {
+        return leagueTeamRepository.findByLeagueAndTeam(league, team)
+                .orElseGet(() -> leagueTeamRepository.save(LeagueTeam.builder().league(league).team(team).build()));
     }
 
     /**
