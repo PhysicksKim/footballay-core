@@ -27,6 +27,8 @@ class DataQualityPropertiesTest {
             assertThat(properties.kafka.producer.enabled).isFalse()
             assertThat(properties.kafka.producer.rawCollectedTopic).isNotBlank()
             assertThat(properties.kafka.consumer.enabled).isFalse()
+            assertThat(properties.kafka.consumer.qualityResultTopic).isNotBlank()
+            assertThat(properties.kafka.consumer.groupId).isNotBlank()
 
             assertThat(properties.duplicateGate.ttl).isPositive()
             assertThat(properties.async.corePoolSize).isGreaterThan(0)
@@ -60,6 +62,8 @@ class DataQualityPropertiesTest {
                 "footballay.data-quality.kafka.producer.enabled=true",
                 "footballay.data-quality.kafka.producer.raw-collected-topic=custom-raw-collected",
                 "footballay.data-quality.kafka.consumer.enabled=true",
+                "footballay.data-quality.kafka.consumer.quality-result-topic=custom-quality-result",
+                "footballay.data-quality.kafka.consumer.group-id=custom-quality-consumer",
             ).run { context ->
                 val properties = context.getBean(DataQualityProperties::class.java)
 
@@ -81,6 +85,8 @@ class DataQualityPropertiesTest {
                 assertThat(properties.kafka.producer.enabled).isTrue()
                 assertThat(properties.kafka.producer.rawCollectedTopic).isEqualTo("custom-raw-collected")
                 assertThat(properties.kafka.consumer.enabled).isTrue()
+                assertThat(properties.kafka.consumer.qualityResultTopic).isEqualTo("custom-quality-result")
+                assertThat(properties.kafka.consumer.groupId).isEqualTo("custom-quality-consumer")
             }
     }
 

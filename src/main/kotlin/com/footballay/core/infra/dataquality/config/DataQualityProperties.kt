@@ -50,6 +50,8 @@ data class DataQualityProperties(
 
     data class KafkaConsumer(
         val enabled: Boolean = false,
+        val qualityResultTopic: String = "football-data-quality-result",
+        val groupId: String = "footballay-core-data-quality-result",
     )
 }
 
