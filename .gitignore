@@ -82,3 +82,6 @@ docs
 
 /plan
 /plan/*
+
+llm-bench/*
+llm-bench
