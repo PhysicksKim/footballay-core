@@ -25,6 +25,7 @@ class DataQualityPropertiesTest {
             assertThat(properties.storage.type).isEqualTo(StorageType.NOOP)
             assertThat(properties.kafka.enabled).isFalse()
             assertThat(properties.kafka.producer.enabled).isFalse()
+            assertThat(properties.kafka.producer.rawCollectedTopic).isNotBlank()
             assertThat(properties.kafka.consumer.enabled).isFalse()
 
             assertThat(properties.duplicateGate.ttl).isPositive()
@@ -57,6 +58,7 @@ class DataQualityPropertiesTest {
                 "footballay.data-quality.storage.local-download-url-ttl=5m",
                 "footballay.data-quality.kafka.enabled=true",
                 "footballay.data-quality.kafka.producer.enabled=true",
+                "footballay.data-quality.kafka.producer.raw-collected-topic=custom-raw-collected",
                 "footballay.data-quality.kafka.consumer.enabled=true",
             ).run { context ->
                 val properties = context.getBean(DataQualityProperties::class.java)
@@ -77,6 +79,7 @@ class DataQualityPropertiesTest {
                 assertThat(properties.storage.localDownloadUrlTtl).isEqualTo(Duration.ofMinutes(5))
                 assertThat(properties.kafka.enabled).isTrue()
                 assertThat(properties.kafka.producer.enabled).isTrue()
+                assertThat(properties.kafka.producer.rawCollectedTopic).isEqualTo("custom-raw-collected")
                 assertThat(properties.kafka.consumer.enabled).isTrue()
             }
     }

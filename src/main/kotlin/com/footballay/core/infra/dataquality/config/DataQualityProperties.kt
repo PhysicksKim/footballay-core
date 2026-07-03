@@ -45,6 +45,7 @@ data class DataQualityProperties(
 
     data class KafkaProducer(
         val enabled: Boolean = false,
+        val rawCollectedTopic: String = "football-data-raw-collected",
     )
 
     data class KafkaConsumer(
