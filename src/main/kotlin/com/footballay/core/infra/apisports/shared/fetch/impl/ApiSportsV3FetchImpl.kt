@@ -1,15 +1,22 @@
 package com.footballay.core.infra.apisports.shared.fetch.impl
 
-import com.footballay.core.bodyObject
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.footballay.core.infra.dataquality.raw.ApiSportsRawResponseCollector
+import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
+import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
+import com.footballay.core.infra.dataquality.raw.model.RawResponseRequestMetadata
 import com.footballay.core.infra.apisports.shared.config.ApiSportsProperties
 import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
 import com.footballay.core.infra.apisports.shared.fetch.response.*
 import com.footballay.core.logger
+import com.footballay.core.parameterizedTypeReference
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
+import java.time.Clock
+import java.time.Instant
 
 /**
  * Implementation of [ApiSportsV3Fetcher] to fetch data from API Sports v3.
@@ -21,6 +28,9 @@ import java.net.URI
 class ApiSportsV3FetchImpl(
     private val restClient: RestClient,
     private val properties: ApiSportsProperties,
+    private val objectMapper: ObjectMapper,
+    private val rawResponseCollector: ApiSportsRawResponseCollector,
+    private val clock: Clock = Clock.systemUTC(),
 ) : ApiSportsV3Fetcher {
     private val log = logger()
 
@@ -35,9 +45,9 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("status", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports Status")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports Status")
+
+        return mapRawJson<ApiSportsV3LiveStatusEnvelope<ApiSportsAccountStatus>>(rawJson)
     }
 
     override fun fetchLeaguesCurrent(): ApiSportsV3Envelope<ApiSportsLeague.Current> {
@@ -49,9 +59,9 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("leagues current", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3Envelope<ApiSportsLeague.Current>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports League Current")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports League Current")
+
+        return mapRawJson<ApiSportsV3Envelope<ApiSportsLeague.Current>>(rawJson)
     }
 
     override fun fetchTeamsOfLeague(
@@ -67,9 +77,9 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("teams of league", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3Envelope<ApiSportsTeam.OfLeague>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports Teams of League")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports Teams of League")
+
+        return mapRawJson<ApiSportsV3Envelope<ApiSportsTeam.OfLeague>>(rawJson)
     }
 
     override fun fetchSquadOfTeam(teamApiId: Long): ApiSportsV3Envelope<ApiSportsPlayer.OfTeam> {
@@ -81,9 +91,9 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("squad of team", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3Envelope<ApiSportsPlayer.OfTeam>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports Squad of Team")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports Squad of Team")
+
+        return mapRawJson<ApiSportsV3Envelope<ApiSportsPlayer.OfTeam>>(rawJson)
     }
 
     override fun fetchFixturesOfLeague(
@@ -99,9 +109,9 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("fixtures of league", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.OfLeague>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports Fixtures of League")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports Fixtures of League")
+
+        return mapRawJson<ApiSportsV3Envelope<ApiSportsFixture.OfLeague>>(rawJson)
     }
 
     override fun fetchFixtureSingle(fixtureApiId: Long): ApiSportsV3Envelope<ApiSportsFixture.Single> {
@@ -113,9 +123,64 @@ class ApiSportsV3FetchImpl(
                 .toUri()
         logNameAndUri("fixture single", uri)
 
-        return apiSportsRestClientRequestBuild(uri)
-            .bodyObject<ApiSportsV3Envelope<ApiSportsFixture.Single>>()
-            ?: throw IllegalStateException("Response body is null of ApiSports Fixture Single")
+        val rawJson = fetchRaw(uri, "Response body is null of ApiSports Fixture Single")
+        collectRawResponse(
+            requestName = "fixture single",
+            endpointKey = "fixture_single",
+            apiId = fixtureApiId.toString(),
+            rawJson = rawJson,
+            uri = uri,
+        )
+
+        return mapRawJson<ApiSportsV3Envelope<ApiSportsFixture.Single>>(rawJson)
+    }
+
+    private fun fetchRaw(
+        uri: URI,
+        nullBodyMessage: String,
+    ): String =
+        apiSportsRestClientRequestBuild(uri)
+            .body(String::class.java)
+            ?: throw IllegalStateException(nullBodyMessage)
+
+    private inline fun <reified T> mapRawJson(rawJson: String): T =
+        objectMapper.readValue(
+            rawJson,
+            objectMapper.typeFactory.constructType(parameterizedTypeReference<T>().type),
+        )
+
+    private fun collectRawResponse(
+        requestName: String,
+        endpointKey: String,
+        apiId: String,
+        rawJson: String,
+        uri: URI,
+    ) {
+        try {
+            rawResponseCollector.collect(
+                RawResponseCollectionCommand(
+                    provider = FootballDataProvider.API_SPORTS,
+                    endpointKey = endpointKey,
+                    apiId = apiId,
+                    rawJson = rawJson,
+                    collectedAt = Instant.now(clock),
+                    request =
+                        RawResponseRequestMetadata(
+                            method = "GET",
+                            path = uri.rawPath,
+                            query = queryParameters(uri),
+                        ),
+                ),
+            )
+        } catch (ex: Exception) {
+            log.warn(
+                "Failed to collect API Sports raw response. requestName={}, endpointKey={}, apiId={}",
+                requestName,
+                endpointKey,
+                apiId,
+                ex,
+            )
+        }
     }
 
     private fun apiSportsRestClientRequestBuild(uri: URI) =
@@ -139,4 +204,11 @@ class ApiSportsV3FetchImpl(
     ) {
         log.info("Request [$reqName] from API Sports: $uri")
     }
+
+    private fun queryParameters(uri: URI): Map<String, String> =
+        UriComponentsBuilder
+            .fromUri(uri)
+            .build()
+            .queryParams
+            .mapValues { (_, values) -> values.firstOrNull().orEmpty() }
 }
