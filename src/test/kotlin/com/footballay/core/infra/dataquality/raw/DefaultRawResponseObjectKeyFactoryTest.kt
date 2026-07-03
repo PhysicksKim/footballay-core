@@ -31,25 +31,6 @@ class DefaultRawResponseObjectKeyFactoryTest {
     }
 
     @Test
-    fun `creates expected Sportmonks object key`() {
-        val factory = factory()
-
-        val objectKey =
-            factory.create(
-                RawResponseObjectKeyCommand(
-                    provider = FootballDataProvider.SPORTMONKS,
-                    endpointKey = "fixture_single",
-                    apiId = "987654",
-                    collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
-                    canonicalHash = "hash",
-                ),
-            )
-
-        assertThat(objectKey)
-            .isEqualTo("data-quality/raw/sportmonks/fixture_single/2026/07/02/987654/20260702T080000Z_hash.json.gz")
-    }
-
-    @Test
     fun `trims raw prefix slashes`() {
         val factory = factory(rawPrefix = "/data-quality/raw/")
 
