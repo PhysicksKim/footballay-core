@@ -75,6 +75,26 @@ class FootballApiCacheServiceTest {
         log.info("findLeagueTeams : {}", findLeagueTeams);
     }
 
+    @DisplayName("팀의 현재 리그 캐싱 - 연관관계 중복 저장 방지")
+    @Test
+    void cacheTeamAndCurrentLeagues_AvoidDuplicateLeagueTeam() {
+        // given
+        long manutd = TeamId.MANUTD;
+        // when
+        footballApiCacheService.cacheTeamAndCurrentLeagues(manutd);
+        footballApiCacheService.cacheTeamAndCurrentLeagues(manutd);
+        // then
+        Team team = teamRepository.findById(manutd).orElseThrow();
+        League epl = leagueRepository.findById(LeagueId.EPL).orElseThrow();
+        assertThat(leagueTeamRepository.findByLeagueAndTeam(epl, team)).isPresent();
+
+        long count = leagueTeamRepository.findAll().stream()
+                .filter(leagueTeam -> leagueTeam.getLeague().getLeagueId() == LeagueId.EPL
+                        && leagueTeam.getTeam().getId() == TeamId.MANUTD)
+                .count();
+        assertThat(count).isEqualTo(1).withFailMessage("팀의 현재 리그 캐싱이 리그팀 연관관계를 중복 저장했습니다.");
+    }
+
     @DisplayName("리그 캐싱 - 새롭게 캐싱")
     @Test
     void cacheLeagues() {
