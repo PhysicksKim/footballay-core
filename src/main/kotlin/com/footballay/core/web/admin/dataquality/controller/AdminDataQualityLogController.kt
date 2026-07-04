@@ -3,6 +3,7 @@ package com.footballay.core.web.admin.dataquality.controller
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogDetailResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogPageResponse
+import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.service.AdminDataQualityLogQueryWebService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -80,5 +81,20 @@ class AdminDataQualityLogController(
         @PathVariable
         @Positive
         id: Long,
-    ): ResponseEntity<AdminDataQualityLogDetailResponse> = ResponseEntity.ok(queryWebService.getLog(id))
+    ): ResponseEntity<AdminDataQualityLogDetailResponse> =
+        ResponseEntity.ok(
+            queryWebService.getLog(id),
+        )
+
+    @Operation(summary = "Data Quality raw JSON 다운로드 URL 생성")
+    @GetMapping("/{id}/raw-json/download-url")
+    fun createRawJsonDownloadUrl(
+        @Parameter(description = "Data quality result log id", example = "1")
+        @PathVariable
+        @Positive
+        id: Long,
+    ): ResponseEntity<AdminDataQualityRawJsonDownloadUrlResponse> =
+        ResponseEntity.ok(
+            queryWebService.createRawJsonDownloadUrl(id),
+        )
 }

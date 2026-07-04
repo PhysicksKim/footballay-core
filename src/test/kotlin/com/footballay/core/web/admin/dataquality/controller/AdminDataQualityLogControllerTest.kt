@@ -3,6 +3,7 @@ package com.footballay.core.web.admin.dataquality.controller
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogDetailResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogPageResponse
+import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogSummaryResponse
 import com.footballay.core.web.admin.dataquality.service.AdminDataQualityLogQueryWebService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -120,6 +121,27 @@ class AdminDataQualityLogControllerTest(
             .andExpect {
                 status { isBadRequest() }
             }
+    }
+
+    @Test
+    @DisplayName("raw JSON download URL 조회는 web service 응답을 JSON으로 반환한다")
+    fun createRawJsonDownloadUrl_returnsResponse() {
+        given(queryWebService.createRawJsonDownloadUrl(1L)).willReturn(
+            AdminDataQualityRawJsonDownloadUrlResponse(
+                downloadUrl = "https://download.example/raw.json.gz",
+                expiresAt = Instant.parse("2026-07-02T08:10:00Z"),
+            ),
+        )
+
+        mockMvc
+            .get("/api/v1/admin/data-quality/logs/{id}/raw-json/download-url", 1L)
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.downloadUrl") { value("https://download.example/raw.json.gz") }
+                jsonPath("$.expiresAt") { value("2026-07-02T08:10:00Z") }
+            }
+
+        verify(queryWebService).createRawJsonDownloadUrl(1L)
     }
 
     private fun summaryResponse(): AdminDataQualityLogSummaryResponse =

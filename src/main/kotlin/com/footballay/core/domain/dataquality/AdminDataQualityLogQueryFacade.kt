@@ -26,4 +26,9 @@ class AdminDataQualityLogQueryFacade(
     fun getLog(id: Long): AdminDataQualityLogDetailModel =
         domainService.findLog(id)
             ?: throw NoSuchElementException("Data quality log not found: $id")
+
+    @Transactional(readOnly = true)
+    fun createRawJsonDownloadUrl(id: Long): AdminDataQualityRawJsonDownloadUrlModel =
+        domainService.createRawJsonDownloadUrl(id)
+            ?: throw NoSuchElementException("Data quality log not found: $id")
 }

@@ -56,3 +56,11 @@ data class AdminDataQualityLogDetailModel(
 ) {
     val hasIssue: Boolean = issueCount > 0
 }
+
+/**
+ * Data Quality raw JSON 다운로드 URL 응답에 사용하는 도메인 모델입니다.
+ */
+data class AdminDataQualityRawJsonDownloadUrlModel(
+    val downloadUrl: String,
+    val expiresAt: Instant,
+)

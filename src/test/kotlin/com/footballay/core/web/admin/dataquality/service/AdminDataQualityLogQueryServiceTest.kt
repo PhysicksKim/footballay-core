@@ -1,11 +1,17 @@
 package com.footballay.core.web.admin.dataquality.service
 
+import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrl
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.persistence.dataquality.entity.DataQualityResultLog
 import com.footballay.core.infra.persistence.dataquality.repository.DataQualityResultLogRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.given
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.domain.PageRequest
@@ -13,6 +19,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
@@ -27,6 +34,9 @@ class AdminDataQualityLogQueryServiceTest {
 
     @Autowired
     private lateinit var repository: DataQualityResultLogRepository
+
+    @MockitoBean
+    private lateinit var rawResponseStorage: RawResponseStorage
 
     @Test
     fun `filters logs by provider endpoint api checkedAt range and has issue`() {
@@ -207,6 +217,100 @@ class AdminDataQualityLogQueryServiceTest {
         }.isInstanceOf(ResponseStatusException::class.java)
             .extracting("statusCode")
             .isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `existing log id returns raw json download url`() {
+        val saved =
+            repository.saveAndFlush(
+                log(
+                    resultEventId = "stage13-result-1",
+                    rawEventId = "stage13-raw-1",
+                    endpointKey = "fixture_single",
+                    apiId = "1208402",
+                    checkedAt = Instant.parse("2026-07-02T14:00:00Z"),
+                    issueCount = 0,
+                ),
+            )
+        given(
+            rawResponseStorage.createDownloadUrl(
+                RawResponseDownloadUrlCommand(rawJsonObjectKey = saved.rawJsonObjectKey),
+            ),
+        ).willReturn(
+            RawResponseDownloadUrl(
+                downloadUrl = "https://download.example/raw.json.gz",
+                expiresAt = Instant.parse("2026-07-02T14:10:00Z"),
+            ),
+        )
+
+        val result = service.createRawJsonDownloadUrl(requireNotNull(saved.id))
+
+        assertThat(result.downloadUrl).isEqualTo("https://download.example/raw.json.gz")
+        assertThat(result.expiresAt).isEqualTo(Instant.parse("2026-07-02T14:10:00Z"))
+        verify(rawResponseStorage).createDownloadUrl(
+            RawResponseDownloadUrlCommand(rawJsonObjectKey = saved.rawJsonObjectKey),
+        )
+    }
+
+    @Test
+    fun `raw json download url is not persisted`() {
+        val saved =
+            repository.saveAndFlush(
+                log(
+                    resultEventId = "stage13-result-2",
+                    rawEventId = "stage13-raw-2",
+                    endpointKey = "fixture_single",
+                    apiId = "1208403",
+                    checkedAt = Instant.parse("2026-07-02T15:00:00Z"),
+                    issueCount = 0,
+                ),
+            )
+        given(rawResponseStorage.createDownloadUrl(any()))
+            .willReturn(
+                RawResponseDownloadUrl(
+                    downloadUrl = "https://download.example/raw-stage13.json.gz",
+                    expiresAt = Instant.parse("2026-07-02T15:10:00Z"),
+                ),
+            )
+
+        service.createRawJsonDownloadUrl(requireNotNull(saved.id))
+        repository.flush()
+
+        val reloaded = repository.findById(requireNotNull(saved.id)).orElseThrow()
+        assertThat(reloaded.rawJsonObjectKey).isEqualTo(saved.rawJsonObjectKey)
+        assertThat(reloaded.resultJson).doesNotContain("https://download.example/raw-stage13.json.gz")
+    }
+
+    @Test
+    fun `missing raw json download url log throws 404`() {
+        assertThatThrownBy {
+            service.createRawJsonDownloadUrl(999_999_998L)
+        }.isInstanceOf(ResponseStatusException::class.java)
+            .extracting("statusCode")
+            .isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
+    fun `raw json download url storage failure throws 502`() {
+        val saved =
+            repository.saveAndFlush(
+                log(
+                    resultEventId = "stage13-result-3",
+                    rawEventId = "stage13-raw-3",
+                    endpointKey = "fixture_single",
+                    apiId = "1208404",
+                    checkedAt = Instant.parse("2026-07-02T16:00:00Z"),
+                    issueCount = 0,
+                ),
+            )
+        given(rawResponseStorage.createDownloadUrl(any()))
+            .willThrow(IllegalStateException("storage unavailable"))
+
+        assertThatThrownBy {
+            service.createRawJsonDownloadUrl(requireNotNull(saved.id))
+        }.isInstanceOf(ResponseStatusException::class.java)
+            .extracting("statusCode")
+            .isEqualTo(HttpStatus.BAD_GATEWAY)
     }
 
     private fun log(

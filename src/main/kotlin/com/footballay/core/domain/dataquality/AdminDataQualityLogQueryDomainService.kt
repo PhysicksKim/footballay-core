@@ -2,6 +2,8 @@ package com.footballay.core.domain.dataquality
 
 import com.footballay.core.infra.persistence.dataquality.entity.DataQualityResultLog
 import com.footballay.core.infra.persistence.dataquality.repository.DataQualityResultLogRepository
+import com.footballay.core.infra.dataquality.raw.RawResponseStorage
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service
 @Service
 class AdminDataQualityLogQueryDomainService(
     private val repository: DataQualityResultLogRepository,
+    private val rawResponseStorage: RawResponseStorage,
 ) {
     fun findLogs(
         filter: AdminDataQualityLogQueryFilter,
@@ -38,6 +41,27 @@ class AdminDataQualityLogQueryDomainService(
             .findById(id)
             .map(::toDetailModel)
             .orElse(null)
+    }
+
+    fun createRawJsonDownloadUrl(id: Long): AdminDataQualityRawJsonDownloadUrlModel? {
+        require(id > 0) { "id must be positive" }
+
+        val rawJsonObjectKey =
+            repository
+                .findById(id)
+                .map { it.rawJsonObjectKey }
+                .orElse(null)
+                ?: return null
+
+        val downloadUrl =
+            rawResponseStorage.createDownloadUrl(
+                RawResponseDownloadUrlCommand(rawJsonObjectKey = rawJsonObjectKey),
+            )
+
+        return AdminDataQualityRawJsonDownloadUrlModel(
+            downloadUrl = downloadUrl.downloadUrl,
+            expiresAt = downloadUrl.expiresAt,
+        )
     }
 
     private fun validateFindLogsRequest(

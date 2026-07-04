@@ -45,3 +45,8 @@ data class AdminDataQualityLogDetailResponse(
     val createdAt: Instant,
     val updatedAt: Instant,
 )
+
+data class AdminDataQualityRawJsonDownloadUrlResponse(
+    val downloadUrl: String,
+    val expiresAt: Instant,
+)

@@ -5,9 +5,11 @@ import com.footballay.core.domain.dataquality.AdminDataQualityLogDetailModel
 import com.footballay.core.domain.dataquality.AdminDataQualityLogQueryFacade
 import com.footballay.core.domain.dataquality.AdminDataQualityLogQueryFilter
 import com.footballay.core.domain.dataquality.AdminDataQualityLogSummaryModel
+import com.footballay.core.domain.dataquality.AdminDataQualityRawJsonDownloadUrlModel
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogDetailResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogPageResponse
+import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminDataQualityLogSummaryResponse
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -85,6 +87,24 @@ class AdminDataQualityLogQueryWebService(
         return toDetailResponse(log)
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    fun createRawJsonDownloadUrl(id: Long): AdminDataQualityRawJsonDownloadUrlResponse {
+        if (id <= 0) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "id must be positive")
+        }
+
+        val downloadUrl =
+            try {
+                queryFacade.createRawJsonDownloadUrl(id)
+            } catch (e: NoSuchElementException) {
+                throw ResponseStatusException(HttpStatus.NOT_FOUND, e.message, e)
+            } catch (e: RuntimeException) {
+                throw ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to create raw JSON download URL", e)
+            }
+
+        return toRawJsonDownloadUrlResponse(downloadUrl)
+    }
+
     private fun pageOf(
         page: Int,
         size: Int,
@@ -157,5 +177,13 @@ class AdminDataQualityLogQueryWebService(
             result = objectMapper.readTree(log.resultJson),
             createdAt = log.createdAt,
             updatedAt = log.updatedAt,
+        )
+
+    private fun toRawJsonDownloadUrlResponse(
+        downloadUrl: AdminDataQualityRawJsonDownloadUrlModel,
+    ): AdminDataQualityRawJsonDownloadUrlResponse =
+        AdminDataQualityRawJsonDownloadUrlResponse(
+            downloadUrl = downloadUrl.downloadUrl,
+            expiresAt = downloadUrl.expiresAt,
         )
 }
