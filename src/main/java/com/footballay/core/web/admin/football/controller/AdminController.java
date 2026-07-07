@@ -1,7 +1,5 @@
 package com.footballay.core.web.admin.football.controller;
 
-import com.footballay.core.config.AppEnvironmentVariable;
-import com.footballay.core.web.admin.football.service.AdminPageAwsService;
 import com.footballay.core.web.admin.football.service.AdminPageService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

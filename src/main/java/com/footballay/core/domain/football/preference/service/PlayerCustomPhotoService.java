@@ -14,6 +14,7 @@ import com.footballay.core.domain.football.repository.PlayerRepository;
 import com.footballay.core.domain.user.entity.User;
 import com.footballay.core.domain.user.repository.UserRepository;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +30,7 @@ public class PlayerCustomPhotoService {
     private final PlayerCustomPhotoRepository playerCustomPhotoRepository;
     private final UserFilePathService userFilePathService;
     private final PreferenceValidator preferenceValidator;
+    @Nullable
     private final CustomPhotoFileUploader customPhotoFileUploader;
 
     /**
@@ -43,6 +45,7 @@ public class PlayerCustomPhotoService {
      */
     @Transactional
     public PlayerCustomPhotoDto registerAndUploadCustomPhoto(long userId, long playerId, MultipartFile file) {
+        CustomPhotoFileUploader uploader = getCustomPhotoFileUploaderOrThrow();
         if (!validateCustomPhoto(file)) {
             throw new IllegalArgumentException("Invalid custom photo");
         }
@@ -53,7 +56,7 @@ public class PlayerCustomPhotoService {
         PlayerCustomPhoto playerCustomPhoto = createPlayerCustomPhotoEntity(preferenceKey, nowUserFilePath, playerId, fileName);
         PlayerCustomPhoto savedPhoto = playerCustomPhotoRepository.save(playerCustomPhoto);
         String s3Key = getS3Key(nowUserFilePath, fileName);
-        customPhotoFileUploader.uploadFile(file, s3Key);
+        uploader.uploadFile(file, s3Key);
         return PlayerCustomPhotoDto.fromEntity(savedPhoto);
     }
 
@@ -176,6 +179,7 @@ public class PlayerCustomPhotoService {
     @Transactional
     public boolean deletePhotoWithUsername(String username, long photoId) {
         try {
+            CustomPhotoFileUploader uploader = getCustomPhotoFileUploaderOrThrow();
             Optional<PlayerCustomPhoto> findPhoto = playerCustomPhotoRepository.findById(photoId);
             if (findPhoto.isEmpty()) {
                 log.warn("delete requested but not found with id={}", photoId);
@@ -190,12 +194,19 @@ public class PlayerCustomPhotoService {
             log.info("Deleted photo id={}", photoId);
             String s3key = userFilePath.getFullPath() + filename;
             log.info("Deleting s3 photo file s3key={}", s3key);
-            customPhotoFileUploader.deleteFile(s3key);
+            uploader.deleteFile(s3key);
             return true;
         } catch (Exception e) {
             log.error("Failed to delete photo", e);
             return false;
         }
+    }
+
+    private CustomPhotoFileUploader getCustomPhotoFileUploaderOrThrow() {
+        if (customPhotoFileUploader == null) {
+            throw new UnsupportedOperationException("Custom photo file upload is disabled.");
+        }
+        return customPhotoFileUploader;
     }
 
     private void validatePhotoKeyUser(PlayerCustomPhoto photo, User user) {
@@ -305,7 +316,7 @@ public class PlayerCustomPhotoService {
         return path;
     }
 
-    public PlayerCustomPhotoService(final UserRepository userRepository, final PlayerRepository playerRepository, final PreferenceKeyRepository preferenceKeyRepository, final PlayerCustomPhotoRepository playerCustomPhotoRepository, final UserFilePathService userFilePathService, final PreferenceValidator preferenceValidator, final CustomPhotoFileUploader customPhotoFileUploader) {
+    public PlayerCustomPhotoService(final UserRepository userRepository, final PlayerRepository playerRepository, final PreferenceKeyRepository preferenceKeyRepository, final PlayerCustomPhotoRepository playerCustomPhotoRepository, final UserFilePathService userFilePathService, final PreferenceValidator preferenceValidator, @Nullable final CustomPhotoFileUploader customPhotoFileUploader) {
         this.userRepository = userRepository;
         this.playerRepository = playerRepository;
         this.preferenceKeyRepository = preferenceKeyRepository;

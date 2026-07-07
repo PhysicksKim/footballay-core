@@ -1,6 +1,5 @@
 package com.footballay.core.web.admin.football.controller;
 
-import com.footballay.core.web.admin.football.service.AdminPageAwsService;
 import com.footballay.core.web.admin.football.service.AdminUserRoleService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminUserRoleController {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminUserRoleController.class);
     private final AdminUserRoleService adminUserRoleService;
-    private final AdminPageAwsService adminPageAwsService;
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole(\'ADMIN\', \'STREAMER\')")
@@ -39,8 +37,7 @@ public class AdminUserRoleController {
         return ResponseEntity.ok().build();
     }
 
-    public AdminUserRoleController(final AdminUserRoleService adminUserRoleService, final AdminPageAwsService adminPageAwsService) {
+    public AdminUserRoleController(final AdminUserRoleService adminUserRoleService) {
         this.adminUserRoleService = adminUserRoleService;
-        this.adminPageAwsService = adminPageAwsService;
     }
 }
