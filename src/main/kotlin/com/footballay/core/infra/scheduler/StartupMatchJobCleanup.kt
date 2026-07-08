@@ -2,6 +2,7 @@ package com.footballay.core.infra.scheduler
 
 import com.footballay.core.infra.scheduler.cleanup.MatchJobCleanupResult
 import com.footballay.core.infra.persistence.core.repository.FixtureCoreRepository
+import com.footballay.core.infra.scheduler.config.StartupMatchJobCleanupProperties
 import com.footballay.core.logger
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.event.ApplicationReadyEvent
@@ -23,7 +24,8 @@ data class StartupMatchJobCleanupResult(
  */
 @Component
 @ConditionalOnProperty(
-    name = ["footballay.startup-match-job-cleanup.enabled"],
+    prefix = StartupMatchJobCleanupProperties.PREFIX,
+    name = [StartupMatchJobCleanupProperties.ENABLED],
     havingValue = "true",
     matchIfMissing = true,
 )

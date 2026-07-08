@@ -40,6 +40,7 @@ spring:
 
   # Quartz Scheduler
   quartz:
+    auto-startup: false
     job-store-type: jdbc
     jdbc:
       initialize-schema: never
@@ -122,6 +123,13 @@ aws:
 
 # Mock API 설정 (기본값, devrealapi 프로파일로 오버라이드 가능)
 footballay:
+  startup-match-job-cleanup:
+    enabled: false
+  fixture-schedule-update:
+    enabled: false
+  match-collect:
+    finished-scanner:
+      enabled: false
   mock-backbone:
     admin-api:
       enabled: true

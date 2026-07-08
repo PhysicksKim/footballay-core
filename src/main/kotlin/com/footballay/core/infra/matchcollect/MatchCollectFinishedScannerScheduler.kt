@@ -1,5 +1,6 @@
 package com.footballay.core.infra.matchcollect
 
+import com.footballay.core.infra.scheduler.config.MatchCollectProperties
 import com.footballay.core.logger
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
@@ -15,7 +16,8 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConditionalOnProperty(
-    name = ["footballay.match-collect.finished-scanner.enabled"],
+    prefix = MatchCollectProperties.PREFIX,
+    name = [MatchCollectProperties.FINISHED_SCANNER_ENABLED],
     havingValue = "true",
     matchIfMissing = true,
 )

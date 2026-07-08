@@ -1,5 +1,6 @@
 package com.footballay.core.infra.fixture.schedule
 
+import com.footballay.core.infra.scheduler.config.FixtureScheduleUpdateProperties
 import com.footballay.core.logger
 import org.quartz.CronScheduleBuilder
 import org.quartz.JobBuilder
@@ -20,7 +21,8 @@ import org.springframework.stereotype.Component
  */
 @Component
 @ConditionalOnProperty(
-    name = ["footballay.fixture-schedule-update.enabled"],
+    prefix = FixtureScheduleUpdateProperties.PREFIX,
+    name = [FixtureScheduleUpdateProperties.ENABLED],
     havingValue = "true",
     matchIfMissing = true,
 )
