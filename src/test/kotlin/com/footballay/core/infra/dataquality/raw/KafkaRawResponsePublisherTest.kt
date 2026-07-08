@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.config.JacksonConfig
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectedEvent
-import com.footballay.core.infra.dataquality.raw.model.RawResponseRequestMetadata
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
@@ -41,20 +41,21 @@ class KafkaRawResponsePublisherTest {
         verify(kafkaTemplate).send(topicCaptor.capture(), keyCaptor.capture(), payloadCaptor.capture())
 
         assertThat(topicCaptor.firstValue).isEqualTo(TOPIC)
-        assertThat(keyCaptor.firstValue).isEqualTo("API_SPORTS:fixture_single:1208397")
+        assertThat(keyCaptor.firstValue).isEqualTo("API_SPORTS:fixtureSingle:fixtureId=1208397")
 
         val payload = objectMapper.readTree(payloadCaptor.firstValue)
-        assertThat(payload["schemaVersion"].asInt()).isEqualTo(1)
-        assertThat(payload["eventId"].asText()).isEqualTo("event-id")
+        assertThat(payload["rawEventId"].asText()).isEqualTo("01JZK8T9CJ4S9ZZ9G0E0D7YQ9M")
         assertThat(payload["provider"].asText()).isEqualTo("API_SPORTS")
-        assertThat(payload["endpointKey"].asText()).isEqualTo("fixture_single")
-        assertThat(payload["apiId"].asText()).isEqualTo("1208397")
+        assertThat(payload["endpointKey"].asText()).isEqualTo("fixtureSingle")
+        assertThat(payload["parameters"][0]["name"].asText()).isEqualTo("fixtureId")
+        assertThat(payload["parameters"][0]["value"].asText()).isEqualTo("1208397")
         assertThat(payload["canonicalHash"].asText()).isEqualTo("hash")
         assertThat(payload["rawJsonObjectKey"].asText()).isEqualTo(RAW_JSON_OBJECT_KEY)
         assertThat(payload["collectedAt"].asText()).isEqualTo("2026-07-03T03:00:00Z")
-        assertThat(payload["request"]["method"].asText()).isEqualTo("GET")
-        assertThat(payload["request"]["path"].asText()).isEqualTo("/fixtures")
-        assertThat(payload["request"]["query"]["id"].asText()).isEqualTo("1208397")
+        assertThat(payload.has("schemaVersion")).isFalse()
+        assertThat(payload.has("eventId")).isFalse()
+        assertThat(payload.has("apiId")).isFalse()
+        assertThat(payload.has("request")).isFalse()
         assertThat(payload.has("rawJson")).isFalse()
         assertThat(payload.toString()).doesNotContain("""{"response"""")
     }
@@ -84,22 +85,16 @@ class KafkaRawResponsePublisherTest {
     private companion object {
         private const val TOPIC = "football-data-raw-collected"
         private const val RAW_JSON_OBJECT_KEY =
-            "data-quality/raw/api-sports/fixture_single/2026/07/03/1208397/20260703T030000Z_hash.json.gz"
+            "data-quality/raw/api-sports/fixtureSingle/2026/07/03/fixtureId-1208397/20260703T030000Z_hash.json.gz"
         private val EVENT =
             RawResponseCollectedEvent(
-                eventId = "event-id",
+                rawEventId = "01JZK8T9CJ4S9ZZ9G0E0D7YQ9M",
                 provider = FootballDataProvider.API_SPORTS,
-                endpointKey = "fixture_single",
-                apiId = "1208397",
+                endpointKey = "fixtureSingle",
+                parameters = listOf(RawResponseParameter(name = "fixtureId", value = "1208397")),
                 canonicalHash = "hash",
                 rawJsonObjectKey = RAW_JSON_OBJECT_KEY,
                 collectedAt = Instant.parse("2026-07-03T03:00:00Z"),
-                request =
-                    RawResponseRequestMetadata(
-                        method = "GET",
-                        path = "/fixtures",
-                        query = mapOf("id" to "1208397"),
-                    ),
             )
     }
 }

@@ -6,7 +6,7 @@ import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionComm
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
-import com.footballay.core.infra.dataquality.raw.model.RawResponseRequestMetadata
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import com.footballay.core.infra.dataquality.raw.model.RawResponseUploadCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -28,8 +28,8 @@ class NoopRawResponseComponentsTest {
             gate.checkAndStore(
                 RawResponseDuplicateCheckCommand(
                     provider = FootballDataProvider.API_SPORTS,
-                    endpointKey = "fixture_single",
-                    apiId = "1208397",
+                    endpointKey = "fixtureSingle",
+                    parameters = PARAMETERS,
                     canonicalHash = "hash",
                 ),
             )
@@ -65,14 +65,13 @@ class NoopRawResponseComponentsTest {
 
         publisher.publish(
             RawResponseCollectedEvent(
-                eventId = "event-id",
+                rawEventId = "01JZK8T9CJ4S9ZZ9G0E0D7YQ9M",
                 provider = command.provider,
                 endpointKey = command.endpointKey,
-                apiId = command.apiId,
+                parameters = command.parameters,
                 canonicalHash = "hash",
-                rawJsonObjectKey = "data-quality/raw/api-sports/fixture_single/object.json.gz",
+                rawJsonObjectKey = "data-quality/raw/api-sports/fixtureSingle/object.json.gz",
                 collectedAt = command.collectedAt,
-                request = command.request,
             ),
         )
     }
@@ -80,15 +79,13 @@ class NoopRawResponseComponentsTest {
     private fun collectionCommand(): RawResponseCollectionCommand =
         RawResponseCollectionCommand(
             provider = FootballDataProvider.API_SPORTS,
-            endpointKey = "fixture_single",
-            apiId = "1208397",
+            endpointKey = "fixtureSingle",
+            parameters = PARAMETERS,
             rawJson = """{"response":[]}""",
             collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
-            request =
-                RawResponseRequestMetadata(
-                    method = "GET",
-                    path = "/fixtures",
-                    query = mapOf("id" to "1208397"),
-                ),
         )
+
+    private companion object {
+        private val PARAMETERS = listOf(RawResponseParameter(name = "fixtureId", value = "1208397"))
+    }
 }

@@ -13,6 +13,7 @@ import com.footballay.core.infra.dataquality.raw.RawResponsePublisher
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -55,13 +56,11 @@ class ApiSportsV3FetchImplRawCollectionTest {
         val commandCaptor = argumentCaptor<RawResponseCollectionCommand>()
         verify(collector).collect(commandCaptor.capture())
         assertThat(commandCaptor.firstValue.provider).isEqualTo(FootballDataProvider.API_SPORTS)
-        assertThat(commandCaptor.firstValue.endpointKey).isEqualTo("fixture_single")
-        assertThat(commandCaptor.firstValue.apiId).isEqualTo("1208397")
+        assertThat(commandCaptor.firstValue.endpointKey).isEqualTo("fixtureSingle")
+        assertThat(commandCaptor.firstValue.parameters)
+            .containsExactly(RawResponseParameter("fixtureId", "1208397"))
         assertThat(commandCaptor.firstValue.rawJson).isEqualTo(FIXTURE_SINGLE_JSON)
         assertThat(commandCaptor.firstValue.collectedAt).isEqualTo(FIXED_NOW)
-        assertThat(commandCaptor.firstValue.request.method).isEqualTo("GET")
-        assertThat(commandCaptor.firstValue.request.path).isEqualTo("/fixtures")
-        assertThat(commandCaptor.firstValue.request.query).containsEntry("id", "1208397")
 
         fixture.server.verify()
     }

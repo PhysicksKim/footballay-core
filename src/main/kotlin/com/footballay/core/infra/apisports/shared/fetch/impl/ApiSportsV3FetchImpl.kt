@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.infra.dataquality.raw.ApiSportsRawResponseCollector
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
-import com.footballay.core.infra.dataquality.raw.model.RawResponseRequestMetadata
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import com.footballay.core.infra.apisports.shared.config.ApiSportsProperties
 import com.footballay.core.infra.apisports.shared.fetch.ApiSportsV3Fetcher
 import com.footballay.core.infra.apisports.shared.fetch.response.*
@@ -126,10 +126,9 @@ class ApiSportsV3FetchImpl(
         val rawJson = fetchRaw(uri, "Response body is null of ApiSports Fixture Single")
         collectRawResponse(
             requestName = "fixture single",
-            endpointKey = "fixture_single",
-            apiId = fixtureApiId.toString(),
+            endpointKey = "fixtureSingle",
+            parameters = listOf(RawResponseParameter(name = "fixtureId", value = fixtureApiId.toString())),
             rawJson = rawJson,
-            uri = uri,
         )
 
         return mapRawJson<ApiSportsV3Envelope<ApiSportsFixture.Single>>(rawJson)
@@ -152,32 +151,25 @@ class ApiSportsV3FetchImpl(
     private fun collectRawResponse(
         requestName: String,
         endpointKey: String,
-        apiId: String,
+        parameters: List<RawResponseParameter>,
         rawJson: String,
-        uri: URI,
     ) {
         try {
             rawResponseCollector.collect(
                 RawResponseCollectionCommand(
                     provider = FootballDataProvider.API_SPORTS,
                     endpointKey = endpointKey,
-                    apiId = apiId,
+                    parameters = parameters,
                     rawJson = rawJson,
                     collectedAt = Instant.now(clock),
-                    request =
-                        RawResponseRequestMetadata(
-                            method = "GET",
-                            path = uri.rawPath,
-                            query = queryParameters(uri),
-                        ),
                 ),
             )
         } catch (ex: Exception) {
             log.warn(
-                "Failed to collect API Sports raw response. requestName={}, endpointKey={}, apiId={}",
+                "Failed to collect API Sports raw response. requestName={}, endpointKey={}, parameters={}",
                 requestName,
                 endpointKey,
-                apiId,
+                parameters,
                 ex,
             )
         }
@@ -204,11 +196,4 @@ class ApiSportsV3FetchImpl(
     ) {
         log.info("Request [$reqName] from API Sports: $uri")
     }
-
-    private fun queryParameters(uri: URI): Map<String, String> =
-        UriComponentsBuilder
-            .fromUri(uri)
-            .build()
-            .queryParams
-            .mapValues { (_, values) -> values.firstOrNull().orEmpty() }
 }

@@ -2,6 +2,7 @@ package com.footballay.core.infra.dataquality.raw
 
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import com.footballay.core.logger
 import org.springframework.data.redis.core.StringRedisTemplate
 import java.time.Duration
@@ -26,10 +27,10 @@ class RedisRawResponseDuplicateGate(
             }
         }.onFailure { ex ->
             log.warn(
-                "Data quality duplicate gate failed. provider={}, endpointKey={}, apiId={}, redisKey={}",
+                "Data quality duplicate gate failed. provider={}, endpointKey={}, parameters={}, redisKey={}",
                 command.provider,
                 command.endpointKey,
-                command.apiId,
+                command.parameters,
                 key,
                 ex,
             )
@@ -40,8 +41,14 @@ class RedisRawResponseDuplicateGate(
         }
     }
 
-    private fun createKey(command: RawResponseDuplicateCheckCommand): String =
-        "$KEY_PREFIX:${command.provider.name}:${command.endpointKey}:${command.apiId}"
+    private fun createKey(command: RawResponseDuplicateCheckCommand): String = "$KEY_PREFIX:${command.provider.name}:${command.endpointKey}:${parameterKey(command.parameters)}"
+
+    private fun parameterKey(parameters: List<RawResponseParameter>): String {
+        require(parameters.isNotEmpty()) {
+            "parameters must not be empty"
+        }
+        return parameters.joinToString("&") { "${it.name}=${it.value}" }
+    }
 
     private companion object {
         private const val KEY_PREFIX = "footballay:data-quality:raw-response"

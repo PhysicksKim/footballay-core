@@ -10,29 +10,27 @@ enum class FootballDataProvider {
 data class RawResponseCollectionCommand(
     val provider: FootballDataProvider,
     val endpointKey: String,
-    val apiId: String,
+    val parameters: List<RawResponseParameter>,
     val rawJson: String,
     val collectedAt: Instant,
-    val request: RawResponseRequestMetadata,
 )
 
-data class RawResponseRequestMetadata(
-    val method: String,
-    val path: String,
-    val query: Map<String, String> = emptyMap(),
+data class RawResponseParameter(
+    val name: String,
+    val value: String,
 )
 
 data class RawResponseDuplicateCheckCommand(
     val provider: FootballDataProvider,
     val endpointKey: String,
-    val apiId: String,
+    val parameters: List<RawResponseParameter>,
     val canonicalHash: String,
 )
 
 data class RawResponseObjectKeyCommand(
     val provider: FootballDataProvider,
     val endpointKey: String,
-    val apiId: String,
+    val parameters: List<RawResponseParameter>,
     val collectedAt: Instant,
     val canonicalHash: String,
 )
@@ -50,7 +48,7 @@ sealed interface RawResponseDuplicateCheckResult {
 data class RawResponseUploadCommand(
     val rawJsonObjectKey: String,
     val gzipBytes: ByteArray,
-    val contentType: String = "application/json",
+    val contentType: String = "application/gzip",
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -87,13 +85,11 @@ data class RawResponseDownloadUrl(
 )
 
 data class RawResponseCollectedEvent(
-    val schemaVersion: Int = 1,
-    val eventId: String,
+    val rawEventId: String,
     val provider: FootballDataProvider,
     val endpointKey: String,
-    val apiId: String,
+    val parameters: List<RawResponseParameter>,
     val canonicalHash: String,
     val rawJsonObjectKey: String,
     val collectedAt: Instant,
-    val request: RawResponseRequestMetadata,
 )

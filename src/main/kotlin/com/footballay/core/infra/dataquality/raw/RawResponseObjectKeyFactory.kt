@@ -3,6 +3,7 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.config.DataQualityProperties
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseObjectKeyCommand
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import org.springframework.stereotype.Component
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -20,7 +21,7 @@ interface RawResponseObjectKeyFactory {
 
 /**
  * Default key layout:
- * data-quality/raw/{provider}/{endpoint}/{yyyy}/{MM}/{dd}/{apiId}/{timestamp}_{hash}.json.gz
+ * data-quality/raw/{provider}/{endpoint}/{yyyy}/{MM}/{dd}/{parameters}/{timestamp}_{hash}.json.gz
  */
 @Component
 class DefaultRawResponseObjectKeyFactory(
@@ -31,13 +32,13 @@ class DefaultRawResponseObjectKeyFactory(
     override fun create(command: RawResponseObjectKeyCommand): String {
         val providerPath = providerPath(command.provider)
         val endpointKey = validatePathSegment("endpointKey", command.endpointKey)
-        val apiId = validatePathSegment("apiId", command.apiId)
+        val parameterPath = parameterPath(command.parameters)
         val canonicalHash = validatePathSegment("canonicalHash", command.canonicalHash)
         val collectedAt = command.collectedAt.atOffset(ZoneOffset.UTC)
         val datePartitionPath = DATE_PARTITION_PATH_FORMATTER.format(collectedAt)
         val timestamp = TIMESTAMP_FORMATTER.format(collectedAt)
 
-        return "$rawPrefix/$providerPath/$endpointKey/$datePartitionPath/$apiId/${timestamp}_$canonicalHash.json.gz"
+        return "$rawPrefix/$providerPath/$endpointKey/$datePartitionPath/$parameterPath/${timestamp}_$canonicalHash.json.gz"
     }
 
     private fun providerPath(provider: FootballDataProvider): String =
@@ -60,6 +61,17 @@ class DefaultRawResponseObjectKeyFactory(
             "$name must not contain URL or query string characters"
         }
         return trimmed
+    }
+
+    private fun parameterPath(parameters: List<RawResponseParameter>): String {
+        require(parameters.isNotEmpty()) {
+            "parameters must not be empty"
+        }
+        return parameters.joinToString("_") { parameter ->
+            val name = validatePathSegment("parameter name", parameter.name)
+            val value = validatePathSegment("parameter value", parameter.value)
+            "$name-$value"
+        }
     }
 
     private fun normalizeRawPrefix(rawPrefix: String): String {

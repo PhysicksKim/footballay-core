@@ -6,7 +6,7 @@ import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionComm
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
 import com.footballay.core.infra.dataquality.raw.model.RawResponseObjectKeyCommand
-import com.footballay.core.infra.dataquality.raw.model.RawResponseRequestMetadata
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import com.footballay.core.infra.dataquality.raw.model.RawResponseStoredObject
 import com.footballay.core.infra.dataquality.raw.model.RawResponseUploadCommand
 import org.assertj.core.api.Assertions.assertThat
@@ -91,8 +91,8 @@ class DefaultApiSportsRawResponseCollectorTest {
                 .checkAndStore(
                     RawResponseDuplicateCheckCommand(
                         provider = FootballDataProvider.API_SPORTS,
-                        endpointKey = "fixture_single",
-                        apiId = "1208397",
+                        endpointKey = "fixtureSingle",
+                        parameters = PARAMETERS,
                         canonicalHash = CANONICAL_HASH,
                     ),
                 )
@@ -100,8 +100,8 @@ class DefaultApiSportsRawResponseCollectorTest {
                 .create(
                     RawResponseObjectKeyCommand(
                         provider = FootballDataProvider.API_SPORTS,
-                        endpointKey = "fixture_single",
-                        apiId = "1208397",
+                        endpointKey = "fixtureSingle",
+                        parameters = PARAMETERS,
                         collectedAt = COLLECTED_AT,
                         canonicalHash = CANONICAL_HASH,
                     ),
@@ -117,15 +117,13 @@ class DefaultApiSportsRawResponseCollectorTest {
             verify(publisher)
                 .publish(
                     argThat<RawResponseCollectedEvent> {
-                        schemaVersion == 1 &&
-                            eventId.isNotBlank() &&
+                        rawEventId.matches(ULID_REGEX) &&
                             provider == FootballDataProvider.API_SPORTS &&
-                            endpointKey == "fixture_single" &&
-                            apiId == "1208397" &&
+                            endpointKey == "fixtureSingle" &&
+                            parameters == PARAMETERS &&
                             canonicalHash == CANONICAL_HASH &&
                             rawJsonObjectKey == OBJECT_KEY &&
-                            collectedAt == COLLECTED_AT &&
-                            request == COMMAND.request
+                            collectedAt == COLLECTED_AT
                     },
                 )
         }
@@ -248,22 +246,18 @@ class DefaultApiSportsRawResponseCollectorTest {
     private companion object {
         private const val RAW_JSON = """{"response":[{"fixture":{"id":1208397}}]}"""
         private const val CANONICAL_HASH = "hash"
-        private const val OBJECT_KEY = "data-quality/raw/api-sports/fixture_single/2026/07/02/1208397/object.json.gz"
+        private const val OBJECT_KEY = "data-quality/raw/api-sports/fixtureSingle/2026/07/02/fixtureId-1208397/object.json.gz"
+        private val PARAMETERS = listOf(RawResponseParameter(name = "fixtureId", value = "1208397"))
+        private val ULID_REGEX = Regex("[0-9A-HJKMNP-TV-Z]{26}")
         private val GZIP_BYTES = byteArrayOf(1, 2, 3)
         private val COLLECTED_AT: Instant = Instant.parse("2026-07-02T08:00:00Z")
         private val COMMAND =
             RawResponseCollectionCommand(
                 provider = FootballDataProvider.API_SPORTS,
-                endpointKey = "fixture_single",
-                apiId = "1208397",
+                endpointKey = "fixtureSingle",
+                parameters = PARAMETERS,
                 rawJson = RAW_JSON,
                 collectedAt = COLLECTED_AT,
-                request =
-                    RawResponseRequestMetadata(
-                        method = "GET",
-                        path = "/fixtures",
-                        query = mapOf("id" to "1208397"),
-                    ),
             )
     }
 }

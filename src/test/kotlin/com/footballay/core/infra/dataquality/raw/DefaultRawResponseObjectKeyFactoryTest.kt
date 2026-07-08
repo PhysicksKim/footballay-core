@@ -3,6 +3,7 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.config.DataQualityProperties
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseObjectKeyCommand
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -17,8 +18,8 @@ class DefaultRawResponseObjectKeyFactoryTest {
             factory.create(
                 RawResponseObjectKeyCommand(
                     provider = FootballDataProvider.API_SPORTS,
-                    endpointKey = "fixture_single",
-                    apiId = "1208397",
+                    endpointKey = "fixtureSingle",
+                    parameters = PARAMETERS,
                     collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
                     canonicalHash = "sha256-base64url",
                 ),
@@ -26,7 +27,7 @@ class DefaultRawResponseObjectKeyFactoryTest {
 
         assertThat(objectKey)
             .isEqualTo(
-                "data-quality/raw/api-sports/fixture_single/2026/07/02/1208397/20260702T080000Z_sha256-base64url.json.gz",
+                "data-quality/raw/api-sports/fixtureSingle/2026/07/02/fixtureId-1208397/20260702T080000Z_sha256-base64url.json.gz",
             )
     }
 
@@ -38,8 +39,8 @@ class DefaultRawResponseObjectKeyFactoryTest {
             factory.create(
                 RawResponseObjectKeyCommand(
                     provider = FootballDataProvider.API_SPORTS,
-                    endpointKey = "fixture_single",
-                    apiId = "1208397",
+                    endpointKey = "fixtureSingle",
+                    parameters = PARAMETERS,
                     collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
                     canonicalHash = "hash",
                 ),
@@ -60,8 +61,8 @@ class DefaultRawResponseObjectKeyFactoryTest {
             factory.create(
                 RawResponseObjectKeyCommand(
                     provider = FootballDataProvider.API_SPORTS,
-                    endpointKey = "fixture_single",
-                    apiId = "1208397",
+                    endpointKey = "fixtureSingle",
+                    parameters = PARAMETERS,
                     collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
                     canonicalHash = "hash",
                 ),
@@ -81,7 +82,7 @@ class DefaultRawResponseObjectKeyFactoryTest {
                 RawResponseObjectKeyCommand(
                     provider = FootballDataProvider.API_SPORTS,
                     endpointKey = "fixture/single",
-                    apiId = "1208397",
+                    parameters = PARAMETERS,
                     collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
                     canonicalHash = "hash",
                 ),
@@ -91,21 +92,21 @@ class DefaultRawResponseObjectKeyFactoryTest {
     }
 
     @Test
-    fun `rejects URL or query string characters in api id`() {
+    fun `rejects URL or query string characters in parameter value`() {
         val factory = factory()
 
         assertThatThrownBy {
             factory.create(
                 RawResponseObjectKeyCommand(
                     provider = FootballDataProvider.API_SPORTS,
-                    endpointKey = "fixture_single",
-                    apiId = "1208397?apiKey=secret",
+                    endpointKey = "fixtureSingle",
+                    parameters = listOf(RawResponseParameter(name = "fixtureId", value = "1208397?apiKey=secret")),
                     collectedAt = Instant.parse("2026-07-02T08:00:00Z"),
                     canonicalHash = "hash",
                 ),
             )
         }.isInstanceOf(IllegalArgumentException::class.java)
-            .hasMessage("apiId must not contain URL or query string characters")
+            .hasMessage("parameter value must not contain URL or query string characters")
     }
 
     @Test
@@ -131,4 +132,8 @@ class DefaultRawResponseObjectKeyFactoryTest {
                     ),
             ),
         )
+
+    private companion object {
+        private val PARAMETERS = listOf(RawResponseParameter(name = "fixtureId", value = "1208397"))
+    }
 }

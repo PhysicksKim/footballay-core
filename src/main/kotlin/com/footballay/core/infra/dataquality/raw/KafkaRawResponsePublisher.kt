@@ -25,11 +25,11 @@ class KafkaRawResponsePublisher(
                 objectMapper.writeValueAsString(event)
             } catch (ex: Exception) {
                 log.warn(
-                    "Failed to serialize data quality raw collected event. provider={}, endpointKey={}, apiId={}, eventId={}",
+                    "Failed to serialize data quality raw collected event. provider={}, endpointKey={}, parameters={}, rawEventId={}",
                     event.provider,
                     event.endpointKey,
-                    event.apiId,
-                    event.eventId,
+                    event.parameters,
+                    event.rawEventId,
                     ex,
                 )
                 return
@@ -41,24 +41,26 @@ class KafkaRawResponsePublisher(
                 .whenComplete { _, ex ->
                     if (ex != null) {
                         log.warn(
-                            "Failed to publish data quality raw collected event. topic={}, key={}, eventId={}",
+                            "Failed to publish data quality raw collected event. topic={}, key={}, rawEventId={}",
                             topic,
                             key,
-                            event.eventId,
+                            event.rawEventId,
                             ex,
                         )
                     }
                 }
         } catch (ex: Exception) {
             log.warn(
-                "Failed to submit data quality raw collected event to Kafka. topic={}, key={}, eventId={}",
+                "Failed to submit data quality raw collected event to Kafka. topic={}, key={}, rawEventId={}",
                 topic,
                 key,
-                event.eventId,
+                event.rawEventId,
                 ex,
             )
         }
     }
 
-    private fun createKey(event: RawResponseCollectedEvent): String = "${event.provider.name}:${event.endpointKey}:${event.apiId}"
+    private fun createKey(event: RawResponseCollectedEvent): String = "${event.provider.name}:${event.endpointKey}:${parameterKey(event)}"
+
+    private fun parameterKey(event: RawResponseCollectedEvent): String = event.parameters.joinToString("&") { "${it.name}=${it.value}" }
 }

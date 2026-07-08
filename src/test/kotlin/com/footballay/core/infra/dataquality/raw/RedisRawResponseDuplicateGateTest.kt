@@ -3,6 +3,7 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
+import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -91,13 +92,14 @@ class RedisRawResponseDuplicateGateTest {
     private fun command(canonicalHash: String): RawResponseDuplicateCheckCommand =
         RawResponseDuplicateCheckCommand(
             provider = FootballDataProvider.API_SPORTS,
-            endpointKey = "fixture_single",
-            apiId = "1208397",
+            endpointKey = "fixtureSingle",
+            parameters = PARAMETERS,
             canonicalHash = canonicalHash,
         )
 
     private companion object {
         private val TTL: Duration = Duration.ofDays(7)
-        private const val REDIS_KEY = "footballay:data-quality:raw-response:API_SPORTS:fixture_single:1208397"
+        private const val REDIS_KEY = "footballay:data-quality:raw-response:API_SPORTS:fixtureSingle:fixtureId=1208397"
+        private val PARAMETERS = listOf(RawResponseParameter(name = "fixtureId", value = "1208397"))
     }
 }
