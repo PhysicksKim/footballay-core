@@ -40,18 +40,11 @@ data class DataQualityProperties(
     data class Kafka(
         val enabled: Boolean = false,
         val producer: KafkaProducer = KafkaProducer(),
-        val consumer: KafkaConsumer = KafkaConsumer(),
     )
 
     data class KafkaProducer(
         val enabled: Boolean = false,
         val rawCollectedTopic: String = "football-data-raw-collected",
-    )
-
-    data class KafkaConsumer(
-        val enabled: Boolean = false,
-        val qualityResultTopic: String = "football-data-quality-result",
-        val groupId: String = "footballay-core-data-quality-result",
     )
 }
 
