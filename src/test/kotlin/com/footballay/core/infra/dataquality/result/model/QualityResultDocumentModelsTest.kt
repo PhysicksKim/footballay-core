@@ -5,6 +5,7 @@ import com.footballay.core.config.JacksonConfig
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
 class QualityResultDocumentModelsTest {
@@ -80,10 +81,13 @@ class QualityResultDocumentModelsTest {
                 "quality_results_raw_json_object_key",
             )
 
+        val documentAnnotation = QualityResultDocument::class.java.getAnnotation(Document::class.java)
+        assertThat(documentAnnotation.collection).isEqualTo(DataQualityMongoCollections.QUALITY_RESULTS)
+
         val rawEventIdIndex =
             QualityResultMongoIndexDefinitions.qualityResults
                 .first { it.name == "quality_results_raw_event_id" }
-        assertThat(rawEventIdIndex.unique).isTrue()
+        assertThat(rawEventIdIndex.unique).isFalse()
         assertThat(rawEventIdIndex.keys)
             .containsExactly(QualityResultMongoIndexKey("rawEventId", QualityResultMongoIndexDirection.ASC))
 

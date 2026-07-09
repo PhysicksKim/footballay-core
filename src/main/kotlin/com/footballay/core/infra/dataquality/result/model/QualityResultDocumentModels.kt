@@ -2,6 +2,8 @@ package com.footballay.core.infra.dataquality.result.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
 // Data Quality 검사 결과를 저장하는 MongoDB quality_results document schema를 정의한다.
@@ -9,7 +11,9 @@ object DataQualityMongoCollections {
     const val QUALITY_RESULTS = "quality_results"
 }
 
+@Document(collection = DataQualityMongoCollections.QUALITY_RESULTS)
 data class QualityResultDocument(
+    @Id
     @param:JsonProperty("_id")
     @get:JsonProperty("_id")
     val id: String,

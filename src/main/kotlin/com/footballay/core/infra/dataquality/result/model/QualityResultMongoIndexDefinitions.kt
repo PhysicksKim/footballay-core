@@ -11,7 +11,6 @@ object QualityResultMongoIndexDefinitions {
             QualityResultMongoIndexDefinition(
                 name = "quality_results_raw_event_id",
                 keys = listOf(QualityResultMongoIndexKey("rawEventId", QualityResultMongoIndexDirection.ASC)),
-                unique = true,
             ),
             QualityResultMongoIndexDefinition(
                 name = "quality_results_source",
