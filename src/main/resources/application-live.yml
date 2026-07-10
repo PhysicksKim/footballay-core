@@ -8,6 +8,11 @@ footballay:
       x-rapidapi-host-value: "v3.football.api-sports.io"
       x-rapidapi-key-name: x-rapidapi-key
       x-rapidapi-key-value: ${FOOTBALLAY_APISPORTS_X_RAPIDAPI_KEY_VALUE}
+  data-quality:
+    storage:
+      bucket: ${FOOTBALLAY_DATA_QUALITY_S3_BUCKET}
+      region: ${FOOTBALLAY_DATA_QUALITY_S3_REGION}
+      s3-download-url-ttl: 10m
 
 aws:
   cloudfront:

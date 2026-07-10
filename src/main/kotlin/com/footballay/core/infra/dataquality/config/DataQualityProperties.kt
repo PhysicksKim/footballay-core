@@ -35,6 +35,13 @@ data class DataQualityProperties(
         val rawPrefix: String = "data-quality/raw",
         val localBaseDir: String = "build/data-quality/raw-storage",
         val localDownloadUrlTtl: Duration = Duration.ofMinutes(10),
+        val s3DownloadUrlTtl: Duration = Duration.ofMinutes(10),
+        val preflight: Preflight = Preflight(),
+    )
+
+    data class Preflight(
+        val enabled: Boolean = false,
+        val keyPrefix: String = "data-quality/raw/_preflight",
     )
 
     data class Kafka(

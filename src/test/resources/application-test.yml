@@ -100,6 +100,11 @@ footballay:
     headers:
       x-rapidapi-host: v3.football.api-sports.io
       x-rapidapi-key: __CENSOREDKEY__
+  data-quality:
+    storage:
+      bucket: MOCK-DATA-QUALITY-BUCKET-NAME
+      region: ap-northeast-2
+      s3-download-url-ttl: 10m
   fixture-cache-refresh:
     redis-pubsub:
       enabled: false

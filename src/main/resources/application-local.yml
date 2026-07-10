@@ -132,6 +132,11 @@ footballay:
   match-collect:
     finished-scanner:
       enabled: false
+  data-quality:
+    storage:
+      bucket: MOCK-DATA-QUALITY-BUCKET-NAME
+      region: ap-northeast-2
+      s3-download-url-ttl: 10m
   mock-backbone:
     admin-api:
       enabled: true

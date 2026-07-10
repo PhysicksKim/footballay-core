@@ -34,6 +34,8 @@ class DataQualityPropertiesTest {
             assertThat(properties.storage.rawPrefix).isNotBlank()
             assertThat(properties.storage.localBaseDir).isNotBlank()
             assertThat(properties.storage.localDownloadUrlTtl).isPositive()
+            assertThat(properties.storage.preflight.enabled).isFalse()
+            assertThat(properties.storage.preflight.keyPrefix).isNotBlank()
         }
     }
 
@@ -55,6 +57,9 @@ class DataQualityPropertiesTest {
                 "footballay.data-quality.storage.raw-prefix=data-quality/raw",
                 "footballay.data-quality.storage.local-base-dir=/tmp/footballay-data-quality",
                 "footballay.data-quality.storage.local-download-url-ttl=5m",
+                "footballay.data-quality.storage.s3-download-url-ttl=7m",
+                "footballay.data-quality.storage.preflight.enabled=true",
+                "footballay.data-quality.storage.preflight.key-prefix=data-quality/raw/_preflight/custom",
                 "footballay.data-quality.kafka.enabled=true",
                 "footballay.data-quality.kafka.producer.enabled=true",
                 "footballay.data-quality.kafka.producer.raw-collected-topic=custom-raw-collected",
@@ -75,6 +80,9 @@ class DataQualityPropertiesTest {
                 assertThat(properties.storage.rawPrefix).isEqualTo("data-quality/raw")
                 assertThat(properties.storage.localBaseDir).isEqualTo("/tmp/footballay-data-quality")
                 assertThat(properties.storage.localDownloadUrlTtl).isEqualTo(Duration.ofMinutes(5))
+                assertThat(properties.storage.s3DownloadUrlTtl).isEqualTo(Duration.ofMinutes(7))
+                assertThat(properties.storage.preflight.enabled).isTrue()
+                assertThat(properties.storage.preflight.keyPrefix).isEqualTo("data-quality/raw/_preflight/custom")
                 assertThat(properties.kafka.enabled).isTrue()
                 assertThat(properties.kafka.producer.enabled).isTrue()
                 assertThat(properties.kafka.producer.rawCollectedTopic).isEqualTo("custom-raw-collected")
