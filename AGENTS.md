@@ -107,8 +107,7 @@ These rules bias toward caution over speed. For trivial tasks, use judgment.
 
 ## New file comments
 
-* For new source files, add a one-line Korean role comment near the top when it improves future navigation.
-* Place it below required directives such as package declarations, shebangs, or framework directives.
+* For new source files, add comment using KDoc or Javadoc in Korean at least one line or more.
 * Skip config files, generated files, simple DTOs, and files where such a comment would violate project style.
 
 ## Done criteria
