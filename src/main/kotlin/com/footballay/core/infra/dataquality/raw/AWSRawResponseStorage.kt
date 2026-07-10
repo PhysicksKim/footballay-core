@@ -5,13 +5,10 @@ import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCom
 import com.footballay.core.infra.dataquality.raw.model.RawResponseStoredObject
 import com.footballay.core.infra.dataquality.raw.model.RawResponseUploadCommand
 
-class AWSRawResponseStorage(
-    private val uploader: S3RawResponseUploader,
-    private val signer: CloudFrontRawResponseSigner,
-) : RawResponseStorage {
+class AWSRawResponseStorage : RawResponseStorage {
     override fun upload(command: RawResponseUploadCommand): RawResponseStoredObject =
-        uploader.upload(command)
+        throw UnsupportedOperationException("AWS raw response storage is not implemented yet")
 
     override fun createDownloadUrl(command: RawResponseDownloadUrlCommand): RawResponseDownloadUrl =
-        signer.createDownloadUrl(command)
+        throw UnsupportedOperationException("AWS raw response storage is not implemented yet")
 }

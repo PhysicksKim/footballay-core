@@ -2,7 +2,10 @@ package com.footballay.core.web.admin.dataquality.service
 
 import com.footballay.core.domain.dataquality.result.QualityResultQueryFacade
 import com.footballay.core.domain.dataquality.result.QualityResultSearchCondition
+import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrl
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.result.model.DataQualityCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityIssueCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityIssueSeverity
@@ -33,6 +36,9 @@ import java.time.Instant
 class AdminQualityResultQueryWebServiceTest {
     @Mock
     private lateinit var qualityResultQueryFacade: QualityResultQueryFacade
+
+    @Mock
+    private lateinit var rawResponseStorage: RawResponseStorage
 
     @Test
     fun `findResults는 조회 조건과 pageable을 facade에 전달하고 summary response로 변환한다`() {
@@ -98,6 +104,41 @@ class AdminQualityResultQueryWebServiceTest {
     }
 
     @Test
+    fun `raw json download url은 result의 object key로 storage에 위임한다`() {
+        whenever(qualityResultQueryFacade.findById("result-1")).thenReturn(document())
+        whenever(
+            rawResponseStorage.createDownloadUrl(
+                RawResponseDownloadUrlCommand(rawJsonObjectKey = "data-quality/raw/object.json.gz"),
+            ),
+        ).thenReturn(
+            RawResponseDownloadUrl(
+                downloadUrl = "file:///tmp/data-quality/raw/object.json.gz",
+                expiresAt = Instant.parse("2026-07-07T12:11:32Z"),
+            ),
+        )
+
+        val result = service().createRawJsonDownloadUrl("result-1")
+
+        assertThat(result.downloadUrl).isEqualTo("file:///tmp/data-quality/raw/object.json.gz")
+        assertThat(result.expiresAt).isEqualTo(Instant.parse("2026-07-07T12:11:32Z"))
+        verify(qualityResultQueryFacade).findById(eq("result-1"))
+        verify(rawResponseStorage).createDownloadUrl(
+            RawResponseDownloadUrlCommand(rawJsonObjectKey = "data-quality/raw/object.json.gz"),
+        )
+    }
+
+    @Test
+    fun `없는 result raw json download url 조회는 404로 변환한다`() {
+        whenever(qualityResultQueryFacade.findById("missing")).thenThrow(NoSuchElementException("missing"))
+
+        assertThatThrownBy {
+            service().createRawJsonDownloadUrl("missing")
+        }.isInstanceOf(ResponseStatusException::class.java)
+            .extracting("statusCode")
+            .isEqualTo(HttpStatus.NOT_FOUND)
+    }
+
+    @Test
     fun `잘못된 조회 조건은 400으로 변환한다`() {
         assertThatThrownBy {
             service().findResults(
@@ -124,6 +165,7 @@ class AdminQualityResultQueryWebServiceTest {
     private fun service() =
         AdminQualityResultQueryWebService(
             qualityResultQueryFacade = qualityResultQueryFacade,
+            rawResponseStorage = rawResponseStorage,
         )
 
     private fun document() =

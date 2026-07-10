@@ -2,7 +2,9 @@ package com.footballay.core.web.admin.dataquality.service
 
 import com.footballay.core.domain.dataquality.result.QualityResultQueryFacade
 import com.footballay.core.domain.dataquality.result.QualityResultSearchCondition
+import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
+import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.result.model.DataQualityArchiveStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityMaxSeverity
@@ -12,6 +14,7 @@ import com.footballay.core.infra.dataquality.result.model.QualityResultDocument
 import com.footballay.core.infra.dataquality.result.model.QualityResultParameterDocument
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityIssueResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityIssueResponseLocationResponse
+import com.footballay.core.web.admin.dataquality.dto.AdminRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultArchiveResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultDetailResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultPageResponse
@@ -28,6 +31,7 @@ import java.time.Instant
 @Service
 class AdminQualityResultQueryWebService(
     private val qualityResultQueryFacade: QualityResultQueryFacade,
+    private val rawResponseStorage: RawResponseStorage,
 ) {
     @PreAuthorize("hasRole('ADMIN')")
     fun findResults(
@@ -80,6 +84,22 @@ class AdminQualityResultQueryWebService(
     fun findResult(resultId: String): AdminQualityResultDetailResponse =
         try {
             toDetailResponse(qualityResultQueryFacade.findById(resultId))
+        } catch (e: NoSuchElementException) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, e.message, e)
+        }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    fun createRawJsonDownloadUrl(resultId: String): AdminRawJsonDownloadUrlResponse =
+        try {
+            val document = qualityResultQueryFacade.findById(resultId)
+            val downloadUrl =
+                rawResponseStorage.createDownloadUrl(
+                    RawResponseDownloadUrlCommand(rawJsonObjectKey = document.rawJsonObjectKey),
+                )
+            AdminRawJsonDownloadUrlResponse(
+                downloadUrl = downloadUrl.downloadUrl,
+                expiresAt = downloadUrl.expiresAt,
+            )
         } catch (e: NoSuchElementException) {
             throw ResponseStatusException(HttpStatus.NOT_FOUND, e.message, e)
         }
@@ -140,7 +160,6 @@ class AdminQualityResultQueryWebService(
             maxSeverity = document.maxSeverity,
             checkStatus = document.checkStatus,
             archiveStatus = document.archive.status,
-            rawJsonObjectKey = document.rawJsonObjectKey,
         )
 
     private fun toDetailResponse(document: QualityResultDocument): AdminQualityResultDetailResponse =
@@ -151,7 +170,6 @@ class AdminQualityResultQueryWebService(
             endpointKey = document.endpointKey,
             parameters = document.parameters.map(::toParameterResponse),
             canonicalHash = document.canonicalHash,
-            rawJsonObjectKey = document.rawJsonObjectKey,
             checkedAt = document.checkedAt,
             scannerVersion = document.scannerVersion,
             hasIssue = document.hasIssue,

@@ -4,6 +4,7 @@ import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.result.model.DataQualityArchiveStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityMaxSeverity
+import com.footballay.core.web.admin.dataquality.dto.AdminRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultDetailResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultPageResponse
 import com.footballay.core.web.admin.dataquality.service.AdminQualityResultQueryWebService
@@ -92,4 +93,16 @@ class AdminQualityResultController(
     fun getResult(
         @PathVariable resultId: String,
     ) = ResponseEntity.ok(adminQualityResultQueryWebService.findResult(resultId))
+
+    @Operation(summary = "Data Quality raw JSON 다운로드 URL 발급")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Raw JSON download URL",
+        content = [Content(schema = Schema(implementation = AdminRawJsonDownloadUrlResponse::class))],
+    )
+    @ApiResponse(responseCode = "404", description = "Data Quality result를 찾을 수 없음")
+    @GetMapping("/{resultId}/raw-json/download-url")
+    fun getRawJsonDownloadUrl(
+        @PathVariable resultId: String,
+    ) = ResponseEntity.ok(adminQualityResultQueryWebService.createRawJsonDownloadUrl(resultId))
 }

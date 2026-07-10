@@ -29,7 +29,6 @@ data class AdminQualityResultSummaryResponse(
     val maxSeverity: DataQualityMaxSeverity,
     val checkStatus: DataQualityCheckStatus,
     val archiveStatus: DataQualityArchiveStatus,
-    val rawJsonObjectKey: String,
 )
 
 data class AdminQualityResultDetailResponse(
@@ -39,7 +38,6 @@ data class AdminQualityResultDetailResponse(
     val endpointKey: String,
     val parameters: List<AdminQualityResultParameterResponse>,
     val canonicalHash: String,
-    val rawJsonObjectKey: String,
     val checkedAt: Instant,
     val scannerVersion: String,
     val hasIssue: Boolean,
@@ -80,4 +78,9 @@ data class AdminQualityResultArchiveResponse(
     val objectKey: String?,
     val archivedAt: Instant?,
     val expiredAt: Instant?,
+)
+
+data class AdminRawJsonDownloadUrlResponse(
+    val downloadUrl: String,
+    val expiresAt: Instant,
 )

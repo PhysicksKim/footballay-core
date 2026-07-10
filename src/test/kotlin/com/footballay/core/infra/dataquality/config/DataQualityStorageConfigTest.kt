@@ -1,18 +1,13 @@
 package com.footballay.core.infra.dataquality.config
 
 import com.footballay.core.infra.dataquality.raw.AWSRawResponseStorage
-import com.footballay.core.infra.dataquality.raw.CloudFrontRawResponseSigner
-import com.footballay.core.infra.dataquality.raw.DefaultS3RawResponseUploader
 import com.footballay.core.infra.dataquality.raw.LocalRawResponseStorage
-import com.footballay.core.infra.dataquality.raw.NoopCloudFrontRawResponseSigner
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
-import com.footballay.core.infra.dataquality.raw.S3RawResponseUploader
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Configuration
-import software.amazon.awssdk.services.s3.S3Client
 
 /**
  * 설정에 따라 [DataQualityStorageConfig] 가 특정 구현체 빈 등록 및 설정값 등을 올바르게 처리하는지 테스트합니다.
@@ -82,13 +77,6 @@ class DataQualityStorageConfigTest {
             ).run { context ->
                 assertThat(context).hasSingleBean(RawResponseStorage::class.java)
                 assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(AWSRawResponseStorage::class.java)
-                assertThat(context).hasBean("dataQualityS3Client")
-                assertThat(context.getBean("dataQualityS3Client")).isInstanceOf(S3Client::class.java)
-                assertThat(context).hasSingleBean(S3RawResponseUploader::class.java)
-                assertThat(context.getBean(S3RawResponseUploader::class.java)).isInstanceOf(DefaultS3RawResponseUploader::class.java)
-                assertThat(context).hasSingleBean(CloudFrontRawResponseSigner::class.java)
-                assertThat(context.getBean(CloudFrontRawResponseSigner::class.java))
-                    .isInstanceOf(NoopCloudFrontRawResponseSigner::class.java)
             }
     }
 

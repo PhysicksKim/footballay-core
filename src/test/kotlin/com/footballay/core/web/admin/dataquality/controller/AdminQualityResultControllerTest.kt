@@ -3,6 +3,7 @@ package com.footballay.core.web.admin.dataquality.controller
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.result.model.DataQualityCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityMaxSeverity
+import com.footballay.core.web.admin.dataquality.dto.AdminRawJsonDownloadUrlResponse
 import com.footballay.core.web.admin.dataquality.dto.AdminQualityResultPageResponse
 import com.footballay.core.web.admin.dataquality.service.AdminQualityResultQueryWebService
 import org.junit.jupiter.api.DisplayName
@@ -100,6 +101,29 @@ class AdminQualityResultControllerTest(
             }
 
         verify(adminQualityResultQueryWebService).findResult("result-1")
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("quality result raw json download url 조회는 resultId를 webservice에 전달한다")
+    fun getRawJsonDownloadUrl_delegatesResultIdToWebService() {
+        given(adminQualityResultQueryWebService.createRawJsonDownloadUrl("result-1"))
+            .willReturn(
+                AdminRawJsonDownloadUrlResponse(
+                    downloadUrl = "file:///tmp/data-quality/raw/object.json.gz",
+                    expiresAt = Instant.parse("2026-07-07T12:11:32Z"),
+                ),
+            )
+
+        mockMvc
+            .get("/api/v1/admin/data-quality/results/{resultId}/raw-json/download-url", "result-1")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.downloadUrl") { value("file:///tmp/data-quality/raw/object.json.gz") }
+                jsonPath("$.expiresAt") { value("2026-07-07T12:11:32Z") }
+            }
+
+        verify(adminQualityResultQueryWebService).createRawJsonDownloadUrl("result-1")
     }
 
     private fun emptyPage() =
