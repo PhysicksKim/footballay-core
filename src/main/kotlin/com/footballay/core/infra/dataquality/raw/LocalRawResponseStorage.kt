@@ -4,6 +4,8 @@ import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrl
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseStoredObject
 import com.footballay.core.infra.dataquality.raw.model.RawResponseUploadCommand
+import com.footballay.core.logger
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Clock
@@ -16,12 +18,19 @@ class LocalRawResponseStorage(
     private val clock: Clock = Clock.systemUTC(),
 ) : RawResponseStorage {
     private val baseDir: Path = baseDir.toAbsolutePath().normalize()
+    private val log = logger()
 
     override fun upload(command: RawResponseUploadCommand): RawResponseStoredObject {
-        val objectPath = resolveObjectPath(command.rawJsonObjectKey)
-        Files.createDirectories(objectPath.parent)
-        Files.write(objectPath, command.gzipBytes)
-        return RawResponseStoredObject(rawJsonObjectKey = command.rawJsonObjectKey)
+        try {
+            val objectPath = resolveObjectPath(command.rawJsonObjectKey)
+            Files.createDirectories(objectPath.parent)
+            Files.write(objectPath, command.gzipBytes)
+            log.info("Stored raw response in local. Path = {}", objectPath.toString())
+            return RawResponseStoredObject(rawJsonObjectKey = command.rawJsonObjectKey)
+        } catch (ex: IOException) {
+            log.error("Error while storing raw response", ex)
+            throw ex
+        }
     }
 
     override fun createDownloadUrl(command: RawResponseDownloadUrlCommand): RawResponseDownloadUrl {

@@ -39,7 +39,7 @@ class OpenApiConfig {
                     ),
             ).servers(
                 listOf(
-                    Server().url("https://localhost:8083").description("Development"),
+                    Server().url("http://localhost:8083").description("Development"),
                     Server().url("https://footballay.com").description("Production"),
                 ),
             ).components(

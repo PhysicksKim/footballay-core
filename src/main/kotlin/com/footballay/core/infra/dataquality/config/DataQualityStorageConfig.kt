@@ -2,6 +2,7 @@ package com.footballay.core.infra.dataquality.config
 
 import com.footballay.core.infra.dataquality.raw.AWSRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.LocalRawResponseStorage
+import com.footballay.core.infra.dataquality.raw.NoopRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -26,6 +27,14 @@ class DataQualityStorageConfig {
             baseDir = Path.of(properties.storage.localBaseDir),
             downloadUrlTtl = properties.storage.localDownloadUrlTtl,
         )
+
+    @Bean
+    @ConditionalOnProperty(
+        prefix = "footballay.data-quality.storage",
+        name = ["type"],
+        havingValue = "noop",
+    )
+    fun noopRawResponseStorage(): RawResponseStorage = NoopRawResponseStorage()
 
     @Bean
     @ConditionalOnProperty(

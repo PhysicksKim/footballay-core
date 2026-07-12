@@ -2,6 +2,7 @@ package com.footballay.core.infra.dataquality.config
 
 import com.footballay.core.infra.dataquality.raw.AWSRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.LocalRawResponseStorage
+import com.footballay.core.infra.dataquality.raw.NoopRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -41,14 +42,15 @@ class DataQualityStorageConfigTest {
     }
 
     @Test
-    fun `does not register local storage when type is noop`() {
+    fun `registers noop storage when type is noop`() {
         contextRunner
             .withPropertyValues(
                 "footballay.data-quality.enabled=true",
                 "footballay.data-quality.storage.enabled=true",
                 "footballay.data-quality.storage.type=noop",
             ).run { context ->
-                assertThat(context).doesNotHaveBean(RawResponseStorage::class.java)
+                assertThat(context).hasSingleBean(RawResponseStorage::class.java)
+                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(NoopRawResponseStorage::class.java)
             }
     }
 
