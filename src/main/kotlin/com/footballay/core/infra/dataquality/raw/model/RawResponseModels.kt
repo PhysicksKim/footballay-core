@@ -84,6 +84,19 @@ data class RawResponseDownloadUrl(
     val expiresAt: Instant,
 )
 
+/**
+ * Raw response 저장 후 Data Quality 처리를 요청하는 이벤트입니다.
+ *
+ * @property rawEventId 원본 응답 수집 건을 식별하는 ULID입니다.
+ * @property provider 원본 응답을 제공한 축구 데이터 제공자입니다.
+ * @property endpointKey 수집한 제공자 API endpoint 식별자입니다.
+ * @property parameters 요청을 구분하는 endpoint 파라미터입니다.
+ * @property canonicalHash 중복 감지에 사용하는 정규화된 원본 응답의 해시입니다.
+ * @property rawJsonObjectKey 저장소 내부에서 원본 gzip 파일을 식별하는 안정적인 object key입니다.
+ * @property rawJsonDownloadUrl 이번 이벤트 소비 시 원본 gzip 파일을 읽기 위한 저장소별 다운로드 URL입니다.
+ * @property rawJsonDownloadUrlExpiresAt 다운로드 URL의 만료 시각입니다.
+ * @property collectedAt 원본 응답을 수집한 시각입니다.
+ */
 data class RawResponseCollectedEvent(
     val rawEventId: String,
     val provider: FootballDataProvider,
@@ -91,5 +104,7 @@ data class RawResponseCollectedEvent(
     val parameters: List<RawResponseParameter>,
     val canonicalHash: String,
     val rawJsonObjectKey: String,
+    val rawJsonDownloadUrl: String,
+    val rawJsonDownloadUrlExpiresAt: Instant,
     val collectedAt: Instant,
 )

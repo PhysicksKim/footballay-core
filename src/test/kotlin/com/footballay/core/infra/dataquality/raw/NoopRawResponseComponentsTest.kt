@@ -71,6 +71,8 @@ class NoopRawResponseComponentsTest {
                 parameters = command.parameters,
                 canonicalHash = "hash",
                 rawJsonObjectKey = "data-quality/raw/api-sports/fixtureSingle/object.json.gz",
+                rawJsonDownloadUrl = "",
+                rawJsonDownloadUrlExpiresAt = Instant.EPOCH,
                 collectedAt = command.collectedAt,
             ),
         )
