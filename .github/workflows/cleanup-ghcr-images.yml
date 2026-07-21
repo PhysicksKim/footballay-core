@@ -26,8 +26,8 @@ permissions:
   packages: read
 
 env:
-  PACKAGE_OWNER: PhysicksKim
-  PACKAGE_OWNER_TYPE: users
+  PACKAGE_OWNER: Footballay
+  PACKAGE_OWNER_TYPE: orgs
   PACKAGE: footballay-core
   KEEP_NON_LATEST: 20
   DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
