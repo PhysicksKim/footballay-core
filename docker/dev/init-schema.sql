@@ -1,22 +1,18 @@
--- footballay_core Schema 생성
-CREATE SCHEMA IF NOT EXISTS footballay_core;
-SET search_path TO footballay_core;
-
 -- ============================================
 -- Quartz Scheduler Tables
 -- ============================================
 
-DROP TABLE IF EXISTS qrtz_fired_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_paused_trigger_grps CASCADE;
-DROP TABLE IF EXISTS qrtz_scheduler_state CASCADE;
-DROP TABLE IF EXISTS qrtz_locks CASCADE;
-DROP TABLE IF EXISTS qrtz_simple_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_cron_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_simprop_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_blob_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_triggers CASCADE;
-DROP TABLE IF EXISTS qrtz_job_details CASCADE;
-DROP TABLE IF EXISTS qrtz_calendars CASCADE;
+DROP TABLE IF EXISTS qrtz_fired_triggers;
+DROP TABLE IF EXISTS qrtz_paused_trigger_grps;
+DROP TABLE IF EXISTS qrtz_scheduler_state;
+DROP TABLE IF EXISTS qrtz_locks;
+DROP TABLE IF EXISTS qrtz_simple_triggers;
+DROP TABLE IF EXISTS qrtz_cron_triggers;
+DROP TABLE IF EXISTS qrtz_simprop_triggers;
+DROP TABLE IF EXISTS qrtz_blob_triggers;
+DROP TABLE IF EXISTS qrtz_triggers;
+DROP TABLE IF EXISTS qrtz_job_details;
+DROP TABLE IF EXISTS qrtz_calendars;
 
 CREATE TABLE qrtz_job_details
 (
@@ -186,35 +182,10 @@ CREATE INDEX idx_qrtz_ft_t_g ON qrtz_fired_triggers (sched_name, trigger_name, t
 CREATE INDEX idx_qrtz_ft_tg ON qrtz_fired_triggers (sched_name, trigger_group);
 
 -- ============================================
--- Spring Security Tables
+-- Spring Security remember-me table.
 -- ============================================
 
-DROP TABLE IF EXISTS authorities CASCADE;
 DROP TABLE IF EXISTS persistent_logins CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-
-CREATE TABLE users
-(
-    user_id       SERIAL PRIMARY KEY,
-    username      VARCHAR(50)  NOT NULL UNIQUE,
-    password      VARCHAR(500) NOT NULL,
-    nickname      VARCHAR(50),
-    enabled       BOOLEAN      NOT NULL DEFAULT true,
-    created_date  TIMESTAMP    NOT NULL DEFAULT NOW(),
-    modified_date TIMESTAMP    NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE authorities
-(
-    authority_id  SERIAL PRIMARY KEY,
-    user_id       INTEGER     NOT NULL,
-    authority     VARCHAR(50) NOT NULL,
-    created_date  TIMESTAMP   NOT NULL DEFAULT NOW(),
-    modified_date TIMESTAMP   NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_authorities_users FOREIGN KEY (user_id) REFERENCES users (user_id)
-);
-
-CREATE UNIQUE INDEX ix_auth_username ON authorities (user_id, authority);
 
 CREATE TABLE persistent_logins
 (
@@ -223,13 +194,3 @@ CREATE TABLE persistent_logins
     token     VARCHAR(64) NOT NULL,
     last_used TIMESTAMP   NOT NULL
 );
-
--- ============================================
--- Initial Data
--- ============================================
-
-INSERT INTO users(username, password, nickname, enabled, created_date, modified_date)
-VALUES ('qwer', '{noop}qwer', 'qwer', true, NOW(), NOW());
-
-INSERT INTO authorities (user_id, authority, created_date, modified_date)
-VALUES (1, 'ROLE_ADMIN', NOW(), NOW());

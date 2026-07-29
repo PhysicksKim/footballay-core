@@ -1,3 +1,5 @@
+name: footballay-dev
+
 services:
   redis:
     image: redis:7.2.4-alpine
@@ -102,10 +104,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
-      - ./logs/postgres:/var/lib/postgresql/data/pg_log
+      - ./logs/postgres:/var/log/postgresql
     command: >
       postgres -c logging_collector=on
-      -c log_directory=pg_log
+      -c log_directory=/var/log/postgresql
       -c log_filename='postgresql-%Y-%m-%d_%H%M%S.log'
       -c log_rotation_age=1d
       -c log_rotation_size=100MB

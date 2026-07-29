@@ -5,6 +5,9 @@
 spring:
   flyway.enabled: false
 
+  kafka:
+    bootstrap-servers: localhost:9092
+
   # JPA 설정
   jpa:
     properties:
@@ -138,6 +141,12 @@ footballay:
     storage:
       type: local
       enabled: true
+      local-base-dir: ${FOOTBALLAY_DATA_QUALITY_RAW_LOCAL_BASE_DIR:/tmp/footballay-dq-smoke}
+    kafka:
+      enabled: true
+      producer:
+        enabled: true
+        raw-collected-topic: football-data-raw-collected
     enabled: true
   mock-backbone:
     admin-api:
