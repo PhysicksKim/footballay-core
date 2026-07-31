@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("football preference는 더 이상 사용되지 않습니다")
 @ActiveProfiles("test")
 @SpringBootTest
 @Transactional

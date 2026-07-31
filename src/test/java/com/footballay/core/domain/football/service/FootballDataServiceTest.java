@@ -11,6 +11,7 @@ import com.footballay.core.domain.football.repository.TeamRepository;
 import com.footballay.core.domain.football.repository.relations.LeagueTeamRepository;
 import com.footballay.core.domain.football.repository.relations.TeamPlayerRepository;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import static com.footballay.core.domain.football.util.GenerateLeagueTeamFixture
 import static com.footballay.core.domain.football.util.GeneratePlayersOfTeam.generatePlayersOfTeam;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("football preference는 더 이상 사용되지 않습니다")
 @Transactional
 @ActiveProfiles("test")
 @SpringBootTest
