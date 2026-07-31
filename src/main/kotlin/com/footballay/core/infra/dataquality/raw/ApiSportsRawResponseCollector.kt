@@ -2,8 +2,6 @@ package com.footballay.core.infra.dataquality.raw
 
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectedEvent
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrl
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
 import com.footballay.core.infra.dataquality.raw.model.RawResponseObjectKeyCommand
@@ -56,9 +54,7 @@ class DefaultApiSportsRawResponseCollector(
         val objectKey = objectKeyOrNull(command, canonicalHash) ?: return
         val gzipBytes = gzipOrNull(command) ?: return
         val storedObject = uploadOrNull(command, objectKey, gzipBytes) ?: return
-        val downloadUrl = downloadUrlOrNull(command, storedObject.rawJsonObjectKey) ?: return
-
-        publishSafely(command, canonicalHash, storedObject.rawJsonObjectKey, downloadUrl)
+        publishSafely(command, canonicalHash, storedObject.rawJsonObjectKey)
     }
 
     private fun hashOrNull(command: RawResponseCollectionCommand): String? =
@@ -174,31 +170,10 @@ class DefaultApiSportsRawResponseCollector(
             null
         }
 
-    private fun downloadUrlOrNull(
-        command: RawResponseCollectionCommand,
-        objectKey: String,
-    ): RawResponseDownloadUrl? =
-        try {
-            storage.createDownloadUrl(
-                RawResponseDownloadUrlCommand(rawJsonObjectKey = objectKey),
-            )
-        } catch (ex: Exception) {
-            log.warn(
-                "Failed to create data quality raw response download URL. provider={}, endpointKey={}, parameters={}, rawJsonObjectKey={}",
-                command.provider,
-                command.endpointKey,
-                command.parameters,
-                objectKey,
-                ex,
-            )
-            null
-        }
-
     private fun publishSafely(
         command: RawResponseCollectionCommand,
         canonicalHash: String,
         objectKey: String,
-        downloadUrl: RawResponseDownloadUrl,
     ) {
         try {
             publisher.publish(
@@ -209,8 +184,6 @@ class DefaultApiSportsRawResponseCollector(
                     parameters = command.parameters,
                     canonicalHash = canonicalHash,
                     rawJsonObjectKey = objectKey,
-                    rawJsonDownloadUrl = downloadUrl.downloadUrl,
-                    rawJsonDownloadUrlExpiresAt = downloadUrl.expiresAt,
                     collectedAt = command.collectedAt,
                 ),
             )

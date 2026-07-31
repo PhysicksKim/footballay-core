@@ -3,8 +3,6 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectedEvent
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrl
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
 import com.footballay.core.infra.dataquality.raw.model.RawResponseObjectKeyCommand
@@ -116,10 +114,6 @@ class DefaultApiSportsRawResponseCollectorTest {
                         gzipBytes = GZIP_BYTES,
                     ),
                 )
-            verify(storage)
-                .createDownloadUrl(
-                    RawResponseDownloadUrlCommand(rawJsonObjectKey = OBJECT_KEY),
-                )
             verify(publisher)
                 .publish(
                     argThat<RawResponseCollectedEvent> {
@@ -129,8 +123,6 @@ class DefaultApiSportsRawResponseCollectorTest {
                             parameters == PARAMETERS &&
                             canonicalHash == CANONICAL_HASH &&
                             rawJsonObjectKey == OBJECT_KEY &&
-                            rawJsonDownloadUrl == DOWNLOAD_URL &&
-                            rawJsonDownloadUrlExpiresAt == DOWNLOAD_URL_EXPIRES_AT &&
                             collectedAt == COLLECTED_AT
                     },
                 )
@@ -203,22 +195,6 @@ class DefaultApiSportsRawResponseCollectorTest {
     }
 
     @Test
-    fun `download URL creation failure is swallowed and skips publish`() {
-        whenever(canonicalHasher.hash(RAW_JSON)).thenReturn(CANONICAL_HASH)
-        whenever(duplicateGate.checkAndStore(any())).thenReturn(RawResponseDuplicateCheckResult.New)
-        whenever(objectKeyFactory.create(any())).thenReturn(OBJECT_KEY)
-        whenever(gzipCodec.compress(RAW_JSON)).thenReturn(GZIP_BYTES)
-        whenever(storage.upload(any())).thenReturn(RawResponseStoredObject(rawJsonObjectKey = OBJECT_KEY))
-        whenever(storage.createDownloadUrl(any())).thenThrow(IllegalStateException("download URL failed"))
-
-        assertThatCode {
-            directCollector.collect(COMMAND)
-        }.doesNotThrowAnyException()
-
-        verify(publisher, never()).publish(any())
-    }
-
-    @Test
     fun `publish failure is swallowed`() {
         stubSuccessfulPipeline()
         whenever(publisher.publish(any())).thenThrow(IllegalStateException("publish failed"))
@@ -234,12 +210,6 @@ class DefaultApiSportsRawResponseCollectorTest {
         whenever(objectKeyFactory.create(any())).thenReturn(OBJECT_KEY)
         whenever(gzipCodec.compress(RAW_JSON)).thenReturn(GZIP_BYTES)
         whenever(storage.upload(any())).thenReturn(RawResponseStoredObject(rawJsonObjectKey = OBJECT_KEY))
-        whenever(storage.createDownloadUrl(RawResponseDownloadUrlCommand(rawJsonObjectKey = OBJECT_KEY))).thenReturn(
-            RawResponseDownloadUrl(
-                downloadUrl = DOWNLOAD_URL,
-                expiresAt = DOWNLOAD_URL_EXPIRES_AT,
-            ),
-        )
     }
 
     private fun collector(executor: ThreadPoolTaskExecutor): DefaultApiSportsRawResponseCollector =
@@ -277,12 +247,10 @@ class DefaultApiSportsRawResponseCollectorTest {
         private const val RAW_JSON = """{"response":[{"fixture":{"id":1208397}}]}"""
         private const val CANONICAL_HASH = "hash"
         private const val OBJECT_KEY = "data-quality/raw/api-sports/fixtureSingle/2026/07/02/fixtureId-1208397/object.json.gz"
-        private const val DOWNLOAD_URL = "file:///tmp/data-quality/raw-storage/$OBJECT_KEY"
         private val PARAMETERS = listOf(RawResponseParameter(name = "fixtureId", value = "1208397"))
         private val ULID_REGEX = Regex("[0-9A-HJKMNP-TV-Z]{26}")
         private val GZIP_BYTES = byteArrayOf(1, 2, 3)
         private val COLLECTED_AT: Instant = Instant.parse("2026-07-02T08:00:00Z")
-        private val DOWNLOAD_URL_EXPIRES_AT: Instant = Instant.parse("2026-07-02T08:10:00Z")
         private val COMMAND =
             RawResponseCollectionCommand(
                 provider = FootballDataProvider.API_SPORTS,

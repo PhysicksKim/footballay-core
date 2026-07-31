@@ -51,8 +51,6 @@ class KafkaRawResponsePublisherTest {
         assertThat(payload["parameters"][0]["value"].asText()).isEqualTo("1208397")
         assertThat(payload["canonicalHash"].asText()).isEqualTo("hash")
         assertThat(payload["rawJsonObjectKey"].asText()).isEqualTo(RAW_JSON_OBJECT_KEY)
-        assertThat(payload["rawJsonDownloadUrl"].asText()).isEqualTo(RAW_JSON_DOWNLOAD_URL)
-        assertThat(payload["rawJsonDownloadUrlExpiresAt"].asText()).isEqualTo("2026-07-03T03:10:00Z")
         assertThat(payload["collectedAt"].asText()).isEqualTo("2026-07-03T03:00:00Z")
         assertThat(payload.has("schemaVersion")).isFalse()
         assertThat(payload.has("eventId")).isFalse()
@@ -88,7 +86,6 @@ class KafkaRawResponsePublisherTest {
         private const val TOPIC = "football-data-raw-collected"
         private const val RAW_JSON_OBJECT_KEY =
             "data-quality/raw/api-sports/fixtureSingle/2026/07/03/fixtureId-1208397/20260703T030000Z_hash.json.gz"
-        private const val RAW_JSON_DOWNLOAD_URL = "https://example.com/$RAW_JSON_OBJECT_KEY"
         private val EVENT =
             RawResponseCollectedEvent(
                 rawEventId = "01JZK8T9CJ4S9ZZ9G0E0D7YQ9M",
@@ -97,8 +94,6 @@ class KafkaRawResponsePublisherTest {
                 parameters = listOf(RawResponseParameter(name = "fixtureId", value = "1208397")),
                 canonicalHash = "hash",
                 rawJsonObjectKey = RAW_JSON_OBJECT_KEY,
-                rawJsonDownloadUrl = RAW_JSON_DOWNLOAD_URL,
-                rawJsonDownloadUrlExpiresAt = Instant.parse("2026-07-03T03:10:00Z"),
                 collectedAt = Instant.parse("2026-07-03T03:00:00Z"),
             )
     }

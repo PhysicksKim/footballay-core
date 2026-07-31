@@ -93,8 +93,6 @@ data class RawResponseDownloadUrl(
  * @property parameters 요청을 구분하는 endpoint 파라미터입니다.
  * @property canonicalHash 중복 감지에 사용하는 정규화된 원본 응답의 해시입니다.
  * @property rawJsonObjectKey 저장소 내부에서 원본 gzip 파일을 식별하는 안정적인 object key입니다.
- * @property rawJsonDownloadUrl 이번 이벤트 소비 시 원본 gzip 파일을 읽기 위한 저장소별 다운로드 URL입니다.
- * @property rawJsonDownloadUrlExpiresAt 다운로드 URL의 만료 시각입니다.
  * @property collectedAt 원본 응답을 수집한 시각입니다.
  */
 data class RawResponseCollectedEvent(
@@ -103,8 +101,12 @@ data class RawResponseCollectedEvent(
     val endpointKey: String,
     val parameters: List<RawResponseParameter>,
     val canonicalHash: String,
+    /**
+     * 현재 배포 환경에 설정된 primary raw-response storage 내부의 object key입니다.
+     *
+     * Consumer는 자신의 storage 설정을 사용해 이 key로 원본을 조회합니다.
+     * bucket, endpoint, credential, presigned URL은 이벤트 계약에 포함하지 않습니다.
+     */
     val rawJsonObjectKey: String,
-    val rawJsonDownloadUrl: String,
-    val rawJsonDownloadUrlExpiresAt: Instant,
     val collectedAt: Instant,
 )
