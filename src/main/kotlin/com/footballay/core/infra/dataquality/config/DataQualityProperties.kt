@@ -32,16 +32,12 @@ data class DataQualityProperties(
         val type: StorageType = StorageType.NOOP,
         val bucket: String = "",
         val region: String = "",
+        val endpoint: String? = null,
+        val pathStyleAccessEnabled: Boolean = false,
+        val accessKey: String? = null,
+        val secretKey: String? = null,
         val rawPrefix: String = "data-quality/raw",
-        val localBaseDir: String = "build/data-quality/raw-storage",
-        val localDownloadUrlTtl: Duration = Duration.ofMinutes(10),
         val s3DownloadUrlTtl: Duration = Duration.ofMinutes(10),
-        val preflight: Preflight = Preflight(),
-    )
-
-    data class Preflight(
-        val enabled: Boolean = false,
-        val keyPrefix: String = "data-quality/raw/_preflight",
     )
 
     data class Kafka(
@@ -57,6 +53,5 @@ data class DataQualityProperties(
 
 enum class StorageType {
     NOOP,
-    LOCAL,
     S3,
 }

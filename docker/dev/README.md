@@ -47,6 +47,10 @@ kafka-init:
 mongodb:
   Data Quality quality_results와 issue_types smoke test용 로컬 MongoDB.
   호스트에서 실행하는 앱은 mongodb://localhost:27017로 접근한다.
+
+minio:
+  Core와 Data Quality Service가 같은 S3-compatible raw response 저장소로 사용하는 로컬 MinIO.
+  API는 http://localhost:9000, 콘솔은 http://localhost:9001로 접근한다.
 ```
 
 ## Volume 영속성.

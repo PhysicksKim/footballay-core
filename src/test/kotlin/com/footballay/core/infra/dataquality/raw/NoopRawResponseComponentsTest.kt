@@ -3,7 +3,6 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectedEvent
 import com.footballay.core.infra.dataquality.raw.model.RawResponseCollectionCommand
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckCommand
 import com.footballay.core.infra.dataquality.raw.model.RawResponseDuplicateCheckResult
 import com.footballay.core.infra.dataquality.raw.model.RawResponseParameter
@@ -48,14 +47,15 @@ class NoopRawResponseComponentsTest {
                     gzipBytes = byteArrayOf(1, 2, 3),
                 ),
             )
-        val downloadUrl =
-            storage.createDownloadUrl(
-                RawResponseDownloadUrlCommand(stored.rawJsonObjectKey),
-            )
-
         assertThat(stored.rawJsonObjectKey).isEqualTo("data-quality/raw/api-sports/fixture_single/object.json.gz")
-        assertThat(downloadUrl.downloadUrl).isEmpty()
-        assertThat(downloadUrl.expiresAt).isEqualTo(Instant.EPOCH)
+    }
+
+    @Test
+    fun `noop download url generator returns an explicit unavailable URL`() {
+        val download = NoopRawResponseDownloadUrlGenerator().createDownloadUrl("data-quality/raw/object.json.gz")
+
+        assertThat(download.uri.toString()).isEqualTo("about:blank")
+        assertThat(download.expiresAt).isEqualTo(Instant.EPOCH)
     }
 
     @Test

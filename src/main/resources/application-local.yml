@@ -139,9 +139,14 @@ footballay:
     raw-collection:
       enabled: true
     storage:
-      type: local
+      type: s3
       enabled: true
-      local-base-dir: ${FOOTBALLAY_DATA_QUALITY_RAW_LOCAL_BASE_DIR:/tmp/footballay-dq-smoke}
+      bucket: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_BUCKET:footballay-data-quality-raw-local}
+      region: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_REGION:ap-northeast-2}
+      endpoint: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ENDPOINT:http://localhost:9000}
+      path-style-access-enabled: true
+      access-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ACCESS_KEY:minioadmin}
+      secret-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_SECRET_KEY:minioadmin}
     kafka:
       enabled: true
       producer:

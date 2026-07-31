@@ -2,9 +2,8 @@ package com.footballay.core.web.admin.dataquality.service
 
 import com.footballay.core.domain.dataquality.result.QualityResultQueryFacade
 import com.footballay.core.domain.dataquality.result.QualityResultSearchCondition
-import com.footballay.core.infra.dataquality.raw.RawResponseStorage
+import com.footballay.core.infra.dataquality.raw.RawResponseDownloadUrlGenerator
 import com.footballay.core.infra.dataquality.raw.model.FootballDataProvider
-import com.footballay.core.infra.dataquality.raw.model.RawResponseDownloadUrlCommand
 import com.footballay.core.infra.dataquality.result.model.DataQualityArchiveStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityCheckStatus
 import com.footballay.core.infra.dataquality.result.model.DataQualityMaxSeverity
@@ -31,7 +30,7 @@ import java.time.Instant
 @Service
 class AdminQualityResultQueryWebService(
     private val qualityResultQueryFacade: QualityResultQueryFacade,
-    private val rawResponseStorage: RawResponseStorage,
+    private val rawResponseDownloadUrlGenerator: RawResponseDownloadUrlGenerator,
 ) {
     @PreAuthorize("hasRole('ADMIN')")
     fun findResults(
@@ -92,12 +91,9 @@ class AdminQualityResultQueryWebService(
     fun createRawJsonDownloadUrl(resultId: String): AdminRawJsonDownloadUrlResponse =
         try {
             val document = qualityResultQueryFacade.findById(resultId)
-            val downloadUrl =
-                rawResponseStorage.createDownloadUrl(
-                    RawResponseDownloadUrlCommand(rawJsonObjectKey = document.rawJsonObjectKey),
-                )
+            val downloadUrl = rawResponseDownloadUrlGenerator.createDownloadUrl(document.rawJsonObjectKey)
             AdminRawJsonDownloadUrlResponse(
-                downloadUrl = downloadUrl.downloadUrl,
+                downloadUrl = downloadUrl.uri.toString(),
                 expiresAt = downloadUrl.expiresAt,
             )
         } catch (e: NoSuchElementException) {

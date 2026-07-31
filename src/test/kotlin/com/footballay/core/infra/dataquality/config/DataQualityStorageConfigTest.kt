@@ -1,9 +1,9 @@
 package com.footballay.core.infra.dataquality.config
 
-import com.footballay.core.infra.dataquality.raw.AWSRawResponseStorage
-import com.footballay.core.infra.dataquality.raw.LocalRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.NoopRawResponseStorage
+import com.footballay.core.infra.dataquality.raw.RawResponseDownloadUrlGenerator
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
+import com.footballay.core.infra.dataquality.raw.S3CompatibleRawResponseStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -19,23 +19,23 @@ class DataQualityStorageConfigTest {
             .withUserConfiguration(TestConfig::class.java, DataQualityStorageConfig::class.java)
 
     @Test
-    fun `does not register local storage when data quality is disabled`() {
+    fun `does not register S3 storage when data quality is disabled`() {
         contextRunner
             .withPropertyValues(
                 "footballay.data-quality.storage.enabled=true",
-                "footballay.data-quality.storage.type=local",
+                "footballay.data-quality.storage.type=s3",
             ).run { context ->
                 assertThat(context).doesNotHaveBean(RawResponseStorage::class.java)
             }
     }
 
     @Test
-    fun `does not register local storage when storage is disabled`() {
+    fun `does not register S3 storage when storage is disabled`() {
         contextRunner
             .withPropertyValues(
                 "footballay.data-quality.enabled=true",
                 "footballay.data-quality.storage.enabled=false",
-                "footballay.data-quality.storage.type=local",
+                "footballay.data-quality.storage.type=s3",
             ).run { context ->
                 assertThat(context).doesNotHaveBean(RawResponseStorage::class.java)
             }
@@ -50,20 +50,8 @@ class DataQualityStorageConfigTest {
                 "footballay.data-quality.storage.type=noop",
             ).run { context ->
                 assertThat(context).hasSingleBean(RawResponseStorage::class.java)
+                assertThat(context).hasSingleBean(RawResponseDownloadUrlGenerator::class.java)
                 assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(NoopRawResponseStorage::class.java)
-            }
-    }
-
-    @Test
-    fun `registers local storage when enabled and type is local`() {
-        contextRunner
-            .withPropertyValues(
-                "footballay.data-quality.enabled=true",
-                "footballay.data-quality.storage.enabled=true",
-                "footballay.data-quality.storage.type=local",
-            ).run { context ->
-                assertThat(context).hasSingleBean(RawResponseStorage::class.java)
-                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(LocalRawResponseStorage::class.java)
             }
     }
 
@@ -78,21 +66,27 @@ class DataQualityStorageConfigTest {
                 "footballay.data-quality.storage.region=ap-northeast-2",
             ).run { context ->
                 assertThat(context).hasSingleBean(RawResponseStorage::class.java)
-                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(AWSRawResponseStorage::class.java)
+                assertThat(context).hasSingleBean(RawResponseDownloadUrlGenerator::class.java)
+                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(S3CompatibleRawResponseStorage::class.java)
+                assertThat(context.getBean(RawResponseStorage::class.java))
+                    .isSameAs(context.getBean(RawResponseDownloadUrlGenerator::class.java))
             }
     }
 
     @Test
-    fun `local storage wins over noop storage when both configs are loaded`() {
+    fun `S3 storage wins over noop storage when both configs are loaded`() {
         ApplicationContextRunner()
             .withUserConfiguration(TestConfig::class.java, DataQualityStorageConfig::class.java, DataQualityNoopConfig::class.java)
             .withPropertyValues(
                 "footballay.data-quality.enabled=true",
                 "footballay.data-quality.storage.enabled=true",
-                "footballay.data-quality.storage.type=local",
+                "footballay.data-quality.storage.type=s3",
+                "footballay.data-quality.storage.bucket=footballay-data-quality",
+                "footballay.data-quality.storage.region=ap-northeast-2",
             ).run { context ->
                 assertThat(context).hasSingleBean(RawResponseStorage::class.java)
-                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(LocalRawResponseStorage::class.java)
+                assertThat(context).hasSingleBean(RawResponseDownloadUrlGenerator::class.java)
+                assertThat(context.getBean(RawResponseStorage::class.java)).isInstanceOf(S3CompatibleRawResponseStorage::class.java)
             }
     }
 

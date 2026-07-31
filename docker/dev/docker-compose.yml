@@ -91,6 +91,37 @@ services:
         max-file: "5"
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: footballay-dev-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: footballay-dev-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/footballay-data-quality-raw-local
+    restart: "no"
+
   postgres:
     image: postgres:17.4
     container_name: footballay-dev-postgres
@@ -143,4 +174,6 @@ volumes:
   kafka_data:
     driver: local
   mongodb_data:
+    driver: local
+  minio_data:
     driver: local
