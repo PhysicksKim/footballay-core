@@ -85,6 +85,13 @@ These rules bias toward caution over speed. For trivial tasks, use judgment.
 
 ## Command and token discipline
 
+### Code dump
+
+* When the user requests a "code dump" or "코드 덤프", create or overwrite the requested dump file by command-line streaming, not by reading each source file into the model and reproducing it through a patch.
+* Resolve the target files with Git first. Unless the user specifies another scope, include every changed `src/` file relative to `HEAD`, including untracked source files, and exclude ignored planning files.
+* Write each target file's complete current filesystem contents to one Markdown file, with a file-path heading and fenced code block. Do not summarize, omit code, or reinterpret source contents.
+* Prefer a single shell pipeline or short shell script that writes directly to the dump file. Verify the number of dumped file headings matches the resolved target file count.
+
 * Prefer targeted commands before full-suite commands.
 * For Gradle tests, prefer.
   `./gradlew test --tests "fully.qualified.TestName" --console=plain`.
