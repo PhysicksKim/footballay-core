@@ -25,14 +25,16 @@ class DataQualityCollectorConfig {
     fun apiSportsRawResponseCollector(
         @Qualifier(DATA_QUALITY_TASK_EXECUTOR_BEAN_NAME)
         taskExecutor: ThreadPoolTaskExecutor,
+        properties: DataQualityProperties,
         canonicalHasher: RawResponseCanonicalHasher,
         duplicateGate: RawResponseDuplicateGate,
         objectKeyFactory: RawResponseObjectKeyFactory,
         gzipCodec: RawResponseGzipCodec,
         storage: RawResponseStorage,
         publisher: RawResponsePublisher,
-    ): ApiSportsRawResponseCollector =
-        DefaultApiSportsRawResponseCollector(
+    ): ApiSportsRawResponseCollector {
+        validateEnabledDependencies(properties)
+        return DefaultApiSportsRawResponseCollector(
             taskExecutor = taskExecutor,
             canonicalHasher = canonicalHasher,
             duplicateGate = duplicateGate,
@@ -41,4 +43,14 @@ class DataQualityCollectorConfig {
             storage = storage,
             publisher = publisher,
         )
+    }
+
+    private fun validateEnabledDependencies(properties: DataQualityProperties) {
+        require(properties.storage.enabled && properties.storage.type == StorageType.S3) {
+            "footballay.data-quality.raw-collection.enabled requires enabled S3 storage"
+        }
+        require(properties.kafka.enabled && properties.kafka.producer.enabled) {
+            "footballay.data-quality.raw-collection.enabled requires enabled Kafka producer"
+        }
+    }
 }

@@ -9,6 +9,7 @@ import com.footballay.core.infra.dataquality.raw.RawResponseObjectKeyFactory
 import com.footballay.core.infra.dataquality.raw.RawResponsePublisher
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.mock
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -49,10 +50,27 @@ class DataQualityCollectorConfigTest {
             .withPropertyValues(
                 "footballay.data-quality.enabled=true",
                 "footballay.data-quality.raw-collection.enabled=true",
+                "footballay.data-quality.storage.enabled=true",
+                "footballay.data-quality.storage.type=s3",
+                "footballay.data-quality.kafka.enabled=true",
+                "footballay.data-quality.kafka.producer.enabled=true",
             ).run { context ->
                 assertThat(context).hasSingleBean(ApiSportsRawResponseCollector::class.java)
                 assertThat(context.getBean(ApiSportsRawResponseCollector::class.java))
                     .isInstanceOf(DefaultApiSportsRawResponseCollector::class.java)
+            }
+    }
+
+    @Test
+    fun `fails startup when raw collection is enabled without s3 storage and kafka producer`() {
+        contextRunner
+            .withPropertyValues(
+                "footballay.data-quality.enabled=true",
+                "footballay.data-quality.raw-collection.enabled=true",
+            ).run { context ->
+                assertThat(context.startupFailure).isNotNull()
+                assertThatThrownBy { throw context.startupFailure }
+                    .hasMessageContaining("requires enabled S3 storage")
             }
     }
 
@@ -63,6 +81,10 @@ class DataQualityCollectorConfigTest {
             .withPropertyValues(
                 "footballay.data-quality.enabled=true",
                 "footballay.data-quality.raw-collection.enabled=true",
+                "footballay.data-quality.storage.enabled=true",
+                "footballay.data-quality.storage.type=s3",
+                "footballay.data-quality.kafka.enabled=true",
+                "footballay.data-quality.kafka.producer.enabled=true",
             ).run { context ->
                 assertThat(context).hasSingleBean(ApiSportsRawResponseCollector::class.java)
                 assertThat(context.getBean(ApiSportsRawResponseCollector::class.java))

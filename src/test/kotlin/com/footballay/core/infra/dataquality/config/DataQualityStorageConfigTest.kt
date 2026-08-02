@@ -1,12 +1,17 @@
 package com.footballay.core.infra.dataquality.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.footballay.core.config.JacksonConfig
+import com.footballay.core.infra.dataquality.raw.KafkaRawResponsePublisher
 import com.footballay.core.infra.dataquality.raw.NoopRawResponseStorage
 import com.footballay.core.infra.dataquality.raw.RawResponseDownloadUrlGenerator
+import com.footballay.core.infra.dataquality.raw.RawResponsePublisher
 import com.footballay.core.infra.dataquality.raw.RawResponseStorage
 import com.footballay.core.infra.dataquality.raw.S3CompatibleRawResponseStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.context.annotation.Bean
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Configuration
 
@@ -90,7 +95,31 @@ class DataQualityStorageConfigTest {
             }
     }
 
+    @Test
+    fun `registers S3 storage and Kafka publisher when all raw collection flags are enabled`() {
+        ApplicationContextRunner()
+            .withUserConfiguration(TestConfig::class.java, DataQualityStorageConfig::class.java, DataQualityKafkaProducerConfig::class.java)
+            .withPropertyValues(
+                "spring.kafka.bootstrap-servers=localhost:9092",
+                "footballay.data-quality.enabled=true",
+                "footballay.data-quality.raw-collection.enabled=true",
+                "footballay.data-quality.storage.enabled=true",
+                "footballay.data-quality.storage.type=s3",
+                "footballay.data-quality.storage.bucket=footballay-data-quality",
+                "footballay.data-quality.storage.region=ap-northeast-2",
+                "footballay.data-quality.kafka.enabled=true",
+                "footballay.data-quality.kafka.producer.enabled=true",
+            ).run { context ->
+                assertThat(context).hasSingleBean(S3CompatibleRawResponseStorage::class.java)
+                assertThat(context).hasSingleBean(RawResponsePublisher::class.java)
+                assertThat(context.getBean(RawResponsePublisher::class.java)).isInstanceOf(KafkaRawResponsePublisher::class.java)
+            }
+    }
+
     @Configuration
     @EnableConfigurationProperties(DataQualityProperties::class)
-    private class TestConfig
+    private class TestConfig {
+        @Bean
+        fun objectMapper(): ObjectMapper = JacksonConfig().objectMapper()
+    }
 }

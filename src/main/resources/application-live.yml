@@ -9,10 +9,19 @@ footballay:
       x-rapidapi-key-name: x-rapidapi-key
       x-rapidapi-key-value: ${FOOTBALLAY_APISPORTS_X_RAPIDAPI_KEY_VALUE}
   data-quality:
+    enabled: ${FOOTBALLAY_DATA_QUALITY_ENABLED:false}
+    raw-collection:
+      enabled: ${FOOTBALLAY_DATA_QUALITY_RAW_COLLECTION_ENABLED:false}
     storage:
+      enabled: ${FOOTBALLAY_DATA_QUALITY_STORAGE_ENABLED:false}
+      type: s3
       bucket: ${FOOTBALLAY_DATA_QUALITY_S3_BUCKET}
       region: ${FOOTBALLAY_DATA_QUALITY_S3_REGION}
       s3-download-url-ttl: 10m
+    kafka:
+      enabled: ${FOOTBALLAY_DATA_QUALITY_KAFKA_ENABLED:false}
+      producer:
+        enabled: ${FOOTBALLAY_DATA_QUALITY_KAFKA_PRODUCER_ENABLED:false}
 
 aws:
   cloudfront:
@@ -28,6 +37,15 @@ aws:
     bucket-name: ${AWS_S3_BUCKET_NAME}
 
 spring:
+  kafka:
+    bootstrap-servers: ${AIVEN_KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: SCRAM-SHA-256
+      ssl.truststore.location: ${AIVEN_KAFKA_CA_PATH}
+      ssl.truststore.type: PEM
+      sasl.jaas.config: >-
+        org.apache.kafka.common.security.scram.ScramLoginModule required username="${AIVEN_KAFKA_CORE_USERNAME}" password="${AIVEN_KAFKA_CORE_PASSWORD}";
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     driver-class-name: org.postgresql.Driver
