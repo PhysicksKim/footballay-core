@@ -1,0 +1,25 @@
+name: footballay-seaweedfs-poc
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.29
+    container_name: footballay-dev-seaweedfs
+    command: mini -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: seaweedfsadmin
+      AWS_SECRET_ACCESS_KEY: seaweedfsadmin
+      S3_BUCKET: footballay-data-quality-raw-local
+    ports:
+      - "8333:8333"
+    volumes:
+      - seaweedfs_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "test \"$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8333/)\" = 403"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  seaweedfs_data:
