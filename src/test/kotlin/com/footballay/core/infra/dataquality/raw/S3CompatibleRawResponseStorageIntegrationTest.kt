@@ -3,9 +3,11 @@ package com.footballay.core.infra.dataquality.raw
 import com.footballay.core.infra.dataquality.raw.model.RawResponseUploadCommand
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
@@ -27,7 +29,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.util.zip.GZIPOutputStream
 
-/** MinIO endpoint에서 S3 path-style presigned GET 계약을 검증합니다. */
+/** SeaweedFS `weed mini` endpoint에서 S3 path-style presigned GET 계약을 검증합니다. */
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class S3CompatibleRawResponseStorageIntegrationTest {
@@ -40,6 +42,7 @@ class S3CompatibleRawResponseStorageIntegrationTest {
     }
 
     @Test
+    @DisplayName("raw response storage가 SeaweedFS presigned GET으로 gzip byte를 보존한다.")
     fun `uploads gzip bytes and downloads identical bytes through a presigned GET URL`() {
         val storage =
             S3CompatibleRawResponseStorage(
@@ -77,12 +80,12 @@ class S3CompatibleRawResponseStorageIntegrationTest {
 
         @Container
         @JvmStatic
-        val minio = MinioContainer()
+        val seaweedFs = SeaweedFsMiniContainer()
 
         val endpoint: URI
-            get() = URI.create("http://${minio.host}:${minio.getMappedPort(9000)}")
+            get() = URI.create("http://${seaweedFs.host}:${seaweedFs.getMappedPort(8333)}")
 
-        val credentials = StaticCredentialsProvider.create(AwsBasicCredentials.create("minioadmin", "minioadmin"))
+        val credentials = StaticCredentialsProvider.create(AwsBasicCredentials.create("seaweedfsadmin", "seaweedfsadmin"))
 
         val s3Client: S3Client by lazy {
             S3Client
@@ -106,14 +109,15 @@ class S3CompatibleRawResponseStorageIntegrationTest {
     }
 }
 
-private class MinioContainer :
-    GenericContainer<MinioContainer>(
-        DockerImageName.parse("minio/minio:RELEASE.2025-04-22T22-12-26Z"),
+private class SeaweedFsMiniContainer :
+    GenericContainer<SeaweedFsMiniContainer>(
+        DockerImageName.parse("chrislusf/seaweedfs:4.29"),
     ) {
     init {
-        withEnv("MINIO_ROOT_USER", "minioadmin")
-        withEnv("MINIO_ROOT_PASSWORD", "minioadmin")
-        withCommand("server", "/data")
-        withExposedPorts(9000)
+        withEnv("AWS_ACCESS_KEY_ID", "seaweedfsadmin")
+        withEnv("AWS_SECRET_ACCESS_KEY", "seaweedfsadmin")
+        withCommand("mini", "-dir=/data")
+        withExposedPorts(8333)
+        waitingFor(Wait.forHttp("/").forPort(8333).forStatusCode(403))
     }
 }

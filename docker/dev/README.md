@@ -48,9 +48,9 @@ mongodb:
   Data Quality quality_results와 issue_types smoke test용 로컬 MongoDB.
   호스트에서 실행하는 앱은 mongodb://localhost:27017로 접근한다.
 
-minio:
-  Core와 Data Quality Service가 같은 S3-compatible raw response 저장소로 사용하는 로컬 MinIO.
-  API는 http://localhost:9000, 콘솔은 http://localhost:9001로 접근한다.
+seaweedfs:
+  Core와 Data Quality Service가 같은 S3-compatible raw response 저장소로 사용하는 로컬 SeaweedFS weed mini.
+  API는 http://localhost:8333로 접근하며 footballay-data-quality-raw-local bucket을 자동 생성한다.
 ```
 
 ## Volume 영속성.
@@ -67,6 +67,9 @@ kafka_data:
 
 mongodb_data:
   MongoDB 데이터 디렉터리.
+
+seaweedfs_data:
+  SeaweedFS S3 데이터 디렉터리.
 ```
 
 ---
@@ -86,3 +89,5 @@ docker compose down -v
 ```bash
 docker compose down
 ```
+
+기존 MinIO volume의 데이터는 자동으로 이전하거나 삭제하지 않는다. 필요한 fixture만 S3 API로 명시적으로 export/import한다.

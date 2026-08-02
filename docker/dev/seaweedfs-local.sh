@@ -13,13 +13,13 @@ aws_s3api() {
 }
 
 case "${1:-}" in
-  up) docker compose -f docker-compose.seaweedfs.yml up -d ;;
-  down) docker compose -f docker-compose.seaweedfs.yml down ;;
+  up) docker compose up -d ;;
+  down) docker compose down ;;
   buckets) aws_s3api list-buckets ;;
   upload) aws_s3api put-object --bucket "$SEAWEEDFS_BUCKET" --key "$3" --body "$2" ;;
   list) aws --endpoint-url "$SEAWEEDFS_ENDPOINT" s3 ls "s3://$SEAWEEDFS_BUCKET" --recursive ;;
   download) aws_s3api get-object --bucket "$SEAWEEDFS_BUCKET" --key "$2" "$3" ;;
-  restart) docker compose -f docker-compose.seaweedfs.yml restart seaweedfs ;;
+  restart) docker compose restart seaweedfs ;;
   reset) aws --endpoint-url "$SEAWEEDFS_ENDPOINT" s3 rm "s3://$SEAWEEDFS_BUCKET" --recursive ;;
   seed) aws --endpoint-url "$SEAWEEDFS_ENDPOINT" s3 sync "$2" "s3://$SEAWEEDFS_BUCKET/${3:-}" ;;
   *)

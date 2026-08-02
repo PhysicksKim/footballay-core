@@ -143,10 +143,10 @@ footballay:
       enabled: true
       bucket: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_BUCKET:footballay-data-quality-raw-local}
       region: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_REGION:ap-northeast-2}
-      endpoint: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ENDPOINT:http://localhost:9000}
+      endpoint: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ENDPOINT:http://localhost:8333}
       path-style-access-enabled: true
-      access-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ACCESS_KEY:minioadmin}
-      secret-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_SECRET_KEY:minioadmin}
+      access-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_ACCESS_KEY:seaweedfsadmin}
+      secret-key: ${FOOTBALLAY_DATA_QUALITY_RAW_S3_SECRET_KEY:seaweedfsadmin}
     kafka:
       enabled: true
       producer:
