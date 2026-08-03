@@ -25,7 +25,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/physickskim/footballay-core
+  IMAGE_NAME: ghcr.io/footballay/footballay-core
 
 jobs:
   build-test:
@@ -182,5 +182,5 @@ jobs:
           curl -fsS -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${TOKEN}" \
-            https://api.github.com/repos/PhysicksKim/footballay-core-action/dispatches \
+            https://api.github.com/repos/Footballay/footballay-core-action/dispatches \
             -d "${PAYLOAD}"
