@@ -37,9 +37,6 @@ aws:
     bucket-name: ${AWS_S3_BUCKET_NAME}
 
 spring:
-  data:
-    mongodb:
-      uri: ${FOOTBALLAY_DATA_QUALITY_MONGODB_URI}
   kafka:
     bootstrap-servers: ${AIVEN_KAFKA_BOOTSTRAP_SERVERS}
     properties:
@@ -54,6 +51,8 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   data:
+    mongodb:
+      uri: ${FOOTBALLAY_DATA_QUALITY_MONGODB_URI}
     redis:
       host: redis
       port: 6379
