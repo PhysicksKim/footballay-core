@@ -36,7 +36,7 @@ spring:
       port: 6379
       password: 1234
     mongodb:
-      uri: mongodb://localhost:27017/footballay_data_quality
+      uri: mongodb://localhost:27017/footballay
 
   # Quartz Scheduler
   quartz:

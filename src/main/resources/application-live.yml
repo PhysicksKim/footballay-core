@@ -52,7 +52,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${FOOTBALLAY_DATA_QUALITY_MONGODB_URI}
+      uri: ${FOOTBALLAY_MONGODB_URI}
     redis:
       host: redis
       port: 6379

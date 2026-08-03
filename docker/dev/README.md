@@ -67,6 +67,8 @@ kafka_data:
 
 mongodb_data:
   MongoDB 데이터 디렉터리.
+  기존 volume에 footballay_data_quality database가 있으면 자동으로 footballay로 이전되거나 삭제되지 않는다.
+  개발 데이터가 필요하면 명시적으로 정리하거나 새 footballay database를 생성한다.
 
 seaweedfs_data:
   SeaweedFS S3 데이터 디렉터리.

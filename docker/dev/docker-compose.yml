@@ -78,7 +78,7 @@ services:
     image: mongo:7.0
     container_name: footballay-dev-mongodb
     environment:
-      MONGO_INITDB_DATABASE: footballay_data_quality
+      MONGO_INITDB_DATABASE: footballay
       TZ: Asia/Seoul
     ports:
       - "27017:27017"
