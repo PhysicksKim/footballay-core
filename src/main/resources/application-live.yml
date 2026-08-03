@@ -37,6 +37,9 @@ aws:
     bucket-name: ${AWS_S3_BUCKET_NAME}
 
 spring:
+  data:
+    mongodb:
+      uri: ${FOOTBALLAY_DATA_QUALITY_MONGODB_URI}
   kafka:
     bootstrap-servers: ${AIVEN_KAFKA_BOOTSTRAP_SERVERS}
     properties:
