@@ -8,16 +8,15 @@
             </auth>
         </http>
 
-        <batch>
-            <maxItems>100</maxItems>
-            <timeoutMs>2000</timeoutMs>
-        </batch>
+        <batchMaxItems>100</batchMaxItems>
+        <batchTimeoutMs>2000</batchTimeoutMs>
 
-        <labels>
-            application = footballay
-            host        = ${HOSTNAME:-unknown}
-        </labels>
-        <layout class="com.github.loki4j.logback.JsonLayout"/>
+        <format class="com.github.loki4j.logback.JsonEncoder">
+            <label>
+                <pattern>application=footballay,service_name=footballay,environment=prod</pattern>
+            </label>
+            <staticLabels>true</staticLabels>
+        </format>
     </appender>
 
     <root level="INFO">
