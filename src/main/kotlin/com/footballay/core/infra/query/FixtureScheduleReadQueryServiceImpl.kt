@@ -16,6 +16,10 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
+/**
+ * Desktop 경기 일정 조회를 위한 읽기 서비스입니다.
+ * Mock Backbone은 실제 수집 데이터와 분리해 조회 동작을 검증할 fixture를 넣기 위한 저장소이며, MockDataReadOption이 요청되면 그 fixture도 함께 반환합니다.
+ */
 @Service
 @Transactional(readOnly = true)
 class FixtureScheduleReadQueryServiceImpl(
@@ -26,6 +30,35 @@ class FixtureScheduleReadQueryServiceImpl(
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     private val clock: Clock = Clock.systemUTC(),
 ) : FixtureScheduleReadQueryService {
+    override fun findFixtureKickoffsByLeague(
+        leagueUid: String,
+        startInclusive: Instant,
+        endExclusive: Instant,
+        option: MockDataReadOption,
+    ): DomainResult<List<Instant>, DomainFail> =
+        try {
+            val fixtureKickoffs =
+                fixtureCoreRepository.findDistinctDefaultKickoffsByLeagueUidInRange(
+                    leagueUid,
+                    startInclusive,
+                    endExclusive,
+                )
+            val mockKickoffs =
+                if (option.includeMockData) {
+                    mockBackboneFixtureRepository.findDistinctMockBackedKickoffsByLeagueUidInRange(
+                        leagueUid,
+                        startInclusive,
+                        endExclusive,
+                    )
+                } else {
+                    emptyList()
+                }
+
+            DomainResult.Success((fixtureKickoffs + mockKickoffs).distinct())
+        } catch (ex: Exception) {
+            DomainResult.Fail(DomainFail.Unknown("Failed to fetch fixture kickoffs: ${ex.message}"))
+        }
+
     override fun findFixturesByLeague(
         leagueUid: String,
         at: Instant?,

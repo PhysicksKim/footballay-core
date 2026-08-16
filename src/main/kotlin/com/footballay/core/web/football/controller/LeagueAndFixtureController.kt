@@ -4,13 +4,18 @@ import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
+import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
 import com.footballay.core.web.football.service.LeagueAndFixtureWebService
 import com.footballay.core.web.football.service.MockDataReadOptionResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.Pattern
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -47,6 +52,57 @@ class LeagueAndFixtureController(
             .getAvailableLeagues(MockDataReadOptionResolver.resolve(devData))
             .toResponseEntity()
 
+    @Operation(summary = "리그별 경기 날짜 조회", description = "캘린더 표시에 사용할 경기 보유 날짜를 조회합니다.")
+    @ApiResponse(
+        responseCode = "200",
+        description = "경기가 있는 날짜 목록입니다.",
+        content = [
+            Content(
+                schema = Schema(implementation = FixtureDatesByLeagueResponse::class),
+                examples = [ExampleObject(value = """{"dates":["2026-08-01","2026-08-31"]}""")],
+            ),
+        ],
+    )
+    @GetMapping("/{leagueUid}/fixtures/dates")
+    fun fixtureDatesByLeague(
+        @Parameter(description = "리그 UID", example = "a1b2c3d4e5f6g7h8")
+        @PathVariable
+        leagueUid: String,
+        @Parameter(description = "시작 날짜 (YYYY-MM-DD, inclusive)", example = "2026-08-01")
+        @RequestParam
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        startDate: LocalDate,
+        @Parameter(description = "종료 날짜 (YYYY-MM-DD, inclusive)", example = "2026-08-31")
+        @RequestParam
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        endDate: LocalDate,
+        @Parameter(description = "Timezone (IANA format, default: UTC)", example = "Asia/Seoul")
+        @RequestParam(required = false, defaultValue = "UTC")
+        timezone: String,
+        @Parameter(description = "mock data 포함 옵션. include이면 mock data를 포함합니다.", example = "include")
+        @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
+        devData: String?,
+    ): ResponseEntity<FixtureDatesByLeagueResponse> {
+        val normalizedLeagueUid = leagueUid.trim()
+        if (normalizedLeagueUid.isEmpty()) return ResponseEntity.badRequest().build()
+        val zoneId =
+            try {
+                ZoneId.of(timezone.trim())
+            } catch (_: Exception) {
+                return ResponseEntity.badRequest().build()
+            }
+        if (startDate.isAfter(endDate)) return ResponseEntity.badRequest().build()
+
+        return leagueAndFixtureWebService
+            .getFixtureDatesByLeague(
+                normalizedLeagueUid,
+                startDate.atStartOfDay(zoneId).toInstant(),
+                endDate.plusDays(1).atStartOfDay(zoneId).toInstant(),
+                zoneId,
+                MockDataReadOptionResolver.resolve(devData),
+            ).toResponseEntity()
+    }
+
     /**
      * 리그의 경기 일정을 모드에 따라 조회합니다.
      *
@@ -82,22 +138,24 @@ class LeagueAndFixtureController(
         @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
         devData: String?,
     ): ResponseEntity<List<FixtureByLeagueResponse>> {
+        val normalizedLeagueUid = leagueUid.trim()
+        if (normalizedLeagueUid.isEmpty()) return ResponseEntity.badRequest().build()
         val zoneId =
             try {
-                ZoneId.of(timezone)
+                ZoneId.of(timezone.trim())
             } catch (_: Exception) {
                 ZoneOffset.UTC
             }
         val localDate =
             try {
-                date?.let { LocalDate.parse(it) }
+                date?.trim()?.takeIf { it.isNotEmpty() }?.let { LocalDate.parse(it) }
             } catch (_: Exception) {
                 null
             }
         val atInstant = localDate?.atStartOfDay(zoneId)?.toInstant()
 
         return leagueAndFixtureWebService
-            .getFixturesByLeague(leagueUid, atInstant, mode, zoneId, MockDataReadOptionResolver.resolve(devData))
+            .getFixturesByLeague(normalizedLeagueUid, atInstant, mode, zoneId, MockDataReadOptionResolver.resolve(devData))
             .toResponseEntity()
     }
 }

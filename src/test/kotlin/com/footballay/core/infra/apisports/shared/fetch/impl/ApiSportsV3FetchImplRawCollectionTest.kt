@@ -66,6 +66,32 @@ class ApiSportsV3FetchImplRawCollectionTest {
     }
 
     @Test
+    fun `fixtures of league fetch maps raw body to DTO and sends it to collector`() {
+        val collector = mock<ApiSportsRawResponseCollector>()
+        val fixture = testFixture(collector = collector)
+        fixture.expectGetFixturesOfLeague(FIXTURES_OF_LEAGUE_JSON)
+
+        val response = fixture.fetcher.fetchFixturesOfLeague(39, 2026)
+
+        assertThat(response.response).hasSize(1)
+        assertThat(response.response.first().fixture.id).isEqualTo(1208397)
+
+        val commandCaptor = argumentCaptor<RawResponseCollectionCommand>()
+        verify(collector).collect(commandCaptor.capture())
+        assertThat(commandCaptor.firstValue.provider).isEqualTo(FootballDataProvider.API_SPORTS)
+        assertThat(commandCaptor.firstValue.endpointKey).isEqualTo("fixturesOfLeague")
+        assertThat(commandCaptor.firstValue.parameters)
+            .containsExactly(
+                RawResponseParameter("leagueId", "39"),
+                RawResponseParameter("season", "2026"),
+            )
+        assertThat(commandCaptor.firstValue.rawJson).isEqualTo(FIXTURES_OF_LEAGUE_JSON)
+        assertThat(commandCaptor.firstValue.collectedAt).isEqualTo(FIXED_NOW)
+
+        fixture.server.verify()
+    }
+
+    @Test
     fun `non fixture single fetch maps DTO without raw collection`() {
         val collector = mock<ApiSportsRawResponseCollector>()
         val fixture = testFixture(collector = collector)
@@ -179,6 +205,16 @@ class ApiSportsV3FetchImplRawCollectionTest {
             .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON))
     }
 
+    private fun TestFixture.expectGetFixturesOfLeague(responseBody: String) {
+        server
+            .expect(requestTo("https://v3.football.api-sports.io/fixtures?league=39&season=2026"))
+            .andExpect(method(org.springframework.http.HttpMethod.GET))
+            .andExpect(header(properties.headers.xRapidapiKeyName, properties.headers.xRapidapiKeyValue))
+            .andExpect(header("Accept", "application/json"))
+            .andExpect(header("Accept-Encoding", "identity"))
+            .andRespond(withSuccess(responseBody, MediaType.APPLICATION_JSON))
+    }
+
     private data class TestFixture(
         val fetcher: ApiSportsV3FetchImpl,
         val server: MockRestServiceServer,
@@ -255,6 +291,50 @@ class ApiSportsV3FetchImplRawCollectionTest {
                   "lineups": [],
                   "statistics": [],
                   "players": []
+                }
+              ]
+            }
+        """
+        private const val FIXTURES_OF_LEAGUE_JSON = """
+            {
+              "get": "fixtures",
+              "parameters": {"league": "39", "season": "2026"},
+              "errors": [],
+              "results": 1,
+              "paging": {"current": 1, "total": 1},
+              "response": [
+                {
+                  "fixture": {
+                    "id": 1208397,
+                    "referee": null,
+                    "timezone": "UTC",
+                    "date": "2026-07-02T19:00:00+00:00",
+                    "timestamp": 1783028400,
+                    "periods": {"first": 1783028400, "second": 1783032000},
+                    "venue": {"id": 1, "name": "Old Trafford", "city": "Manchester"},
+                    "status": {"long": "Not Started", "short": "NS", "elapsed": null, "extra": null}
+                  },
+                  "league": {
+                    "id": 39,
+                    "name": "Premier League",
+                    "country": "England",
+                    "logo": "league-logo",
+                    "flag": "flag",
+                    "season": 2026,
+                    "round": "Regular Season - 1",
+                    "standings": true
+                  },
+                  "teams": {
+                    "home": {"id": 33, "name": "Manchester United", "logo": "home-logo", "winner": null},
+                    "away": {"id": 34, "name": "Newcastle", "logo": "away-logo", "winner": null}
+                  },
+                  "goals": {"home": null, "away": null},
+                  "score": {
+                    "halftime": {"home": null, "away": null},
+                    "fulltime": {"home": null, "away": null},
+                    "extratime": null,
+                    "penalty": null
+                  }
                 }
               ]
             }

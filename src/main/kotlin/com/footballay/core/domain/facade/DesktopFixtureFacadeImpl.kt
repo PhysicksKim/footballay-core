@@ -2,12 +2,14 @@ package com.footballay.core.domain.facade
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.common.result.map
 import com.footballay.core.domain.model.FixtureModel
 import com.footballay.core.infra.query.FixtureScheduleReadQueryService
 import com.footballay.core.logger
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
@@ -24,6 +26,18 @@ class DesktopFixtureFacadeImpl(
     private val fixtureScheduleReadQueryService: FixtureScheduleReadQueryService,
 ) : DesktopFixtureFacade {
     val log = logger()
+
+    @Transactional(readOnly = true)
+    override fun getFixtureDatesByLeague(
+        leagueUid: String,
+        startInclusive: Instant,
+        endExclusive: Instant,
+        zoneId: ZoneId,
+        option: MockDataReadOption,
+    ): DomainResult<List<LocalDate>, DomainFail> =
+        fixtureScheduleReadQueryService
+            .findFixtureKickoffsByLeague(leagueUid, startInclusive, endExclusive, option)
+            .map { kickoffs -> kickoffs.map { it.atZone(zoneId).toLocalDate() }.distinct().sorted() }
 
     @Transactional(readOnly = true)
     override fun getFixturesByLeague(

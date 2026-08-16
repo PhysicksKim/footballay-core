@@ -224,6 +224,31 @@ class MockDataReadRepositoryQueryTest {
             .isEqualTo(Instant.parse("2026-06-05T11:00:00Z"))
     }
 
+    @Test
+    fun `mock kickoff date query는 범위 경계를 지키고 다른 리그 fixture를 제외한다`() {
+        val startInclusive = Instant.parse("2026-06-01T00:00:00Z")
+        val endExclusive = Instant.parse("2026-06-02T00:00:00Z")
+        val atStart = saveFixture("mock-at-start", mockLeague, startInclusive)
+        val beforeEnd = saveFixture("mock-before-end", mockLeague, endExclusive.minusSeconds(1))
+        val atEnd = saveFixture("mock-at-end", mockLeague, endExclusive)
+        val otherLeagueFixture = saveFixture("mock-other-league", sharedLeague, Instant.parse("2026-06-01T12:00:00Z"))
+        saveMockBackboneFixture(atStart)
+        saveMockBackboneFixture(beforeEnd)
+        saveMockBackboneFixture(atEnd)
+        saveMockBackboneFixture(otherLeagueFixture)
+        entityManager.flush()
+        entityManager.clear()
+
+        val result =
+            mockBackboneFixtureRepository.findDistinctMockBackedKickoffsByLeagueUidInRange(
+                mockLeague.uid,
+                startInclusive,
+                endExclusive,
+            )
+
+        assertThat(result).containsExactlyInAnyOrder(startInclusive, endExclusive.minusSeconds(1))
+    }
+
     private fun saveApiSportsLeague(
         league: LeagueCore,
         apiId: Long,

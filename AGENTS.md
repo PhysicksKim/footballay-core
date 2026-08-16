@@ -126,3 +126,7 @@ A task is complete only when.
 * If checks could not run, the exact reason and command to run manually are reported.
 * The diff was reviewed for unrelated changes.
 * The final report lists changed files, verification result, and remaining risks.
+
+## ETC
+- Do not run `./gradlew --stop`, `clean`, or use temporary `GRADLE_USER_HOME` / Kotlin daemon overrides unless explicitly required.
+- Gradle/Kotlin first runs may take several minutes with little output; do not treat them as hung or terminate daemons prematurely.

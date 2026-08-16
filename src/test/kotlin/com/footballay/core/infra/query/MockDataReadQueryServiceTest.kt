@@ -139,6 +139,33 @@ class MockDataReadQueryServiceTest {
     }
 
     @Test
+    fun `fixture dates 기본 조회는 Core fixture를 반환하고 mock fixture는 option일 때만 포함한다`() {
+        val coreKickoff = Instant.parse("2026-06-10T10:00:00Z")
+        val mockKickoff = Instant.parse("2026-06-10T12:00:00Z")
+        saveFixture("core-date", sharedLeague, coreKickoff)
+        saveMockFixture("mock-date", sharedLeague, mockKickoff)
+        entityManager.flush()
+        entityManager.clear()
+
+        val defaultResult =
+            fixtureScheduleReadQueryService.findFixtureKickoffsByLeague(
+                sharedLeague.uid,
+                Instant.parse("2026-06-10T00:00:00Z"),
+                Instant.parse("2026-06-11T00:00:00Z"),
+            )
+        val includeMockResult =
+            fixtureScheduleReadQueryService.findFixtureKickoffsByLeague(
+                sharedLeague.uid,
+                Instant.parse("2026-06-10T00:00:00Z"),
+                Instant.parse("2026-06-11T00:00:00Z"),
+                MockDataReadOption(includeMockData = true),
+            )
+
+        assertThat((defaultResult as DomainResult.Success).value).containsExactly(coreKickoff)
+        assertThat((includeMockResult as DomainResult.Success).value).containsExactlyInAnyOrder(coreKickoff, mockKickoff)
+    }
+
+    @Test
     fun `fixture nearest 기본 조회는 mock kickoff에 오염되지 않는다`() {
         saveApiFixture("api-nearest", sharedLeague, Instant.parse("2026-06-10T10:00:00Z"))
         saveMockFixture("mock-nearest", sharedLeague, Instant.parse("2026-06-05T10:00:00Z"))

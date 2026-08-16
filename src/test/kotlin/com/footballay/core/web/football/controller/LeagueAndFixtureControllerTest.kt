@@ -4,6 +4,7 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.facade.MockDataReadOption
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
+import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
 import com.footballay.core.web.football.service.LeagueAndFixtureWebService
 import com.footballay.core.web.football.service.MockDataReadOptionResolver
 import io.mockk.every
@@ -133,14 +134,73 @@ class LeagueAndFixtureControllerTest {
             )
 
         mockMvc
-            .get("/api/v1/football/leagues/{leagueUid}/fixtures", "league-1") {
-                param("date", "2026-06-01")
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures", " league-1 ") {
+                param("date", " 2026-06-01 ")
                 param("mode", "exact")
-                param("timezone", "UTC")
+                param("timezone", " UTC ")
                 header(MockDataReadOptionResolver.HEADER_NAME, "include")
             }.andExpect {
                 status { isOk() }
                 jsonPath("$[0].uid") { value("mock-fixture") }
+            }
+    }
+
+    @Test
+    fun `fixture dates by league - inclusive 범위와 timezone을 전달한다`() {
+        every {
+            webService.getFixtureDatesByLeague(
+                leagueUid = "league-1",
+                startInclusive = Instant.parse("2026-08-01T00:00:00Z"),
+                endExclusive = Instant.parse("2026-09-01T00:00:00Z"),
+                zoneId = ZoneId.of("UTC"),
+                option = MockDataReadOption.DEFAULT,
+            )
+        } returns DomainResult.Success(FixtureDatesByLeagueResponse(listOf("2026-08-01", "2026-08-31")))
+
+        mockMvc
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures/dates", "league-1") {
+                param("startDate", "2026-08-01")
+                param("endDate", "2026-08-31")
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.dates[0]") { value("2026-08-01") }
+                jsonPath("$.dates[1]") { value("2026-08-31") }
+            }
+    }
+
+    @Test
+    fun `fixture dates by league - timezone 또는 날짜 범위가 잘못되면 bad request를 반환한다`() {
+        mockMvc
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures/dates", "   ") {
+                param("startDate", "2026-08-01")
+                param("endDate", "2026-08-31")
+            }.andExpect {
+                status { isBadRequest() }
+            }
+
+        mockMvc
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures/dates", "league-1") {
+                param("startDate", "2026-08-02")
+                param("endDate", "2026-08-01")
+            }.andExpect {
+                status { isBadRequest() }
+            }
+
+        mockMvc
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures/dates", "league-1") {
+                param("startDate", "2026-08-01")
+                param("endDate", "2026-08-31")
+                param("timezone", "invalid/timezone")
+            }.andExpect {
+                status { isBadRequest() }
+            }
+
+        mockMvc
+            .get("/api/v1/football/leagues/{leagueUid}/fixtures/dates", "league-1") {
+                param("startDate", "2026-08-xx")
+                param("endDate", "2026-08-31")
+            }.andExpect {
+                status { isBadRequest() }
             }
     }
 }

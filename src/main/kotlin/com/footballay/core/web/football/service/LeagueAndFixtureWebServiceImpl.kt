@@ -11,6 +11,7 @@ import com.footballay.core.domain.model.LeagueModel
 import com.footballay.core.logger
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
+import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
@@ -25,6 +26,17 @@ class LeagueAndFixtureWebServiceImpl(
     private val desktopFixtureFacade: DesktopFixtureFacade,
 ) : LeagueAndFixtureWebService {
     val log = logger()
+
+    override fun getFixtureDatesByLeague(
+        leagueUid: String,
+        startInclusive: Instant,
+        endExclusive: Instant,
+        zoneId: ZoneId,
+        option: MockDataReadOption,
+    ): DomainResult<FixtureDatesByLeagueResponse, DomainFail> =
+        desktopFixtureFacade
+            .getFixtureDatesByLeague(leagueUid, startInclusive, endExclusive, zoneId, option)
+            .map { dates -> FixtureDatesByLeagueResponse(dates.map { it.toString() }) }
 
     override fun getAvailableLeagues(option: MockDataReadOption): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
         desktopLeagueFacade.getAvailableLeagues(option).map { leagues ->

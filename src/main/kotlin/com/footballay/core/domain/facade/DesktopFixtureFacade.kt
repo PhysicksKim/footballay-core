@@ -4,12 +4,21 @@ import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.model.FixtureModel
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 /**
  * Desktop App용 Fixture 조회 Facade Interface
  */
 interface DesktopFixtureFacade {
+    fun getFixtureDatesByLeague(
+        leagueUid: String,
+        startInclusive: Instant,
+        endExclusive: Instant,
+        zoneId: ZoneId,
+        option: MockDataReadOption = MockDataReadOption.DEFAULT,
+    ): DomainResult<List<LocalDate>, DomainFail>
+
     /**
      * 리그의 경기 일정을 모드에 따라 조회합니다.
      *

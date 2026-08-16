@@ -51,6 +51,22 @@ interface MockBackboneFixtureRepository : JpaRepository<MockBackboneFixture, Lon
 
     @Query(
         """
+        SELECT DISTINCT f.kickoff
+        FROM MockBackboneFixture mf
+        JOIN mf.fixture f
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :startInclusive
+          AND f.kickoff < :endExclusive
+        """,
+    )
+    fun findDistinctMockBackedKickoffsByLeagueUidInRange(
+        @Param("leagueUid") leagueUid: String,
+        @Param("startInclusive") startInclusive: Instant,
+        @Param("endExclusive") endExclusive: Instant,
+    ): List<Instant>
+
+    @Query(
+        """
         SELECT MIN(f.kickoff)
         FROM MockBackboneFixture mf
         JOIN mf.fixture f

@@ -207,6 +207,26 @@ interface FixtureCoreRepository : JpaRepository<FixtureCore, Long> {
         @Param("endExclusive") endExclusive: Instant,
     ): List<FixtureCore>
 
+    @Query(
+        """
+        SELECT DISTINCT f.kickoff
+        FROM FixtureCore f
+        WHERE f.league.uid = :leagueUid
+          AND f.kickoff >= :startInclusive
+          AND f.kickoff < :endExclusive
+          AND NOT EXISTS (
+              SELECT mf.id
+              FROM MockBackboneFixture mf
+              WHERE mf.fixture = f
+          )
+        """,
+    )
+    fun findDistinctDefaultKickoffsByLeagueUidInRange(
+        @Param("leagueUid") leagueUid: String,
+        @Param("startInclusive") startInclusive: Instant,
+        @Param("endExclusive") endExclusive: Instant,
+    ): List<Instant>
+
     /**
      * 특정 리그(UID 기반)에서 from 이후 가장 가까운 kickoff 시각을 조회합니다.
      *

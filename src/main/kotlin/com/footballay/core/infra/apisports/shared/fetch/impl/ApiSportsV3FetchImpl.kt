@@ -110,6 +110,16 @@ class ApiSportsV3FetchImpl(
         logNameAndUri("fixtures of league", uri)
 
         val rawJson = fetchRaw(uri, "Response body is null of ApiSports Fixtures of League")
+        collectRawResponse(
+            requestName = "fixtures of league",
+            endpointKey = "fixturesOfLeague",
+            parameters =
+                listOf(
+                    RawResponseParameter(name = "leagueId", value = leagueApiId.toString()),
+                    RawResponseParameter(name = "season", value = season.toString()),
+                ),
+            rawJson = rawJson,
+        )
 
         return mapRawJson<ApiSportsV3Envelope<ApiSportsFixture.OfLeague>>(rawJson)
     }

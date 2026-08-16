@@ -8,6 +8,13 @@ import java.time.Instant
 import java.time.ZoneId
 
 interface FixtureScheduleReadQueryService {
+    fun findFixtureKickoffsByLeague(
+        leagueUid: String,
+        startInclusive: Instant,
+        endExclusive: Instant,
+        option: MockDataReadOption = MockDataReadOption.DEFAULT,
+    ): DomainResult<List<Instant>, DomainFail>
+
     fun findFixturesByLeague(
         leagueUid: String,
         at: Instant?,

@@ -27,6 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
@@ -256,6 +257,80 @@ class DesktopFixtureFacadeImplTest {
         assertThat(includeMockResult).isInstanceOf(DomainResult.Success::class.java)
         assertThat((includeMockResult as DomainResult.Success).value.map { it.uid })
             .containsExactly("api-option", "mock-option")
+    }
+
+    @Test
+    fun `fixture dates는 범위 양 끝을 포함하고 같은 날짜를 하나로 반환한다`() {
+        val start = Instant.parse("2025-03-05T00:00:00Z")
+        createFixtureWithApiSports("start-date", start)
+        createFixtureWithApiSports("same-date", start.plus(3, ChronoUnit.HOURS))
+        createFixtureWithApiSports("end-date", Instant.parse("2025-03-07T23:00:00Z"))
+        createFixtureWithApiSports("outside", Instant.parse("2025-03-08T00:00:00Z"))
+        em.flush()
+        em.clear()
+
+        val result =
+            desktopFixtureFacade.getFixtureDatesByLeague(
+                testLeague.uid,
+                start,
+                Instant.parse("2025-03-08T00:00:00Z"),
+                ZoneOffset.UTC,
+            )
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        assertThat((result as DomainResult.Success).value)
+            .containsExactly(
+                java.time.LocalDate.parse("2025-03-05"),
+                java.time.LocalDate.parse("2025-03-07"),
+            )
+    }
+
+    @Test
+    fun `fixture dates는 include option일 때만 mock fixture 날짜를 포함한다`() {
+        createFixtureWithMockBackbone("mock-date", Instant.parse("2025-03-06T10:00:00Z"))
+        em.flush()
+        em.clear()
+
+        val defaultResult =
+            desktopFixtureFacade.getFixtureDatesByLeague(
+                testLeague.uid,
+                Instant.parse("2025-03-06T00:00:00Z"),
+                Instant.parse("2025-03-07T00:00:00Z"),
+                ZoneOffset.UTC,
+            )
+        val includeResult =
+            desktopFixtureFacade.getFixtureDatesByLeague(
+                testLeague.uid,
+                Instant.parse("2025-03-06T00:00:00Z"),
+                Instant.parse("2025-03-07T00:00:00Z"),
+                ZoneOffset.UTC,
+                MockDataReadOption(includeMockData = true),
+            )
+
+        assertThat((defaultResult as DomainResult.Success).value).isEmpty()
+        assertThat((includeResult as DomainResult.Success).value)
+            .containsExactly(java.time.LocalDate.parse("2025-03-06"))
+    }
+
+    @Test
+    fun `fixture dates는 timezone의 자정 kickoff를 해당 로컬 날짜로 반환한다`() {
+        val zoneId = ZoneId.of("Asia/Seoul")
+        val startInclusive = Instant.parse("2025-03-01T15:00:00Z")
+        val endExclusive = Instant.parse("2025-03-02T15:00:00Z")
+        createFixtureWithApiSports("seoul-midnight", startInclusive)
+        em.flush()
+        em.clear()
+
+        val result =
+            desktopFixtureFacade.getFixtureDatesByLeague(
+                testLeague.uid,
+                startInclusive,
+                endExclusive,
+                zoneId,
+            )
+
+        assertThat((result as DomainResult.Success).value)
+            .containsExactly(java.time.LocalDate.parse("2025-03-02"))
     }
 
     @Test
