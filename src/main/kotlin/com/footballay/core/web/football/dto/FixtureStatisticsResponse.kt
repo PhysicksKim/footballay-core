@@ -20,6 +20,12 @@ data class FixtureStatisticsResponse(
 
     data class TeamWithStatistics(
         val team: TeamInfo,
+        /**
+         * 수집된 팀 통계입니다.
+         *
+         * provider가 통계를 아직 주지 않은 경우 내부 null 값은 0으로 보정됩니다.
+         * 따라서 0은 실제 경기 수치와 통계 미수집을 구분하지 않습니다.
+         */
         val teamStatistics: TeamStatistics,
         val playerStatistics: List<PlayerWithStatistics>,
     )

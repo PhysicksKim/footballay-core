@@ -272,6 +272,8 @@ class MatchDataQueryServiceImpl(
         )
 
     private fun toEventInfo(event: ApiSportsMatchEvent): FixtureEventsModel.EventInfo {
+        // ApiSportsMatchEvent는 저장 시 정규화된 값이다.
+        // Own Goal의 matchTeam은 득점 인정 팀이고, Missed Penalty의 eventType은 ETC다.
         val matchTeam = event.matchTeam
         val teamApiSports = matchTeam?.teamApiSports
         val teamCore = teamApiSports?.teamCore

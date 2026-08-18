@@ -13,6 +13,13 @@ class ApiSportsMatchEvent(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixture_api_id")
     var fixtureApi: FixtureApiSports,
+    /**
+     * 이벤트가 화면상 귀속되는 팀입니다.
+     *
+     * 일반 이벤트는 provider가 전달한 이벤트 팀입니다. 다만 `Goal`의 `Own Goal`은
+     * 자책골로 득점이 인정된 상대 팀으로 정규화되어 저장됩니다. 이 경우 [player]는
+     * [matchTeam]과 다른 팀의 자책골 선수일 수 있습니다.
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_team_id")
     var matchTeam: ApiSportsMatchTeam? = null,
@@ -37,6 +44,10 @@ class ApiSportsMatchEvent(
     @JoinColumn(name = "assist_id")
     var assist: ApiSportsMatchPlayer? = null,
     @Column(name = "sequence", nullable = false)
+    /**
+     * Core가 재정렬 후 부여한 이벤트 순서입니다.
+     * provider 배열 index가 아니며, 같은 시간의 이벤트를 안정적으로 정렬하는 자연 키입니다.
+     */
     var sequence: Int,
     // --- event info fields ---
     @Column(name = "elapsed_time")
@@ -44,7 +55,12 @@ class ApiSportsMatchEvent(
     @Column(name = "extra_time")
     var extraTime: Int? = null, // 추가 시간
     @Column(name = "event_type")
-    var eventType: String, // 이벤트 타입 (Goal, Card, Subst, VAR, ETC)
+    /**
+     * 정규화된 이벤트 타입입니다. 예. `Goal`, `Card`, `Subst`, `VAR`, `ETC`.
+     *
+     * provider의 `Goal + Missed Penalty`는 득점이 아니므로 `ETC + Missed Penalty`로 저장됩니다.
+     */
+    var eventType: String,
     @Column(name = "detail")
     var detail: String? = null, // 이벤트 상세 정보
     @Column(name = "comments")
