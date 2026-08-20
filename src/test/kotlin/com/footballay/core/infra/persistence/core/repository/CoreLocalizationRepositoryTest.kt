@@ -68,6 +68,66 @@ class CoreLocalizationRepositoryTest {
         assertThat(databaseLocales("league_core_localization")).containsExactly("en")
     }
 
+    @Test
+    fun `localization repositories batch read by core uid and locale`() {
+        val includedPlayer = playerCoreRepository.save(PlayerCore(uid = "included-player", name = "Player"))
+        val excludedPlayer = playerCoreRepository.save(PlayerCore(uid = "excluded-player", name = "Player"))
+        val includedTeam = teamCoreRepository.save(TeamCore(uid = "included-team", name = "Team"))
+        val excludedTeam = teamCoreRepository.save(TeamCore(uid = "excluded-team", name = "Team"))
+        val includedLeague = leagueCoreRepository.save(LeagueCore(uid = "included-league", name = "League"))
+        val excludedLeague = leagueCoreRepository.save(LeagueCore(uid = "excluded-league", name = "League"))
+
+        playerLocalizationRepository.saveAll(
+            listOf(
+                PlayerCoreLocalization(playerCore = includedPlayer, locale = SupportedLocale.EN, name = "Player EN"),
+                PlayerCoreLocalization(playerCore = includedPlayer, locale = SupportedLocale.KO, name = "선수"),
+                PlayerCoreLocalization(playerCore = excludedPlayer, locale = SupportedLocale.EN, name = "Excluded"),
+            ),
+        )
+        teamLocalizationRepository.saveAll(
+            listOf(
+                TeamCoreLocalization(teamCore = includedTeam, locale = SupportedLocale.EN, name = "Team EN"),
+                TeamCoreLocalization(teamCore = includedTeam, locale = SupportedLocale.KO, name = "팀"),
+                TeamCoreLocalization(teamCore = excludedTeam, locale = SupportedLocale.EN, name = "Excluded"),
+            ),
+        )
+        leagueLocalizationRepository.saveAll(
+            listOf(
+                LeagueCoreLocalization(leagueCore = includedLeague, locale = SupportedLocale.EN, name = "League EN"),
+                LeagueCoreLocalization(leagueCore = includedLeague, locale = SupportedLocale.KO, name = "리그"),
+                LeagueCoreLocalization(leagueCore = excludedLeague, locale = SupportedLocale.EN, name = "Excluded"),
+            ),
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val players =
+            playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(
+                coreUids = setOf(includedPlayer.uid, "missing-player"),
+                locales = SupportedLocale.entries,
+            )
+        val teams =
+            teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(
+                coreUids = setOf(includedTeam.uid, "missing-team"),
+                locales = setOf(SupportedLocale.KO),
+            )
+        val leagues =
+            leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(
+                coreUids = setOf(includedLeague.uid, "missing-league"),
+                locales = setOf(SupportedLocale.EN),
+            )
+
+        assertThat(players.map { it.playerCore.uid to it.locale })
+            .containsExactlyInAnyOrder(
+                includedPlayer.uid to SupportedLocale.EN,
+                includedPlayer.uid to SupportedLocale.KO,
+            )
+        assertThat(teams.map { it.teamCore.uid to it.locale })
+            .containsExactly(includedTeam.uid to SupportedLocale.KO)
+        assertThat(leagues.map { it.leagueCore.uid to it.locale })
+            .containsExactly(includedLeague.uid to SupportedLocale.EN)
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun databaseLocales(table: String): List<String> =
         entityManager.createNativeQuery("SELECT locale FROM $table ORDER BY id").resultList as List<String>
