@@ -12,6 +12,8 @@ import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocumentFactory
 import com.footballay.core.web.football.dto.FixtureLiveStatusResponse
 import com.footballay.core.web.football.mapper.MatchDataMapper
+import com.footballay.core.localization.SupportedLocale
+import com.footballay.core.web.football.localization.FootballResponseLocalizationService
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test
 class FixtureWebServiceCachingTest {
     private lateinit var matchDataQueryService: MatchDataQueryService
     private lateinit var matchDataMapper: MatchDataMapper
+    private lateinit var localizationService: FootballResponseLocalizationService
     private lateinit var cacheManager: FixtureWebCacheManager
     private lateinit var cacheDocumentFactory: FixtureResponseCacheDocumentFactory
     private lateinit var httpEtagHelper: FixtureHttpEtagHelper
@@ -33,6 +36,7 @@ class FixtureWebServiceCachingTest {
     fun setUp() {
         matchDataQueryService = mockk()
         matchDataMapper = mockk()
+        localizationService = mockk()
         cacheManager = mockk()
         cacheDocumentFactory = mockk()
         httpEtagHelper = mockk()
@@ -40,6 +44,7 @@ class FixtureWebServiceCachingTest {
             FixtureWebService(
                 matchDataQueryService = matchDataQueryService,
                 matchDataMapper = matchDataMapper,
+                localizationService = localizationService,
                 cacheManager = cacheManager,
                 cacheDocumentFactory = cacheDocumentFactory,
                 httpEtagHelper = httpEtagHelper,
@@ -165,6 +170,18 @@ class FixtureWebServiceCachingTest {
             ),
         )
         verify(exactly = 0) { matchDataQueryService.getFixtureLiveStatus(any()) }
+    }
+
+    @Test
+    fun `getFixtureEvents - cache hit 이면 localization 조회를 하지 않는다`() {
+        every { cacheManager.findSnapshot("fixture-1", FixturePollingEndpoint.EVENTS) } returns
+            FixtureWebCacheSnapshot(snapshotJson = "{\"fixtureUid\":\"fixture-1\"}", etagHash = "etag-1")
+
+        val result = service.getFixtureEvents("fixture-1", null, locale = SupportedLocale.KO)
+
+        assertThat(result).isEqualTo(FixtureWebResult.Ok("{\"fixtureUid\":\"fixture-1\"}", "etag-1"))
+        verify(exactly = 0) { matchDataQueryService.getFixtureEvents(any()) }
+        verify(exactly = 0) { localizationService.localizeEvents(any(), any()) }
     }
 
     @Test

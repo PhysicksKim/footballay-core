@@ -1,6 +1,7 @@
 package com.footballay.core.web.football.mapper
 
 import com.footballay.core.domain.model.match.*
+import com.footballay.core.web.football.localization.LocalizedFixtureInfoModel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -55,7 +56,17 @@ class MatchDataMapperTest {
             )
 
         // When
-        val dto = mapper.toFixtureInfoResponse(model)
+        val dto =
+            mapper.toFixtureInfoResponse(
+                LocalizedFixtureInfoModel(
+                    fixtureUid = model.fixtureUid,
+                    referee = model.referee,
+                    date = model.date,
+                    league = LocalizedFixtureInfoModel.League("premier-league-2024", "Premier League", null, "https://logo.png"),
+                    home = LocalizedFixtureInfoModel.Team("team-city-50", "Manchester City", null, "https://city-logo.png", null),
+                    away = LocalizedFixtureInfoModel.Team("team-liverpool-51", "Liverpool", null, "https://liverpool-logo.png", null),
+                ),
+            )
 
         // Then
         assertThat(dto.fixtureUid).isEqualTo("testfixture0001")
@@ -65,6 +76,38 @@ class MatchDataMapperTest {
         assertThat(dto.home?.name).isEqualTo("Manchester City")
         assertThat(dto.home?.shortName).isNull()
         assertThat(dto.away?.name).isEqualTo("Liverpool")
+        assertThat(dto.away?.shortName).isNull()
+    }
+
+    @Test
+    fun `toFixtureInfoResponse - 결정된 localized name을 반영한다`() {
+        val model =
+            FixtureInfoModel(
+                fixtureUid = "fixture-1",
+                referee = null,
+                date = "2026-08-20 20:00",
+                league = FixtureInfoModel.LeagueInfo(name = "Default League", logo = null, leagueUid = "league-1"),
+                home = FixtureInfoModel.TeamInfo(name = "Default Home", logo = null, teamUid = "team-home", playerColor = null),
+                away = FixtureInfoModel.TeamInfo(name = "Default Away", logo = null, teamUid = "team-away", playerColor = null),
+            )
+
+        val dto =
+            mapper.toFixtureInfoResponse(
+                LocalizedFixtureInfoModel(
+                    fixtureUid = model.fixtureUid,
+                    referee = model.referee,
+                    date = model.date,
+                    league = LocalizedFixtureInfoModel.League("league-1", "리그", "리그 약칭", null),
+                    home = LocalizedFixtureInfoModel.Team("team-home", "English Home", "EH", null, null),
+                    away = LocalizedFixtureInfoModel.Team("team-away", "Default Away", null, null, null),
+                ),
+            )
+
+        assertThat(dto.league.name).isEqualTo("리그")
+        assertThat(dto.league.shortName).isEqualTo("리그 약칭")
+        assertThat(dto.home?.name).isEqualTo("English Home")
+        assertThat(dto.home?.shortName).isEqualTo("EH")
+        assertThat(dto.away?.name).isEqualTo("Default Away")
         assertThat(dto.away?.shortName).isNull()
     }
 

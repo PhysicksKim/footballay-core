@@ -3,6 +3,7 @@ package com.footballay.core.web.football.service
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.facade.MockDataReadOption
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
@@ -26,6 +27,7 @@ interface LeagueAndFixtureWebService {
      */
     fun getAvailableLeagues(
         option: MockDataReadOption = MockDataReadOption.DEFAULT,
+        locale: SupportedLocale = SupportedLocale.EN,
     ): DomainResult<List<AvailableLeagueResponse>, DomainFail>
 
     /**
@@ -44,5 +46,6 @@ interface LeagueAndFixtureWebService {
         mode: String,
         zoneId: ZoneId,
         option: MockDataReadOption = MockDataReadOption.DEFAULT,
+        locale: SupportedLocale = SupportedLocale.EN,
     ): DomainResult<List<FixtureByLeagueResponse>, DomainFail>
 }

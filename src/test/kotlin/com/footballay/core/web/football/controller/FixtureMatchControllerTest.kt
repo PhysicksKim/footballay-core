@@ -2,6 +2,7 @@ package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.dto.FixtureInfoResponse
 import com.footballay.core.web.football.service.FixtureWebResult
@@ -27,13 +28,13 @@ class FixtureMatchControllerTest {
         httpEtagHelper = mockk()
         mockMvc =
             MockMvcBuilders
-                .standaloneSetup(FixtureMatchController(webService, httpEtagHelper))
+                .standaloneSetup(FixtureMatchController(webService, httpEtagHelper, AcceptLanguageLocaleResolver()))
                 .build()
     }
 
     @Test
     fun `info endpoint returns name and shortName without korean-specific fields`() {
-        every { webService.getFixtureInfo("fixture-1") } returns
+        every { webService.getFixtureInfo("fixture-1", SupportedLocale.KO) } returns
             DomainResult.Success(
                 FixtureInfoResponse(
                     fixtureUid = "fixture-1",
@@ -52,9 +53,13 @@ class FixtureMatchControllerTest {
             )
 
         mockMvc
-            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1")
+            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1") {
+                header(HttpHeaders.ACCEPT_LANGUAGE, "ko-KR")
+            }
             .andExpect {
                 status { isOk() }
+                header { string(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE) }
+                header { string(HttpHeaders.CONTENT_LANGUAGE, "ko") }
                 jsonPath("$.league.name") { value("Premier League") }
                 jsonPath("$.league.shortName") { value("PL") }
                 jsonPath("$.league.koreanName") { doesNotExist() }
@@ -71,10 +76,14 @@ class FixtureMatchControllerTest {
         every { httpEtagHelper.toWeakEtag("etag-1") } returns """W/"etag-1""""
 
         mockMvc
-            .get("/api/v1/football/fixtures/{uid}/status", "fixture-1")
+            .get("/api/v1/football/fixtures/{uid}/status", "fixture-1") {
+                header(HttpHeaders.ACCEPT_LANGUAGE, "ko")
+            }
             .andExpect {
                 status { isOk() }
                 header { string(HttpHeaders.ETAG, """W/"etag-1"""") }
+                header { string(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE) }
+                header { string(HttpHeaders.CONTENT_LANGUAGE, "ko") }
                 content {
                     contentType(MediaType.APPLICATION_JSON)
                     json("""{"fixtureUid":"fixture-1","liveStatus":{"shortStatus":"NS","longStatus":"Not Started","elapsed":null,"score":{"home":0,"away":0}}}""")
@@ -90,9 +99,12 @@ class FixtureMatchControllerTest {
         mockMvc
             .get("/api/v1/football/fixtures/{uid}/status", "fixture-1") {
                 header(HttpHeaders.IF_NONE_MATCH, """W/"etag-1"""")
+                header(HttpHeaders.ACCEPT_LANGUAGE, "ko")
             }.andExpect {
                 status { isNotModified() }
                 header { string(HttpHeaders.ETAG, """W/"etag-1"""") }
+                header { string(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE) }
+                header { string(HttpHeaders.CONTENT_LANGUAGE, "ko") }
                 content { string("") }
             }
     }

@@ -6,16 +6,16 @@ import com.footballay.core.common.result.map
 import com.footballay.core.domain.facade.DesktopFixtureFacade
 import com.footballay.core.domain.facade.DesktopLeagueFacade
 import com.footballay.core.domain.facade.MockDataReadOption
-import com.footballay.core.domain.model.FixtureModel
-import com.footballay.core.domain.model.LeagueModel
 import com.footballay.core.logger
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
+import com.footballay.core.web.football.localization.FootballResponseLocalizationService
+import com.footballay.core.web.football.mapper.MatchDataMapper
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * Desktop App용 League 및 Fixture 조회 WebService 구현체
@@ -24,6 +24,8 @@ import java.time.format.DateTimeFormatter
 class LeagueAndFixtureWebServiceImpl(
     private val desktopLeagueFacade: DesktopLeagueFacade,
     private val desktopFixtureFacade: DesktopFixtureFacade,
+    private val localizationService: FootballResponseLocalizationService,
+    private val matchDataMapper: MatchDataMapper,
 ) : LeagueAndFixtureWebService {
     val log = logger()
 
@@ -38,10 +40,14 @@ class LeagueAndFixtureWebServiceImpl(
             .getFixtureDatesByLeague(leagueUid, startInclusive, endExclusive, zoneId, option)
             .map { dates -> FixtureDatesByLeagueResponse(dates.map { it.toString() }) }
 
-    override fun getAvailableLeagues(option: MockDataReadOption): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
-        desktopLeagueFacade.getAvailableLeagues(option).map { leagues ->
-            leagues.map { toAvailableLeagueResponse(it) }
-        }
+    override fun getAvailableLeagues(
+        option: MockDataReadOption,
+        locale: SupportedLocale,
+    ): DomainResult<List<AvailableLeagueResponse>, DomainFail> =
+        desktopLeagueFacade
+            .getAvailableLeagues(option)
+            .map { localizationService.localizeAvailableLeagues(it, locale) }
+            .map(matchDataMapper::toAvailableLeagueResponses)
 
     override fun getFixturesByLeague(
         leagueUid: String,
@@ -49,53 +55,10 @@ class LeagueAndFixtureWebServiceImpl(
         mode: String,
         zoneId: ZoneId,
         option: MockDataReadOption,
+        locale: SupportedLocale,
     ): DomainResult<List<FixtureByLeagueResponse>, DomainFail> =
-        desktopFixtureFacade.getFixturesByLeague(leagueUid, at, mode, zoneId, option).map { fixtures ->
-            fixtures.map { toFixtureByLeagueResponse(it) }
-        }
-
-    private fun toAvailableLeagueResponse(model: LeagueModel): AvailableLeagueResponse =
-        AvailableLeagueResponse(
-            uid = model.uid,
-            name = model.name,
-            shortName = null,
-            logo = model.photo,
-        )
-
-    private fun toFixtureByLeagueResponse(model: FixtureModel): FixtureByLeagueResponse =
-        FixtureByLeagueResponse(
-            uid = model.uid,
-            kickoff = model.schedule.kickoffAt?.let { DateTimeFormatter.ISO_INSTANT.format(it) },
-            round = model.schedule.round,
-            homeTeam =
-                model.homeTeam?.let { team ->
-                    FixtureByLeagueResponse.TeamInfo(
-                        uid = team.uid,
-                        name = team.name,
-                        shortName = null,
-                        logo = team.logo,
-                    )
-                },
-            awayTeam =
-                model.awayTeam?.let { team ->
-                    FixtureByLeagueResponse.TeamInfo(
-                        uid = team.uid,
-                        name = team.name,
-                        shortName = null,
-                        logo = team.logo,
-                    )
-                },
-            status =
-                FixtureByLeagueResponse.StatusInfo(
-                    longStatus = model.status.statusText,
-                    shortStatus = model.status.code.value,
-                    elapsed = model.status.elapsed,
-                ),
-            score =
-                FixtureByLeagueResponse.ScoreInfo(
-                    home = model.score.home,
-                    away = model.score.away,
-                ),
-            available = model.available,
-        )
+        desktopFixtureFacade
+            .getFixturesByLeague(leagueUid, at, mode, zoneId, option)
+            .map { localizationService.localizeFixturesByLeague(it, locale) }
+            .map(matchDataMapper::toFixtureByLeagueResponses)
 }

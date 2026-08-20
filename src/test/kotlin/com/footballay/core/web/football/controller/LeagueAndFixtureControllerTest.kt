@@ -2,6 +2,7 @@ package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.facade.MockDataReadOption
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
@@ -26,13 +27,13 @@ class LeagueAndFixtureControllerTest {
         webService = mockk()
         mockMvc =
             MockMvcBuilders
-                .standaloneSetup(LeagueAndFixtureController(webService))
+                .standaloneSetup(LeagueAndFixtureController(webService, AcceptLanguageLocaleResolver()))
                 .build()
     }
 
     @Test
     fun `available leagues - 헤더가 없으면 기본 mock data read option을 전달한다`() {
-        every { webService.getAvailableLeagues(MockDataReadOption.DEFAULT) } returns
+        every { webService.getAvailableLeagues(MockDataReadOption.DEFAULT, SupportedLocale.KO) } returns
             DomainResult.Success(
                 listOf(
                     AvailableLeagueResponse(
@@ -45,9 +46,13 @@ class LeagueAndFixtureControllerTest {
             )
 
         mockMvc
-            .get("/api/v1/football/leagues/available")
+            .get("/api/v1/football/leagues/available") {
+                header("Accept-Language", "ko-KR")
+            }
             .andExpect {
                 status { isOk() }
+                header { string("Vary", "Accept-Language") }
+                header { string("Content-Language", "ko") }
                 jsonPath("$[0].uid") { value("api-league") }
                 jsonPath("$[0].shortName") { value("APL") }
                 jsonPath("$[0].nameKo") { doesNotExist() }
@@ -109,6 +114,7 @@ class LeagueAndFixtureControllerTest {
                 mode = "exact",
                 zoneId = ZoneId.of("UTC"),
                 option = MockDataReadOption(includeMockData = true),
+                locale = SupportedLocale.KO,
             )
         } returns
             DomainResult.Success(
@@ -141,8 +147,11 @@ class LeagueAndFixtureControllerTest {
                 param("mode", "exact")
                 param("timezone", " UTC ")
                 header(MockDataReadOptionResolver.HEADER_NAME, "include")
+                header("Accept-Language", "ko")
             }.andExpect {
                 status { isOk() }
+                header { string("Vary", "Accept-Language") }
+                header { string("Content-Language", "ko") }
                 jsonPath("$[0].uid") { value("mock-fixture") }
             }
     }

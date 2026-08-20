@@ -1,8 +1,10 @@
 package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.toHttpStatus
-import com.footballay.core.common.result.toResponseEntity
+import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
 import com.footballay.core.logger
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.dto.*
 import com.footballay.core.web.football.service.FixtureWebResult
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.*
 class FixtureMatchController(
     private val webService: FixtureWebService,
     private val httpEtagHelper: FixtureHttpEtagHelper,
+    private val localeResolver: AcceptLanguageLocaleResolver,
 ) {
     private val log = logger()
 
@@ -64,11 +67,12 @@ class FixtureMatchController(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<FixtureInfoResponse> {
         log.info("GET /api/v1/football/fixtures/{}/info", uid)
-        return webService
-            .getFixtureInfo(uid)
-            .toResponseEntity()
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toLocalizedResponse(webService.getFixtureInfo(uid, locale), locale)
     }
 
     @Operation(
@@ -91,9 +95,15 @@ class FixtureMatchController(
         ifNoneMatch: String?,
         @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
         fixtureCacheControl: String?,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/status", uid)
-        return toPollingResponse(webService.getFixtureLiveStatus(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toPollingResponse(
+            webService.getFixtureLiveStatus(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)),
+            locale,
+        )
     }
 
     @Operation(
@@ -116,9 +126,15 @@ class FixtureMatchController(
         ifNoneMatch: String?,
         @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
         fixtureCacheControl: String?,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/lineup", uid)
-        return toPollingResponse(webService.getFixtureLineup(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toPollingResponse(
+            webService.getFixtureLineup(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl), locale),
+            locale,
+        )
     }
 
     @Operation(
@@ -141,9 +157,15 @@ class FixtureMatchController(
         ifNoneMatch: String?,
         @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
         fixtureCacheControl: String?,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/events", uid)
-        return toPollingResponse(webService.getFixtureEvents(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toPollingResponse(
+            webService.getFixtureEvents(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl), locale),
+            locale,
+        )
     }
 
     @Operation(
@@ -166,30 +188,61 @@ class FixtureMatchController(
         ifNoneMatch: String?,
         @RequestHeader(name = FIXTURE_CACHE_CONTROL_HEADER, required = false)
         fixtureCacheControl: String?,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<String> {
         log.info("GET /api/v1/football/fixtures/{}/statistics", uid)
-        return toPollingResponse(webService.getFixtureStatistics(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl)))
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toPollingResponse(
+            webService.getFixtureStatistics(uid, ifNoneMatch, shouldBypassCacheRead(fixtureCacheControl), locale),
+            locale,
+        )
     }
 
-    private fun shouldBypassCacheRead(fixtureCacheControl: String?): Boolean = fixtureCacheControl.equals(CACHE_CONTROL_BYPASS, ignoreCase = true)
+    private fun shouldBypassCacheRead(fixtureCacheControl: String?): Boolean =
+        fixtureCacheControl.equals(
+            CACHE_CONTROL_BYPASS,
+            ignoreCase = true,
+        )
 
-    private fun toPollingResponse(result: FixtureWebResult): ResponseEntity<String> =
+    private fun toPollingResponse(
+        result: FixtureWebResult,
+        locale: SupportedLocale,
+    ): ResponseEntity<String> =
         when (result) {
             is FixtureWebResult.Ok ->
                 ResponseEntity
                     .ok()
                     .contentType(MediaType.APPLICATION_JSON)
                     .eTag(httpEtagHelper.toWeakEtag(result.etagHash))
+                    .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE)
+                    .header(HttpHeaders.CONTENT_LANGUAGE, locale.code)
                     .body(result.snapshotJson)
             is FixtureWebResult.NotModified ->
                 ResponseEntity
                     .status(304)
                     .eTag(httpEtagHelper.toWeakEtag(result.etagHash))
+                    .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE)
+                    .header(HttpHeaders.CONTENT_LANGUAGE, locale.code)
                     .build()
             is FixtureWebResult.Fail ->
                 ResponseEntity
                     .status(result.error.toHttpStatus())
                     .build()
+        }
+
+    private fun <T : Any> toLocalizedResponse(
+        result: DomainResult<T, DomainFail>,
+        locale: SupportedLocale,
+    ): ResponseEntity<T> =
+        when (result) {
+            is DomainResult.Success ->
+                ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE)
+                    .header(HttpHeaders.CONTENT_LANGUAGE, locale.code)
+                    .body(result.value)
+            is DomainResult.Fail -> ResponseEntity.status(result.error.toHttpStatus()).build()
         }
 
     private companion object {

@@ -2,266 +2,450 @@ package com.footballay.core.web.football.mapper
 
 import com.footballay.core.domain.model.match.*
 import com.footballay.core.web.football.dto.*
-import com.footballay.core.logger
+import com.footballay.core.web.football.localization.*
 import org.springframework.stereotype.Component
+import java.time.format.DateTimeFormatter
 
-/**
- * Match Data Domain Model → Response DTO 변환 Mapper
- *
- * **책임:**
- * - Domain Model을 Web Response DTO로 변환
- * - null 안전성 보장
- * - 클라이언트 API 계약에 맞는 형식으로 변환
- */
+/** 완성된 localized web representation을 public response DTO로 변환합니다. */
 @Component
 class MatchDataMapper {
-    private val log = logger()
+    fun toFixtureInfoResponse(model: LocalizedFixtureInfoModel): FixtureInfoResponse {
+        val league =
+            FixtureInfoResponse.LeagueInfo(
+                leagueUid = model.league.leagueUid,
+                name = model.league.name,
+                shortName = model.league.shortName,
+                logo = model.league.logo,
+            )
 
-    /**
-     * Fixture 기본 정보 변환 (Domain Model → Response DTO)
-     */
-    fun toFixtureInfoResponse(model: FixtureInfoModel): FixtureInfoResponse =
-        FixtureInfoResponse(
+        return FixtureInfoResponse(
             fixtureUid = model.fixtureUid,
             referee = model.referee,
             date = model.date,
-            league =
-                FixtureInfoResponse.LeagueInfo(
-                    leagueUid = model.league.leagueUid,
-                    name = model.league.name,
-                    shortName = null,
-                    logo = model.league.logo,
-                ),
-            home =
-                model.home?.let { team ->
-                    FixtureInfoResponse.TeamInfo(
-                        teamUid = team.teamUid,
-                        name = team.name,
-                        shortName = null,
-                        logo = team.logo,
-                        playerColor =
-                            team.playerColor?.let {
-                                FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
-                            },
-                    )
-                },
-            away =
-                model.away?.let { team ->
-                    FixtureInfoResponse.TeamInfo(
-                        teamUid = team.teamUid,
-                        name = team.name,
-                        shortName = null,
-                        logo = team.logo,
-                        playerColor =
-                            team.playerColor?.let {
-                                FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border)
-                            },
-                    )
-                },
+            league = league,
+            home = model.home?.toResponse(),
+            away = model.away?.toResponse(),
         )
+    }
 
-    /**
-     * Fixture 라이브 상태 변환 (Domain Model → Response DTO)
-     */
-    fun toFixtureLiveStatusResponse(model: FixtureLiveStatusModel): FixtureLiveStatusResponse =
-        FixtureLiveStatusResponse(
+    fun toFixtureLiveStatusResponse(model: FixtureLiveStatusModel): FixtureLiveStatusResponse {
+        val score =
+            FixtureLiveStatusResponse.Score(
+                home = model.liveStatus.score.home,
+                away = model.liveStatus.score.away,
+            )
+        val liveStatus =
+            FixtureLiveStatusResponse.LiveStatus(
+                elapsed = model.liveStatus.elapsed,
+                shortStatus = model.liveStatus.shortStatus,
+                longStatus = model.liveStatus.longStatus,
+                score = score,
+            )
+
+        return FixtureLiveStatusResponse(
             fixtureUid = model.fixtureUid,
-            liveStatus =
-                FixtureLiveStatusResponse.LiveStatus(
-                    elapsed = model.liveStatus.elapsed,
-                    shortStatus = model.liveStatus.shortStatus,
-                    longStatus = model.liveStatus.longStatus,
-                    score =
-                        FixtureLiveStatusResponse.Score(
-                            home = model.liveStatus.score.home,
-                            away = model.liveStatus.score.away,
-                        ),
-                ),
+            liveStatus = liveStatus,
         )
+    }
 
-    /**
-     * 경기 이벤트 목록 변환 (Domain Model → Response DTO)
-     */
-    fun toFixtureEventsResponse(model: FixtureEventsModel): FixtureEventsResponse =
-        FixtureEventsResponse(
+    fun toFixtureEventsResponse(model: LocalizedFixtureEventsModel): FixtureEventsResponse {
+        val events = model.events.map { event -> event.toResponse() }
+
+        return FixtureEventsResponse(
             fixtureUid = model.fixtureUid,
-            events = model.events.map { toEventInfo(it) },
+            events = events,
+        )
+    }
+
+    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
+    fun toFixtureEventsResponse(model: FixtureEventsModel): FixtureEventsResponse {
+        val events = model.events.map { event -> event.toResponse() }
+
+        return FixtureEventsResponse(
+            fixtureUid = model.fixtureUid,
+            events = events,
+        )
+    }
+
+    fun toFixtureLineupResponse(model: LocalizedFixtureLineupModel): FixtureLineupResponse {
+        val lineup =
+            FixtureLineupResponse.Lineup(
+                home = model.home?.toResponse(),
+                away = model.away?.toResponse(),
+            )
+
+        return FixtureLineupResponse(
+            fixtureUid = model.fixtureUid,
+            lineup = lineup,
+        )
+    }
+
+    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
+    fun toFixtureLineupResponse(model: FixtureLineupModel): FixtureLineupResponse {
+        val lineup =
+            FixtureLineupResponse.Lineup(
+                home = model.lineup.home?.toResponse(),
+                away = model.lineup.away?.toResponse(),
+            )
+
+        return FixtureLineupResponse(
+            fixtureUid = model.fixtureUid,
+            lineup = lineup,
+        )
+    }
+
+    fun toFixtureStatisticsResponse(model: LocalizedFixtureStatisticsModel): FixtureStatisticsResponse {
+        val fixture =
+            FixtureStatisticsResponse.FixtureBasic(
+                uid = model.fixture.uid,
+                elapsed = model.fixture.elapsed,
+                status = model.fixture.status,
+            )
+
+        return FixtureStatisticsResponse(
+            fixture = fixture,
+            home = model.home?.toResponse(),
+            away = model.away?.toResponse(),
+        )
+    }
+
+    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
+    fun toFixtureStatisticsResponse(model: FixtureStatisticsModel): FixtureStatisticsResponse {
+        val fixture =
+            FixtureStatisticsResponse.FixtureBasic(
+                uid = model.fixture.uid,
+                elapsed = model.fixture.elapsed,
+                status = model.fixture.status,
+            )
+
+        return FixtureStatisticsResponse(
+            fixture = fixture,
+            home = model.home?.toResponse(),
+            away = model.away?.toResponse(),
+        )
+    }
+
+    fun toAvailableLeagueResponses(
+        models: List<LocalizedAvailableLeagueModel>,
+    ): List<AvailableLeagueResponse> =
+        models.map { model ->
+            AvailableLeagueResponse(
+                uid = model.uid,
+                name = model.name,
+                shortName = model.shortName,
+                logo = model.logo,
+            )
+        }
+
+    fun toFixtureByLeagueResponses(
+        models: List<LocalizedFixtureByLeagueModel>,
+    ): List<FixtureByLeagueResponse> =
+        models.map { model -> model.toResponse() }
+
+    private fun LocalizedFixtureInfoModel.Team.toResponse(): FixtureInfoResponse.TeamInfo =
+        FixtureInfoResponse.TeamInfo(
+            teamUid = teamUid,
+            name = name,
+            shortName = shortName,
+            logo = logo,
+            playerColor = playerColor.toResponse(),
         )
 
-    private fun toEventInfo(event: FixtureEventsModel.EventInfo): FixtureEventsResponse.EventInfo =
+    private fun LocalizedFixtureEventsModel.Event.toResponse(): FixtureEventsResponse.EventInfo =
         FixtureEventsResponse.EventInfo(
-            sequence = event.sequence,
-            elapsed = event.elapsed,
-            extraTime = event.extraTime,
-            team =
-                FixtureEventsResponse.TeamInfo(
-                    teamUid = event.team.teamUid,
-                    name = event.team.name,
-                    shortName = null,
-                    playerColor =
-                        event.team.playerColor?.let {
-                            FixtureEventsResponse.UniformColorDto(it.primary, it.number, it.border)
-                        },
-                ),
-            player = event.player?.let { toPlayerInfo(it) },
-            assist = event.assist?.let { toPlayerInfo(it) },
-            type = event.type,
-            detail = event.detail,
-            comments = event.comments,
+            sequence = sequence,
+            elapsed = elapsed,
+            extraTime = extraTime,
+            team = team.toResponse(),
+            player = player?.toResponse(),
+            assist = assist?.toResponse(),
+            type = type,
+            detail = detail,
+            comments = comments,
         )
 
-    private fun toPlayerInfo(player: FixtureEventsModel.PlayerInfo): FixtureEventsResponse.PlayerInfo =
+    private fun LocalizedFixtureEventsModel.Team.toResponse(): FixtureEventsResponse.TeamInfo =
+        FixtureEventsResponse.TeamInfo(
+            teamUid = teamUid,
+            name = name,
+            shortName = shortName,
+            playerColor = playerColor.toResponse(),
+        )
+
+    private fun LocalizedFixtureEventsModel.Player.toResponse(): FixtureEventsResponse.PlayerInfo =
         FixtureEventsResponse.PlayerInfo(
-            matchPlayerUid = player.matchPlayerUid ?: "",
-            playerUid = player.playerUid,
-            name = player.name ?: "",
-            shortName = null,
-            number = player.number,
+            matchPlayerUid = matchPlayerUid,
+            playerUid = playerUid,
+            name = name,
+            shortName = shortName,
+            number = number,
         )
 
-    /**
-     * 경기 라인업 변환 (Domain Model → Response DTO)
-     */
-    fun toFixtureLineupResponse(model: FixtureLineupModel): FixtureLineupResponse =
-        FixtureLineupResponse(
-            fixtureUid = model.fixtureUid,
-            lineup =
-                FixtureLineupResponse.Lineup(
-                    home = model.lineup.home?.let { toStartLineup(it) },
-                    away = model.lineup.away?.let { toStartLineup(it) },
-                ),
-        )
+    private fun FixtureEventsModel.EventInfo.toResponse(): FixtureEventsResponse.EventInfo {
+        val team =
+            FixtureEventsResponse.TeamInfo(
+                teamUid = team.teamUid,
+                name = team.name,
+                shortName = null,
+                playerColor = team.playerColor.toResponse(),
+            )
+        val player =
+            player?.let {
+                FixtureEventsResponse.PlayerInfo(
+                    matchPlayerUid = it.matchPlayerUid.orEmpty(),
+                    playerUid = it.playerUid,
+                    name = it.name.orEmpty(),
+                    shortName = null,
+                    number = it.number,
+                )
+            }
+        val assist =
+            assist?.let {
+                FixtureEventsResponse.PlayerInfo(
+                    matchPlayerUid = it.matchPlayerUid.orEmpty(),
+                    playerUid = it.playerUid,
+                    name = it.name.orEmpty(),
+                    shortName = null,
+                    number = it.number,
+                )
+            }
 
-    private fun toStartLineup(lineup: FixtureLineupModel.StartLineup): FixtureLineupResponse.StartLineup =
-        FixtureLineupResponse.StartLineup(
-            teamUid = lineup.teamUid,
-            teamName = lineup.teamName,
-            teamShortName = null,
-            formation = lineup.formation,
-            players = lineup.players.map { toLineupPlayer(it) },
-            substitutes = lineup.substitutes.map { toLineupPlayer(it) },
-            playerColor =
-                lineup.playerColor?.let {
-                    FixtureLineupResponse.UniformColorDto(it.primary, it.number, it.border)
-                },
+        return FixtureEventsResponse.EventInfo(
+            sequence = sequence,
+            elapsed = elapsed,
+            extraTime = extraTime,
+            team = team,
+            player = player,
+            assist = assist,
+            type = type,
+            detail = detail,
+            comments = comments,
         )
+    }
 
-    private fun toLineupPlayer(player: FixtureLineupModel.LineupPlayer): FixtureLineupResponse.LineupPlayer =
+    private fun LocalizedFixtureLineupModel.StartLineup.toResponse(): FixtureLineupResponse.StartLineup {
+        val players = players.map { player -> player.toResponse() }
+        val substitutes = substitutes.map { player -> player.toResponse() }
+
+        return FixtureLineupResponse.StartLineup(
+            teamUid = teamUid,
+            teamName = teamName,
+            teamShortName = teamShortName,
+            formation = formation,
+            players = players,
+            substitutes = substitutes,
+            playerColor = playerColor.toResponse(),
+        )
+    }
+
+    private fun LocalizedFixtureLineupModel.Player.toResponse(): FixtureLineupResponse.LineupPlayer =
         FixtureLineupResponse.LineupPlayer(
-            matchPlayerUid = player.matchPlayerUid,
-            playerUid = player.playerUid,
-            name = player.name,
+            matchPlayerUid = matchPlayerUid,
+            playerUid = playerUid,
+            name = name,
+            shortName = shortName,
+            number = number,
+            photo = photo,
+            position = position,
+            grid = grid,
+            substitute = substitute,
+        )
+
+    private fun FixtureLineupModel.StartLineup.toResponse(): FixtureLineupResponse.StartLineup {
+        val players = players.map { player -> player.toResponse() }
+        val substitutes = substitutes.map { player -> player.toResponse() }
+
+        return FixtureLineupResponse.StartLineup(
+            teamUid = teamUid,
+            teamName = teamName,
+            teamShortName = null,
+            formation = formation,
+            players = players,
+            substitutes = substitutes,
+            playerColor = playerColor.toResponse(),
+        )
+    }
+
+    private fun FixtureLineupModel.LineupPlayer.toResponse(): FixtureLineupResponse.LineupPlayer =
+        FixtureLineupResponse.LineupPlayer(
+            matchPlayerUid = matchPlayerUid,
+            playerUid = playerUid,
+            name = name,
             shortName = null,
-            number = player.number,
-            photo = player.photo,
-            position = player.position,
-            grid = player.grid,
-            substitute = player.substitute,
+            number = number,
+            photo = photo,
+            position = position,
+            grid = grid,
+            substitute = substitute,
         )
 
-    /**
-     * 경기 통계 변환 (Domain Model → Response DTO)
-     */
-    fun toFixtureStatisticsResponse(model: FixtureStatisticsModel): FixtureStatisticsResponse =
-        FixtureStatisticsResponse(
-            fixture =
-                FixtureStatisticsResponse.FixtureBasic(
-                    uid = model.fixture.uid,
-                    elapsed = model.fixture.elapsed,
-                    status = model.fixture.status,
-                ),
-            home = model.home?.let { toTeamWithStatistics(it) },
-            away = model.away?.let { toTeamWithStatistics(it) },
+    private fun LocalizedFixtureStatisticsModel.TeamWithStatistics.toResponse(): FixtureStatisticsResponse.TeamWithStatistics {
+        val playerStatistics = playerStatistics.map { player -> player.toResponse() }
+
+        return FixtureStatisticsResponse.TeamWithStatistics(
+            team = team.toResponse(),
+            teamStatistics = teamStatistics.toResponse(),
+            playerStatistics = playerStatistics,
+        )
+    }
+
+    private fun LocalizedFixtureStatisticsModel.Team.toResponse(): FixtureStatisticsResponse.TeamInfo =
+        FixtureStatisticsResponse.TeamInfo(
+            teamUid = teamUid,
+            name = name,
+            shortName = shortName,
+            logo = logo,
+            playerColor = playerColor.toResponse(),
         )
 
-    private fun toTeamWithStatistics(team: FixtureStatisticsModel.TeamWithStatistics): FixtureStatisticsResponse.TeamWithStatistics =
-        FixtureStatisticsResponse.TeamWithStatistics(
-            team =
-                FixtureStatisticsResponse.TeamInfo(
-                    teamUid = team.team.teamUid,
-                    name = team.team.name,
-                    shortName = null,
-                    logo = team.team.logo,
-                    playerColor =
-                        team.team.playerColor?.let {
-                            FixtureStatisticsResponse.UniformColorDto(it.primary, it.number, it.border)
-                        },
-                ),
-            teamStatistics = toTeamStatistics(team.teamStatistics),
-            playerStatistics = team.playerStatistics.map { toPlayerWithStatistics(it) },
-        )
-
-    private fun toTeamStatistics(stats: FixtureStatisticsModel.TeamStatistics): FixtureStatisticsResponse.TeamStatistics =
-        FixtureStatisticsResponse.TeamStatistics(
-            shotsOnGoal = stats.shotsOnGoal,
-            shotsOffGoal = stats.shotsOffGoal,
-            totalShots = stats.totalShots,
-            blockedShots = stats.blockedShots,
-            shotsInsideBox = stats.shotsInsideBox,
-            shotsOutsideBox = stats.shotsOutsideBox,
-            fouls = stats.fouls,
-            cornerKicks = stats.cornerKicks,
-            offsides = stats.offsides,
-            ballPossession = stats.ballPossession,
-            yellowCards = stats.yellowCards,
-            redCards = stats.redCards,
-            goalkeeperSaves = stats.goalkeeperSaves,
-            totalPasses = stats.totalPasses,
-            passesAccurate = stats.passesAccurate,
-            passesAccuracyPercentage = stats.passesAccuracyPercentage,
-            goalsPrevented = stats.goalsPrevented,
-            xg = stats.xg.map { toXG(it) },
-        )
-
-    private fun toXG(xg: FixtureStatisticsModel.XG): FixtureStatisticsResponse.XG =
-        FixtureStatisticsResponse.XG(
-            elapsed = xg.elapsed,
-            xg = xg.xg,
-        )
-
-    private fun toPlayerWithStatistics(player: FixtureStatisticsModel.PlayerWithStatistics): FixtureStatisticsResponse.PlayerWithStatistics =
+    private fun LocalizedFixtureStatisticsModel.PlayerWithStatistics.toResponse(): FixtureStatisticsResponse.PlayerWithStatistics =
         FixtureStatisticsResponse.PlayerWithStatistics(
-            player =
-                FixtureStatisticsResponse.PlayerInfo(
-                    matchPlayerUid = player.player.matchPlayerUid ?: "",
-                    playerUid = player.player.playerUid,
-                    name = player.player.name ?: "",
-                    shortName = null,
-                    photo = player.player.photo,
-                    position = player.player.position,
-                    number = player.player.number,
-                ),
-            statistics = toPlayerStatistics(player.statistics),
+            player = player.toResponse(),
+            statistics = statistics.toResponse(),
         )
 
-    private fun toPlayerStatistics(stats: FixtureStatisticsModel.PlayerStatistics): FixtureStatisticsResponse.PlayerStatistics =
-        FixtureStatisticsResponse.PlayerStatistics(
-            minutesPlayed = stats.minutesPlayed,
-            position = stats.position,
-            rating = stats.rating,
-            captain = stats.captain,
-            substitute = stats.substitute,
-            shotsTotal = stats.shotsTotal,
-            shotsOn = stats.shotsOn,
-            goals = stats.goals,
-            goalsConceded = stats.goalsConceded,
-            assists = stats.assists,
-            saves = stats.saves,
-            passesTotal = stats.passesTotal,
-            passesKey = stats.passesKey,
-            passesAccuracy = stats.passesAccuracy,
-            tacklesTotal = stats.tacklesTotal,
-            interceptions = stats.interceptions,
-            duelsTotal = stats.duelsTotal,
-            duelsWon = stats.duelsWon,
-            dribblesAttempts = stats.dribblesAttempts,
-            dribblesSuccess = stats.dribblesSuccess,
-            foulsCommitted = stats.foulsCommitted,
-            foulsDrawn = stats.foulsDrawn,
-            yellowCards = stats.yellowCards,
-            redCards = stats.redCards,
-            penaltiesScored = stats.penaltiesScored,
-            penaltiesMissed = stats.penaltiesMissed,
-            penaltiesSaved = stats.penaltiesSaved,
+    private fun LocalizedFixtureStatisticsModel.Player.toResponse(): FixtureStatisticsResponse.PlayerInfo =
+        FixtureStatisticsResponse.PlayerInfo(
+            matchPlayerUid = matchPlayerUid,
+            playerUid = playerUid,
+            name = name,
+            shortName = shortName,
+            photo = photo,
+            position = position,
+            number = number,
         )
+
+    private fun FixtureStatisticsModel.TeamWithStatistics.toResponse(): FixtureStatisticsResponse.TeamWithStatistics {
+        val team =
+            FixtureStatisticsResponse.TeamInfo(
+                teamUid = team.teamUid,
+                name = team.name,
+                shortName = null,
+                logo = team.logo,
+                playerColor = team.playerColor.toResponse(),
+            )
+        val playerStatistics = playerStatistics.map { player -> player.toResponse() }
+
+        return FixtureStatisticsResponse.TeamWithStatistics(
+            team = team,
+            teamStatistics = teamStatistics.toResponse(),
+            playerStatistics = playerStatistics,
+        )
+    }
+
+    private fun FixtureStatisticsModel.PlayerWithStatistics.toResponse(): FixtureStatisticsResponse.PlayerWithStatistics {
+        val player =
+            FixtureStatisticsResponse.PlayerInfo(
+                matchPlayerUid = player.matchPlayerUid.orEmpty(),
+                playerUid = player.playerUid,
+                name = player.name.orEmpty(),
+                shortName = null,
+                photo = player.photo,
+                position = player.position,
+                number = player.number,
+            )
+
+        return FixtureStatisticsResponse.PlayerWithStatistics(
+            player = player,
+            statistics = statistics.toResponse(),
+        )
+    }
+
+    private fun FixtureStatisticsModel.TeamStatistics.toResponse(): FixtureStatisticsResponse.TeamStatistics =
+        FixtureStatisticsResponse.TeamStatistics(
+            shotsOnGoal = shotsOnGoal,
+            shotsOffGoal = shotsOffGoal,
+            totalShots = totalShots,
+            blockedShots = blockedShots,
+            shotsInsideBox = shotsInsideBox,
+            shotsOutsideBox = shotsOutsideBox,
+            fouls = fouls,
+            cornerKicks = cornerKicks,
+            offsides = offsides,
+            ballPossession = ballPossession,
+            yellowCards = yellowCards,
+            redCards = redCards,
+            goalkeeperSaves = goalkeeperSaves,
+            totalPasses = totalPasses,
+            passesAccurate = passesAccurate,
+            passesAccuracyPercentage = passesAccuracyPercentage,
+            goalsPrevented = goalsPrevented,
+            xg = xg.map { FixtureStatisticsResponse.XG(it.elapsed, it.xg) },
+        )
+
+    private fun FixtureStatisticsModel.PlayerStatistics.toResponse(): FixtureStatisticsResponse.PlayerStatistics =
+        FixtureStatisticsResponse.PlayerStatistics(
+            minutesPlayed = minutesPlayed,
+            position = position,
+            rating = rating,
+            captain = captain,
+            substitute = substitute,
+            shotsTotal = shotsTotal,
+            shotsOn = shotsOn,
+            goals = goals,
+            goalsConceded = goalsConceded,
+            assists = assists,
+            saves = saves,
+            passesTotal = passesTotal,
+            passesKey = passesKey,
+            passesAccuracy = passesAccuracy,
+            tacklesTotal = tacklesTotal,
+            interceptions = interceptions,
+            duelsTotal = duelsTotal,
+            duelsWon = duelsWon,
+            dribblesAttempts = dribblesAttempts,
+            dribblesSuccess = dribblesSuccess,
+            foulsCommitted = foulsCommitted,
+            foulsDrawn = foulsDrawn,
+            yellowCards = yellowCards,
+            redCards = redCards,
+            penaltiesScored = penaltiesScored,
+            penaltiesMissed = penaltiesMissed,
+            penaltiesSaved = penaltiesSaved,
+        )
+
+    private fun LocalizedFixtureByLeagueModel.toResponse(): FixtureByLeagueResponse {
+        val status =
+            FixtureByLeagueResponse.StatusInfo(
+                longStatus = status.statusText,
+                shortStatus = status.code.value,
+                elapsed = status.elapsed,
+            )
+        val score =
+            FixtureByLeagueResponse.ScoreInfo(
+                home = score.home,
+                away = score.away,
+            )
+
+        return FixtureByLeagueResponse(
+            uid = uid,
+            kickoff = kickoff?.let(DateTimeFormatter.ISO_INSTANT::format),
+            round = round,
+            homeTeam = homeTeam?.toResponse(),
+            awayTeam = awayTeam?.toResponse(),
+            status = status,
+            score = score,
+            available = available,
+        )
+    }
+
+    private fun LocalizedFixtureByLeagueModel.Team.toResponse(): FixtureByLeagueResponse.TeamInfo =
+        FixtureByLeagueResponse.TeamInfo(
+            uid = uid,
+            name = name,
+            shortName = shortName,
+            logo = logo,
+        )
+
+    private fun FixtureInfoModel.UniformColorModel?.toResponse(): FixtureInfoResponse.UniformColorDto? =
+        this?.let { FixtureInfoResponse.UniformColorDto(it.primary, it.number, it.border) }
+
+    private fun FixtureEventsModel.UniformColorModel?.toResponse(): FixtureEventsResponse.UniformColorDto? =
+        this?.let { FixtureEventsResponse.UniformColorDto(it.primary, it.number, it.border) }
+
+    private fun FixtureLineupModel.UniformColorModel?.toResponse(): FixtureLineupResponse.UniformColorDto? =
+        this?.let { FixtureLineupResponse.UniformColorDto(it.primary, it.number, it.border) }
+
+    private fun FixtureStatisticsModel.UniformColorModel?.toResponse(): FixtureStatisticsResponse.UniformColorDto? =
+        this?.let { FixtureStatisticsResponse.UniformColorDto(it.primary, it.number, it.border) }
 }

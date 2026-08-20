@@ -1,7 +1,11 @@
 package com.footballay.core.web.football.controller
 
+import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
+import com.footballay.core.common.result.toHttpStatus
 import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.logger
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.dto.AvailableLeagueResponse
 import com.footballay.core.web.football.dto.FixtureByLeagueResponse
 import com.footballay.core.web.football.dto.FixtureDatesByLeagueResponse
@@ -16,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.Pattern
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
@@ -37,6 +42,7 @@ import java.time.ZoneOffset
 @RequestMapping("/api/v1/football/leagues")
 class LeagueAndFixtureController(
     private val leagueAndFixtureWebService: LeagueAndFixtureWebService,
+    private val localeResolver: AcceptLanguageLocaleResolver,
 ) {
     val log = logger()
 
@@ -47,10 +53,18 @@ class LeagueAndFixtureController(
         @Parameter(description = "mock data 포함 옵션. include이면 mock data를 포함합니다.", example = "include")
         @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
         devData: String?,
-    ): ResponseEntity<List<AvailableLeagueResponse>> =
-        leagueAndFixtureWebService
-            .getAvailableLeagues(MockDataReadOptionResolver.resolve(devData))
-            .toResponseEntity()
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
+    ): ResponseEntity<List<AvailableLeagueResponse>> {
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toLocalizedResponse(
+            leagueAndFixtureWebService.getAvailableLeagues(
+                MockDataReadOptionResolver.resolve(devData),
+                locale,
+            ),
+            locale,
+        )
+    }
 
     @Operation(summary = "리그별 경기 날짜 조회", description = "캘린더 표시에 사용할 경기 보유 날짜를 조회합니다.")
     @ApiResponse(
@@ -137,6 +151,8 @@ class LeagueAndFixtureController(
         @Parameter(description = "mock data 포함 옵션. include이면 mock data를 포함합니다.", example = "include")
         @RequestHeader(name = MockDataReadOptionResolver.HEADER_NAME, required = false)
         devData: String?,
+        @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
+        acceptLanguage: String?,
     ): ResponseEntity<List<FixtureByLeagueResponse>> {
         val normalizedLeagueUid = leagueUid.trim()
         if (normalizedLeagueUid.isEmpty()) return ResponseEntity.badRequest().build()
@@ -146,16 +162,44 @@ class LeagueAndFixtureController(
             } catch (_: Exception) {
                 ZoneOffset.UTC
             }
+        val normalizedDate = date?.trim()
         val localDate =
-            try {
-                date?.trim()?.takeIf { it.isNotEmpty() }?.let { LocalDate.parse(it) }
-            } catch (_: Exception) {
+            if (normalizedDate.isNullOrEmpty()) {
                 null
+            } else {
+                try {
+                    LocalDate.parse(normalizedDate)
+                } catch (_: Exception) {
+                    null
+                }
             }
         val atInstant = localDate?.atStartOfDay(zoneId)?.toInstant()
 
-        return leagueAndFixtureWebService
-            .getFixturesByLeague(normalizedLeagueUid, atInstant, mode, zoneId, MockDataReadOptionResolver.resolve(devData))
-            .toResponseEntity()
+        val locale = localeResolver.resolve(acceptLanguage)
+        return toLocalizedResponse(
+            leagueAndFixtureWebService.getFixturesByLeague(
+                normalizedLeagueUid,
+                atInstant,
+                mode,
+                zoneId,
+                MockDataReadOptionResolver.resolve(devData),
+                locale,
+            ),
+            locale,
+        )
     }
+
+    private fun <T : Any> toLocalizedResponse(
+        result: DomainResult<T, DomainFail>,
+        locale: SupportedLocale,
+    ): ResponseEntity<T> =
+        when (result) {
+            is DomainResult.Success ->
+                ResponseEntity
+                    .ok()
+                    .header(HttpHeaders.VARY, HttpHeaders.ACCEPT_LANGUAGE)
+                    .header(HttpHeaders.CONTENT_LANGUAGE, locale.code)
+                    .body(result.value)
+            is DomainResult.Fail -> ResponseEntity.status(result.error.toHttpStatus()).build()
+        }
 }

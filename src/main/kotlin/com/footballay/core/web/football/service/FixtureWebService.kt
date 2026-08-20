@@ -5,12 +5,14 @@ import com.footballay.core.common.result.DomainResult
 import com.footballay.core.common.result.map
 import com.footballay.core.infra.query.MatchDataQueryService
 import com.footballay.core.logger
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.cache.FixturePollingEndpoint
 import com.footballay.core.web.football.cache.FixtureWebCacheManager
 import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocument
 import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocumentFactory
 import com.footballay.core.web.football.dto.*
+import com.footballay.core.web.football.localization.FootballResponseLocalizationService
 import com.footballay.core.web.football.mapper.MatchDataMapper
 import org.springframework.stereotype.Service
 
@@ -21,18 +23,23 @@ import org.springframework.stereotype.Service
 class FixtureWebService(
     private val matchDataQueryService: MatchDataQueryService,
     private val matchDataMapper: MatchDataMapper,
+    private val localizationService: FootballResponseLocalizationService,
     private val cacheManager: FixtureWebCacheManager,
     private val cacheDocumentFactory: FixtureResponseCacheDocumentFactory,
     private val httpEtagHelper: FixtureHttpEtagHelper,
 ) {
     private val log = logger()
 
-    fun getFixtureInfo(fixtureUid: String): DomainResult<FixtureInfoResponse, DomainFail> {
+    fun getFixtureInfo(
+        fixtureUid: String,
+        locale: SupportedLocale = SupportedLocale.EN,
+    ): DomainResult<FixtureInfoResponse, DomainFail> {
         log.info("getFixtureInfo. fixtureUid={}", fixtureUid)
 
         return matchDataQueryService
             .getFixtureInfo(fixtureUid)
-            .map { domain -> matchDataMapper.toFixtureInfoResponse(domain) }
+            .map { localizationService.localizeFixtureInfo(it, locale) }
+            .map(matchDataMapper::toFixtureInfoResponse)
     }
 
     fun getFixtureLiveStatus(
@@ -56,6 +63,7 @@ class FixtureWebService(
         fixtureUid: String,
         ifNoneMatch: String?,
         bypassCacheRead: Boolean = false,
+        locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureEvents. fixtureUid={}", fixtureUid)
 
@@ -64,7 +72,7 @@ class FixtureWebService(
             endpoint = FixturePollingEndpoint.EVENTS,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
-            query = { queryFixtureEvents(fixtureUid) },
+            query = { queryFixtureEvents(fixtureUid, locale) },
             createDocument = { cacheDocumentFactory.create(it) },
         )
     }
@@ -73,6 +81,7 @@ class FixtureWebService(
         fixtureUid: String,
         ifNoneMatch: String?,
         bypassCacheRead: Boolean = false,
+        locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureLineup. fixtureUid={}", fixtureUid)
 
@@ -81,7 +90,7 @@ class FixtureWebService(
             endpoint = FixturePollingEndpoint.LINEUP,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
-            query = { queryFixtureLineup(fixtureUid) },
+            query = { queryFixtureLineup(fixtureUid, locale) },
             createDocument = { cacheDocumentFactory.create(it) },
         )
     }
@@ -90,6 +99,7 @@ class FixtureWebService(
         fixtureUid: String,
         ifNoneMatch: String?,
         bypassCacheRead: Boolean = false,
+        locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureStatistics. fixtureUid={}", fixtureUid)
 
@@ -98,7 +108,7 @@ class FixtureWebService(
             endpoint = FixturePollingEndpoint.STATISTICS,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
-            query = { queryFixtureStatistics(fixtureUid) },
+            query = { queryFixtureStatistics(fixtureUid, locale) },
             createDocument = { cacheDocumentFactory.create(it) },
         )
     }
@@ -106,22 +116,34 @@ class FixtureWebService(
     private fun queryFixtureLiveStatus(fixtureUid: String): DomainResult<FixtureLiveStatusResponse, DomainFail> =
         matchDataQueryService
             .getFixtureLiveStatus(fixtureUid)
-            .map { domain -> matchDataMapper.toFixtureLiveStatusResponse(domain) }
+            .map { model -> matchDataMapper.toFixtureLiveStatusResponse(model) }
 
-    private fun queryFixtureEvents(fixtureUid: String): DomainResult<FixtureEventsResponse, DomainFail> =
+    private fun queryFixtureEvents(
+        fixtureUid: String,
+        locale: SupportedLocale,
+    ): DomainResult<FixtureEventsResponse, DomainFail> =
         matchDataQueryService
             .getFixtureEvents(fixtureUid)
-            .map { domain -> matchDataMapper.toFixtureEventsResponse(domain) }
+            .map { localizationService.localizeEvents(it, locale) }
+            .map(matchDataMapper::toFixtureEventsResponse)
 
-    private fun queryFixtureLineup(fixtureUid: String): DomainResult<FixtureLineupResponse, DomainFail> =
+    private fun queryFixtureLineup(
+        fixtureUid: String,
+        locale: SupportedLocale,
+    ): DomainResult<FixtureLineupResponse, DomainFail> =
         matchDataQueryService
             .getFixtureLineup(fixtureUid)
-            .map { domain -> matchDataMapper.toFixtureLineupResponse(domain) }
+            .map { localizationService.localizeLineup(it, locale) }
+            .map(matchDataMapper::toFixtureLineupResponse)
 
-    private fun queryFixtureStatistics(fixtureUid: String): DomainResult<FixtureStatisticsResponse, DomainFail> =
+    private fun queryFixtureStatistics(
+        fixtureUid: String,
+        locale: SupportedLocale,
+    ): DomainResult<FixtureStatisticsResponse, DomainFail> =
         matchDataQueryService
             .getFixtureStatistics(fixtureUid)
-            .map { domain -> matchDataMapper.toFixtureStatisticsResponse(domain) }
+            .map { localizationService.localizeStatistics(it, locale) }
+            .map(matchDataMapper::toFixtureStatisticsResponse)
 
     private fun <T : Any> getPollingFixture(
         fixtureUid: String,
