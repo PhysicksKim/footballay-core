@@ -20,8 +20,6 @@ data class LeagueCore(
     var uid: String,
     @Column(nullable = false)
     var name: String,
-    @Column(name = "name_ko")
-    var nameKo: String? = null,
     @Column(nullable = false)
     var available: Boolean = false,
     @Enumerated(EnumType.STRING)

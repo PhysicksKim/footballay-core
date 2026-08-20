@@ -19,8 +19,6 @@ data class TeamCore(
      */
     @Column(nullable = false)
     var name: String,
-    @Column(name = "name_ko")
-    var nameKo: String? = null,
     var code: String? = null,
     var country: String? = null,
     var founded: Int? = null,

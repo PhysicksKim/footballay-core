@@ -57,6 +57,7 @@ class FixtureCanonicalJsonPipelineTest {
         assertThat(firstJson).isEqualTo(secondJson)
         assertThat(firstJson).doesNotContain("\n", "\r")
         assertThat(firstJson).isEqualTo(firstJson.trim())
+        assertThat(firstJson).contains("\"shortName\":null").doesNotContain("koreanName")
     }
 
     @Test
@@ -258,8 +259,8 @@ class FixtureCanonicalJsonPipelineTest {
         sequence = sequence,
         elapsed = sequence * 10,
         extraTime = null,
-        team = FixtureEventsResponse.TeamInfo(teamUid = "team-$sequence", name = "Team $sequence", koreanName = null, playerColor = null),
-        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$playerSuffix", playerUid = "player-$playerSuffix", name = "Player $playerSuffix", koreanName = null, number = sequence),
+        team = FixtureEventsResponse.TeamInfo(teamUid = "team-$sequence", name = "Team $sequence", shortName = null, playerColor = null),
+        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$playerSuffix", playerUid = "player-$playerSuffix", name = "Player $playerSuffix", shortName = null, number = sequence),
         assist = null,
         type = type,
         detail = "$type detail",
@@ -273,7 +274,7 @@ class FixtureCanonicalJsonPipelineTest {
     ) = FixtureLineupResponse.StartLineup(
         teamUid = teamUid,
         teamName = teamUid,
-        teamKoreanName = null,
+        teamShortName = null,
         formation = "4-3-3",
         players = players,
         substitutes = substitutes,
@@ -288,7 +289,7 @@ class FixtureCanonicalJsonPipelineTest {
         matchPlayerUid = matchPlayerUid,
         playerUid = "player-$matchPlayerUid",
         name = name,
-        koreanName = null,
+        shortName = null,
         number = null,
         photo = null,
         position = if (substitute) "SUB" else "M",
@@ -305,7 +306,7 @@ class FixtureCanonicalJsonPipelineTest {
             FixtureStatisticsResponse.TeamInfo(
                 teamUid = teamUid,
                 name = teamUid,
-                koreanName = null,
+                shortName = null,
                 logo = null,
                 playerColor = null,
             ),
@@ -342,7 +343,7 @@ class FixtureCanonicalJsonPipelineTest {
                 matchPlayerUid = matchPlayerUid,
                 playerUid = "player-$matchPlayerUid",
                 name = name,
-                koreanName = null,
+                shortName = null,
                 photo = null,
                 position = "M",
                 number = null,

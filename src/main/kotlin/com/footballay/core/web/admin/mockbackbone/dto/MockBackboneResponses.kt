@@ -5,7 +5,6 @@ import java.time.Instant
 data class MockLeagueResponse(
     val uid: String,
     val name: String,
-    val nameKo: String?,
     val photo: String?,
     val available: Boolean,
 )
@@ -13,7 +12,6 @@ data class MockLeagueResponse(
 data class MockTeamResponse(
     val uid: String,
     val name: String,
-    val nameKo: String?,
     val code: String?,
 )
 
@@ -34,7 +32,6 @@ data class MockFixtureResponse(
     data class TeamSide(
         val uid: String,
         val name: String,
-        val nameKo: String?,
         val logo: String?,
     )
 }

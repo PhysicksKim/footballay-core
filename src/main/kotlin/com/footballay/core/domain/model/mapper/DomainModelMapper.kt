@@ -46,7 +46,6 @@ class DomainModelMapper {
         return LeagueModel(
             uid = leagueCore.uid,
             name = leagueCore.name,
-            nameKo = leagueCore.nameKo,
             photo = photo,
             available = leagueCore.available,
             extension = extra,
@@ -67,7 +66,6 @@ class DomainModelMapper {
         TeamModel(
             uid = teamCore.uid,
             name = teamCore.name,
-            nameKo = teamCore.nameKo,
             code = teamCore.code,
             extension =
                 TeamApiSportsExtension(
@@ -107,7 +105,6 @@ class DomainModelMapper {
         return PlayerModel(
             uid = playerCore.uid,
             name = playerCore.name,
-            nameKo = playerCore.nameKo,
             photo = photo,
             position = position,
             number = number,
@@ -211,7 +208,6 @@ class DomainModelMapper {
         FixtureModel.TeamSide(
             uid = teamCore.uid,
             name = teamCore.name,
-            nameKo = teamCore.nameKo,
             logo = teamApiSports.logo, // 로고 정보는 FixtureCore에서 직접 제공되지 않으므로 apiSports 사용
         )
 }

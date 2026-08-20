@@ -38,7 +38,7 @@ class LeagueAndFixtureControllerTest {
                     AvailableLeagueResponse(
                         uid = "api-league",
                         name = "ApiSports League",
-                        nameKo = null,
+                        shortName = "APL",
                         logo = null,
                     ),
                 ),
@@ -49,6 +49,8 @@ class LeagueAndFixtureControllerTest {
             .andExpect {
                 status { isOk() }
                 jsonPath("$[0].uid") { value("api-league") }
+                jsonPath("$[0].shortName") { value("APL") }
+                jsonPath("$[0].nameKo") { doesNotExist() }
             }
     }
 
@@ -60,7 +62,7 @@ class LeagueAndFixtureControllerTest {
                     AvailableLeagueResponse(
                         uid = "mock-league",
                         name = "Mock League",
-                        nameKo = null,
+                        shortName = null,
                         logo = null,
                     ),
                 ),
@@ -83,7 +85,7 @@ class LeagueAndFixtureControllerTest {
                     AvailableLeagueResponse(
                         uid = "api-league",
                         name = "ApiSports League",
-                        nameKo = null,
+                        shortName = null,
                         logo = null,
                     ),
                 ),

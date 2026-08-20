@@ -72,7 +72,6 @@ class MockSimpleFixtureScenarioServiceTest {
                 LeagueModel(
                     uid = "league-1",
                     name = command.name,
-                    nameKo = null,
                     photo = null,
                     available = command.available,
                 ),
@@ -84,7 +83,6 @@ class MockSimpleFixtureScenarioServiceTest {
                 TeamModel(
                     uid = "${command.name}-uid",
                     name = command.name,
-                    nameKo = null,
                     code = null,
                 ),
             )
@@ -98,8 +96,8 @@ class MockSimpleFixtureScenarioServiceTest {
                     uid = "fixture-1",
                     leagueUid = command.leagueCoreUid,
                     schedule = FixtureModel.FixtureSchedule(kickoffAt = command.kickoff, round = ""),
-                    homeTeam = FixtureModel.TeamSide(homeTeamCoreUid, homeTeamCoreUid, null, null),
-                    awayTeam = FixtureModel.TeamSide(awayTeamCoreUid, awayTeamCoreUid, null, null),
+                    homeTeam = FixtureModel.TeamSide(homeTeamCoreUid, homeTeamCoreUid, null),
+                    awayTeam = FixtureModel.TeamSide(awayTeamCoreUid, awayTeamCoreUid, null),
                     status = FixtureModel.Status("Not Started", FixtureModel.StatusCode.NS, null, null),
                     score = FixtureModel.Score(null, null),
                     available = command.fixtureAvailable,

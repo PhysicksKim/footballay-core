@@ -15,7 +15,6 @@ class MockBackboneModelMapper {
         LeagueModel(
             uid = league.uid,
             name = league.name,
-            nameKo = league.nameKo,
             photo = null,
             available = league.available,
         )
@@ -24,7 +23,6 @@ class MockBackboneModelMapper {
         TeamModel(
             uid = team.uid,
             name = team.name,
-            nameKo = team.nameKo,
             code = team.code,
         )
 
@@ -58,7 +56,6 @@ class MockBackboneModelMapper {
         FixtureModel.TeamSide(
             uid = team.uid,
             name = team.name,
-            nameKo = team.nameKo,
             logo = null,
         )
 

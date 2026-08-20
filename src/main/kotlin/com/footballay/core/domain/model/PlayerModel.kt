@@ -11,7 +11,6 @@ sealed interface PlayerExtension
 data class PlayerModel(
     val uid: String,
     val name: String,
-    val nameKo: String?,
     val photo: String?,
     val position: String?,
     val number: Int?,

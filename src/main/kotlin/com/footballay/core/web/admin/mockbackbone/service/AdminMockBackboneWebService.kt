@@ -102,7 +102,6 @@ class AdminMockBackboneWebService(
         MockLeagueResponse(
             uid = model.uid,
             name = model.name,
-            nameKo = model.nameKo,
             photo = model.photo,
             available = model.available,
         )
@@ -111,7 +110,6 @@ class AdminMockBackboneWebService(
         MockTeamResponse(
             uid = model.uid,
             name = model.name,
-            nameKo = model.nameKo,
             code = model.code,
         )
 
@@ -135,7 +133,6 @@ class AdminMockBackboneWebService(
         MockFixtureResponse.TeamSide(
             uid = team.uid,
             name = team.name,
-            nameKo = team.nameKo,
             logo = team.logo,
         )
 

@@ -1,7 +1,9 @@
 package com.footballay.core.web.football.controller
 
 import com.footballay.core.common.result.DomainFail
+import com.footballay.core.common.result.DomainResult
 import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
+import com.footballay.core.web.football.dto.FixtureInfoResponse
 import com.footballay.core.web.football.service.FixtureWebResult
 import com.footballay.core.web.football.service.FixtureWebService
 import io.mockk.every
@@ -27,6 +29,36 @@ class FixtureMatchControllerTest {
             MockMvcBuilders
                 .standaloneSetup(FixtureMatchController(webService, httpEtagHelper))
                 .build()
+    }
+
+    @Test
+    fun `info endpoint returns name and shortName without korean-specific fields`() {
+        every { webService.getFixtureInfo("fixture-1") } returns
+            DomainResult.Success(
+                FixtureInfoResponse(
+                    fixtureUid = "fixture-1",
+                    referee = null,
+                    date = "2026-08-20 20:00",
+                    league =
+                        FixtureInfoResponse.LeagueInfo(
+                            leagueUid = "league-1",
+                            name = "Premier League",
+                            shortName = "PL",
+                            logo = null,
+                        ),
+                    home = null,
+                    away = null,
+                ),
+            )
+
+        mockMvc
+            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.league.name") { value("Premier League") }
+                jsonPath("$.league.shortName") { value("PL") }
+                jsonPath("$.league.koreanName") { doesNotExist() }
+            }
     }
 
     @Test

@@ -21,9 +21,7 @@ class AdminMatchCollectQueryModelMapper {
             fixtureStatusCode = fixture.statusCode,
             fixtureAvailable = fixture.available,
             homeTeamName = fixture.homeTeam?.name,
-            homeTeamNameKo = fixture.homeTeam?.nameKo,
             awayTeamName = fixture.awayTeam?.name,
-            awayTeamNameKo = fixture.awayTeam?.nameKo,
             leagueMatchCollect = league.matchCollect,
             matchCollectStatus = state.matchCollectStatus,
             lastCollectedAt = state.lastCollectedAt,
@@ -34,7 +32,6 @@ class AdminMatchCollectQueryModelMapper {
         AdminMatchCollectLeagueModel(
             leagueUid = league.uid,
             name = league.name,
-            nameKo = league.nameKo,
             available = league.available,
             matchCollect = league.matchCollect,
         )

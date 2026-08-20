@@ -29,7 +29,7 @@ class MatchDataMapper {
                 FixtureInfoResponse.LeagueInfo(
                     leagueUid = model.league.leagueUid,
                     name = model.league.name,
-                    koreanName = model.league.koreanName,
+                    shortName = null,
                     logo = model.league.logo,
                 ),
             home =
@@ -37,7 +37,7 @@ class MatchDataMapper {
                     FixtureInfoResponse.TeamInfo(
                         teamUid = team.teamUid,
                         name = team.name,
-                        koreanName = team.koreanName,
+                        shortName = null,
                         logo = team.logo,
                         playerColor =
                             team.playerColor?.let {
@@ -50,7 +50,7 @@ class MatchDataMapper {
                     FixtureInfoResponse.TeamInfo(
                         teamUid = team.teamUid,
                         name = team.name,
-                        koreanName = team.koreanName,
+                        shortName = null,
                         logo = team.logo,
                         playerColor =
                             team.playerColor?.let {
@@ -97,7 +97,7 @@ class MatchDataMapper {
                 FixtureEventsResponse.TeamInfo(
                     teamUid = event.team.teamUid,
                     name = event.team.name,
-                    koreanName = event.team.koreanName,
+                    shortName = null,
                     playerColor =
                         event.team.playerColor?.let {
                             FixtureEventsResponse.UniformColorDto(it.primary, it.number, it.border)
@@ -115,7 +115,7 @@ class MatchDataMapper {
             matchPlayerUid = player.matchPlayerUid ?: "",
             playerUid = player.playerUid,
             name = player.name ?: "",
-            koreanName = player.koreanName,
+            shortName = null,
             number = player.number,
         )
 
@@ -136,7 +136,7 @@ class MatchDataMapper {
         FixtureLineupResponse.StartLineup(
             teamUid = lineup.teamUid,
             teamName = lineup.teamName,
-            teamKoreanName = lineup.teamKoreanName,
+            teamShortName = null,
             formation = lineup.formation,
             players = lineup.players.map { toLineupPlayer(it) },
             substitutes = lineup.substitutes.map { toLineupPlayer(it) },
@@ -151,7 +151,7 @@ class MatchDataMapper {
             matchPlayerUid = player.matchPlayerUid,
             playerUid = player.playerUid,
             name = player.name,
-            koreanName = player.koreanName,
+            shortName = null,
             number = player.number,
             photo = player.photo,
             position = player.position,
@@ -180,7 +180,7 @@ class MatchDataMapper {
                 FixtureStatisticsResponse.TeamInfo(
                     teamUid = team.team.teamUid,
                     name = team.team.name,
-                    koreanName = team.team.koreanName,
+                    shortName = null,
                     logo = team.team.logo,
                     playerColor =
                         team.team.playerColor?.let {
@@ -226,7 +226,7 @@ class MatchDataMapper {
                     matchPlayerUid = player.player.matchPlayerUid ?: "",
                     playerUid = player.player.playerUid,
                     name = player.player.name ?: "",
-                    koreanName = player.player.koreanName,
+                    shortName = null,
                     photo = player.player.photo,
                     position = player.player.position,
                     number = player.player.number,

@@ -74,7 +74,6 @@ data class FixtureModel(
     data class TeamSide(
         val uid: String,
         val name: String,
-        val nameKo: String?,
         val logo: String?,
     )
 

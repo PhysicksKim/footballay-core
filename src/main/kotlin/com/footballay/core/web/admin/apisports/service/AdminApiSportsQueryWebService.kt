@@ -44,7 +44,6 @@ class AdminApiSportsQueryWebService(
                 apiId = ext.apiId,
                 uid = model.uid,
                 name = model.name,
-                nameKo = model.nameKo,
                 logo = ext.logo,
                 code = model.code,
             )
@@ -73,7 +72,6 @@ class AdminApiSportsQueryWebService(
                 apiId = ext.apiId,
                 uid = model.uid,
                 name = model.name,
-                nameKo = model.nameKo,
                 photo = model.photo,
                 position = model.position,
                 number = model.number,

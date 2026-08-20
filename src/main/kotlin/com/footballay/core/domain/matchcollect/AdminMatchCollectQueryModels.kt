@@ -14,9 +14,7 @@ data class AdminMatchCollectStateModel(
     val fixtureStatusCode: FixtureStatusCode,
     val fixtureAvailable: Boolean,
     val homeTeamName: String?,
-    val homeTeamNameKo: String?,
     val awayTeamName: String?,
-    val awayTeamNameKo: String?,
     val leagueMatchCollect: MatchCollect?,
     val matchCollectStatus: MatchCollectStatus,
     val lastCollectedAt: Instant?,
@@ -25,7 +23,6 @@ data class AdminMatchCollectStateModel(
 data class AdminMatchCollectLeagueModel(
     val leagueUid: String,
     val name: String,
-    val nameKo: String?,
     val available: Boolean,
     val matchCollect: MatchCollect,
 )

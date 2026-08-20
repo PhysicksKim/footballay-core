@@ -33,7 +33,6 @@ class MatchDataMapperTest {
                     FixtureInfoModel.LeagueInfo(
                         id = 1L,
                         name = "Premier League",
-                        koreanName = null,
                         logo = "https://logo.png",
                         leagueUid = "premier-league-2024",
                     ),
@@ -41,7 +40,6 @@ class MatchDataMapperTest {
                     FixtureInfoModel.TeamInfo(
                         id = 100L,
                         name = "Manchester City",
-                        koreanName = null,
                         logo = "https://city-logo.png",
                         teamUid = "team-city-50",
                         playerColor = null,
@@ -50,7 +48,6 @@ class MatchDataMapperTest {
                     FixtureInfoModel.TeamInfo(
                         id = 200L,
                         name = "Liverpool",
-                        koreanName = null,
                         logo = "https://liverpool-logo.png",
                         teamUid = "team-liverpool-51",
                         playerColor = null,
@@ -64,8 +61,11 @@ class MatchDataMapperTest {
         assertThat(dto.fixtureUid).isEqualTo("testfixture0001")
         assertThat(dto.referee).isEqualTo("Michael Oliver")
         assertThat(dto.league.name).isEqualTo("Premier League")
+        assertThat(dto.league.shortName).isNull()
         assertThat(dto.home?.name).isEqualTo("Manchester City")
+        assertThat(dto.home?.shortName).isNull()
         assertThat(dto.away?.name).isEqualTo("Liverpool")
+        assertThat(dto.away?.shortName).isNull()
     }
 
     @Test
@@ -127,7 +127,6 @@ class MatchDataMapperTest {
                             FixtureLineupModel.StartLineup(
                                 teamId = 0L,
                                 teamName = "",
-                                teamKoreanName = null,
                                 formation = null,
                                 players = emptyList(),
                                 substitutes = emptyList(),
@@ -138,7 +137,6 @@ class MatchDataMapperTest {
                             FixtureLineupModel.StartLineup(
                                 teamId = 0L,
                                 teamName = "",
-                                teamKoreanName = null,
                                 formation = null,
                                 players = emptyList(),
                                 substitutes = emptyList(),
@@ -154,6 +152,8 @@ class MatchDataMapperTest {
         // Then
         assertThat(dto.fixtureUid).isEqualTo("testfixture0004")
         assertThat(dto.lineup.home?.teamName).isEmpty()
+        assertThat(dto.lineup.home?.teamShortName).isNull()
         assertThat(dto.lineup.away?.teamName).isEmpty()
+        assertThat(dto.lineup.away?.teamShortName).isNull()
     }
 }

@@ -58,7 +58,7 @@ class LeagueAndFixtureWebServiceImpl(
         AvailableLeagueResponse(
             uid = model.uid,
             name = model.name,
-            nameKo = model.nameKo,
+            shortName = null,
             logo = model.photo,
         )
 
@@ -72,7 +72,7 @@ class LeagueAndFixtureWebServiceImpl(
                     FixtureByLeagueResponse.TeamInfo(
                         uid = team.uid,
                         name = team.name,
-                        nameKo = team.nameKo,
+                        shortName = null,
                         logo = team.logo,
                     )
                 },
@@ -81,7 +81,7 @@ class LeagueAndFixtureWebServiceImpl(
                     FixtureByLeagueResponse.TeamInfo(
                         uid = team.uid,
                         name = team.name,
-                        nameKo = team.nameKo,
+                        shortName = null,
                         logo = team.logo,
                     )
                 },

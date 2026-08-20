@@ -64,9 +64,7 @@ class AdminMatchCollectQueryWebServiceTest {
         assertThat(result.content.first().seasonYear).isEqualTo(2026)
         assertThat(result.content.first().leagueMatchCollect).isEqualTo(MatchCollect.LIVE)
         assertThat(result.content.first().homeTeamName).isEqualTo("Home Team")
-        assertThat(result.content.first().homeTeamNameKo).isEqualTo("홈팀")
         assertThat(result.content.first().awayTeamName).isEqualTo("Away Team")
-        assertThat(result.content.first().awayTeamNameKo).isEqualTo("원정팀")
         assertThat(result.content.first().matchCollectStatus).isEqualTo(MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN)
     }
 
@@ -202,7 +200,6 @@ class AdminMatchCollectQueryWebServiceTest {
         AdminMatchCollectLeagueModel(
             leagueUid = "league-1",
             name = "League",
-            nameKo = null,
             available = true,
             matchCollect = MatchCollect.LIVE,
         )
@@ -217,9 +214,7 @@ class AdminMatchCollectQueryWebServiceTest {
             fixtureStatusCode = FixtureStatusCode.FT,
             fixtureAvailable = false,
             homeTeamName = "Home Team",
-            homeTeamNameKo = "홈팀",
             awayTeamName = "Away Team",
-            awayTeamNameKo = "원정팀",
             leagueMatchCollect = MatchCollect.LIVE,
             matchCollectStatus = MatchCollectStatus.DATA_INCOMPLETE_NEEDS_ADMIN,
             lastCollectedAt = Instant.parse("2026-06-20T12:00:00Z"),

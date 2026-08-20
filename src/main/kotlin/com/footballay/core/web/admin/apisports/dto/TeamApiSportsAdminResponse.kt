@@ -17,8 +17,6 @@ data class TeamApiSportsAdminResponse(
     val uid: String,
     @Schema(description = "팀 이름", example = "Manchester City")
     val name: String,
-    @Schema(description = "팀 이름 (한국어)", example = "맨체스터 시티")
-    val nameKo: String?,
     @Schema(description = "창단 연도", example = "1880")
     val logo: String?,
     @Schema(description = "팀 코드", example = "MCI")

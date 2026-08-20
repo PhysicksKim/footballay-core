@@ -162,7 +162,6 @@ class AdminMatchCollectControllerTest(
                 MatchCollectLeagueResponse(
                     leagueUid = "league-1",
                     name = "League",
-                    nameKo = null,
                     available = true,
                     matchCollect = com.footballay.core.domain.league.MatchCollect.LIVE,
                 ),

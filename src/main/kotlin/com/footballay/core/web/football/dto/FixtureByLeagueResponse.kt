@@ -16,7 +16,7 @@ data class FixtureByLeagueResponse(
     data class TeamInfo(
         val uid: String?,
         val name: String,
-        val nameKo: String?,
+        val shortName: String?,
         val logo: String?,
     )
 

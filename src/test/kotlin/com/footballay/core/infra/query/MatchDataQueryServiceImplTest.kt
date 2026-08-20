@@ -4,6 +4,8 @@ import com.footballay.core.MatchConfig
 import com.footballay.core.MatchEntityGenerator
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
+import jakarta.persistence.EntityManager
+import jakarta.persistence.PersistenceContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -36,6 +38,9 @@ class MatchDataQueryServiceImplTest {
     @Autowired
     private lateinit var entityGenerator: MatchEntityGenerator
 
+    @PersistenceContext
+    private lateinit var entityManager: EntityManager
+
     @Test
     fun `getFixtureInfo - UID로 기본 정보 조회 성공`() {
         // Given: MatchEntityGenerator로 완전한 매치 생성
@@ -51,6 +56,54 @@ class MatchDataQueryServiceImplTest {
         assertThat(model.fixtureUid).isEqualTo(fixtureUid)
         assertThat(model.referee).isEqualTo("Michael Oliver")
         assertThat(model.league.name).isEqualTo("Test Premier League")
+    }
+
+    @Test
+    fun `fixture info uses core league name instead of provider name`() {
+        val entities = entityGenerator.createCompleteMatchEntities()
+        entities.leagueCore.name = "Core League"
+        entities.leagueApiSports.name = "Provider League"
+        entityManager.flush()
+        entityManager.clear()
+
+        val result = queryService.getFixtureInfo(entities.fixtureCore.uid)
+
+        assertThat(result).isInstanceOf(DomainResult.Success::class.java)
+        assertThat((result as DomainResult.Success).value.league.name).isEqualTo("Core League")
+    }
+
+    @Test
+    fun `linked match player uses core name in events lineup and statistics`() {
+        val entities = entityGenerator.createCompleteMatchEntities()
+        entities.players.first().name = "Core Player"
+        entities.matchPlayers.first().name = "Match Player"
+        entityManager.flush()
+        entityManager.clear()
+
+        val events = (queryService.getFixtureEvents(entities.fixtureCore.uid) as DomainResult.Success).value
+        val lineup = (queryService.getFixtureLineup(entities.fixtureCore.uid) as DomainResult.Success).value
+        val statistics = (queryService.getFixtureStatistics(entities.fixtureCore.uid) as DomainResult.Success).value
+
+        assertThat(events.events.first().player?.name).isEqualTo("Core Player")
+        assertThat(lineup.lineup.home?.players?.first()?.name).isEqualTo("Core Player")
+        assertThat(statistics.home?.playerStatistics?.first()?.player?.name).isEqualTo("Core Player")
+    }
+
+    @Test
+    fun `unlinked match player keeps match player name in events lineup and statistics`() {
+        val entities = entityGenerator.createCompleteMatchEntities()
+        entities.matchPlayers.first().name = "Unlinked Match Player"
+        entities.matchPlayers.first().playerApiSports = null
+        entityManager.flush()
+        entityManager.clear()
+
+        val events = (queryService.getFixtureEvents(entities.fixtureCore.uid) as DomainResult.Success).value
+        val lineup = (queryService.getFixtureLineup(entities.fixtureCore.uid) as DomainResult.Success).value
+        val statistics = (queryService.getFixtureStatistics(entities.fixtureCore.uid) as DomainResult.Success).value
+
+        assertThat(events.events.first().player?.name).isEqualTo("Unlinked Match Player")
+        assertThat(lineup.lineup.home?.players?.first()?.name).isEqualTo("Unlinked Match Player")
+        assertThat(statistics.home?.playerStatistics?.first()?.player?.name).isEqualTo("Unlinked Match Player")
     }
 
     @Test

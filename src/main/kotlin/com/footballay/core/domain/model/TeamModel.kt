@@ -11,7 +11,6 @@ sealed interface TeamExtension
 data class TeamModel(
     val uid: String,
     val name: String,
-    val nameKo: String?,
     val code: String?,
     val extension: TeamExtension = NoTeamExtension,
 )

@@ -19,8 +19,6 @@ data class PlayerCore(
      */
     @Column(nullable = false)
     var name: String,
-    @Column(name = "name_ko")
-    var nameKo: String? = null,
     var firstname: String? = null,
     var lastname: String? = null,
     var age: Int? = null,

@@ -12,7 +12,6 @@ data class FixtureSummaryDto(
 ) {
     data class TeamDto(
         val name: String,
-        val nameKo: String?,
         val logo: String?,
     )
 }

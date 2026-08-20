@@ -131,7 +131,6 @@ class AdminMatchCollectQueryWebService(
         MatchCollectLeagueResponse(
             leagueUid = league.leagueUid,
             name = league.name,
-            nameKo = league.nameKo,
             available = league.available,
             matchCollect = league.matchCollect,
         )
@@ -146,9 +145,7 @@ class AdminMatchCollectQueryWebService(
             fixtureStatusCode = state.fixtureStatusCode,
             fixtureAvailable = state.fixtureAvailable,
             homeTeamName = state.homeTeamName,
-            homeTeamNameKo = state.homeTeamNameKo,
             awayTeamName = state.awayTeamName,
-            awayTeamNameKo = state.awayTeamNameKo,
             leagueMatchCollect = state.leagueMatchCollect,
             matchCollectStatus = state.matchCollectStatus,
             lastCollectedAt = state.lastCollectedAt,
@@ -164,9 +161,7 @@ class AdminMatchCollectQueryWebService(
             fixtureStatusCode = state.fixtureStatusCode,
             fixtureAvailable = state.fixtureAvailable,
             homeTeamName = state.homeTeamName,
-            homeTeamNameKo = state.homeTeamNameKo,
             awayTeamName = state.awayTeamName,
-            awayTeamNameKo = state.awayTeamNameKo,
             matchCollectStatus = state.matchCollectStatus,
             lastCollectedAt = state.lastCollectedAt,
         )

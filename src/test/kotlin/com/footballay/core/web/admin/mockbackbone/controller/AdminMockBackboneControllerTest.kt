@@ -48,7 +48,6 @@ class AdminMockBackboneControllerTest(
             MockLeagueResponse(
                 uid = "league-core-1",
                 name = "Mock League",
-                nameKo = null,
                 photo = null,
                 available = true,
             )
@@ -207,7 +206,6 @@ class AdminMockBackboneControllerTest(
         MockLeagueResponse(
             uid = "league-core-1",
             name = "Mock League",
-            nameKo = null,
             photo = null,
             available = true,
         )
@@ -219,7 +217,6 @@ class AdminMockBackboneControllerTest(
         MockTeamResponse(
             uid = uid,
             name = name,
-            nameKo = null,
             code = null,
         )
 
@@ -233,14 +230,12 @@ class AdminMockBackboneControllerTest(
                 MockFixtureResponse.TeamSide(
                     uid = "home-team-1",
                     name = "Mock Home",
-                    nameKo = null,
                     logo = null,
                 ),
             awayTeam =
                 MockFixtureResponse.TeamSide(
                     uid = "away-team-1",
                     name = "Mock Away",
-                    nameKo = null,
                     logo = null,
                 ),
             statusText = "Not Started",

@@ -17,8 +17,6 @@ data class PlayerApiSportsAdminResponse(
     val uid: String,
     @Schema(description = "선수 이름", example = "Kevin De Bruyne")
     val name: String,
-    @Schema(description = "선수 이름 (한국어)", example = "케빈 더 브라위너")
-    val nameKo: String?,
     @Schema(description = "선수 사진 URL", example = "https://example.com/photos/1234.png")
     val photo: String?,
     @Schema(description = "포지션", example = "Midfielder")

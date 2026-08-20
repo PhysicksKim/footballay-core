@@ -36,7 +36,6 @@ class LeagueAndFixtureWebServiceImplTest {
                     LeagueModel(
                         uid = "mock-league",
                         name = "Mock League",
-                        nameKo = null,
                         photo = null,
                         available = true,
                     ),

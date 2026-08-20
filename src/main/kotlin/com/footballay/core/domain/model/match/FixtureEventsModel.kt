@@ -24,7 +24,6 @@ data class FixtureEventsModel(
     data class TeamInfo(
         val teamId: Long = 0, // Deprecated: PK 노출 방지
         val name: String,
-        val koreanName: String?,
         val teamUid: String,
         val playerColor: UniformColorModel?,
     )
@@ -38,7 +37,6 @@ data class FixtureEventsModel(
     data class PlayerInfo(
         val playerId: Long? = null, // Deprecated: PK 노출 방지
         val name: String?,
-        val koreanName: String?,
         val number: Int?,
         val matchPlayerUid: String?,
         val playerUid: String?,

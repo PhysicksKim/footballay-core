@@ -14,9 +14,7 @@ data class MatchCollectStateResponse(
     val fixtureStatusCode: FixtureStatusCode,
     val fixtureAvailable: Boolean,
     val homeTeamName: String?,
-    val homeTeamNameKo: String?,
     val awayTeamName: String?,
-    val awayTeamNameKo: String?,
     val leagueMatchCollect: MatchCollect?,
     val matchCollectStatus: MatchCollectStatus,
     val lastCollectedAt: Instant?,
@@ -42,7 +40,6 @@ data class MatchCollectLeagueStatePageResponse(
 data class MatchCollectLeagueResponse(
     val leagueUid: String,
     val name: String,
-    val nameKo: String?,
     val available: Boolean,
     val matchCollect: MatchCollect,
 )
@@ -55,9 +52,7 @@ data class MatchCollectFixtureStateResponse(
     val fixtureStatusCode: FixtureStatusCode,
     val fixtureAvailable: Boolean,
     val homeTeamName: String?,
-    val homeTeamNameKo: String?,
     val awayTeamName: String?,
-    val awayTeamNameKo: String?,
     val matchCollectStatus: MatchCollectStatus?,
     val lastCollectedAt: Instant?,
 )

@@ -6,6 +6,6 @@ package com.footballay.core.web.football.dto
 data class AvailableLeagueResponse(
     val uid: String,
     val name: String,
-    val nameKo: String?,
+    val shortName: String?,
     val logo: String?,
 )

@@ -205,8 +205,7 @@ class MatchDataQueryServiceImpl(
             league =
                 FixtureInfoModel.LeagueInfo(
                     id = 0L, // Deprecated: PK 노출 방지
-                    name = league.name,
-                    koreanName = leagueCore.nameKo,
+                    name = leagueCore.name,
                     logo = league.logo,
                     leagueUid = leagueCore.uid,
                 ),
@@ -215,7 +214,6 @@ class MatchDataQueryServiceImpl(
                     FixtureInfoModel.TeamInfo(
                         id = 0L, // Deprecated: PK 노출 방지
                         name = teamCore.name,
-                        koreanName = teamCore.nameKo,
                         logo = teamCore.teamApiSports?.logo,
                         teamUid = teamCore.uid,
                         playerColor =
@@ -229,7 +227,6 @@ class MatchDataQueryServiceImpl(
                     FixtureInfoModel.TeamInfo(
                         id = 0L, // Deprecated: PK 노출 방지
                         name = teamCore.name,
-                        koreanName = teamCore.nameKo,
                         logo = teamCore.teamApiSports?.logo,
                         teamUid = teamCore.uid,
                         playerColor =
@@ -286,7 +283,6 @@ class MatchDataQueryServiceImpl(
                 FixtureEventsModel.TeamInfo(
                     teamId = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
-                    koreanName = teamCore?.nameKo,
                     teamUid = teamCore?.uid ?: "",
                     playerColor =
                         matchTeam?.playerColor?.let {
@@ -307,8 +303,7 @@ class MatchDataQueryServiceImpl(
 
         return FixtureEventsModel.PlayerInfo(
             playerId = null, // Deprecated: PK 노출 방지
-            name = matchPlayer.name ?: playerCore?.name,
-            koreanName = playerCore?.nameKo,
+            name = playerCore?.name ?: matchPlayer.name,
             number = matchPlayer.number,
             matchPlayerUid = matchPlayer.matchPlayerUid,
             playerUid = playerCore?.uid,
@@ -344,7 +339,6 @@ class MatchDataQueryServiceImpl(
         return FixtureLineupModel.StartLineup(
             teamId = 0L, // Deprecated: PK 노출 방지
             teamName = teamCore?.name ?: "",
-            teamKoreanName = teamCore?.nameKo,
             formation = matchTeam.formation,
             players = startXI,
             substitutes = substitutes,
@@ -362,8 +356,7 @@ class MatchDataQueryServiceImpl(
 
         return FixtureLineupModel.LineupPlayer(
             id = 0L, // Deprecated: PK 노출 방지
-            name = matchPlayer.name ?: playerCore?.name ?: "",
-            koreanName = playerCore?.nameKo,
+            name = playerCore?.name ?: matchPlayer.name,
             number = matchPlayer.number,
             photo = playerApiSports?.photo,
             position = matchPlayer.position,
@@ -378,7 +371,6 @@ class MatchDataQueryServiceImpl(
         FixtureLineupModel.StartLineup(
             teamId = 0L,
             teamName = "",
-            teamKoreanName = null,
             formation = null,
             players = emptyList(),
             substitutes = emptyList(),
@@ -416,7 +408,6 @@ class MatchDataQueryServiceImpl(
                 FixtureStatisticsModel.TeamInfo(
                     id = 0L, // Deprecated: PK 노출 방지
                     name = teamCore?.name ?: "",
-                    koreanName = teamCore?.nameKo,
                     logo = teamApiSports?.logo,
                     teamUid = teamCore?.uid ?: "",
                     playerColor =
@@ -465,8 +456,7 @@ class MatchDataQueryServiceImpl(
             player =
                 FixtureStatisticsModel.PlayerInfoBasic(
                     id = null, // Deprecated: PK 노출 방지
-                    name = matchPlayer.name ?: playerCore?.name,
-                    koreanName = playerCore?.nameKo,
+                    name = playerCore?.name ?: matchPlayer.name,
                     photo = playerApiSports?.photo,
                     position = matchPlayer.position,
                     number = matchPlayer.number,
@@ -512,7 +502,6 @@ class MatchDataQueryServiceImpl(
                 FixtureStatisticsModel.TeamInfo(
                     id = 0L,
                     name = "",
-                    koreanName = null,
                     logo = null,
                     teamUid = "",
                     playerColor = null,

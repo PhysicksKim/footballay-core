@@ -13,7 +13,6 @@ object FixtureWebMapper {
                 if (model.homeTeam != null) {
                     FixtureSummaryDto.TeamDto(
                         name = model.homeTeam.name,
-                        nameKo = model.homeTeam.nameKo,
                         logo = model.homeTeam.logo,
                     )
                 } else {
@@ -23,7 +22,6 @@ object FixtureWebMapper {
                 if (model.awayTeam != null) {
                     FixtureSummaryDto.TeamDto(
                         name = model.awayTeam.name,
-                        nameKo = model.awayTeam.nameKo,
                         logo = model.awayTeam.logo,
                     )
                 } else {
