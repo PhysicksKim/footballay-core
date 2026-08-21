@@ -57,16 +57,6 @@ class MatchDataMapper {
         )
     }
 
-    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
-    fun toFixtureEventsResponse(model: FixtureEventsModel): FixtureEventsResponse {
-        val events = model.events.map { event -> event.toResponse() }
-
-        return FixtureEventsResponse(
-            fixtureUid = model.fixtureUid,
-            events = events,
-        )
-    }
-
     fun toFixtureLineupResponse(model: LocalizedFixtureLineupModel): FixtureLineupResponse {
         val lineup =
             FixtureLineupResponse.Lineup(
@@ -80,37 +70,7 @@ class MatchDataMapper {
         )
     }
 
-    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
-    fun toFixtureLineupResponse(model: FixtureLineupModel): FixtureLineupResponse {
-        val lineup =
-            FixtureLineupResponse.Lineup(
-                home = model.lineup.home?.toResponse(),
-                away = model.lineup.away?.toResponse(),
-            )
-
-        return FixtureLineupResponse(
-            fixtureUid = model.fixtureUid,
-            lineup = lineup,
-        )
-    }
-
     fun toFixtureStatisticsResponse(model: LocalizedFixtureStatisticsModel): FixtureStatisticsResponse {
-        val fixture =
-            FixtureStatisticsResponse.FixtureBasic(
-                uid = model.fixture.uid,
-                elapsed = model.fixture.elapsed,
-                status = model.fixture.status,
-            )
-
-        return FixtureStatisticsResponse(
-            fixture = fixture,
-            home = model.home?.toResponse(),
-            away = model.away?.toResponse(),
-        )
-    }
-
-    // 06 scheduler materialization 전까지 기존 locale-independent refresh path가 사용합니다.
-    fun toFixtureStatisticsResponse(model: FixtureStatisticsModel): FixtureStatisticsResponse {
         val fixture =
             FixtureStatisticsResponse.FixtureBasic(
                 uid = model.fixture.uid,

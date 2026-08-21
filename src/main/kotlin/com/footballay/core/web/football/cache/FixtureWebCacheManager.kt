@@ -8,24 +8,14 @@ import java.time.Duration
 import java.time.Instant
 
 interface FixtureWebCacheManager {
-    fun find(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): FixtureWebCacheEntry?
+    fun find(identity: FixtureWebCacheIdentity): FixtureWebCacheEntry?
 
-    fun findSnapshot(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): FixtureWebCacheSnapshot?
+    fun findSnapshot(identity: FixtureWebCacheIdentity): FixtureWebCacheSnapshot?
 
-    fun findEtagHash(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): String?
+    fun findEtagHash(identity: FixtureWebCacheIdentity): String?
 
     fun save(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
+        identity: FixtureWebCacheIdentity,
         document: FixtureResponseCacheDocument,
     )
 }
@@ -48,11 +38,8 @@ class RedisFixtureWebCacheManager(
     private val log = logger()
     private val hashOperations by lazy { stringRedisTemplate.opsForHash<String, String>() }
 
-    override fun find(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): FixtureWebCacheEntry? {
-        val key = key(fixtureUid, endpoint)
+    override fun find(identity: FixtureWebCacheIdentity): FixtureWebCacheEntry? {
+        val key = key(identity)
 
         return runCatching {
             val values = hashOperations.entries(key)
@@ -70,15 +57,12 @@ class RedisFixtureWebCacheManager(
                 updatedAt = Instant.parse(updatedAtRaw),
             )
         }.onFailure { ex ->
-            log.warn("Failed to read fixture web cache. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+            log.warn("Failed to read fixture web cache. fixtureUid={}, endpoint={}, locale={}, key={}", identity.fixtureUid, identity.endpoint, identity.locale, key, ex)
         }.getOrNull()
     }
 
-    override fun findSnapshot(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): FixtureWebCacheSnapshot? {
-        val key = key(fixtureUid, endpoint)
+    override fun findSnapshot(identity: FixtureWebCacheIdentity): FixtureWebCacheSnapshot? {
+        val key = key(identity)
 
         return runCatching {
             val values = hashOperations.multiGet(key, SNAPSHOT_FIELDS)
@@ -90,29 +74,25 @@ class RedisFixtureWebCacheManager(
                 etagHash = etagHash,
             )
         }.onFailure { ex ->
-            log.warn("Failed to read fixture web cache snapshot. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+            log.warn("Failed to read fixture web cache snapshot. fixtureUid={}, endpoint={}, locale={}, key={}", identity.fixtureUid, identity.endpoint, identity.locale, key, ex)
         }.getOrNull()
     }
 
-    override fun findEtagHash(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): String? {
-        val key = key(fixtureUid, endpoint)
+    override fun findEtagHash(identity: FixtureWebCacheIdentity): String? {
+        val key = key(identity)
 
         return runCatching {
             hashOperations.get(key, ETAG_HASH_FIELD)
         }.onFailure { ex ->
-            log.warn("Failed to read fixture web cache etag. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+            log.warn("Failed to read fixture web cache etag. fixtureUid={}, endpoint={}, locale={}, key={}", identity.fixtureUid, identity.endpoint, identity.locale, key, ex)
         }.getOrNull()
     }
 
     override fun save(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
+        identity: FixtureWebCacheIdentity,
         document: FixtureResponseCacheDocument,
     ) {
-        val key = key(fixtureUid, endpoint)
+        val key = key(identity)
 
         runCatching {
             hashOperations.putAll(
@@ -125,14 +105,14 @@ class RedisFixtureWebCacheManager(
             )
             stringRedisTemplate.expire(key, CACHE_TTL)
         }.onFailure { ex ->
-            log.warn("Failed to write fixture web cache. fixtureUid={}, endpoint={}, key={}", fixtureUid, endpoint, key, ex)
+            log.warn("Failed to write fixture web cache. fixtureUid={}, endpoint={}, locale={}, key={}", identity.fixtureUid, identity.endpoint, identity.locale, key, ex)
         }
     }
 
-    private fun key(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
-    ): String = "$KEY_PREFIX:${endpoint.keySegment}:$fixtureUid"
+    private fun key(identity: FixtureWebCacheIdentity): String {
+        val prefix = "$KEY_PREFIX:${identity.endpoint.keySegment}:${identity.fixtureUid}"
+        return identity.locale?.let { "$prefix:${it.code}" } ?: prefix
+    }
 
     private companion object {
         const val KEY_PREFIX = "footballay:fixture:web"

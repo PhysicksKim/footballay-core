@@ -7,6 +7,7 @@ import com.footballay.core.infra.query.MatchDataQueryService
 import com.footballay.core.logger
 import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.cache.FixturePollingEndpoint
+import com.footballay.core.web.football.cache.FixtureWebCacheIdentity
 import com.footballay.core.web.football.cache.FixtureWebCacheManager
 import com.footballay.core.web.football.cache.hash.FixtureHttpEtagHelper
 import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocument
@@ -48,10 +49,10 @@ class FixtureWebService(
         bypassCacheRead: Boolean = false,
     ): FixtureWebResult {
         log.info("getFixtureLiveStatus. fixtureUid={}", fixtureUid)
+        val identity = FixtureWebCacheIdentity(fixtureUid, FixturePollingEndpoint.STATUS, null)
 
         return getPollingFixture(
-            fixtureUid = fixtureUid,
-            endpoint = FixturePollingEndpoint.STATUS,
+            identity = identity,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
             query = { queryFixtureLiveStatus(fixtureUid) },
@@ -66,10 +67,10 @@ class FixtureWebService(
         locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureEvents. fixtureUid={}", fixtureUid)
+        val identity = FixtureWebCacheIdentity(fixtureUid, FixturePollingEndpoint.EVENTS, locale)
 
         return getPollingFixture(
-            fixtureUid = fixtureUid,
-            endpoint = FixturePollingEndpoint.EVENTS,
+            identity = identity,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
             query = { queryFixtureEvents(fixtureUid, locale) },
@@ -84,10 +85,10 @@ class FixtureWebService(
         locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureLineup. fixtureUid={}", fixtureUid)
+        val identity = FixtureWebCacheIdentity(fixtureUid, FixturePollingEndpoint.LINEUP, locale)
 
         return getPollingFixture(
-            fixtureUid = fixtureUid,
-            endpoint = FixturePollingEndpoint.LINEUP,
+            identity = identity,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
             query = { queryFixtureLineup(fixtureUid, locale) },
@@ -102,10 +103,10 @@ class FixtureWebService(
         locale: SupportedLocale = SupportedLocale.EN,
     ): FixtureWebResult {
         log.info("getFixtureStatistics. fixtureUid={}", fixtureUid)
+        val identity = FixtureWebCacheIdentity(fixtureUid, FixturePollingEndpoint.STATISTICS, locale)
 
         return getPollingFixture(
-            fixtureUid = fixtureUid,
-            endpoint = FixturePollingEndpoint.STATISTICS,
+            identity = identity,
             ifNoneMatch = ifNoneMatch,
             bypassCacheRead = bypassCacheRead,
             query = { queryFixtureStatistics(fixtureUid, locale) },
@@ -146,8 +147,7 @@ class FixtureWebService(
             .map(matchDataMapper::toFixtureStatisticsResponse)
 
     private fun <T : Any> getPollingFixture(
-        fixtureUid: String,
-        endpoint: FixturePollingEndpoint,
+        identity: FixtureWebCacheIdentity,
         ifNoneMatch: String?,
         bypassCacheRead: Boolean,
         query: () -> DomainResult<T, DomainFail>,
@@ -155,13 +155,13 @@ class FixtureWebService(
     ): FixtureWebResult {
         if (!bypassCacheRead) {
             if (!ifNoneMatch.isNullOrBlank()) {
-                val cachedEtagHash = cacheManager.findEtagHash(fixtureUid, endpoint)
+                val cachedEtagHash = cacheManager.findEtagHash(identity)
                 if (cachedEtagHash != null && httpEtagHelper.matchesIfNoneMatch(ifNoneMatch, cachedEtagHash)) {
                     return FixtureWebResult.NotModified(cachedEtagHash)
                 }
             }
 
-            val cached = cacheManager.findSnapshot(fixtureUid, endpoint)
+            val cached = cacheManager.findSnapshot(identity)
             if (cached != null) {
                 return FixtureWebResult.Ok(cached.snapshotJson, cached.etagHash)
             }
@@ -170,7 +170,7 @@ class FixtureWebService(
         return when (val result = query()) {
             is DomainResult.Success -> {
                 val document = createDocument(result.value)
-                cacheManager.save(fixtureUid, endpoint, document)
+                cacheManager.save(identity, document)
                 FixtureWebResult.Ok(document.snapshotJson, document.etagHash)
             }
             is DomainResult.Fail -> FixtureWebResult.Fail(result.error)

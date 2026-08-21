@@ -1,5 +1,6 @@
 package com.footballay.core.web.football.cache
 
+import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.football.cache.hash.FixtureResponseCacheDocument
 import io.mockk.every
 import io.mockk.just
@@ -40,7 +41,7 @@ class RedisFixtureWebCacheManagerTest {
                 "updatedAt" to "2026-04-24T00:00:00Z",
             )
 
-        val result = cacheManager.find("fixture-1", FixturePollingEndpoint.STATUS)
+        val result = cacheManager.find(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATUS, null))
 
         assertThat(result).isNotNull
         assertThat(result!!.snapshotJson).isEqualTo("""{"fixtureUid":"fixture-1"}""")
@@ -57,7 +58,7 @@ class RedisFixtureWebCacheManagerTest {
             )
         } returns listOf("""{"fixtureUid":"fixture-1"}""", "etag-1")
 
-        val result = cacheManager.findSnapshot("fixture-1", FixturePollingEndpoint.STATUS)
+        val result = cacheManager.findSnapshot(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATUS, null))
 
         assertThat(result).isNotNull
         assertThat(result!!.snapshotJson).isEqualTo("""{"fixtureUid":"fixture-1"}""")
@@ -68,7 +69,7 @@ class RedisFixtureWebCacheManagerTest {
     fun `findEtagHash - etag 필드만 가져온다`() {
         every { hashOperations.get("footballay:fixture:web:status:fixture-1", "etagHash") } returns "etag-1"
 
-        val result = cacheManager.findEtagHash("fixture-1", FixturePollingEndpoint.STATUS)
+        val result = cacheManager.findEtagHash(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATUS, null))
 
         assertThat(result).isEqualTo("etag-1")
     }
@@ -76,11 +77,10 @@ class RedisFixtureWebCacheManagerTest {
     @Test
     fun `save - snapshot 과 etag 와 updatedAt 을 같은 key 에 저장하고 ttl 을 건다`() {
         every { hashOperations.putAll(any(), any<Map<String, String>>()) } just runs
-        every { stringRedisTemplate.expire("footballay:fixture:web:events:fixture-2", any<Duration>()) } returns true
+        every { stringRedisTemplate.expire("footballay:fixture:web:events:fixture-2:en", Duration.ofMinutes(3)) } returns true
 
         cacheManager.save(
-            fixtureUid = "fixture-2",
-            endpoint = FixturePollingEndpoint.EVENTS,
+            identity = FixtureWebCacheIdentity("fixture-2", FixturePollingEndpoint.EVENTS, SupportedLocale.EN),
             document =
                 FixtureResponseCacheDocument(
                     snapshotJson = """{"fixtureUid":"fixture-2"}""",
@@ -90,7 +90,7 @@ class RedisFixtureWebCacheManagerTest {
 
         verify {
             hashOperations.putAll(
-                "footballay:fixture:web:events:fixture-2",
+                "footballay:fixture:web:events:fixture-2:en",
                 match<Map<String, String>> {
                     it["snapshotJson"] == """{"fixtureUid":"fixture-2"}""" &&
                         it["etagHash"] == "etag-2" &&
@@ -98,6 +98,19 @@ class RedisFixtureWebCacheManagerTest {
                 },
             )
         }
-        verify { stringRedisTemplate.expire("footballay:fixture:web:events:fixture-2", any<Duration>()) }
+        verify { stringRedisTemplate.expire("footballay:fixture:web:events:fixture-2:en", Duration.ofMinutes(3)) }
+    }
+
+    @Test
+    fun `localized endpoint - locale별 key를 사용한다`() {
+        every { hashOperations.get(any(), "etagHash") } returns "etag"
+
+        for (endpoint in listOf(FixturePollingEndpoint.EVENTS, FixturePollingEndpoint.LINEUP, FixturePollingEndpoint.STATISTICS)) {
+            cacheManager.findEtagHash(FixtureWebCacheIdentity("fixture-1", endpoint, SupportedLocale.EN))
+            cacheManager.findEtagHash(FixtureWebCacheIdentity("fixture-1", endpoint, SupportedLocale.KO))
+
+            verify { hashOperations.get("footballay:fixture:web:${endpoint.keySegment}:fixture-1:en", "etagHash") }
+            verify { hashOperations.get("footballay:fixture:web:${endpoint.keySegment}:fixture-1:ko", "etagHash") }
+        }
     }
 }

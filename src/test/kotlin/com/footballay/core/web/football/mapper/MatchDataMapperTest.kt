@@ -1,7 +1,7 @@
 package com.footballay.core.web.football.mapper
 
 import com.footballay.core.domain.model.match.*
-import com.footballay.core.web.football.localization.LocalizedFixtureInfoModel
+import com.footballay.core.web.football.localization.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -143,9 +143,9 @@ class MatchDataMapperTest {
 
     @Test
     fun `toFixtureEventsResponse - 빈 이벤트 목록 변환`() {
-        // Given: Empty events
+        // Given: Empty localized events
         val model =
-            FixtureEventsModel(
+            LocalizedFixtureEventsModel(
                 fixtureUid = "testfixture0003",
                 events = emptyList(),
             )
@@ -160,33 +160,12 @@ class MatchDataMapperTest {
 
     @Test
     fun `toFixtureLineupResponse - null 라인업 처리`() {
-        // Given: Empty lineup
+        // Given: Localized lineup
         val model =
-            FixtureLineupModel(
+            LocalizedFixtureLineupModel(
                 fixtureUid = "testfixture0004",
-                lineup =
-                    FixtureLineupModel.Lineup(
-                        home =
-                            FixtureLineupModel.StartLineup(
-                                teamId = 0L,
-                                teamName = "",
-                                formation = null,
-                                players = emptyList(),
-                                substitutes = emptyList(),
-                                teamUid = "",
-                                playerColor = null,
-                            ),
-                        away =
-                            FixtureLineupModel.StartLineup(
-                                teamId = 0L,
-                                teamName = "",
-                                formation = null,
-                                players = emptyList(),
-                                substitutes = emptyList(),
-                                teamUid = "",
-                                playerColor = null,
-                            ),
-                    ),
+                home = LocalizedFixtureLineupModel.StartLineup("", "", null, null, emptyList(), emptyList(), null),
+                away = LocalizedFixtureLineupModel.StartLineup("", "", null, null, emptyList(), emptyList(), null),
             )
 
         // When

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class FixtureMatchCacheRefreshUseCase(
-    private val fixtureSnapshotRefreshService: FixtureSnapshotRefreshService,
+    private val fixturePollingCacheRefreshUseCase: FixturePollingCacheRefreshUseCase,
 ) {
     private val log = logger()
 
@@ -16,6 +16,6 @@ class FixtureMatchCacheRefreshUseCase(
             trigger.source,
             trigger.jobPhase,
         )
-        fixtureSnapshotRefreshService.refreshAll(trigger)
+        fixturePollingCacheRefreshUseCase.refreshAll(trigger)
     }
 }
