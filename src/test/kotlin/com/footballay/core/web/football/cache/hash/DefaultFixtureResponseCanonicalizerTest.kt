@@ -134,6 +134,18 @@ class DefaultFixtureResponseCanonicalizerTest {
     }
 
     @Test
+    fun `canonicalize events - 같은 식별자에서 player name으로 deterministic 하게 정렬된다`() {
+        val first = FixtureEventsResponse("fixture-2", listOf(event(2, "Goal", playerName = "Park"), event(2, "Goal", playerName = "Kim")))
+        val second = FixtureEventsResponse("fixture-2", first.events.reversed())
+
+        val firstCanonical = canonicalizer.canonicalize(first)
+        val secondCanonical = canonicalizer.canonicalize(second)
+
+        assertThat(firstCanonical.events.map { it.player?.name }).containsExactly("Kim", "Park")
+        assertThat(firstCanonical).isEqualTo(secondCanonical)
+    }
+
+    @Test
     fun `canonicalize events - 빈 events 도 그대로 유지된다`() {
         val response =
             FixtureEventsResponse(
@@ -313,9 +325,9 @@ class DefaultFixtureResponseCanonicalizerTest {
                                 teamUid = "home-team",
                                 players =
                                     listOf(
-                                        lineupPlayer("mp-2", name = "Third duplicate"),
+                                        lineupPlayer("mp-2", name = "Duplicate", shortName = "Third"),
                                         lineupPlayer("mp-1", name = "Alpha"),
-                                        lineupPlayer("mp-2", name = "Second duplicate"),
+                                        lineupPlayer("mp-2", name = "Duplicate", shortName = "Second"),
                                     ),
                                 substitutes = emptyList(),
                             ),
@@ -332,8 +344,8 @@ class DefaultFixtureResponseCanonicalizerTest {
                                 teamUid = "home-team",
                                 players =
                                     listOf(
-                                        lineupPlayer("mp-2", name = "Second duplicate"),
-                                        lineupPlayer("mp-2", name = "Third duplicate"),
+                                        lineupPlayer("mp-2", name = "Duplicate", shortName = "Second"),
+                                        lineupPlayer("mp-2", name = "Duplicate", shortName = "Third"),
                                         lineupPlayer("mp-1", name = "Alpha"),
                                     ),
                                 substitutes = emptyList(),
@@ -348,8 +360,8 @@ class DefaultFixtureResponseCanonicalizerTest {
         assertThat(
             firstCanonical.lineup.home!!
                 .players
-                .map { "${it.matchPlayerUid}:${it.name}" },
-        ).containsExactly("mp-1:Alpha", "mp-2:Second duplicate", "mp-2:Third duplicate")
+                .map { "${it.matchPlayerUid}:${it.shortName}" },
+        ).containsExactly("mp-1:null", "mp-2:Second", "mp-2:Third")
         assertThat(firstCanonical).isEqualTo(secondCanonical)
     }
 
@@ -529,9 +541,9 @@ class DefaultFixtureResponseCanonicalizerTest {
                             ),
                         playerStatistics =
                             listOf(
-                                playerStatistic(matchPlayerUid = "mp-2", name = "Second duplicate"),
+                                playerStatistic(matchPlayerUid = "mp-2", name = "Duplicate", shortName = "Second"),
                                 playerStatistic(matchPlayerUid = "mp-1", name = "Alpha"),
-                                playerStatistic(matchPlayerUid = "mp-2", name = "First duplicate"),
+                                playerStatistic(matchPlayerUid = "mp-2", name = "Duplicate", shortName = "First"),
                             ),
                     ),
                 away = null,
@@ -572,8 +584,8 @@ class DefaultFixtureResponseCanonicalizerTest {
                             ),
                         playerStatistics =
                             listOf(
-                                playerStatistic(matchPlayerUid = "mp-2", name = "First duplicate"),
-                                playerStatistic(matchPlayerUid = "mp-2", name = "Second duplicate"),
+                                playerStatistic(matchPlayerUid = "mp-2", name = "Duplicate", shortName = "First"),
+                                playerStatistic(matchPlayerUid = "mp-2", name = "Duplicate", shortName = "Second"),
                                 playerStatistic(matchPlayerUid = "mp-1", name = "Alpha"),
                             ),
                     ),
@@ -583,8 +595,8 @@ class DefaultFixtureResponseCanonicalizerTest {
         val firstCanonical = canonicalizer.canonicalize(first)
         val secondCanonical = canonicalizer.canonicalize(second)
 
-        assertThat(firstCanonical.home!!.playerStatistics.map { "${it.player.matchPlayerUid}:${it.player.name}" })
-            .containsExactly("mp-1:Alpha", "mp-2:First duplicate", "mp-2:Second duplicate")
+        assertThat(firstCanonical.home!!.playerStatistics.map { "${it.player.matchPlayerUid}:${it.player.shortName}" })
+            .containsExactly("mp-1:null", "mp-2:First", "mp-2:Second")
         assertThat(firstCanonical).isEqualTo(secondCanonical)
     }
 
@@ -640,12 +652,14 @@ class DefaultFixtureResponseCanonicalizerTest {
     private fun event(
         sequence: Int,
         type: String,
+        playerSuffix: String = sequence.toString(),
+        playerName: String = "Player $playerSuffix",
     ) = FixtureEventsResponse.EventInfo(
         sequence = sequence,
         elapsed = sequence * 10,
         extraTime = null,
         team = FixtureEventsResponse.TeamInfo(teamUid = "team-$sequence", name = "Team $sequence", shortName = null, playerColor = null),
-        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$sequence", playerUid = "player-$sequence", name = "Player $sequence", shortName = null, number = sequence),
+        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$playerSuffix", playerUid = "player-$playerSuffix", name = playerName, shortName = null, number = sequence),
         assist = null,
         type = type,
         detail = "$type detail",
@@ -670,11 +684,12 @@ class DefaultFixtureResponseCanonicalizerTest {
         matchPlayerUid: String,
         substitute: Boolean = false,
         name: String = "Player $matchPlayerUid",
+        shortName: String? = null,
     ) = FixtureLineupResponse.LineupPlayer(
         matchPlayerUid = matchPlayerUid,
         playerUid = "player-$matchPlayerUid",
         name = name,
-        shortName = null,
+        shortName = shortName,
         number = null,
         photo = null,
         position = if (substitute) "SUB" else "M",
@@ -766,13 +781,14 @@ class DefaultFixtureResponseCanonicalizerTest {
     private fun playerStatistic(
         matchPlayerUid: String,
         name: String,
+        shortName: String? = null,
     ) = FixtureStatisticsResponse.PlayerWithStatistics(
         player =
             FixtureStatisticsResponse.PlayerInfo(
                 matchPlayerUid = matchPlayerUid,
                 playerUid = "player-$matchPlayerUid",
                 name = name,
-                shortName = null,
+                shortName = shortName,
                 photo = null,
                 position = "M",
                 number = null,
@@ -817,19 +833,4 @@ class DefaultFixtureResponseCanonicalizerTest {
         xg = value,
     )
 
-    private fun event(
-        sequence: Int,
-        type: String,
-        playerSuffix: String,
-    ) = FixtureEventsResponse.EventInfo(
-        sequence = sequence,
-        elapsed = sequence * 10,
-        extraTime = null,
-        team = FixtureEventsResponse.TeamInfo(teamUid = "team-$sequence", name = "Team $sequence", shortName = null, playerColor = null),
-        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$playerSuffix", playerUid = "player-$playerSuffix", name = "Player $playerSuffix", shortName = null, number = null),
-        assist = null,
-        type = type,
-        detail = "$type detail",
-        comments = null,
-    )
 }

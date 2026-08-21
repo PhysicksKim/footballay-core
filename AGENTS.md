@@ -101,7 +101,9 @@ These rules bias toward caution over speed. For trivial tasks, use judgment.
 * Inspect logs with `rg`, `grep`, `tail`, or `sed`.
 * Do not rely only on LLM-summarized output for test failures, DB errors, transaction issues, duplicate key errors, or flaky suite-only failures.
 * For DB/test failures, preserve and inspect raw evidence such as failing test name, table, constraint, SQLState, transaction boundary, fixture path, and test order.
-* Run the full suite only when needed or explicitly requested.
+* Run the full suite only when needed or explicitly requested.  
+* Git should not track code dump file.  
+* If a `plan/` directory exists at the project root and is ignored by Git, write code dumps there.  
 
 ## Context notes for large tasks
 

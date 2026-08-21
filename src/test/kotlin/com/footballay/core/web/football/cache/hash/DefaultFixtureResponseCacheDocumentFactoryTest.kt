@@ -112,15 +112,24 @@ class DefaultFixtureResponseCacheDocumentFactoryTest {
         assertThat(firstDocument.etagHash).isNotEqualTo(secondDocument.etagHash)
     }
 
+    @Test
+    fun `create events - localized player name이 달라지면 weak etag 도 달라진다`() {
+        val first = FixtureEventsResponse("fixture-2", listOf(event(1, "Goal", playerName = "Park")))
+        val second = FixtureEventsResponse("fixture-2", listOf(event(1, "Goal", playerName = "Kim")))
+
+        assertThat(factory.create(first).etagHash).isNotEqualTo(factory.create(second).etagHash)
+    }
+
     private fun event(
         sequence: Int,
         type: String,
+        playerName: String = "Player $sequence",
     ) = FixtureEventsResponse.EventInfo(
         sequence = sequence,
         elapsed = sequence * 10,
         extraTime = null,
         team = FixtureEventsResponse.TeamInfo(teamUid = "team-$sequence", name = "Team $sequence", shortName = null, playerColor = null),
-        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$sequence", playerUid = "player-$sequence", name = "Player $sequence", shortName = null, number = sequence),
+        player = FixtureEventsResponse.PlayerInfo(matchPlayerUid = "mp-$sequence", playerUid = "player-$sequence", name = playerName, shortName = null, number = sequence),
         assist = null,
         type = type,
         detail = "$type detail",
