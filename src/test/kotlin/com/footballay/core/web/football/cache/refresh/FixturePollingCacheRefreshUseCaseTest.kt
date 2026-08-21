@@ -1,5 +1,6 @@
 package com.footballay.core.web.football.cache.refresh
 
+import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.model.match.FixtureEventsModel
 import com.footballay.core.domain.model.match.FixtureLineupModel
@@ -58,24 +59,11 @@ class FixturePollingCacheRefreshUseCaseTest {
     @Test
     fun `refreshAll - status 하나와 locale별 localized snapshot을 저장한다`() {
         val models = pollingModels()
-        val statusResponse = mockk<FixtureLiveStatusResponse>()
-        val statusDocument = FixtureResponseCacheDocument("status", "etag-status")
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(models.liveStatus)
-        every { matchDataQueryService.getFixtureLineup("fixture-1") } returns DomainResult.Success(models.lineup)
-        every { matchDataQueryService.getFixtureEvents("fixture-1") } returns DomainResult.Success(models.events)
-        every { matchDataQueryService.getFixtureStatistics("fixture-1") } returns DomainResult.Success(models.statistics)
-        every { matchDataMapper.toFixtureLiveStatusResponse(models.liveStatus) } returns statusResponse
-        every { cacheDocumentFactory.create(statusResponse) } returns statusDocument
-        every {
-            localizationService.preparePollingModels(models.lineup, models.events, models.statistics, SupportedLocale.entries)
-        } returns models.localizedByLocale
-        every { matchDataMapper.toFixtureLineupResponse(any<LocalizedFixtureLineupModel>()) } returns FixtureLineupResponse("fixture-1", FixtureLineupResponse.Lineup(null, null))
-        every { matchDataMapper.toFixtureEventsResponse(any<LocalizedFixtureEventsModel>()) } returns FixtureEventsResponse("fixture-1", emptyList())
-        every { matchDataMapper.toFixtureStatisticsResponse(any<LocalizedFixtureStatisticsModel>()) } returns FixtureStatisticsResponse(FixtureStatisticsResponse.FixtureBasic("fixture-1", null, "1H"), null, null)
-        every { cacheDocumentFactory.create(any<FixtureLineupResponse>()) } returns FixtureResponseCacheDocument("lineup", "etag-lineup")
-        every { cacheDocumentFactory.create(any<FixtureEventsResponse>()) } returns FixtureResponseCacheDocument("events", "etag-events")
-        every { cacheDocumentFactory.create(any<FixtureStatisticsResponse>()) } returns FixtureResponseCacheDocument("statistics", "etag-statistics")
-        every { cacheManager.save(any(), any()) } just runs
+        val statusDocument = givenSuccessfulStatusQuery(models)
+        givenSuccessfulLocalizedQueries(models)
+        givenLocalizedSnapshotPreparation(models)
+        givenLocalizedResponseProjection()
+        givenCacheSaveSucceeds()
 
         service.refreshAll(FixtureMatchCacheRefreshTrigger(fixtureUid = "fixture-1"))
 
@@ -97,23 +85,91 @@ class FixturePollingCacheRefreshUseCaseTest {
     @Test
     fun `refreshAll - localization preparation 실패에도 status 저장은 유지한다`() {
         val models = pollingModels()
-        val statusResponse = mockk<FixtureLiveStatusResponse>()
-        val statusDocument = FixtureResponseCacheDocument("status", "etag-status")
-        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(models.liveStatus)
-        every { matchDataQueryService.getFixtureLineup("fixture-1") } returns DomainResult.Success(models.lineup)
-        every { matchDataQueryService.getFixtureEvents("fixture-1") } returns DomainResult.Success(models.events)
-        every { matchDataQueryService.getFixtureStatistics("fixture-1") } returns DomainResult.Success(models.statistics)
-        every { matchDataMapper.toFixtureLiveStatusResponse(models.liveStatus) } returns statusResponse
-        every { cacheDocumentFactory.create(statusResponse) } returns statusDocument
+        val statusDocument = givenSuccessfulStatusQuery(models)
+        givenSuccessfulLocalizedQueries(models)
         every {
             localizationService.preparePollingModels(models.lineup, models.events, models.statistics, SupportedLocale.entries)
         } throws IllegalStateException("localization failed")
-        every { cacheManager.save(any(), any()) } just runs
+        givenCacheSaveSucceeds()
 
         service.refreshAll(FixtureMatchCacheRefreshTrigger(fixtureUid = "fixture-1"))
 
         verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATUS, null), statusDocument) }
         verify(exactly = 0) { cacheManager.save(match { it.locale != null }, any()) }
+    }
+
+    @Test
+    fun `refreshAll - 한 endpoint 조회 실패 후에도 나머지 localized snapshot을 저장한다`() {
+        val models = pollingModels()
+        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Fail(DomainFail.NotFound("Fixture", "fixture-1"))
+        givenSuccessfulLocalizedQueries(models)
+        givenLocalizedSnapshotPreparation(models)
+        givenLocalizedResponseProjection()
+        givenCacheSaveSucceeds()
+
+        service.refreshAll(FixtureMatchCacheRefreshTrigger(fixtureUid = "fixture-1"))
+
+        verify(exactly = 0) { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATUS, null), any()) }
+        for (locale in SupportedLocale.entries) {
+            verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.LINEUP, locale), any()) }
+            verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.EVENTS, locale), any()) }
+            verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.STATISTICS, locale), any()) }
+        }
+    }
+
+    @Test
+    fun `refreshAll - 한 locale 저장 실패 후에도 다른 locale snapshot을 저장한다`() {
+        val models = pollingModels()
+        givenSuccessfulStatusQuery(models)
+        givenSuccessfulLocalizedQueries(models)
+        givenLocalizedSnapshotPreparation(models)
+        givenLocalizedResponseProjection()
+        every { cacheManager.save(any(), any()) } answers {
+            if (firstArg<FixtureWebCacheIdentity>() == FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.LINEUP, SupportedLocale.EN)) {
+                throw IllegalStateException("save failed")
+            }
+        }
+
+        service.refreshAll(FixtureMatchCacheRefreshTrigger(fixtureUid = "fixture-1"))
+
+        verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", FixturePollingEndpoint.EVENTS, SupportedLocale.EN), any()) }
+        for (endpoint in listOf(FixturePollingEndpoint.LINEUP, FixturePollingEndpoint.EVENTS, FixturePollingEndpoint.STATISTICS)) {
+            verify { cacheManager.save(FixtureWebCacheIdentity("fixture-1", endpoint, SupportedLocale.KO), any()) }
+        }
+    }
+
+    private fun givenSuccessfulStatusQuery(models: PollingModels): FixtureResponseCacheDocument {
+        val response = mockk<FixtureLiveStatusResponse>()
+        val document = FixtureResponseCacheDocument("status", "etag-status")
+        every { matchDataQueryService.getFixtureLiveStatus("fixture-1") } returns DomainResult.Success(models.liveStatus)
+        every { matchDataMapper.toFixtureLiveStatusResponse(models.liveStatus) } returns response
+        every { cacheDocumentFactory.create(response) } returns document
+        return document
+    }
+
+    private fun givenSuccessfulLocalizedQueries(models: PollingModels) {
+        every { matchDataQueryService.getFixtureLineup("fixture-1") } returns DomainResult.Success(models.lineup)
+        every { matchDataQueryService.getFixtureEvents("fixture-1") } returns DomainResult.Success(models.events)
+        every { matchDataQueryService.getFixtureStatistics("fixture-1") } returns DomainResult.Success(models.statistics)
+    }
+
+    private fun givenLocalizedSnapshotPreparation(models: PollingModels) {
+        every {
+            localizationService.preparePollingModels(models.lineup, models.events, models.statistics, SupportedLocale.entries)
+        } returns models.localizedByLocale
+    }
+
+    private fun givenLocalizedResponseProjection() {
+        every { matchDataMapper.toFixtureLineupResponse(any<LocalizedFixtureLineupModel>()) } returns FixtureLineupResponse("fixture-1", FixtureLineupResponse.Lineup(null, null))
+        every { matchDataMapper.toFixtureEventsResponse(any<LocalizedFixtureEventsModel>()) } returns FixtureEventsResponse("fixture-1", emptyList())
+        every { matchDataMapper.toFixtureStatisticsResponse(any<LocalizedFixtureStatisticsModel>()) } returns FixtureStatisticsResponse(FixtureStatisticsResponse.FixtureBasic("fixture-1", null, "1H"), null, null)
+        every { cacheDocumentFactory.create(any<FixtureLineupResponse>()) } returns FixtureResponseCacheDocument("lineup", "etag-lineup")
+        every { cacheDocumentFactory.create(any<FixtureEventsResponse>()) } returns FixtureResponseCacheDocument("events", "etag-events")
+        every { cacheDocumentFactory.create(any<FixtureStatisticsResponse>()) } returns FixtureResponseCacheDocument("statistics", "etag-statistics")
+    }
+
+    private fun givenCacheSaveSucceeds() {
+        every { cacheManager.save(any(), any()) } just runs
     }
 
     private fun pollingModels(): PollingModels {

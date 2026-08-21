@@ -24,44 +24,12 @@ class MatchDataMapperTest {
 
     @Test
     fun `toFixtureInfoResponse - 기본 정보 변환 성공`() {
-        // Given: Domain Model
-        val model =
-            FixtureInfoModel(
-                fixtureUid = "testfixture0001",
-                referee = "Michael Oliver",
-                date = "2025-01-15 20:00",
-                league =
-                    FixtureInfoModel.LeagueInfo(
-                        id = 1L,
-                        name = "Premier League",
-                        logo = "https://logo.png",
-                        leagueUid = "premier-league-2024",
-                    ),
-                home =
-                    FixtureInfoModel.TeamInfo(
-                        id = 100L,
-                        name = "Manchester City",
-                        logo = "https://city-logo.png",
-                        teamUid = "team-city-50",
-                        playerColor = null,
-                    ),
-                away =
-                    FixtureInfoModel.TeamInfo(
-                        id = 200L,
-                        name = "Liverpool",
-                        logo = "https://liverpool-logo.png",
-                        teamUid = "team-liverpool-51",
-                        playerColor = null,
-                    ),
-            )
-
-        // When
         val dto =
             mapper.toFixtureInfoResponse(
                 LocalizedFixtureInfoModel(
-                    fixtureUid = model.fixtureUid,
-                    referee = model.referee,
-                    date = model.date,
+                    fixtureUid = "testfixture0001",
+                    referee = "Michael Oliver",
+                    date = "2025-01-15 20:00",
                     league = LocalizedFixtureInfoModel.League("premier-league-2024", "Premier League", null, "https://logo.png"),
                     home = LocalizedFixtureInfoModel.Team("team-city-50", "Manchester City", null, "https://city-logo.png", null),
                     away = LocalizedFixtureInfoModel.Team("team-liverpool-51", "Liverpool", null, "https://liverpool-logo.png", null),
@@ -81,22 +49,12 @@ class MatchDataMapperTest {
 
     @Test
     fun `toFixtureInfoResponse - 결정된 localized name을 반영한다`() {
-        val model =
-            FixtureInfoModel(
-                fixtureUid = "fixture-1",
-                referee = null,
-                date = "2026-08-20 20:00",
-                league = FixtureInfoModel.LeagueInfo(name = "Default League", logo = null, leagueUid = "league-1"),
-                home = FixtureInfoModel.TeamInfo(name = "Default Home", logo = null, teamUid = "team-home", playerColor = null),
-                away = FixtureInfoModel.TeamInfo(name = "Default Away", logo = null, teamUid = "team-away", playerColor = null),
-            )
-
         val dto =
             mapper.toFixtureInfoResponse(
                 LocalizedFixtureInfoModel(
-                    fixtureUid = model.fixtureUid,
-                    referee = model.referee,
-                    date = model.date,
+                    fixtureUid = "fixture-1",
+                    referee = null,
+                    date = "2026-08-20 20:00",
                     league = LocalizedFixtureInfoModel.League("league-1", "리그", "리그 약칭", null),
                     home = LocalizedFixtureInfoModel.Team("team-home", "English Home", "EH", null, null),
                     away = LocalizedFixtureInfoModel.Team("team-away", "Default Away", null, null, null),

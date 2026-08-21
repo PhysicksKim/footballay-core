@@ -69,35 +69,7 @@ class FootballResponseLocalizationServiceTest {
 
     @Test
     fun `polling preparation reads team and player localization once for all locales`() {
-        val lineup =
-            FixtureLineupModel(
-                fixtureUid = "fixture-1",
-                lineup =
-                    FixtureLineupModel.Lineup(
-                        home =
-                            FixtureLineupModel.StartLineup(
-                                teamName = "Home",
-                                teamUid = "team-1",
-                                formation = null,
-                                players =
-                                    listOf(
-                                        FixtureLineupModel.LineupPlayer(
-                                            name = "Player",
-                                            number = null,
-                                            photo = null,
-                                            position = null,
-                                            grid = null,
-                                            substitute = false,
-                                            matchPlayerUid = "match-player-1",
-                                            playerUid = "player-1",
-                                        ),
-                                    ),
-                                substitutes = emptyList(),
-                                playerColor = null,
-                            ),
-                        away = null,
-                    ),
-            )
+        val lineup = lineupWithOnePlayer()
         every { teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
         every { playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
 
@@ -121,4 +93,34 @@ class FootballResponseLocalizationServiceTest {
         }
         verify(exactly = 0) { leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) }
     }
+
+    private fun lineupWithOnePlayer(): FixtureLineupModel =
+        FixtureLineupModel(
+            fixtureUid = "fixture-1",
+            lineup =
+                FixtureLineupModel.Lineup(
+                    home =
+                        FixtureLineupModel.StartLineup(
+                            teamName = "Home",
+                            teamUid = "team-1",
+                            formation = null,
+                            players =
+                                listOf(
+                                    FixtureLineupModel.LineupPlayer(
+                                        name = "Player",
+                                        number = null,
+                                        photo = null,
+                                        position = null,
+                                        grid = null,
+                                        substitute = false,
+                                        matchPlayerUid = "match-player-1",
+                                        playerUid = "player-1",
+                                    ),
+                                ),
+                            substitutes = emptyList(),
+                            playerColor = null,
+                        ),
+                    away = null,
+                ),
+        )
 }
