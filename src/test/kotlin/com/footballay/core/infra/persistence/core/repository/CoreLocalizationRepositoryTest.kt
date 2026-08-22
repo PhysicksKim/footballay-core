@@ -132,6 +132,13 @@ class CoreLocalizationRepositoryTest {
             .containsExactly(includedTeam.uid to SupportedLocale.KO)
         assertThat(leagues.map { it.leagueCore.uid to it.locale })
             .containsExactly(includedLeague.uid to SupportedLocale.EN)
+        assertThat(playerLocalizationRepository.findByCoreUidAndLocale(includedPlayer.uid, SupportedLocale.EN)?.name)
+            .isEqualTo("Player EN")
+        assertThat(teamLocalizationRepository.findByCoreUidAndLocale(includedTeam.uid, SupportedLocale.KO)?.name)
+            .isEqualTo("팀")
+        assertThat(leagueLocalizationRepository.findByCoreUidAndLocale(includedLeague.uid, SupportedLocale.EN)?.name)
+            .isEqualTo("League EN")
+        assertThat(playerLocalizationRepository.findByCoreUidAndLocale("missing-player", SupportedLocale.EN)).isNull()
     }
 
     @Suppress("UNCHECKED_CAST")

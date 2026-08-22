@@ -15,6 +15,20 @@ interface PlayerCoreLocalizationRepository : JpaRepository<PlayerCoreLocalizatio
         SELECT localization
         FROM PlayerCoreLocalization localization
         JOIN FETCH localization.playerCore core
+        WHERE core.uid = :coreUid
+          AND localization.locale = :locale
+        """,
+    )
+    fun findByCoreUidAndLocale(
+        @Param("coreUid") coreUid: String,
+        @Param("locale") locale: SupportedLocale,
+    ): PlayerCoreLocalization?
+
+    @Query(
+        """
+        SELECT localization
+        FROM PlayerCoreLocalization localization
+        JOIN FETCH localization.playerCore core
         WHERE core.uid IN :coreUids
           AND localization.locale IN :locales
         """,

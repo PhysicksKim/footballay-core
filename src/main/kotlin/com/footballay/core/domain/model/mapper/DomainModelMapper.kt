@@ -27,6 +27,14 @@ import org.springframework.stereotype.Component
  */
 @Component
 class DomainModelMapper {
+    fun toLeagueModel(leagueCore: LeagueCore): LeagueModel =
+        LeagueModel(
+            uid = leagueCore.uid,
+            name = leagueCore.name,
+            photo = null,
+            available = leagueCore.available,
+        )
+
     /**
      * LeagueCore Entity를 LeagueModel로 변환
      *
@@ -78,6 +86,13 @@ class DomainModelMapper {
                 ),
         )
 
+    fun toTeamModel(teamCore: TeamCore): TeamModel =
+        TeamModel(
+            uid = teamCore.uid,
+            name = teamCore.name,
+            code = teamCore.code,
+        )
+
     /**
      * PlayerApiSports Entity를 PlayerModel로 변환
      *
@@ -111,6 +126,15 @@ class DomainModelMapper {
             extension = extension,
         )
     }
+
+    fun toPlayerModel(playerCore: PlayerCore): PlayerModel =
+        PlayerModel(
+            uid = playerCore.uid,
+            name = playerCore.name,
+            photo = null,
+            position = playerCore.position,
+            number = null,
+        )
 
     /**
      * [leagueUid]가 필요 없는 경우 생략 가능합니다.
