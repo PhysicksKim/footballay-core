@@ -110,7 +110,7 @@ class RedisFixtureWebCacheManager(
     }
 
     private fun key(identity: FixtureWebCacheIdentity): String {
-        val prefix = "$KEY_PREFIX:${identity.endpoint.keySegment}:${identity.fixtureUid}"
+        val prefix = "$KEY_PREFIX:${identity.fixtureUid}:${identity.endpoint.keySegment}"
         return identity.locale?.let { "$prefix:${it.code}" } ?: prefix
     }
 
