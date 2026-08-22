@@ -9,6 +9,7 @@ import com.footballay.core.domain.model.mapper.DomainModelMapper
 import com.footballay.core.infra.persistence.apisports.repository.LeagueApiSportsRepository
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreRepository
 import com.footballay.core.infra.persistence.core.repository.LeagueTeamCoreRepository
+import com.footballay.core.infra.persistence.core.repository.PlayerCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import com.footballay.core.infra.persistence.core.repository.TeamPlayerCoreRepository
 import org.springframework.stereotype.Service
@@ -24,6 +25,7 @@ class LeagueFacade(
     private val leagueTeamCoreRepository: LeagueTeamCoreRepository,
     private val teamCoreRepository: TeamCoreRepository,
     private val teamPlayerCoreRepository: TeamPlayerCoreRepository,
+    private val playerCoreRepository: PlayerCoreRepository,
     private val mapper: DomainModelMapper,
 ) {
     // - Read ALL Available Leagues
@@ -63,6 +65,16 @@ class LeagueFacade(
     fun findLeagueByApiId(apiId: Long): DomainResult<LeagueModel, DomainFail> =
         leagueApiSportsRepository.findByApiId(apiId)?.leagueCore?.let { DomainResult.Success(mapper.toLeagueModel(it)) }
             ?: DomainResult.Fail(DomainFail.NotFound("LeagueApiSports", apiId.toString()))
+
+    @Transactional(readOnly = true)
+    fun findTeamByUid(uid: String): DomainResult<TeamModel, DomainFail> =
+        teamCoreRepository.findByUid(uid)?.let { DomainResult.Success(mapper.toTeamModel(it)) }
+            ?: DomainResult.Fail(DomainFail.NotFound("TeamCore", uid))
+
+    @Transactional(readOnly = true)
+    fun findPlayerByUid(uid: String): DomainResult<PlayerModel, DomainFail> =
+        playerCoreRepository.findByUid(uid)?.let { DomainResult.Success(mapper.toPlayerModel(it)) }
+            ?: DomainResult.Fail(DomainFail.NotFound("PlayerCore", uid))
 
     @Transactional(readOnly = true)
     fun findTeamsByLeagueUid(leagueUid: String): DomainResult<List<TeamModel>, DomainFail> {
