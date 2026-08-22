@@ -16,18 +16,20 @@ import jakarta.persistence.UniqueConstraint
 @Entity
 @Table(
     name = "player_core_localization",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["core_id", "locale"])],
+    uniqueConstraints = [UniqueConstraint(columnNames = ["player_core_uid", "locale"])],
 )
 data class PlayerCoreLocalization(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "core_id", nullable = false)
+    @JoinColumn(name = "player_core_uid", referencedColumnName = "uid", nullable = false)
     var playerCore: PlayerCore,
     @Column(nullable = false)
     var locale: SupportedLocale,
     var name: String? = null,
     @Column(name = "short_name")
     var shortName: String? = null,
+    @Column(name = "ai_generated", nullable = false)
+    var aiGenerated: Boolean = false,
 )

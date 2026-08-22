@@ -28,38 +28,42 @@ class CoreLocalizationMigrationIntegrationTest {
                 assertThat(connection.tableExists(table)).isTrue()
             }
 
-            val coreIds = connection.insertCores()
+            val coreUids = connection.insertCores()
             connection.execute(
-                "INSERT INTO player_core_localization (core_id, locale, name, short_name) VALUES (${coreIds.player}, 'en', NULL, NULL)",
+                "INSERT INTO player_core_localization (player_core_uid, locale, name, short_name) VALUES ('${coreUids.player}', 'en', NULL, NULL)",
             )
             connection.execute(
-                "INSERT INTO team_core_localization (core_id, locale, name, short_name) VALUES (${coreIds.team}, 'ko', '', ' ')",
+                "INSERT INTO team_core_localization (team_core_uid, locale, name, short_name) VALUES ('${coreUids.team}', 'ko', '', ' ')",
             )
             connection.execute(
-                "INSERT INTO league_core_localization (core_id, locale, name, short_name) VALUES (${coreIds.league}, 'en', 'League EN', NULL)",
+                "INSERT INTO league_core_localization (league_core_uid, locale, name, short_name) VALUES ('${coreUids.league}', 'en', 'League EN', NULL)",
             )
 
             assertThat(connection.queryLong("SELECT COUNT(*) FROM player_core_localization")).isEqualTo(1)
             assertThat(connection.queryLong("SELECT COUNT(*) FROM team_core_localization")).isEqualTo(1)
             assertThat(connection.queryLong("SELECT COUNT(*) FROM league_core_localization")).isEqualTo(1)
+            localizationTables.forEach { table ->
+                assertThat(connection.queryBoolean("SELECT ai_generated FROM $table")).isFalse()
+            }
         }
     }
 
     @Test
     fun `V11 enforces unique locale and cascades core deletion`() {
         inMigratedSchema { connection ->
-            val coreIds = connection.insertCores()
+            val coreUids = connection.insertCores()
 
-            localizationTables.zip(coreIds.asList()).forEach { (table, coreId) ->
-                connection.execute("INSERT INTO $table (core_id, locale) VALUES ($coreId, 'en')")
+            localizationTables.zip(coreUids.asList()).forEach { (table, coreUid) ->
+                val coreUidColumn = "${table.removeSuffix("_localization")}_uid"
+                connection.execute("INSERT INTO $table ($coreUidColumn, locale) VALUES ('$coreUid', 'en')")
                 assertThatThrownBy {
-                    connection.execute("INSERT INTO $table (core_id, locale) VALUES ($coreId, 'en')")
+                    connection.execute("INSERT INTO $table ($coreUidColumn, locale) VALUES ('$coreUid', 'en')")
                 }.hasMessageContaining("duplicate key value violates unique constraint")
             }
 
-            connection.execute("DELETE FROM player_core WHERE id = ${coreIds.player}")
-            connection.execute("DELETE FROM team_core WHERE id = ${coreIds.team}")
-            connection.execute("DELETE FROM league_core WHERE id = ${coreIds.league}")
+            connection.execute("DELETE FROM player_core WHERE uid = '${coreUids.player}'")
+            connection.execute("DELETE FROM team_core WHERE uid = '${coreUids.team}'")
+            connection.execute("DELETE FROM league_core WHERE uid = '${coreUids.league}'")
 
             localizationTables.forEach { table ->
                 assertThat(connection.queryLong("SELECT COUNT(*) FROM $table")).isZero()
@@ -94,11 +98,11 @@ class CoreLocalizationMigrationIntegrationTest {
             connection.execute("SET search_path TO $schema")
         }
 
-    private fun Connection.insertCores(): CoreIds =
-        CoreIds(
-            player = queryLong("INSERT INTO player_core (uid, name, auto_generated) VALUES ('player-${UUID.randomUUID()}', 'Player', false) RETURNING id"),
-            team = queryLong("INSERT INTO team_core (uid, name, national, auto_generated) VALUES ('team-${UUID.randomUUID()}', 'Team', false, false) RETURNING id"),
-            league = queryLong("INSERT INTO league_core (uid, name, available, auto_generated, match_collect) VALUES ('league-${UUID.randomUUID()}', 'League', false, false, 'NONE') RETURNING id"),
+    private fun Connection.insertCores(): CoreUids =
+        CoreUids(
+            player = "player-${UUID.randomUUID()}".also { uid -> execute("INSERT INTO player_core (uid, name, auto_generated) VALUES ('$uid', 'Player', false)") },
+            team = "team-${UUID.randomUUID()}".also { uid -> execute("INSERT INTO team_core (uid, name, national, auto_generated) VALUES ('$uid', 'Team', false, false)") },
+            league = "league-${UUID.randomUUID()}".also { uid -> execute("INSERT INTO league_core (uid, name, available, auto_generated, match_collect) VALUES ('$uid', 'League', false, false, 'NONE')") },
         )
 
     private fun Connection.tableExists(table: String): Boolean =
@@ -120,16 +124,24 @@ class CoreLocalizationMigrationIntegrationTest {
             }
         }
 
+    private fun Connection.queryBoolean(sql: String): Boolean =
+        createStatement().use { statement ->
+            statement.executeQuery(sql).use { resultSet ->
+                check(resultSet.next())
+                resultSet.getBoolean(1)
+            }
+        }
+
     private fun Connection.execute(sql: String) {
         createStatement().use { statement -> statement.execute(sql) }
     }
 
-    private data class CoreIds(
-        val player: Long,
-        val team: Long,
-        val league: Long,
+    private data class CoreUids(
+        val player: String,
+        val team: String,
+        val league: String,
     ) {
-        fun asList(): List<Long> = listOf(player, team, league)
+        fun asList(): List<String> = listOf(player, team, league)
     }
 
     private companion object {

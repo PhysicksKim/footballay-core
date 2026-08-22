@@ -66,6 +66,12 @@ class CoreLocalizationRepositoryTest {
         assertThat(databaseLocales("player_core_localization")).containsExactly("en")
         assertThat(databaseLocales("team_core_localization")).containsExactly("ko")
         assertThat(databaseLocales("league_core_localization")).containsExactly("en")
+        assertThat(databaseCoreUids("player_core_localization", "player_core_uid")).containsExactly(player.uid)
+        assertThat(databaseCoreUids("team_core_localization", "team_core_uid")).containsExactly(team.uid)
+        assertThat(databaseCoreUids("league_core_localization", "league_core_uid")).containsExactly(league.uid)
+        assertThat(databaseAiGenerated("player_core_localization")).containsExactly(false)
+        assertThat(databaseAiGenerated("team_core_localization")).containsExactly(false)
+        assertThat(databaseAiGenerated("league_core_localization")).containsExactly(false)
     }
 
     @Test
@@ -131,4 +137,15 @@ class CoreLocalizationRepositoryTest {
     @Suppress("UNCHECKED_CAST")
     private fun databaseLocales(table: String): List<String> =
         entityManager.createNativeQuery("SELECT locale FROM $table ORDER BY id").resultList as List<String>
+
+    @Suppress("UNCHECKED_CAST")
+    private fun databaseCoreUids(
+        table: String,
+        column: String,
+    ): List<String> =
+        entityManager.createNativeQuery("SELECT $column FROM $table ORDER BY id").resultList as List<String>
+
+    @Suppress("UNCHECKED_CAST")
+    private fun databaseAiGenerated(table: String): List<Boolean> =
+        entityManager.createNativeQuery("SELECT ai_generated FROM $table ORDER BY id").resultList as List<Boolean>
 }
