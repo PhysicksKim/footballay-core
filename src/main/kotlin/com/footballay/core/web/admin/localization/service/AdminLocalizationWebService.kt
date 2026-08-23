@@ -10,6 +10,13 @@ import com.footballay.core.localization.CoreLocalizationModel
 import com.footballay.core.localization.LocalizationFacade
 import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.admin.localization.dto.CoreLocalizationResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContext
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContextItem
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportEntityType
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportItem
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportRequest
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
 import org.springframework.stereotype.Service
@@ -21,6 +28,17 @@ class AdminLocalizationWebService(
     private val localizationFacade: LocalizationFacade,
 ) {
     fun getSupportedLocales(): List<SupportedLocaleResponse> = SupportedLocale.entries.map { SupportedLocaleResponse(it.code) }
+
+    fun exportForAi(request: AiLocalizationExportRequest): DomainResult<AiLocalizationExportResponse, DomainFail> {
+        val locales = request.locales.map { it.toSupportedLocale() }
+        val validationErrors = validateExportRequest(request, locales)
+        if (validationErrors.isNotEmpty()) return DomainResult.Fail(DomainFail.Validation(validationErrors))
+
+        return when (request.entityType) {
+            AiLocalizationExportEntityType.TEAM -> exportTeams(request, locales.filterNotNull())
+            AiLocalizationExportEntityType.PLAYER -> exportPlayers(request, locales.filterNotNull())
+        }
+    }
 
     fun getAvailableLeagues(locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> =
         when (val result = leagueFacade.getAvailableCoreLeagues()) {
@@ -132,6 +150,101 @@ class AdminLocalizationWebService(
             is DomainResult.Fail -> playerResult
         }
 
+    private fun exportTeams(
+        request: AiLocalizationExportRequest,
+        locales: List<SupportedLocale>,
+    ): DomainResult<AiLocalizationExportResponse, DomainFail> {
+        return when (val leagueResult = leagueFacade.findLeagueByUid(request.leagueUid)) {
+            is DomainResult.Success ->
+                when (val teamsResult = leagueFacade.findTeamsByLeagueUid(request.leagueUid)) {
+                    is DomainResult.Success -> {
+                        val teamsByUid = teamsResult.value.associateBy { it.uid }
+                        val missingUids = request.uids.filterNot(teamsByUid::containsKey)
+                        if (missingUids.isNotEmpty()) return contextMismatch("TEAM_NOT_IN_LEAGUE", missingUids)
+                        val teams = request.uids.map(teamsByUid::getValue)
+                        val localizations =
+                            localizationFacade
+                                .findTeamLocalizations(request.uids, locales)
+                                .associateBy { it.coreUid to it.locale }
+                        DomainResult.Success(
+                            AiLocalizationExportResponse(
+                                locales = request.locales,
+                                entityType = request.entityType,
+                                context = AiLocalizationExportContext(leagueResult.value.toContextItem()),
+                                items = teams.map { it.toExportItem(locales, localizations) },
+                            ),
+                        )
+                    }
+                    is DomainResult.Fail -> teamsResult
+                }
+            is DomainResult.Fail -> leagueResult
+        }
+    }
+
+    private fun exportPlayers(
+        request: AiLocalizationExportRequest,
+        locales: List<SupportedLocale>,
+    ): DomainResult<AiLocalizationExportResponse, DomainFail> {
+        val teamUid = request.teamUid ?: return DomainResult.Fail(DomainFail.Validation.single("TEAM_UID_REQUIRED", "teamUid는 PLAYER export에 필요합니다."))
+        return when (val leagueResult = leagueFacade.findLeagueByUid(request.leagueUid)) {
+            is DomainResult.Success ->
+                when (val teamsResult = leagueFacade.findTeamsByLeagueUid(request.leagueUid)) {
+                    is DomainResult.Success -> {
+                        if (teamsResult.value.none { it.uid == teamUid }) return contextMismatch("TEAM_NOT_IN_LEAGUE", listOf(teamUid))
+                        when (val teamResult = leagueFacade.findTeamByUid(teamUid)) {
+                            is DomainResult.Success ->
+                                when (val playersResult = leagueFacade.findPlayersByTeamUid(teamUid)) {
+                                    is DomainResult.Success -> {
+                                        val playersByUid = playersResult.value.associateBy { it.uid }
+                                        val missingUids = request.uids.filterNot(playersByUid::containsKey)
+                                        if (missingUids.isNotEmpty()) return contextMismatch("PLAYER_NOT_IN_TEAM", missingUids)
+                                        val players = request.uids.map(playersByUid::getValue)
+                                        val localizations =
+                                            localizationFacade
+                                                .findPlayerLocalizations(request.uids, locales)
+                                                .associateBy { it.coreUid to it.locale }
+                                        DomainResult.Success(
+                                            AiLocalizationExportResponse(
+                                                locales = request.locales,
+                                                entityType = request.entityType,
+                                                context = AiLocalizationExportContext(leagueResult.value.toContextItem(), teamResult.value.toContextItem()),
+                                                items = players.map { it.toExportItem(locales, localizations) },
+                                            ),
+                                        )
+                                    }
+                                    is DomainResult.Fail -> playersResult
+                                }
+                            is DomainResult.Fail -> teamResult
+                        }
+                    }
+                    is DomainResult.Fail -> teamsResult
+                }
+            is DomainResult.Fail -> leagueResult
+        }
+    }
+
+    private fun validateExportRequest(
+        request: AiLocalizationExportRequest,
+        locales: List<SupportedLocale?>,
+    ): List<DomainFail.Validation.ValidationError> =
+        buildList {
+            if (request.locales.isEmpty()) add(DomainFail.Validation.ValidationError("LOCALES_EMPTY", "locales는 비어 있을 수 없습니다.", "locales"))
+            if (request.locales.size != request.locales.toSet().size) add(DomainFail.Validation.ValidationError("LOCALES_DUPLICATED", "locales에 중복 값이 있습니다.", "locales"))
+            request.locales.zip(locales).filter { it.second == null }.forEach { (locale, _) ->
+                add(DomainFail.Validation.ValidationError("UNSUPPORTED_LOCALE", "지원하지 않는 locale입니다: $locale", "locales"))
+            }
+            if (request.uids.isEmpty()) add(DomainFail.Validation.ValidationError("UIDS_EMPTY", "uids는 비어 있을 수 없습니다.", "uids"))
+            if (request.uids.size != request.uids.toSet().size) add(DomainFail.Validation.ValidationError("UIDS_DUPLICATED", "uids에 중복 값이 있습니다.", "uids"))
+        }
+
+    private fun contextMismatch(
+        code: String,
+        uids: List<String>,
+    ): DomainResult.Fail<DomainFail.Validation> =
+        DomainResult.Fail(
+            DomainFail.Validation(uids.map { DomainFail.Validation.ValidationError(code, "현재 탐색 문맥에 포함되지 않은 UID입니다: $it", "uids") }),
+        )
+
     private fun DomainResult<LeagueModel, DomainFail>.withLeagueLocalization(
         findLocalization: (LeagueModel) -> CoreLocalizationModel?,
     ): DomainResult<CoreLocalizationResponse, DomainFail> =
@@ -147,4 +260,36 @@ class AdminLocalizationWebService(
     private fun PlayerModel.toResponse(localization: CoreLocalizationModel?): CoreLocalizationResponse = CoreLocalizationResponse(uid, name, localization?.toResponse())
 
     private fun CoreLocalizationModel.toResponse(): LocalizationResponse = LocalizationResponse(name, shortName, aiGenerated)
+
+    private fun String.toSupportedLocale(): SupportedLocale? = SupportedLocale.entries.find { it.code == this }
+
+    private fun LeagueModel.toContextItem(): AiLocalizationExportContextItem = AiLocalizationExportContextItem(uid, name)
+
+    private fun TeamModel.toContextItem(): AiLocalizationExportContextItem = AiLocalizationExportContextItem(uid, name)
+
+    private fun TeamModel.toExportItem(
+        locales: List<SupportedLocale>,
+        localizations: Map<Pair<String, SupportedLocale>, CoreLocalizationModel>,
+    ): AiLocalizationExportItem =
+        AiLocalizationExportItem(
+            uid = uid,
+            originalName = name,
+            localizations = locales.associate { locale ->
+                locale.code to localizations[uid to locale].toExportValue()
+            },
+        )
+
+    private fun PlayerModel.toExportItem(
+        locales: List<SupportedLocale>,
+        localizations: Map<Pair<String, SupportedLocale>, CoreLocalizationModel>,
+    ): AiLocalizationExportItem =
+        AiLocalizationExportItem(
+            uid = uid,
+            originalName = name,
+            localizations = locales.associate { locale ->
+                locale.code to localizations[uid to locale].toExportValue()
+            },
+        )
+
+    private fun CoreLocalizationModel?.toExportValue(): AiLocalizationExportValue = AiLocalizationExportValue(this?.name, this?.shortName)
 }

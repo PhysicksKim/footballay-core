@@ -4,9 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.admin.localization.dto.CoreLocalizationResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContext
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContextItem
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportEntityType
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportItem
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
+import com.footballay.core.web.admin.localization.ai.AiLocalizationContract
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
 import com.footballay.core.web.admin.localization.service.AdminLocalizationWebService
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.given
@@ -19,6 +27,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 
 @SpringBootTest
@@ -77,5 +86,47 @@ class AdminLocalizationManagementControllerTest(
             }.andExpect {
             status { isBadRequest() }
         }
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("AI export endpoint는 Team context와 locale별 localization을 반환한다")
+    fun exportForAi_returnsExportPayload() {
+        val request = mapOf(
+            "entityType" to "TEAM",
+            "leagueUid" to "league-1",
+            "locales" to listOf("en", "ko"),
+            "uids" to listOf("team-1"),
+        )
+        given(adminLocalizationWebService.exportForAi(org.mockito.kotlin.any())).willReturn(
+            DomainResult.Success(
+                AiLocalizationExportResponse(
+                    locales = listOf("en", "ko"),
+                    entityType = AiLocalizationExportEntityType.TEAM,
+                    context = AiLocalizationExportContext(AiLocalizationExportContextItem("league-1", "Premier League")),
+                    items = listOf(AiLocalizationExportItem("team-1", "Arsenal", mapOf("en" to AiLocalizationExportValue("Arsenal", "ARS"), "ko" to AiLocalizationExportValue(null, null)))),
+                ),
+            ),
+        )
+
+        val result =
+            mockMvc
+                .post("/api/v1/admin/localizations/ai-export") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = objectMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isOk() }
+                    jsonPath("$.version") { value(AiLocalizationContract.VERSION) }
+                    jsonPath("$.entityType") { value("TEAM") }
+                    jsonPath("$.context.league.uid") { value("league-1") }
+                    jsonPath("$.context.team") { doesNotExist() }
+                    jsonPath("$.items[0].localizations.en.shortName") { value("ARS") }
+                }.andReturn()
+
+        val missingLocalization = objectMapper.readTree(result.response.contentAsString).at("/items/0/localizations/ko")
+        assertThat(missingLocalization.has("name")).isTrue()
+        assertThat(missingLocalization.get("name").isNull).isTrue()
+        assertThat(missingLocalization.has("shortName")).isTrue()
+        assertThat(missingLocalization.get("shortName").isNull).isTrue()
     }
 }

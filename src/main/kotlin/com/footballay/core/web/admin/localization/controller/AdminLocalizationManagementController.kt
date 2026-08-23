@@ -3,6 +3,8 @@ package com.footballay.core.web.admin.localization.controller
 import com.footballay.core.common.result.toResponseEntity
 import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.admin.localization.dto.CoreLocalizationResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportRequest
+import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
 import com.footballay.core.web.admin.localization.dto.LocalizationUpdateRequest
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
 import com.footballay.core.web.admin.localization.service.AdminLocalizationWebService
@@ -13,6 +15,7 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -64,6 +67,11 @@ class AdminLocalizationManagementController(
         val supportedLocale = locale.toSupportedLocale() ?: return ResponseEntity.badRequest().build()
         return adminLocalizationWebService.getPlayers(teamUid, supportedLocale).toResponseEntity()
     }
+
+    @PostMapping("/ai-export")
+    fun exportForAi(
+        @RequestBody @Valid request: AiLocalizationExportRequest,
+    ): ResponseEntity<AiLocalizationExportResponse> = adminLocalizationWebService.exportForAi(request).toResponseEntity()
 
     @PutMapping("/leagues/{uid}/{locale}")
     fun updateLeagueLocalization(
