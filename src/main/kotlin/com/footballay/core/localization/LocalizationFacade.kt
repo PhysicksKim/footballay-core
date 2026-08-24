@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class LocalizationFacade(
     private val localizationService: LocalizationService,
+    private val aiLocalizationService: AiLocalizationService,
 ) {
     @Transactional(readOnly = true)
     fun findLeagueLocalizations(
@@ -75,9 +76,9 @@ class LocalizationFacade(
 
     @Transactional
     fun applyAiTeamLocalizations(updates: List<AiLocalizationUpdate>): AiLocalizationApplyResult =
-        localizationService.applyAiTeamLocalizations(updates)
+        aiLocalizationService.applyTeamLocalizations(updates)
 
     @Transactional
     fun applyAiPlayerLocalizations(updates: List<AiLocalizationUpdate>): AiLocalizationApplyResult =
-        localizationService.applyAiPlayerLocalizations(updates)
+        aiLocalizationService.applyPlayerLocalizations(updates)
 }

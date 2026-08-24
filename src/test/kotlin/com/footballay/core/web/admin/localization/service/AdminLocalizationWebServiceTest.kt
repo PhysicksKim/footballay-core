@@ -13,12 +13,13 @@ import com.footballay.core.localization.AiLocalizationApplyResult
 import com.footballay.core.localization.LocalizationFacade
 import com.footballay.core.localization.LocalizationUpsertResult
 import com.footballay.core.localization.SupportedLocale
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportEntityType
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportRequest
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImport
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportItem
+import com.footballay.core.web.admin.localization.ai.AiLocalizationEntityType
 import com.footballay.core.web.admin.localization.ai.AiLocalizationImportValidator
+import com.footballay.core.web.admin.localization.ai.AiLocalizationExportContextLoader
+import com.footballay.core.web.admin.localization.ai.AiLocalizationExportValidator
+import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImport
+import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImportItem
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.groups.Tuple
 import org.junit.jupiter.api.DisplayName
@@ -99,7 +100,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("Team AI export는 League context와 여러 locale의 기존 localization을 조립한다")
     fun exportForAi_exportsTeamsWithContextAndMultipleLocales() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.TEAM, "league-1", locales = listOf("en", "ko"), uids = listOf("team-1"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.TEAM, "league-1", locales = listOf("en", "ko"), uids = listOf("team-1"))
         whenever(leagueFacade.findLeagueByUid("league-1")).thenReturn(DomainResult.Success(LeagueModel("league-1", "Premier League", null, true)))
         whenever(leagueFacade.findTeamsByLeagueUid("league-1")).thenReturn(DomainResult.Success(listOf(TeamModel("team-1", "Arsenal", "ARS"))))
         whenever(localizationFacade.findTeamLocalizations(listOf("team-1"), listOf(SupportedLocale.EN, SupportedLocale.KO))).thenReturn(
@@ -118,7 +119,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("Player AI export는 League와 Team 관계 및 선택 Player를 검증한다")
     fun exportForAi_exportsPlayersWithLeagueAndTeamContext() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.PLAYER, "league-1", "team-1", listOf("en", "ko"), listOf("player-1"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.PLAYER, "league-1", "team-1", listOf("en", "ko"), listOf("player-1"))
         whenever(leagueFacade.findLeagueByUid("league-1")).thenReturn(DomainResult.Success(LeagueModel("league-1", "Premier League", null, true)))
         whenever(leagueFacade.findTeamsByLeagueUid("league-1")).thenReturn(DomainResult.Success(listOf(TeamModel("team-1", "Arsenal", "ARS"))))
         whenever(leagueFacade.findTeamByUid("team-1")).thenReturn(DomainResult.Success(TeamModel("team-1", "Arsenal", "ARS")))
@@ -137,7 +138,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI export는 빈 locale과 UID를 validation 실패로 반환한다")
     fun exportForAi_returnsValidationForEmptySelections() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.TEAM, "league-1", locales = emptyList(), uids = emptyList())
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.TEAM, "league-1", locales = emptyList(), uids = emptyList())
 
         val result = aiService().exportForAi(request)
 
@@ -156,7 +157,7 @@ class AdminLocalizationWebServiceTest {
     @DisplayName("AI export는 중복 locale과 UID를 validation 실패로 반환한다")
     fun exportForAi_returnsValidationForDuplicateSelections() {
         val request = AiLocalizationExportRequest(
-            AiLocalizationExportEntityType.TEAM,
+            AiLocalizationEntityType.TEAM,
             "league-1",
             locales = listOf("ko", "ko"),
             uids = listOf("team-1", "team-1"),
@@ -177,7 +178,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI export는 지원하지 않는 locale을 validation 실패로 반환한다")
     fun exportForAi_returnsValidationForUnsupportedLocale() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.TEAM, "league-1", locales = listOf("fr"), uids = listOf("team-1"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.TEAM, "league-1", locales = listOf("fr"), uids = listOf("team-1"))
 
         val result = aiService().exportForAi(request)
 
@@ -189,7 +190,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI export는 요청 Team이 League 문맥에 없으면 validation 실패를 반환한다")
     fun exportForAi_returnsValidationWhenTeamIsOutsideLeagueContext() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.TEAM, "league-1", locales = listOf("ko"), uids = listOf("team-2"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.TEAM, "league-1", locales = listOf("ko"), uids = listOf("team-2"))
         whenever(leagueFacade.findLeagueByUid("league-1")).thenReturn(DomainResult.Success(LeagueModel("league-1", "Premier League", null, true)))
         whenever(leagueFacade.findTeamsByLeagueUid("league-1")).thenReturn(DomainResult.Success(listOf(TeamModel("team-1", "Arsenal", "ARS"))))
 
@@ -203,7 +204,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI Player export는 Team이 League 문맥에 없으면 validation 실패를 반환한다")
     fun exportForAi_returnsValidationWhenPlayerTeamIsOutsideLeagueContext() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.PLAYER, "league-1", "team-2", listOf("ko"), listOf("player-1"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.PLAYER, "league-1", "team-2", listOf("ko"), listOf("player-1"))
         whenever(leagueFacade.findLeagueByUid("league-1")).thenReturn(DomainResult.Success(LeagueModel("league-1", "Premier League", null, true)))
         whenever(leagueFacade.findTeamsByLeagueUid("league-1")).thenReturn(DomainResult.Success(listOf(TeamModel("team-1", "Arsenal", "ARS"))))
 
@@ -217,7 +218,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI Player export는 Player가 Team 문맥에 없으면 validation 실패를 반환한다")
     fun exportForAi_returnsValidationWhenPlayerIsOutsideTeamContext() {
-        val request = AiLocalizationExportRequest(AiLocalizationExportEntityType.PLAYER, "league-1", "team-1", listOf("ko"), listOf("player-2"))
+        val request = AiLocalizationExportRequest(AiLocalizationEntityType.PLAYER, "league-1", "team-1", listOf("ko"), listOf("player-2"))
         whenever(leagueFacade.findLeagueByUid("league-1")).thenReturn(DomainResult.Success(LeagueModel("league-1", "Premier League", null, true)))
         whenever(leagueFacade.findTeamsByLeagueUid("league-1")).thenReturn(DomainResult.Success(listOf(TeamModel("team-1", "Arsenal", "ARS"))))
         whenever(leagueFacade.findTeamByUid("team-1")).thenReturn(DomainResult.Success(TeamModel("team-1", "Arsenal", "ARS")))
@@ -240,10 +241,10 @@ class AdminLocalizationWebServiceTest {
         val playerResult = aiService().validateAiImport(json("""{"version":1,"entityType":"PLAYER","items":[{"uid":"player-1","locale":"en","shortName":"Saka"}]}"""))
 
         assertThat(teamResult.isSuccess).isTrue()
-        assertThat(teamResult.value?.entityType).isEqualTo(com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType.TEAM)
+        assertThat(teamResult.value?.entityType).isEqualTo(AiLocalizationEntityType.TEAM)
         assertThat(teamResult.value?.items).extracting("uid", "locale", "name", "shortName").containsExactly(Tuple("team-1", SupportedLocale.KO, null, null))
         assertThat(playerResult.isSuccess).isTrue()
-        assertThat(playerResult.value?.entityType).isEqualTo(com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType.PLAYER)
+        assertThat(playerResult.value?.entityType).isEqualTo(AiLocalizationEntityType.PLAYER)
         assertThat(playerResult.value?.items).extracting("uid", "locale", "name", "shortName").containsExactly(Tuple("player-1", SupportedLocale.EN, null, "Saka"))
         verifyNoInteractions(localizationFacade)
     }
@@ -296,7 +297,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI import는 검증 완료 item을 다시 파싱하지 않고 Team bulk apply 결과를 응답으로 조립한다")
     fun applyAiImport_appliesValidatedTeamItems() {
-        val import = AiLocalizationImport(AiLocalizationImportEntityType.TEAM, listOf(AiLocalizationImportItem(0, "team-1", SupportedLocale.KO, "아스널", null)))
+        val import = ValidatedAiLocalizationImport(AiLocalizationEntityType.TEAM, listOf(ValidatedAiLocalizationImportItem(0, "team-1", SupportedLocale.KO, "아스널", null)))
         whenever(localizationFacade.applyAiTeamLocalizations(org.mockito.kotlin.any())).thenReturn(
             AiLocalizationApplyResult(
                 updatedCount = 1,
@@ -326,7 +327,7 @@ class AdminLocalizationWebServiceTest {
     @Test
     @DisplayName("AI import는 Player bulk apply를 선택한다")
     fun applyAiImport_appliesValidatedPlayerItems() {
-        val import = AiLocalizationImport(AiLocalizationImportEntityType.PLAYER, listOf(AiLocalizationImportItem(0, "player-1", SupportedLocale.EN, null, "Saka")))
+        val import = ValidatedAiLocalizationImport(AiLocalizationEntityType.PLAYER, listOf(ValidatedAiLocalizationImportItem(0, "player-1", SupportedLocale.EN, null, "Saka")))
         whenever(localizationFacade.applyAiPlayerLocalizations(org.mockito.kotlin.any())).thenReturn(AiLocalizationApplyResult(0, 1, emptyList()))
 
         val response = aiService().applyAiImport(import)
@@ -342,5 +343,11 @@ class AdminLocalizationWebServiceTest {
 
     private fun service() = AdminLocalizationWebService(leagueFacade, localizationFacade)
 
-    private fun aiService() = AdminAiLocalizationWebService(leagueFacade, localizationFacade, AiLocalizationImportValidator(leagueFacade))
+    private fun aiService() =
+        AdminAiLocalizationWebService(
+            localizationFacade,
+            AiLocalizationExportValidator(),
+            AiLocalizationExportContextLoader(leagueFacade),
+            AiLocalizationImportValidator(leagueFacade),
+        )
 }

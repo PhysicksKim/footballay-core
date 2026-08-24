@@ -18,14 +18,20 @@ class AdminLocalizationWebService(
 ) {
     fun getSupportedLocales(): List<SupportedLocaleResponse> = SupportedLocale.entries.map(AdminLocalizationMapper::toSupportedLocaleResponse)
 
-    fun getAvailableLeagues(locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> =
-        when (val result = leagueFacade.getAvailableCoreLeagues()) {
-            is DomainResult.Success -> {
-                val localizations = localizationFacade.findLeagueLocalizations(result.value.map { it.uid }, listOf(locale)).associateBy { it.coreUid }
-                DomainResult.Success(result.value.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    fun getAvailableLeagues(locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> {
+        val leagues =
+            when (val result = leagueFacade.getAvailableCoreLeagues()) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
             }
-            is DomainResult.Fail -> result
-        }
+        val localizations =
+            localizationFacade
+                .findLeagueLocalizations(
+                    leagues.map { it.uid },
+                    listOf(locale),
+                ).associateBy { it.coreUid }
+        return DomainResult.Success(leagues.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    }
 
     fun lookupLeague(
         uid: String?,
@@ -35,65 +41,113 @@ class AdminLocalizationWebService(
         val leagueResult =
             when {
                 uid != null && apiId == null -> leagueFacade.findLeagueByUid(uid)
+
                 uid == null && apiId != null -> leagueFacade.findLeagueByApiId(apiId)
-                else -> return DomainResult.Fail(DomainFail.Validation.single("INVALID_LEAGUE_LOOKUP", "uid 또는 apiId 중 하나만 지정해야 합니다."))
+
+                else -> return DomainResult.Fail(
+                    DomainFail.Validation.single(
+                        "INVALID_LEAGUE_LOOKUP",
+                        "uid 또는 apiId 중 하나만 지정해야 합니다.",
+                    ),
+                )
             }
-        return when (leagueResult) {
-            is DomainResult.Success -> DomainResult.Success(
-                AdminLocalizationMapper.toResponse(
-                    leagueResult.value,
-                    localizationFacade.findLeagueLocalization(leagueResult.value.uid, locale),
-                ),
-            )
-            is DomainResult.Fail -> leagueResult
-        }
+        val league =
+            when (leagueResult) {
+                is DomainResult.Success -> leagueResult.value
+                is DomainResult.Fail -> return leagueResult
+            }
+        return DomainResult.Success(
+            AdminLocalizationMapper.toResponse(
+                league,
+                localizationFacade.findLeagueLocalization(league.uid, locale),
+            ),
+        )
     }
 
-    fun getTeams(leagueUid: String, locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> =
-        when (val result = leagueFacade.findTeamsByLeagueUid(leagueUid)) {
-            is DomainResult.Success -> {
-                val localizations = localizationFacade.findTeamLocalizations(result.value.map { it.uid }, listOf(locale)).associateBy { it.coreUid }
-                DomainResult.Success(result.value.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    fun getTeams(
+        leagueUid: String,
+        locale: SupportedLocale,
+    ): DomainResult<List<CoreLocalizationResponse>, DomainFail> {
+        val teams =
+            when (val result = leagueFacade.findTeamsByLeagueUid(leagueUid)) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
             }
-            is DomainResult.Fail -> result
-        }
+        val localizations =
+            localizationFacade.findTeamLocalizations(teams.map { it.uid }, listOf(locale)).associateBy { it.coreUid }
+        return DomainResult.Success(teams.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    }
 
-    fun getPlayers(teamUid: String, locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> =
-        when (val result = leagueFacade.findPlayersByTeamUid(teamUid)) {
-            is DomainResult.Success -> {
-                val localizations = localizationFacade.findPlayerLocalizations(result.value.map { it.uid }, listOf(locale)).associateBy { it.coreUid }
-                DomainResult.Success(result.value.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    fun getPlayers(
+        teamUid: String,
+        locale: SupportedLocale,
+    ): DomainResult<List<CoreLocalizationResponse>, DomainFail> {
+        val players =
+            when (val result = leagueFacade.findPlayersByTeamUid(teamUid)) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
             }
-            is DomainResult.Fail -> result
-        }
+        val localizations =
+            localizationFacade
+                .findPlayerLocalizations(players.map { it.uid }, listOf(locale))
+                .associateBy { it.coreUid }
+        return DomainResult.Success(players.map { AdminLocalizationMapper.toResponse(it, localizations[it.uid]) })
+    }
 
-    fun updateLeagueLocalization(uid: String, locale: SupportedLocale, name: String?, shortName: String?): DomainResult<CoreLocalizationResponse, DomainFail> =
-        when (val leagueResult = leagueFacade.findLeagueByUid(uid)) {
-            is DomainResult.Success ->
-                when (val localizationResult = localizationFacade.upsertLeagueLocalization(uid, locale, name, shortName)) {
-                    is DomainResult.Success -> DomainResult.Success(AdminLocalizationMapper.toResponse(leagueResult.value, localizationResult.value.localization))
-                    is DomainResult.Fail -> localizationResult
-                }
-            is DomainResult.Fail -> leagueResult
-        }
+    fun updateLeagueLocalization(
+        uid: String,
+        locale: SupportedLocale,
+        name: String?,
+        shortName: String?,
+    ): DomainResult<CoreLocalizationResponse, DomainFail> {
+        val league =
+            when (val result = leagueFacade.findLeagueByUid(uid)) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
+            }
+        val localization =
+            when (val result = localizationFacade.upsertLeagueLocalization(uid, locale, name, shortName)) {
+                is DomainResult.Success -> result.value.localization
+                is DomainResult.Fail -> return result
+            }
+        return DomainResult.Success(AdminLocalizationMapper.toResponse(league, localization))
+    }
 
-    fun updateTeamLocalization(uid: String, locale: SupportedLocale, name: String?, shortName: String?): DomainResult<CoreLocalizationResponse, DomainFail> =
-        when (val teamResult = leagueFacade.findTeamByUid(uid)) {
-            is DomainResult.Success ->
-                when (val localizationResult = localizationFacade.upsertTeamLocalization(uid, locale, name, shortName)) {
-                    is DomainResult.Success -> DomainResult.Success(AdminLocalizationMapper.toResponse(teamResult.value, localizationResult.value.localization))
-                    is DomainResult.Fail -> localizationResult
-                }
-            is DomainResult.Fail -> teamResult
-        }
+    fun updateTeamLocalization(
+        uid: String,
+        locale: SupportedLocale,
+        name: String?,
+        shortName: String?,
+    ): DomainResult<CoreLocalizationResponse, DomainFail> {
+        val team =
+            when (val result = leagueFacade.findTeamByUid(uid)) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
+            }
+        val localization =
+            when (val result = localizationFacade.upsertTeamLocalization(uid, locale, name, shortName)) {
+                is DomainResult.Success -> result.value.localization
+                is DomainResult.Fail -> return result
+            }
+        return DomainResult.Success(AdminLocalizationMapper.toResponse(team, localization))
+    }
 
-    fun updatePlayerLocalization(uid: String, locale: SupportedLocale, name: String?, shortName: String?): DomainResult<CoreLocalizationResponse, DomainFail> =
-        when (val playerResult = leagueFacade.findPlayerByUid(uid)) {
-            is DomainResult.Success ->
-                when (val localizationResult = localizationFacade.upsertPlayerLocalization(uid, locale, name, shortName)) {
-                    is DomainResult.Success -> DomainResult.Success(AdminLocalizationMapper.toResponse(playerResult.value, localizationResult.value.localization))
-                    is DomainResult.Fail -> localizationResult
-                }
-            is DomainResult.Fail -> playerResult
-        }
+    fun updatePlayerLocalization(
+        uid: String,
+        locale: SupportedLocale,
+        name: String?,
+        shortName: String?,
+    ): DomainResult<CoreLocalizationResponse, DomainFail> {
+        val player =
+            when (val result = leagueFacade.findPlayerByUid(uid)) {
+                is DomainResult.Success -> result.value
+                is DomainResult.Fail -> return result
+            }
+        val localization =
+            when (val result = localizationFacade.upsertPlayerLocalization(uid, locale, name, shortName)) {
+                is DomainResult.Success -> result.value.localization
+                is DomainResult.Fail -> return result
+            }
+        return DomainResult.Success(AdminLocalizationMapper.toResponse(player, localization))
+    }
 }

@@ -6,16 +6,15 @@ import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.admin.localization.dto.CoreLocalizationResponse
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContext
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContextItem
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportEntityType
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportItem
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationError
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationFailureResponse
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationResult
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImport
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportItem
+import com.footballay.core.web.admin.localization.ai.AiLocalizationImportValidationResult
+import com.footballay.core.web.admin.localization.ai.AiLocalizationEntityType
+import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImport
+import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImportItem
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportResponse
 import com.footballay.core.web.admin.localization.ai.AiLocalizationContract
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
@@ -116,7 +115,7 @@ class AdminLocalizationManagementControllerTest(
             DomainResult.Success(
                 AiLocalizationExportResponse(
                     locales = listOf("en", "ko"),
-                    entityType = AiLocalizationExportEntityType.TEAM,
+                    entityType = AiLocalizationEntityType.TEAM,
                     context = AiLocalizationExportContext(AiLocalizationExportContextItem("league-1", "Premier League")),
                     items = listOf(AiLocalizationExportItem("team-1", "Arsenal", mapOf("en" to AiLocalizationExportValue("Arsenal", "ARS"), "ko" to AiLocalizationExportValue(null, null)))),
                 ),
@@ -150,7 +149,7 @@ class AdminLocalizationManagementControllerTest(
     fun importForAi_acceptsValidPayloads() {
         given(adminAiLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
             AiLocalizationImportValidationResult.success(
-                AiLocalizationImport(AiLocalizationImportEntityType.TEAM, listOf(AiLocalizationImportItem(0, "team-1", SupportedLocale.KO, null, null))),
+                ValidatedAiLocalizationImport(AiLocalizationEntityType.TEAM, listOf(ValidatedAiLocalizationImportItem(0, "team-1", SupportedLocale.KO, null, null))),
             ),
         )
         given(adminAiLocalizationWebService.applyAiImport(org.mockito.kotlin.any())).willReturn(
