@@ -10,6 +10,12 @@ import com.footballay.core.web.admin.localization.dto.AiLocalizationExportEntity
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportItem
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationError
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationFailureResponse
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationResult
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImport
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportItem
 import com.footballay.core.web.admin.localization.ai.AiLocalizationContract
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
@@ -18,6 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.given
+import org.mockito.kotlin.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -128,5 +135,111 @@ class AdminLocalizationManagementControllerTest(
         assertThat(missingLocalization.get("name").isNull).isTrue()
         assertThat(missingLocalization.has("shortName")).isTrue()
         assertThat(missingLocalization.get("shortName").isNull).isTrue()
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("AI import endpoint는 유효한 Team과 Player payload를 validation 단계에서 수락한다")
+    fun importForAi_acceptsValidPayloads() {
+        given(adminLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
+            AiLocalizationImportValidationResult.success(
+                AiLocalizationImport(AiLocalizationImportEntityType.TEAM, listOf(AiLocalizationImportItem(0, "team-1", SupportedLocale.KO, null, null))),
+            ),
+        )
+
+        listOf("TEAM" to "team-1", "PLAYER" to "player-1").forEach { (entityType, uid) ->
+            mockMvc
+                .post("/api/v1/admin/localizations/ai-import") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = """{"version":1,"entityType":"$entityType","items":[{"uid":"$uid","locale":"ko"}]}"""
+                }.andExpect {
+                    status { isOk() }
+                }
+        }
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("AI import endpoint는 validation 실패 body를 400으로 반환한다")
+    fun importForAi_returnsValidationFailure() {
+        given(adminLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
+            AiLocalizationImportValidationResult.failure(
+                AiLocalizationImportValidationFailureResponse(
+                    listOf(AiLocalizationImportValidationError("INVALID_FIELD_TYPE", "name은 null 또는 string이어야 합니다.", index = 0, field = "items[0].name")),
+                ),
+            ),
+        )
+
+        mockMvc
+            .post("/api/v1/admin/localizations/ai-import") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"version":1,"entityType":"TEAM","items":[{"uid":"team-1","locale":"ko","name":123}]}"""
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errors[0].code") { value("INVALID_FIELD_TYPE") }
+                jsonPath("$.errors[0].index") { value(0) }
+            }
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("AI import endpoint는 malformed JSON을 validation error body로 반환한다")
+    fun importForAi_returnsValidationFailureForMalformedJson() {
+        mockMvc
+            .post("/api/v1/admin/localizations/ai-import") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "{"
+            }.andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errors[0].code") { value("MALFORMED_JSON") }
+            }
+
+        verifyNoInteractions(adminLocalizationWebService)
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("AI import endpoint는 빈 body와 whitespace-only body를 malformed JSON으로 반환한다")
+    fun importForAi_returnsValidationFailureForBlankBody() {
+        listOf("", "  \n\t ").forEach { body ->
+            mockMvc
+                .post("/api/v1/admin/localizations/ai-import") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = body
+                }.andExpect {
+                    status { isBadRequest() }
+                    jsonPath("$.errors[0].code") { value("MALFORMED_JSON") }
+                }
+        }
+
+        verifyNoInteractions(adminLocalizationWebService)
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("malformed manual PUT은 AI import validation 응답으로 변환되지 않는다")
+    fun updateLocalization_keepsExistingMalformedJsonResponse() {
+        mockMvc
+            .put("/api/v1/admin/localizations/leagues/{uid}/{locale}", "league-1", "ko") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "{"
+            }.andExpect {
+                status { isBadRequest() }
+                content { string("잘못된 요청입니다.") }
+            }
+    }
+
+    @WithMockUser(roles = ["ADMIN"])
+    @Test
+    @DisplayName("malformed AI export은 AI import validation 응답으로 변환되지 않는다")
+    fun exportForAi_keepsExistingMalformedJsonResponse() {
+        mockMvc
+            .post("/api/v1/admin/localizations/ai-export") {
+                contentType = MediaType.APPLICATION_JSON
+                content = "{"
+            }.andExpect {
+                status { isBadRequest() }
+                content { string("잘못된 요청입니다.") }
+            }
     }
 }

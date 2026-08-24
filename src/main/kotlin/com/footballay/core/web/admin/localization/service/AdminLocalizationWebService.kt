@@ -1,5 +1,6 @@
 package com.footballay.core.web.admin.localization.service
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.footballay.core.common.result.DomainFail
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.domain.facade.LeagueFacade
@@ -19,6 +20,7 @@ import com.footballay.core.web.admin.localization.dto.AiLocalizationExportRespon
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
+import com.footballay.core.web.admin.localization.ai.AiLocalizationImportValidator
 import org.springframework.stereotype.Service
 
 /** Admin localization 조회와 Core 결과 조립을 처리합니다. */
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service
 class AdminLocalizationWebService(
     private val leagueFacade: LeagueFacade,
     private val localizationFacade: LocalizationFacade,
+    private val aiLocalizationImportValidator: AiLocalizationImportValidator,
 ) {
     fun getSupportedLocales(): List<SupportedLocaleResponse> = SupportedLocale.entries.map { SupportedLocaleResponse(it.code) }
 
@@ -39,6 +42,8 @@ class AdminLocalizationWebService(
             AiLocalizationExportEntityType.PLAYER -> exportPlayers(request, locales.filterNotNull())
         }
     }
+
+    fun validateAiImport(payload: JsonNode) = aiLocalizationImportValidator.validate(payload)
 
     fun getAvailableLeagues(locale: SupportedLocale): DomainResult<List<CoreLocalizationResponse>, DomainFail> =
         when (val result = leagueFacade.getAvailableCoreLeagues()) {

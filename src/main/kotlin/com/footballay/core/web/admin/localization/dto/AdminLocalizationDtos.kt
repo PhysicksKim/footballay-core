@@ -33,6 +33,11 @@ enum class AiLocalizationExportEntityType {
     PLAYER,
 }
 
+enum class AiLocalizationImportEntityType {
+    TEAM,
+    PLAYER,
+}
+
 data class AiLocalizationExportRequest(
     val entityType: AiLocalizationExportEntityType,
     val leagueUid: String,
