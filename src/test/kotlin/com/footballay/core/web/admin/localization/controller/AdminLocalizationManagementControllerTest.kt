@@ -16,14 +16,18 @@ import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValida
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImport
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportEntityType
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportItem
+import com.footballay.core.web.admin.localization.dto.AiLocalizationImportResponse
 import com.footballay.core.web.admin.localization.ai.AiLocalizationContract
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
 import com.footballay.core.web.admin.localization.service.AdminLocalizationWebService
+import com.footballay.core.web.admin.localization.service.AdminAiLocalizationWebService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.given
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -46,6 +50,9 @@ class AdminLocalizationManagementControllerTest(
 ) {
     @MockitoBean
     private lateinit var adminLocalizationWebService: AdminLocalizationWebService
+
+    @MockitoBean
+    private lateinit var adminAiLocalizationWebService: AdminAiLocalizationWebService
 
     @WithMockUser(roles = ["ADMIN"])
     @Test
@@ -105,7 +112,7 @@ class AdminLocalizationManagementControllerTest(
             "locales" to listOf("en", "ko"),
             "uids" to listOf("team-1"),
         )
-        given(adminLocalizationWebService.exportForAi(org.mockito.kotlin.any())).willReturn(
+        given(adminAiLocalizationWebService.exportForAi(org.mockito.kotlin.any())).willReturn(
             DomainResult.Success(
                 AiLocalizationExportResponse(
                     locales = listOf("en", "ko"),
@@ -141,10 +148,13 @@ class AdminLocalizationManagementControllerTest(
     @Test
     @DisplayName("AI import endpoint는 유효한 Team과 Player payload를 validation 단계에서 수락한다")
     fun importForAi_acceptsValidPayloads() {
-        given(adminLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
+        given(adminAiLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
             AiLocalizationImportValidationResult.success(
                 AiLocalizationImport(AiLocalizationImportEntityType.TEAM, listOf(AiLocalizationImportItem(0, "team-1", SupportedLocale.KO, null, null))),
             ),
+        )
+        given(adminAiLocalizationWebService.applyAiImport(org.mockito.kotlin.any())).willReturn(
+            AiLocalizationImportResponse(updatedCount = 0, unchangedCount = 1, changes = emptyList()),
         )
 
         listOf("TEAM" to "team-1", "PLAYER" to "player-1").forEach { (entityType, uid) ->
@@ -154,6 +164,8 @@ class AdminLocalizationManagementControllerTest(
                     content = """{"version":1,"entityType":"$entityType","items":[{"uid":"$uid","locale":"ko"}]}"""
                 }.andExpect {
                     status { isOk() }
+                    jsonPath("$.updatedCount") { value(0) }
+                    jsonPath("$.unchangedCount") { value(1) }
                 }
         }
     }
@@ -162,7 +174,7 @@ class AdminLocalizationManagementControllerTest(
     @Test
     @DisplayName("AI import endpoint는 validation 실패 body를 400으로 반환한다")
     fun importForAi_returnsValidationFailure() {
-        given(adminLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
+        given(adminAiLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
             AiLocalizationImportValidationResult.failure(
                 AiLocalizationImportValidationFailureResponse(
                     listOf(AiLocalizationImportValidationError("INVALID_FIELD_TYPE", "name은 null 또는 string이어야 합니다.", index = 0, field = "items[0].name")),
@@ -179,6 +191,8 @@ class AdminLocalizationManagementControllerTest(
                 jsonPath("$.errors[0].code") { value("INVALID_FIELD_TYPE") }
                 jsonPath("$.errors[0].index") { value(0) }
             }
+
+        verify(adminAiLocalizationWebService, never()).applyAiImport(org.mockito.kotlin.any())
     }
 
     @WithMockUser(roles = ["ADMIN"])
@@ -194,7 +208,7 @@ class AdminLocalizationManagementControllerTest(
                 jsonPath("$.errors[0].code") { value("MALFORMED_JSON") }
             }
 
-        verifyNoInteractions(adminLocalizationWebService)
+        verifyNoInteractions(adminAiLocalizationWebService)
     }
 
     @WithMockUser(roles = ["ADMIN"])
@@ -212,7 +226,7 @@ class AdminLocalizationManagementControllerTest(
                 }
         }
 
-        verifyNoInteractions(adminLocalizationWebService)
+        verifyNoInteractions(adminAiLocalizationWebService)
     }
 
     @WithMockUser(roles = ["ADMIN"])

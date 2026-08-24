@@ -35,6 +35,25 @@ data class AiLocalizationImportValidationFailureResponse(
     val errors: List<AiLocalizationImportValidationError>,
 )
 
+data class AiLocalizationImportResponse(
+    val updatedCount: Int,
+    val unchangedCount: Int,
+    val changes: List<AiLocalizationImportChangeResponse>,
+)
+
+data class AiLocalizationImportChangeResponse(
+    val uid: String,
+    val locale: String,
+    val before: AiLocalizationImportValueResponse?,
+    val after: AiLocalizationImportValueResponse,
+)
+
+data class AiLocalizationImportValueResponse(
+    val name: String?,
+    val shortName: String?,
+    val aiGenerated: Boolean,
+)
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class AiLocalizationImportValidationError(
     val code: String,

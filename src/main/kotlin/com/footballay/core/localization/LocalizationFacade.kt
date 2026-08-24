@@ -72,4 +72,12 @@ class LocalizationFacade(
         shortName: String?,
     ): DomainResult<LocalizationUpsertResult, DomainFail> =
         localizationService.upsertPlayerLocalization(coreUid, locale, name, shortName)
+
+    @Transactional
+    fun applyAiTeamLocalizations(updates: List<AiLocalizationUpdate>): AiLocalizationApplyResult =
+        localizationService.applyAiTeamLocalizations(updates)
+
+    @Transactional
+    fun applyAiPlayerLocalizations(updates: List<AiLocalizationUpdate>): AiLocalizationApplyResult =
+        localizationService.applyAiPlayerLocalizations(updates)
 }

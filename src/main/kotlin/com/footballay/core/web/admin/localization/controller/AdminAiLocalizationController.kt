@@ -7,7 +7,7 @@ import com.footballay.core.web.admin.localization.dto.AiLocalizationExportReques
 import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationError
 import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationFailureResponse
-import com.footballay.core.web.admin.localization.service.AdminLocalizationWebService
+import com.footballay.core.web.admin.localization.service.AdminAiLocalizationWebService
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RestController
 @PreAuthorize("hasRole('ADMIN')")
 @RequestMapping("/api/v1/admin/localizations")
 class AdminAiLocalizationController(
-    private val adminLocalizationWebService: AdminLocalizationWebService,
+    private val adminAiLocalizationWebService: AdminAiLocalizationWebService,
     private val objectMapper: ObjectMapper,
 ) {
     @PostMapping("/ai-export")
     fun exportForAi(
         @RequestBody @Valid request: AiLocalizationExportRequest,
-    ): ResponseEntity<AiLocalizationExportResponse> = adminLocalizationWebService.exportForAi(request).toResponseEntity()
+    ): ResponseEntity<AiLocalizationExportResponse> = adminAiLocalizationWebService.exportForAi(request).toResponseEntity()
 
     @PostMapping("/ai-import")
     fun importForAi(
@@ -35,8 +35,11 @@ class AdminAiLocalizationController(
     ): ResponseEntity<*> {
         if (rawPayload.isNullOrBlank()) return malformedJsonResponse()
         return try {
-            val result = adminLocalizationWebService.validateAiImport(objectMapper.readTree(rawPayload))
-            if (result.isSuccess) ResponseEntity.ok().build<Any>() else ResponseEntity.badRequest().body(requireNotNull(result.failure))
+            val result = adminAiLocalizationWebService.validateAiImport(objectMapper.readTree(rawPayload))
+            if (result.isSuccess) {
+                val response = adminAiLocalizationWebService.applyAiImport(requireNotNull(result.value))
+                ResponseEntity.ok(response)
+            } else ResponseEntity.badRequest().body(requireNotNull(result.failure))
         } catch (_: JsonProcessingException) {
             malformedJsonResponse()
         }
