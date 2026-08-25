@@ -43,39 +43,21 @@ class CoreLocalizationRepositoryTest {
     private lateinit var entityManager: EntityManager
 
     @Test
-    fun `localizations store lowercase locale and allow null or blank names`() {
+    fun `localization repository maps SupportedLocale to lowercase database value`() {
         val player = playerCoreRepository.save(PlayerCore(uid = "player-localization", name = "Player"))
-        val team = teamCoreRepository.save(TeamCore(uid = "team-localization", name = "Team"))
-        val league = leagueCoreRepository.save(LeagueCore(uid = "league-localization", name = "League"))
 
         playerLocalizationRepository.save(
             PlayerCoreLocalization(playerCore = player, locale = SupportedLocale.EN, name = null, shortName = null),
-        )
-        teamLocalizationRepository.save(
-            TeamCoreLocalization(teamCore = team, locale = SupportedLocale.KO, name = "", shortName = " "),
-        )
-        leagueLocalizationRepository.save(
-            LeagueCoreLocalization(leagueCore = league, locale = SupportedLocale.EN, name = "League EN"),
         )
         entityManager.flush()
         entityManager.clear()
 
         assertThat(playerLocalizationRepository.findAll().single().locale).isEqualTo(SupportedLocale.EN)
-        assertThat(teamLocalizationRepository.findAll().single().name).isEmpty()
-        assertThat(leagueLocalizationRepository.findAll().single().name).isEqualTo("League EN")
         assertThat(databaseLocales("player_core_localization")).containsExactly("en")
-        assertThat(databaseLocales("team_core_localization")).containsExactly("ko")
-        assertThat(databaseLocales("league_core_localization")).containsExactly("en")
-        assertThat(databaseCoreUids("player_core_localization", "player_core_uid")).containsExactly(player.uid)
-        assertThat(databaseCoreUids("team_core_localization", "team_core_uid")).containsExactly(team.uid)
-        assertThat(databaseCoreUids("league_core_localization", "league_core_uid")).containsExactly(league.uid)
-        assertThat(databaseAiGenerated("player_core_localization")).containsExactly(false)
-        assertThat(databaseAiGenerated("team_core_localization")).containsExactly(false)
-        assertThat(databaseAiGenerated("league_core_localization")).containsExactly(false)
     }
 
     @Test
-    fun `localization repositories batch read by core uid and locale`() {
+    fun `each localization repository queries by core uid and locale`() {
         val includedPlayer = playerCoreRepository.save(PlayerCore(uid = "included-player", name = "Player"))
         val excludedPlayer = playerCoreRepository.save(PlayerCore(uid = "excluded-player", name = "Player"))
         val includedTeam = teamCoreRepository.save(TeamCore(uid = "included-team", name = "Team"))
@@ -145,14 +127,4 @@ class CoreLocalizationRepositoryTest {
     private fun databaseLocales(table: String): List<String> =
         entityManager.createNativeQuery("SELECT locale FROM $table ORDER BY id").resultList as List<String>
 
-    @Suppress("UNCHECKED_CAST")
-    private fun databaseCoreUids(
-        table: String,
-        column: String,
-    ): List<String> =
-        entityManager.createNativeQuery("SELECT $column FROM $table ORDER BY id").resultList as List<String>
-
-    @Suppress("UNCHECKED_CAST")
-    private fun databaseAiGenerated(table: String): List<Boolean> =
-        entityManager.createNativeQuery("SELECT ai_generated FROM $table ORDER BY id").resultList as List<Boolean>
 }

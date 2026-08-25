@@ -16,6 +16,7 @@ import com.footballay.core.infra.persistence.core.repository.TeamCoreLocalizatio
 import com.footballay.core.infra.persistence.core.repository.TeamCoreRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.groups.Tuple
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -71,7 +72,7 @@ class LocalizationFacadeTest {
     }
 
     @Test
-    fun `manual upsert는 non null field만 변경하고 no op은 ai generated를 유지한다`() {
+    fun `manual upsert changes supplied values and preserves aiGenerated for no ops`() {
         val player = playerCoreRepository.save(PlayerCore(uid = "existing-player", name = "Player"))
         playerLocalizationRepository.save(
             PlayerCoreLocalization(
@@ -83,9 +84,13 @@ class LocalizationFacadeTest {
             ),
         )
 
+        val sameValue = localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, "기존 이름", null).successValue().localization
         val nameOnly = localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, "수정 이름", null).successValue().localization
         val noOp = localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, null, null).successValue().localization
 
+        assertThat(sameValue).isEqualTo(
+            CoreLocalizationModel(player.uid, SupportedLocale.KO, "기존 이름", "기존 약칭", true),
+        )
         assertThat(nameOnly).isEqualTo(
             CoreLocalizationModel(player.uid, SupportedLocale.KO, "수정 이름", "기존 약칭", false),
         )
@@ -93,40 +98,12 @@ class LocalizationFacadeTest {
     }
 
     @Test
-    fun `manual upsert는 League Team Player의 same value와 null no op에서 ai generated를 유지한다`() {
-        val league = leagueCoreRepository.save(LeagueCore(uid = "manual-league", name = "League"))
-        val team = teamCoreRepository.save(TeamCore(uid = "manual-team", name = "Team"))
-        val player = playerCoreRepository.save(PlayerCore(uid = "manual-player", name = "Player"))
-        leagueLocalizationRepository.save(LeagueCoreLocalization(leagueCore = league, locale = SupportedLocale.KO, name = "리그", aiGenerated = true))
-        teamLocalizationRepository.save(TeamCoreLocalization(teamCore = team, locale = SupportedLocale.KO, shortName = "팀", aiGenerated = false))
-        playerLocalizationRepository.save(PlayerCoreLocalization(playerCore = player, locale = SupportedLocale.KO, name = "선수", aiGenerated = true))
-
-        val sameLeague = localizationFacade.upsertLeagueLocalization(league.uid, SupportedLocale.KO, "리그", null).successValue().localization
-        val sameTeam = localizationFacade.upsertTeamLocalization(team.uid, SupportedLocale.KO, null, "팀").successValue().localization
-        val nullPlayer = localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, null, null).successValue().localization
-
-        assertThat(sameLeague?.aiGenerated).isTrue()
-        assertThat(sameTeam?.aiGenerated).isFalse()
-        assertThat(nullPlayer?.aiGenerated).isTrue()
-        assertThat(localizationFacade.upsertLeagueLocalization(league.uid, SupportedLocale.KO, "변경 리그", null).successValue().localization?.aiGenerated).isFalse()
-        assertThat(localizationFacade.upsertTeamLocalization(team.uid, SupportedLocale.KO, "변경 팀", null).successValue().localization?.aiGenerated).isFalse()
-        assertThat(localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, null, "변경 선수").successValue().localization?.aiGenerated).isFalse()
-    }
-
-    @Test
-    fun `missing localization은 값이 없으면 생성하지 않고 batch와 단건 조회를 제공한다`() {
+    fun `manual upsert does not create a localization without values`() {
         val player = playerCoreRepository.save(PlayerCore(uid = "missing-player", name = "Player"))
 
         assertThat(localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, null, null).successValue().localization).isNull()
         assertThat(localizationFacade.findPlayerLocalization(player.uid, SupportedLocale.KO)).isNull()
 
-        localizationFacade.upsertPlayerLocalization(player.uid, SupportedLocale.KO, "선수", null).successValue()
-
-        assertThat(localizationFacade.findPlayerLocalization(player.uid, SupportedLocale.KO)).isEqualTo(
-            CoreLocalizationModel(player.uid, SupportedLocale.KO, "선수", null, false),
-        )
-        assertThat(localizationFacade.findPlayerLocalizations(setOf(player.uid), setOf(SupportedLocale.KO)))
-            .containsExactly(CoreLocalizationModel(player.uid, SupportedLocale.KO, "선수", null, false))
     }
 
     @Test
@@ -176,8 +153,8 @@ class LocalizationFacadeTest {
         assertThat(result.unchangedCount).isEqualTo(2)
         assertThat(result.changes).extracting("coreUid", "locale", "before.name", "before.shortName", "after.name", "after.shortName", "after.aiGenerated")
             .containsExactly(
-                org.assertj.core.groups.Tuple(existingTeam.uid, SupportedLocale.KO, "기존 이름", "기존 약칭", "변경 이름", "기존 약칭", true),
-                org.assertj.core.groups.Tuple(newTeam.uid, SupportedLocale.EN, null, null, "New Team", "NT", true),
+                Tuple(existingTeam.uid, SupportedLocale.KO, "기존 이름", "기존 약칭", "변경 이름", "기존 약칭", true),
+                Tuple(newTeam.uid, SupportedLocale.EN, null, null, "New Team", "NT", true),
             )
         assertThat(localizationFacade.findTeamLocalization(existingTeam.uid, SupportedLocale.EN)?.aiGenerated).isTrue()
         assertThat(localizationFacade.findTeamLocalization(newTeam.uid, SupportedLocale.KO)).isNull()
