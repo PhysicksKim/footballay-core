@@ -4,30 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.footballay.core.common.result.DomainResult
 import com.footballay.core.localization.SupportedLocale
 import com.footballay.core.web.admin.localization.dto.CoreLocalizationResponse
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContext
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportContextItem
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportItem
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportResponse
-import com.footballay.core.web.admin.localization.dto.AiLocalizationExportValue
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationError
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportValidationFailureResponse
-import com.footballay.core.web.admin.localization.ai.AiLocalizationImportValidationResult
-import com.footballay.core.web.admin.localization.ai.AiLocalizationEntityType
-import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImport
-import com.footballay.core.web.admin.localization.ai.ValidatedAiLocalizationImportItem
-import com.footballay.core.web.admin.localization.dto.AiLocalizationImportResponse
-import com.footballay.core.web.admin.localization.ai.AiLocalizationContract
 import com.footballay.core.web.admin.localization.dto.LocalizationResponse
 import com.footballay.core.web.admin.localization.dto.SupportedLocaleResponse
 import com.footballay.core.web.admin.localization.service.AdminLocalizationWebService
-import com.footballay.core.web.admin.localization.service.AdminAiLocalizationWebService
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.given
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoInteractions
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -37,7 +20,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 
 @SpringBootTest
@@ -49,9 +31,6 @@ class AdminLocalizationManagementControllerTest(
 ) {
     @MockitoBean
     private lateinit var adminLocalizationWebService: AdminLocalizationWebService
-
-    @MockitoBean
-    private lateinit var adminAiLocalizationWebService: AdminAiLocalizationWebService
 
     @WithMockUser(roles = ["ADMIN"])
     @Test
@@ -88,7 +67,7 @@ class AdminLocalizationManagementControllerTest(
 
     @WithMockUser(roles = ["ADMIN"])
     @Test
-    @DisplayName("PUT은 name과 shortName이 255자를 넘으면 validation 400을 반환한다")
+    @DisplayName("PUT은 name이 255자를 넘으면 validation 400을 반환한다")
     fun updateLocalization_returnsBadRequestForTooLongValue() {
         val request = mapOf("name" to "a".repeat(256))
 
@@ -103,129 +82,26 @@ class AdminLocalizationManagementControllerTest(
 
     @WithMockUser(roles = ["ADMIN"])
     @Test
-    @DisplayName("AI export endpoint는 Team context와 locale별 localization을 반환한다")
-    fun exportForAi_returnsExportPayload() {
-        val request = mapOf(
-            "entityType" to "TEAM",
-            "leagueUid" to "league-1",
-            "locales" to listOf("en", "ko"),
-            "uids" to listOf("team-1"),
-        )
-        given(adminAiLocalizationWebService.exportForAi(org.mockito.kotlin.any())).willReturn(
+    @DisplayName("manual PUT은 locale과 변경값을 service에 전달하고 localization 응답을 반환한다")
+    fun updateLocalization_passesRequestAndReturnsResponse() {
+        given(adminLocalizationWebService.updateLeagueLocalization("league-1", SupportedLocale.KO, "리그 하나", "리그")).willReturn(
             DomainResult.Success(
-                AiLocalizationExportResponse(
-                    locales = listOf("en", "ko"),
-                    entityType = AiLocalizationEntityType.TEAM,
-                    context = AiLocalizationExportContext(AiLocalizationExportContextItem("league-1", "Premier League")),
-                    items = listOf(AiLocalizationExportItem("team-1", "Arsenal", mapOf("en" to AiLocalizationExportValue("Arsenal", "ARS"), "ko" to AiLocalizationExportValue(null, null)))),
-                ),
-            ),
-        )
-
-        val result =
-            mockMvc
-                .post("/api/v1/admin/localizations/ai-export") {
-                    contentType = MediaType.APPLICATION_JSON
-                    content = objectMapper.writeValueAsString(request)
-                }.andExpect {
-                    status { isOk() }
-                    jsonPath("$.version") { value(AiLocalizationContract.VERSION) }
-                    jsonPath("$.entityType") { value("TEAM") }
-                    jsonPath("$.context.league.uid") { value("league-1") }
-                    jsonPath("$.context.team") { doesNotExist() }
-                    jsonPath("$.items[0].localizations.en.shortName") { value("ARS") }
-                }.andReturn()
-
-        val missingLocalization = objectMapper.readTree(result.response.contentAsString).at("/items/0/localizations/ko")
-        assertThat(missingLocalization.has("name")).isTrue()
-        assertThat(missingLocalization.get("name").isNull).isTrue()
-        assertThat(missingLocalization.has("shortName")).isTrue()
-        assertThat(missingLocalization.get("shortName").isNull).isTrue()
-    }
-
-    @WithMockUser(roles = ["ADMIN"])
-    @Test
-    @DisplayName("AI import endpoint는 유효한 Team과 Player payload를 validation 단계에서 수락한다")
-    fun importForAi_acceptsValidPayloads() {
-        given(adminAiLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
-            AiLocalizationImportValidationResult.success(
-                ValidatedAiLocalizationImport(AiLocalizationEntityType.TEAM, listOf(ValidatedAiLocalizationImportItem(0, "team-1", SupportedLocale.KO, null, null))),
-            ),
-        )
-        given(adminAiLocalizationWebService.applyAiImport(org.mockito.kotlin.any())).willReturn(
-            AiLocalizationImportResponse(updatedCount = 0, unchangedCount = 1, changes = emptyList()),
-        )
-
-        listOf("TEAM" to "team-1", "PLAYER" to "player-1").forEach { (entityType, uid) ->
-            mockMvc
-                .post("/api/v1/admin/localizations/ai-import") {
-                    contentType = MediaType.APPLICATION_JSON
-                    content = """{"version":1,"entityType":"$entityType","items":[{"uid":"$uid","locale":"ko"}]}"""
-                }.andExpect {
-                    status { isOk() }
-                    jsonPath("$.updatedCount") { value(0) }
-                    jsonPath("$.unchangedCount") { value(1) }
-                }
-        }
-    }
-
-    @WithMockUser(roles = ["ADMIN"])
-    @Test
-    @DisplayName("AI import endpoint는 validation 실패 body를 400으로 반환한다")
-    fun importForAi_returnsValidationFailure() {
-        given(adminAiLocalizationWebService.validateAiImport(org.mockito.kotlin.any())).willReturn(
-            AiLocalizationImportValidationResult.failure(
-                AiLocalizationImportValidationFailureResponse(
-                    listOf(AiLocalizationImportValidationError("INVALID_FIELD_TYPE", "name은 null 또는 string이어야 합니다.", index = 0, field = "items[0].name")),
-                ),
+                CoreLocalizationResponse("league-1", "League One", LocalizationResponse("리그 하나", "리그", false)),
             ),
         )
 
         mockMvc
-            .post("/api/v1/admin/localizations/ai-import") {
+            .put("/api/v1/admin/localizations/leagues/{uid}/{locale}", "league-1", "ko") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"version":1,"entityType":"TEAM","items":[{"uid":"team-1","locale":"ko","name":123}]}"""
+                content = """{"name":"리그 하나","shortName":"리그"}"""
             }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.errors[0].code") { value("INVALID_FIELD_TYPE") }
-                jsonPath("$.errors[0].index") { value(0) }
+                status { isOk() }
+                jsonPath("$.uid") { value("league-1") }
+                jsonPath("$.localization.name") { value("리그 하나") }
+                jsonPath("$.localization.aiGenerated") { value(false) }
             }
 
-        verify(adminAiLocalizationWebService, never()).applyAiImport(org.mockito.kotlin.any())
-    }
-
-    @WithMockUser(roles = ["ADMIN"])
-    @Test
-    @DisplayName("AI import endpoint는 malformed JSON을 validation error body로 반환한다")
-    fun importForAi_returnsValidationFailureForMalformedJson() {
-        mockMvc
-            .post("/api/v1/admin/localizations/ai-import") {
-                contentType = MediaType.APPLICATION_JSON
-                content = "{"
-            }.andExpect {
-                status { isBadRequest() }
-                jsonPath("$.errors[0].code") { value("MALFORMED_JSON") }
-            }
-
-        verifyNoInteractions(adminAiLocalizationWebService)
-    }
-
-    @WithMockUser(roles = ["ADMIN"])
-    @Test
-    @DisplayName("AI import endpoint는 빈 body와 whitespace-only body를 malformed JSON으로 반환한다")
-    fun importForAi_returnsValidationFailureForBlankBody() {
-        listOf("", "  \n\t ").forEach { body ->
-            mockMvc
-                .post("/api/v1/admin/localizations/ai-import") {
-                    contentType = MediaType.APPLICATION_JSON
-                    content = body
-                }.andExpect {
-                    status { isBadRequest() }
-                    jsonPath("$.errors[0].code") { value("MALFORMED_JSON") }
-                }
-        }
-
-        verifyNoInteractions(adminAiLocalizationWebService)
+        verify(adminLocalizationWebService).updateLeagueLocalization("league-1", SupportedLocale.KO, "리그 하나", "리그")
     }
 
     @WithMockUser(roles = ["ADMIN"])
@@ -234,20 +110,6 @@ class AdminLocalizationManagementControllerTest(
     fun updateLocalization_keepsExistingMalformedJsonResponse() {
         mockMvc
             .put("/api/v1/admin/localizations/leagues/{uid}/{locale}", "league-1", "ko") {
-                contentType = MediaType.APPLICATION_JSON
-                content = "{"
-            }.andExpect {
-                status { isBadRequest() }
-                content { string("잘못된 요청입니다.") }
-            }
-    }
-
-    @WithMockUser(roles = ["ADMIN"])
-    @Test
-    @DisplayName("malformed AI export은 AI import validation 응답으로 변환되지 않는다")
-    fun exportForAi_keepsExistingMalformedJsonResponse() {
-        mockMvc
-            .post("/api/v1/admin/localizations/ai-export") {
                 contentType = MediaType.APPLICATION_JSON
                 content = "{"
             }.andExpect {
