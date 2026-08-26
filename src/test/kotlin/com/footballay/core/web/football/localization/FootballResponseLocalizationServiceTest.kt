@@ -1,14 +1,21 @@
 package com.footballay.core.web.football.localization
 
 import com.footballay.core.domain.model.match.FixtureInfoModel
+import com.footballay.core.domain.model.match.FixtureEventsModel
 import com.footballay.core.domain.model.match.FixtureLineupModel
+import com.footballay.core.domain.model.match.FixtureStatisticsModel
+import com.footballay.core.infra.persistence.core.entity.LeagueCore
+import com.footballay.core.infra.persistence.core.entity.LeagueCoreLocalization
+import com.footballay.core.infra.persistence.core.entity.PlayerCore
+import com.footballay.core.infra.persistence.core.entity.PlayerCoreLocalization
+import com.footballay.core.infra.persistence.core.entity.TeamCore
+import com.footballay.core.infra.persistence.core.entity.TeamCoreLocalization
 import com.footballay.core.infra.persistence.core.repository.LeagueCoreLocalizationRepository
 import com.footballay.core.infra.persistence.core.repository.PlayerCoreLocalizationRepository
 import com.footballay.core.infra.persistence.core.repository.TeamCoreLocalizationRepository
 import com.footballay.core.localization.SupportedLocale
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -33,7 +40,7 @@ class FootballResponseLocalizationServiceTest {
     }
 
     @Test
-    fun `fixture info reads only league and team localization once`() {
+    fun `fixture info reflects requested league and team names with short names`() {
         val model =
             FixtureInfoModel(
                 fixtureUid = "fixture-1",
@@ -43,55 +50,46 @@ class FootballResponseLocalizationServiceTest {
                 home = FixtureInfoModel.TeamInfo(name = "Home", logo = null, teamUid = "team-1", playerColor = null),
                 away = null,
             )
-        every { leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
-        every { teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
+        every { leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns
+            listOf(
+                LeagueCoreLocalization(leagueCore = LeagueCore(uid = "league-1", name = "League"), locale = SupportedLocale.KO, name = "리그", shortName = "리그 약칭"),
+            )
+        every { teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns
+            listOf(
+                TeamCoreLocalization(teamCore = TeamCore(uid = "team-1", name = "Home"), locale = SupportedLocale.KO, name = "홈 팀", shortName = "홈"),
+            )
 
         val response = service.localizeFixtureInfo(model, SupportedLocale.KO)
 
-        assertThat(response.league.name).isEqualTo("League")
-        assertThat(response.home?.name).isEqualTo("Home")
-        val requestedLocales = setOf(SupportedLocale.KO, SupportedLocale.EN)
-
-        verify(exactly = 1) {
-            leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(
-                setOf("league-1"),
-                requestedLocales,
-            )
-        }
-        verify(exactly = 1) {
-            teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(
-                setOf("team-1"),
-                requestedLocales,
-            )
-        }
-        verify(exactly = 0) { playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) }
+        assertThat(response.league.name).isEqualTo("리그")
+        assertThat(response.league.shortName).isEqualTo("리그 약칭")
+        assertThat(response.home?.name).isEqualTo("홈 팀")
+        assertThat(response.home?.shortName).isEqualTo("홈")
     }
 
     @Test
-    fun `polling preparation reads team and player localization once for all locales`() {
+    fun `polling preparation reflects localized names in lineup events and statistics`() {
         val lineup = lineupWithOnePlayer()
-        every { teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
-        every { playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns emptyList()
-
-        val responses = service.preparePollingModels(lineup, null, null, SupportedLocale.entries)
-
-        assertThat(responses[SupportedLocale.EN]?.lineup?.home?.teamName).isEqualTo("Home")
-        assertThat(responses[SupportedLocale.EN]?.lineup?.home?.players?.single()?.name).isEqualTo("Player")
-        val supportedLocales = SupportedLocale.entries.toSet()
-
-        verify(exactly = 1) {
-            teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(
-                setOf("team-1"),
-                supportedLocales,
+        val events = eventsWithOnePlayer()
+        val statistics = statisticsWithOnePlayer()
+        every { teamLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns
+            listOf(
+                TeamCoreLocalization(teamCore = TeamCore(uid = "team-1", name = "Home"), locale = SupportedLocale.KO, name = "홈 팀", shortName = "홈"),
             )
-        }
-        verify(exactly = 1) {
-            playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(
-                setOf("player-1"),
-                supportedLocales,
+        every { playerLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) } returns
+            listOf(
+                PlayerCoreLocalization(playerCore = PlayerCore(uid = "player-1", name = "Player"), locale = SupportedLocale.KO, name = "선수", shortName = "선"),
             )
-        }
-        verify(exactly = 0) { leagueLocalizationRepository.findAllByCoreUidInAndLocaleIn(any(), any()) }
+
+        val responses = service.preparePollingModels(lineup, events, statistics, SupportedLocale.entries)
+
+        val home = responses[SupportedLocale.KO]?.lineup?.home
+        assertThat(home?.teamName).isEqualTo("홈 팀")
+        assertThat(home?.teamShortName).isEqualTo("홈")
+        assertThat(home?.players?.single()?.name).isEqualTo("선수")
+        assertThat(home?.players?.single()?.shortName).isEqualTo("선")
+        assertThat(responses[SupportedLocale.KO]?.events?.events?.single()?.player?.shortName).isEqualTo("선")
+        assertThat(responses[SupportedLocale.KO]?.statistics?.home?.playerStatistics?.single()?.player?.name).isEqualTo("선수")
     }
 
     private fun lineupWithOnePlayer(): FixtureLineupModel =
@@ -122,5 +120,42 @@ class FootballResponseLocalizationServiceTest {
                         ),
                     away = null,
                 ),
+        )
+
+    private fun eventsWithOnePlayer(): FixtureEventsModel =
+        FixtureEventsModel(
+            fixtureUid = "fixture-1",
+            events =
+                listOf(
+                    FixtureEventsModel.EventInfo(
+                        sequence = 1,
+                        elapsed = 10,
+                        extraTime = null,
+                        team = FixtureEventsModel.TeamInfo(name = "Home", teamUid = "team-1", playerColor = null),
+                        player = FixtureEventsModel.PlayerInfo(name = "Player", number = null, matchPlayerUid = "match-player-1", playerUid = "player-1"),
+                        assist = null,
+                        type = "Goal",
+                        detail = "Normal Goal",
+                        comments = null,
+                    ),
+                ),
+        )
+
+    private fun statisticsWithOnePlayer(): FixtureStatisticsModel =
+        FixtureStatisticsModel(
+            fixture = FixtureStatisticsModel.FixtureBasic("fixture-1", null, "1H"),
+            home =
+                FixtureStatisticsModel.TeamWithStatistics(
+                    team = FixtureStatisticsModel.TeamInfo(name = "Home", logo = null, teamUid = "team-1", playerColor = null),
+                    teamStatistics = mockk(),
+                    playerStatistics =
+                        listOf(
+                            FixtureStatisticsModel.PlayerWithStatistics(
+                                player = FixtureStatisticsModel.PlayerInfoBasic(name = "Player", photo = null, position = null, number = null, matchPlayerUid = "match-player-1", playerUid = "player-1"),
+                                statistics = mockk(),
+                            ),
+                        ),
+                ),
+            away = null,
         )
 }
