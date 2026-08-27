@@ -87,13 +87,16 @@ class AdminAiLocalizationControllerTest(
         assertThat(missingLocalization.has("shortName")).isTrue()
         assertThat(missingLocalization.get("shortName").isNull).isTrue()
         assertThat(AiLocalizationContract.EXPORT_INSTRUCTION).contains(
-            "context",
-            "originalName",
-            "uid는 변경하지 마세요",
-            "요청된 locales",
-            "설명이나 Markdown 없이 import contract JSON만",
-            "entityType은 export 데이터의 entityType 값을 그대로 사용하세요",
-            "\"entityType\":\"...\"",
+            "Footballay",
+            "축구 데이터 localization",
+            "uid",
+            "절대 수정",
+            "모든 item",
+            "모든 locale",
+            "선수의 shortName",
+            "팀의 shortName",
+            "(uid, locale)",
+            "JSON object 하나만",
             "version",
             "entityType",
             "items",

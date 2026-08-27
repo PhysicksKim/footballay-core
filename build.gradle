@@ -141,6 +141,7 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    maxHeapSize = '1g'
 }
 tasks.withType(KotlinCompile).configureEach {
     compilerOptions {
