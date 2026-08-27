@@ -19,6 +19,7 @@ data class AiLocalizationExportResponse(
     val version: Int = AiLocalizationContract.VERSION,
     val locales: List<String>,
     val entityType: AiLocalizationEntityType,
+    val instruction: String = AiLocalizationContract.EXPORT_INSTRUCTION,
     val context: AiLocalizationExportContext,
     val items: List<AiLocalizationExportItem>,
 )

@@ -75,6 +75,7 @@ class AdminAiLocalizationControllerTest(
                     status { isOk() }
                     jsonPath("$.version") { value(AiLocalizationContract.VERSION) }
                     jsonPath("$.entityType") { value("TEAM") }
+                    jsonPath("$.instruction") { value(AiLocalizationContract.EXPORT_INSTRUCTION) }
                     jsonPath("$.context.league.uid") { value("league-1") }
                     jsonPath("$.context.team") { doesNotExist() }
                     jsonPath("$.items[0].localizations.en.shortName") { value("ARS") }
@@ -85,6 +86,21 @@ class AdminAiLocalizationControllerTest(
         assertThat(missingLocalization.get("name").isNull).isTrue()
         assertThat(missingLocalization.has("shortName")).isTrue()
         assertThat(missingLocalization.get("shortName").isNull).isTrue()
+        assertThat(AiLocalizationContract.EXPORT_INSTRUCTION).contains(
+            "context",
+            "originalName",
+            "uid는 변경하지 마세요",
+            "요청된 locales",
+            "설명이나 Markdown 없이 import contract JSON만",
+            "entityType은 export 데이터의 entityType 값을 그대로 사용하세요",
+            "\"entityType\":\"...\"",
+            "version",
+            "entityType",
+            "items",
+            "locale",
+            "name",
+            "shortName",
+        )
     }
 
     @WithMockUser(roles = ["ADMIN"])
