@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * MatchDataQueryService 통합 테스트
@@ -48,7 +50,7 @@ class MatchDataQueryServiceImplTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = queryService.getFixtureInfo(fixtureUid)
+        val result = queryService.getFixtureInfo(fixtureUid, ZoneId.of("Asia/Seoul"))
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
@@ -66,10 +68,26 @@ class MatchDataQueryServiceImplTest {
         entityManager.flush()
         entityManager.clear()
 
-        val result = queryService.getFixtureInfo(entities.fixtureCore.uid)
+        val result = queryService.getFixtureInfo(entities.fixtureCore.uid, ZoneId.of("Asia/Seoul"))
 
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         assertThat((result as DomainResult.Success).value.league.name).isEqualTo("Core League")
+    }
+
+    @Test
+    fun `getFixtureInfo formats kickoff in requested timezone`() {
+        val entities =
+            entityGenerator.createCompleteMatchEntities(
+                MatchConfig(kickoffTime = Instant.parse("2026-08-20T23:00:00Z")),
+            )
+
+        val seoul = (queryService.getFixtureInfo(entities.fixtureCore.uid, ZoneId.of("Asia/Seoul")) as DomainResult.Success).value
+        val utc = (queryService.getFixtureInfo(entities.fixtureCore.uid, ZoneId.of("UTC")) as DomainResult.Success).value
+        val london = (queryService.getFixtureInfo(entities.fixtureCore.uid, ZoneId.of("Europe/London")) as DomainResult.Success).value
+
+        assertThat(seoul.date).isEqualTo("2026-08-21 08:00")
+        assertThat(utc.date).isEqualTo("2026-08-20 23:00")
+        assertThat(london.date).isEqualTo("2026-08-21 00:00")
     }
 
     @Test
@@ -178,7 +196,7 @@ class MatchDataQueryServiceImplTest {
         val invalidUid = "invaliduid99999"
 
         // When
-        val result = queryService.getFixtureInfo(invalidUid)
+        val result = queryService.getFixtureInfo(invalidUid, ZoneId.of("Asia/Seoul"))
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Fail::class.java)

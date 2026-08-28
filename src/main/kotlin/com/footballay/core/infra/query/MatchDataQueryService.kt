@@ -7,9 +7,10 @@ import com.footballay.core.domain.model.match.FixtureInfoModel
 import com.footballay.core.domain.model.match.FixtureLineupModel
 import com.footballay.core.domain.model.match.FixtureLiveStatusModel
 import com.footballay.core.domain.model.match.FixtureStatisticsModel
+import java.time.ZoneId
 
 interface MatchDataQueryService {
-    fun getFixtureInfo(fixtureUid: String): DomainResult<FixtureInfoModel, DomainFail>
+    fun getFixtureInfo(fixtureUid: String, zoneId: ZoneId): DomainResult<FixtureInfoModel, DomainFail>
 
     fun getFixtureLiveStatus(fixtureUid: String): DomainResult<FixtureLiveStatusModel, DomainFail>
 

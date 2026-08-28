@@ -16,6 +16,7 @@ import com.footballay.core.web.football.dto.*
 import com.footballay.core.web.football.localization.FootballResponseLocalizationService
 import com.footballay.core.web.football.mapper.MatchDataMapper
 import org.springframework.stereotype.Service
+import java.time.ZoneId
 
 /**
  * Footballay Fixture Web Service
@@ -33,12 +34,13 @@ class FixtureWebService(
 
     fun getFixtureInfo(
         fixtureUid: String,
+        zoneId: ZoneId,
         locale: SupportedLocale = SupportedLocale.EN,
     ): DomainResult<FixtureInfoResponse, DomainFail> {
         log.info("getFixtureInfo. fixtureUid={}", fixtureUid)
 
         return matchDataQueryService
-            .getFixtureInfo(fixtureUid)
+            .getFixtureInfo(fixtureUid, zoneId)
             .map { localizationService.localizeFixtureInfo(it, locale) }
             .map(matchDataMapper::toFixtureInfoResponse)
     }

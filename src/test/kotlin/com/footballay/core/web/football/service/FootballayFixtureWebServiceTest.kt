@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
+import java.time.ZoneId
 
 /**
  * 전체 API 흐름 검증 (WebService → QueryService → Mapper → Repository)
@@ -46,7 +47,7 @@ class FootballayFixtureWebServiceTest {
         val fixtureUid = entities.fixtureCore.uid
 
         // When
-        val result = webService.getFixtureInfo(fixtureUid)
+        val result = webService.getFixtureInfo(fixtureUid, ZoneId.of("Asia/Seoul"))
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
@@ -75,7 +76,7 @@ class FootballayFixtureWebServiceTest {
             TeamCoreLocalization(teamCore = entities.awayTeam, locale = SupportedLocale.EN, name = "Arsenal FC", shortName = "AFC"),
         )
 
-        val result = webService.getFixtureInfo(entities.fixtureCore.uid, SupportedLocale.KO)
+        val result = webService.getFixtureInfo(entities.fixtureCore.uid, ZoneId.of("Asia/Seoul"), SupportedLocale.KO)
 
         assertThat(result).isInstanceOf(DomainResult.Success::class.java)
         val response = (result as DomainResult.Success).value
@@ -175,7 +176,7 @@ class FootballayFixtureWebServiceTest {
         val invalidUid = "invaliduid99999"
 
         // When
-        val result = webService.getFixtureInfo(invalidUid)
+        val result = webService.getFixtureInfo(invalidUid, ZoneId.of("Asia/Seoul"))
 
         // Then
         assertThat(result).isInstanceOf(DomainResult.Fail::class.java)

@@ -30,7 +30,6 @@ class MatchDataQueryServiceImpl(
     private val log = logger()
 
     private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-    private val seoulZone = ZoneId.of("Asia/Seoul")
 
     /**
      * Fixture 기본 정보 조회
@@ -38,7 +37,7 @@ class MatchDataQueryServiceImpl(
      * @param fixtureUid Fixture UID
      * @return DomainResult<FixtureInfoModel>
      */
-    override fun getFixtureInfo(fixtureUid: String): DomainResult<FixtureInfoModel, DomainFail> {
+    override fun getFixtureInfo(fixtureUid: String, zoneId: ZoneId): DomainResult<FixtureInfoModel, DomainFail> {
         val fixture =
             fixtureApiSportsRepository.findByCoreUid(fixtureUid)
                 ?: return DomainResult.Fail(DomainFail.NotFound("Fixture", fixtureUid))
@@ -46,7 +45,7 @@ class MatchDataQueryServiceImpl(
         log.debug("Fetched fixture info for uid: {}", fixtureUid)
 
         return try {
-            val model = toFixtureInfoModel(fixture)
+            val model = toFixtureInfoModel(fixture, zoneId)
             DomainResult.Success(model)
         } catch (e: Exception) {
             log.error("Error converting fixture to domain model for uid: {}", fixtureUid, e)
@@ -183,7 +182,7 @@ class MatchDataQueryServiceImpl(
     // Entity → Domain Model 변환 메서드
     // ===========================
 
-    private fun toFixtureInfoModel(fixture: FixtureApiSports): FixtureInfoModel {
+    private fun toFixtureInfoModel(fixture: FixtureApiSports, zoneId: ZoneId): FixtureInfoModel {
         val core = fixture.core ?: throw IllegalArgumentException("FixtureCore is null")
         val season = fixture.season ?: throw IllegalArgumentException("Season is null")
         val league = season.leagueApiSports ?: throw IllegalArgumentException("League is null")
@@ -194,7 +193,7 @@ class MatchDataQueryServiceImpl(
 
         val dateStr =
             fixture.date
-                ?.atZone(seoulZone)
+                ?.atZone(zoneId)
                 ?.format(dateFormatter)
                 ?: ""
 

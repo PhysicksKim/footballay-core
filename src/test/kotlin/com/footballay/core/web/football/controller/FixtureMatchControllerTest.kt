@@ -16,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.time.ZoneId
 
 class FixtureMatchControllerTest {
     private lateinit var webService: FixtureWebService
@@ -34,7 +35,7 @@ class FixtureMatchControllerTest {
 
     @Test
     fun `info endpoint returns name and shortName without korean-specific fields`() {
-        every { webService.getFixtureInfo("fixture-1", SupportedLocale.KO) } returns
+        every { webService.getFixtureInfo("fixture-1", ZoneId.of("Asia/Seoul"), SupportedLocale.KO) } returns
             DomainResult.Success(
                 FixtureInfoResponse(
                     fixtureUid = "fixture-1",
@@ -65,6 +66,48 @@ class FixtureMatchControllerTest {
                 jsonPath("$.league.koreanName") { doesNotExist() }
             }
     }
+
+    @Test
+    fun `info endpoint passes requested IANA timezone to web service`() {
+        every { webService.getFixtureInfo("fixture-1", ZoneId.of("UTC"), SupportedLocale.EN) } returns fixtureInfo()
+        every { webService.getFixtureInfo("fixture-1", ZoneId.of("Europe/London"), SupportedLocale.EN) } returns fixtureInfo()
+
+        mockMvc
+            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1") {
+                param("timezone", "UTC")
+            }.andExpect {
+                status { isOk() }
+            }
+
+        mockMvc
+            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1") {
+                param("timezone", "Europe/London")
+            }.andExpect {
+                status { isOk() }
+            }
+    }
+
+    @Test
+    fun `info endpoint returns bad request for invalid timezone`() {
+        mockMvc
+            .get("/api/v1/football/fixtures/{uid}/info", "fixture-1") {
+                param("timezone", "invalid/timezone")
+            }.andExpect {
+                status { isBadRequest() }
+            }
+    }
+
+    private fun fixtureInfo(): DomainResult<FixtureInfoResponse, DomainFail> =
+        DomainResult.Success(
+            FixtureInfoResponse(
+                fixtureUid = "fixture-1",
+                referee = null,
+                date = "2026-08-20 20:00",
+                league = FixtureInfoResponse.LeagueInfo("league-1", "Premier League", null, null),
+                home = null,
+                away = null,
+            ),
+        )
 
     @Test
     fun `status endpoint - Ok 결과를 application json body 와 etag 로 반환한다`() {

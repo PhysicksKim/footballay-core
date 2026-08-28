@@ -22,6 +22,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import java.time.ZoneId
 
 /**
  * Football Fixture Public API Controller
@@ -60,19 +61,28 @@ class FixtureMatchController(
             content = [Content(schema = Schema(implementation = FixtureInfoResponse::class))],
         ),
         ApiResponse(responseCode = "404", description = "Fixture를 찾을 수 없음"),
-        ApiResponse(responseCode = "400", description = "잘못된 UID 형식"),
+        ApiResponse(responseCode = "400", description = "잘못된 UID 형식 또는 timezone"),
     )
     @GetMapping("/{uid}/info")
     fun getFixtureInfo(
         @Parameter(description = "Fixture UID (예: yp4nn06fntg591kk)")
         @PathVariable
         @NotBlank uid: String,
+        @Parameter(description = "Timezone (IANA format, default: Asia/Seoul)", example = "UTC")
+        @RequestParam(required = false, defaultValue = "Asia/Seoul")
+        timezone: String,
         @RequestHeader(name = HttpHeaders.ACCEPT_LANGUAGE, required = false)
         acceptLanguage: String?,
     ): ResponseEntity<FixtureInfoResponse> {
         log.info("GET /api/v1/football/fixtures/{}/info", uid)
+        val zoneId =
+            try {
+                ZoneId.of(timezone.trim())
+            } catch (_: Exception) {
+                return ResponseEntity.badRequest().build()
+            }
         val locale = localeResolver.resolve(acceptLanguage)
-        return toLocalizedResponse(webService.getFixtureInfo(uid, locale), locale)
+        return toLocalizedResponse(webService.getFixtureInfo(uid, zoneId, locale), locale)
     }
 
     @Operation(
