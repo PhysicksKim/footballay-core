@@ -115,9 +115,9 @@ object MatchEventChangePlanner {
                 .associate { dto ->
                     dto.sequence to MatchedPair(dto, entityEvents[dto.sequence]!!)
                 }
-        val toRetain = buildRetainedEntities(matchedPairs, allMatchPlayers)
+        val toRetain = buildRetainedEntities(matchedPairs, homeTeam, awayTeam, allMatchPlayers)
 
-        // 4단계: 효율적인 고아 엔티티 → 삭제 계획 - Entity에만 있고 DTO에 없는 엔티티들
+        // 4단계: Orphan 엔티티 삭제 계획 - DTO에 없고 기존에 저장된 Entity에만 있는 것들
         val toDelete = calculateOrphanEntities(dtoEvents, entityEvents)
 
         val changeSet =
@@ -316,7 +316,7 @@ object MatchEventChangePlanner {
      * 3. 변경사항이 없는 경우 null 반환하여 제외
      *
      * **변경사항 확인 항목:**
-     * - elapsedTime, extraTime, eventType, detail, comments
+     * - matchTeam, elapsedTime, extraTime, eventType, detail, comments
      * - player, assist (MatchPlayerKey 기반)
      *
      * @param matched 매칭된 DTO-Entity 쌍 맵
@@ -325,13 +325,17 @@ object MatchEventChangePlanner {
      */
     private fun buildRetainedEntities(
         matched: Map<Int, MatchedPair>,
+        homeTeam: ApiSportsMatchTeam?,
+        awayTeam: ApiSportsMatchTeam?,
         allMatchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): List<ApiSportsMatchEvent> =
         matched.values.mapNotNull { pair ->
-            if (hasFieldChanges(pair.entity, pair.dto, allMatchPlayers)) {
+            val matchTeam = findMatchTeam(pair.dto.teamApiId, homeTeam, awayTeam)
+            if (hasFieldChanges(pair.entity, pair.dto, matchTeam, allMatchPlayers)) {
                 // 직접 필드 업데이트 - 변경사항이 있는 경우에만 업데이트
                 pair.entity
                     .apply {
+                        this.matchTeam = matchTeam
                         elapsedTime = pair.dto.elapsedTime
                         extraTime = pair.dto.extraTime
                         eventType = pair.dto.eventType
@@ -352,7 +356,7 @@ object MatchEventChangePlanner {
      * 엔티티와 DTO 간 필드 변경사항 확인
      *
      * **확인 항목:**
-     * - elapsedTime, extraTime, eventType, detail, comments
+     * - matchTeam, elapsedTime, extraTime, eventType, detail, comments
      * - player, assist (MatchPlayerKey 기반으로 찾은 MatchPlayer)
      *
      * **성능 최적화:**
@@ -366,12 +370,14 @@ object MatchEventChangePlanner {
     private fun hasFieldChanges(
         entity: ApiSportsMatchEvent,
         dto: MatchEventDto,
+        matchTeam: ApiSportsMatchTeam?,
         allMatchPlayers: Map<String, ApiSportsMatchPlayer>,
     ): Boolean {
         val currentPlayer = findMatchPlayer(dto.playerMpKey, allMatchPlayers)
         val currentAssist = findMatchPlayer(dto.assistMpKey, allMatchPlayers)
 
-        return entity.elapsedTime != dto.elapsedTime ||
+        return entity.matchTeam != matchTeam ||
+            entity.elapsedTime != dto.elapsedTime ||
             entity.extraTime != dto.extraTime ||
             entity.eventType != dto.eventType ||
             entity.detail != dto.detail ||

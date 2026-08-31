@@ -53,14 +53,7 @@ import org.springframework.stereotype.Component
  * - 이유: 골이 아닌 골 기회이므로 별도 분류.
  * - 추가설명: 이 이벤트는 경기 중에는 등장하지만 경기 후에는 제거됨
  *
- * #### 3.2 Own Goal → 상대 팀으로 득점 기록
- * - 조건: `type="Goal"` && `detail="Own Goal"`
- * - 변환: `teamApiId`를 상대 팀으로 교체
- *   - 홈팀 선수가 Own Goal → 어웨이팀(득점 획득 팀) ID로 변경
- *   - 어웨이팀 선수가 Own Goal → 홈팀 ID로 변경
- * - 예외: 팀 ID가 홈/어웨이와 일치하지 않으면 경고 로그 + 원본 유지
- *
- * #### 3.3 Substitution null → UNKNOWN
+ * #### 3.2 Substitution null → UNKNOWN
  * - 조건: `type="subst"` && `player.id=null` && `player.name=null` && `assist.id=null` && `assist.name=null`
  * - 변환: `eventType="UNKNOWN"`
  * - 주의: id만 null이고 name이 있는 경우는 정상 처리 (이름으로 매칭 가능)
@@ -96,7 +89,7 @@ import org.springframework.stereotype.Component
  *
  * ## 에러 처리 전략
  * - 치명적 오류 (팀 ID null, 라인업 없음) → 빈 결과 반환
- * - 데이터 이상 (비정상 subst, Own Goal 팀 불일치) → 경고 로그 + 원본 유지
+ * - 데이터 이상 (비정상 subst) → 경고 로그 + 원본 유지
  * - 예외 발생 → catch하여 로그 기록 후 빈 결과 반환
  */
 @Component
@@ -131,7 +124,7 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
             val normalizedEvents = createNormalizedEvents(dto, lineupForSubstSimulation)
 
             // 3. 정규화된 이벤트를 MatchEventDto로 변환
-            val eventDtos = createMatchEventDtos(normalizedEvents, lineupForSubstSimulation)
+            val eventDtos = createMatchEventDtos(normalizedEvents)
 
             // 4. Context에 이벤트 전용 선수 추가 (라인업에 없는 선수)
             addEventOnlyPlayers(normalizedEvents, context)
@@ -144,14 +137,11 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
         }
     }
 
-    private fun createMatchEventDtos(
-        normalizedEvents: List<FullMatchSyncDto.EventDto>,
-        lineupInfo: LineupInfo,
-    ): List<MatchEventDto> {
+    private fun createMatchEventDtos(normalizedEvents: List<FullMatchSyncDto.EventDto>): List<MatchEventDto> {
         // 먼저 DTO로 변환 (sequence는 임시로 원본 인덱스 사용)
         val unsortedDtos =
             normalizedEvents.mapIndexed { index, event ->
-                toMatchEventDto(event, index, lineupInfo)
+                toMatchEventDto(event, index)
             }
 
         // 정렬 로직
@@ -350,13 +340,11 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
      *
      * 특수 케이스 처리:
      * 1. 패널티 실축: type="Goal", detail="Missed Penalty" → type="ETC"
-     * 2. Own Goal: type="Goal", detail="Own Goal" → teamApiId를 상대 팀으로 변경
-     * 3. Substitution null: player와 assist가 모두 완전히 null → type="UNKNOWN"
+     * 2. Substitution null: player와 assist가 모두 완전히 null → type="UNKNOWN"
      */
     private fun toMatchEventDto(
         event: FullMatchSyncDto.EventDto,
         sequence: Int,
-        lineupInfo: LineupInfo,
     ): MatchEventDto {
         // 1. 패널티 실축 처리
         val adjustedType =
@@ -378,25 +366,6 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
                 event.type
             }
 
-        // 2. Own Goal 팀 변경
-        val adjustedTeamApiId =
-            if (event.type.equals("Goal", ignoreCase = true) &&
-                event.detail?.equals("Own Goal", ignoreCase = true) == true
-            ) {
-                // Own Goal인 경우 상대 팀으로 변경
-                val currentTeamId = event.team.id
-                when (currentTeamId) {
-                    lineupInfo.homeTeamId -> lineupInfo.awayTeamId
-                    lineupInfo.awayTeamId -> lineupInfo.homeTeamId
-                    else -> {
-                        log.warn("Own Goal 이벤트의 팀 ID가 홈/어웨이 팀 ID와 일치하지 않습니다: currentTeamId={}, homeTeamId={}, awayTeamId={}", currentTeamId, lineupInfo.homeTeamId, lineupInfo.awayTeamId)
-                        event.team.id
-                    }
-                }
-            } else {
-                event.team.id
-            }
-
         return MatchEventDto(
             sequence = sequence,
             elapsedTime = if (event.time.elapsed > 0) event.time.elapsed else 0,
@@ -404,7 +373,7 @@ class MatchEventExtractorImpl : MatchEventDtoExtractor {
             eventType = adjustedType,
             detail = event.detail,
             comments = event.comments,
-            teamApiId = adjustedTeamApiId,
+            teamApiId = event.team.id,
             playerMpKey =
                 if (event.player?.name != null) {
                     MatchPlayerKeyGenerator.generateMatchPlayerKey(

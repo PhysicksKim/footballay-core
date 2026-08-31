@@ -794,8 +794,8 @@ class MatchEventExtractorImplTest {
     }
 
     @Test
-    @DisplayName("Own Goal 이벤트의 팀을 상대 팀(득점 획득 팀)으로 변경한다")
-    fun `should change team to opponent for own goal`() {
+    @DisplayName("Own Goal 이벤트의 API Sports raw 팀을 그대로 유지한다")
+    fun `should preserve raw team for own goal`() {
         // given
         val dto = createDtoWithOwnGoal()
 
@@ -808,7 +808,7 @@ class MatchEventExtractorImplTest {
         val event = result.events[0]
         assertEquals("Goal", event.eventType)
         assertEquals("Own Goal", event.detail)
-        // 홈팀 선수(100L)가 Own Goal을 넣었으므로 teamApiId는 어웨이팀(200L)이어야 함
+        // Own Goal의 API Sports raw 팀 ID를 그대로 사용한다.
         assertEquals(200L, event.teamApiId)
     }
 
@@ -927,7 +927,7 @@ class MatchEventExtractorImplTest {
             listOf(
                 FullMatchSyncDto.EventDto(
                     time = FullMatchSyncDto.EventDto.TimeDto(elapsed = 25, extra = null),
-                    team = FullMatchSyncDto.TeamSimpleDto(id = 100L, name = "Arsenal", logo = "arsenal.png"), // 홈팀
+                    team = FullMatchSyncDto.TeamSimpleDto(id = 200L, name = "Chelsea", logo = "chelsea.png"), // API Sports raw 득점 팀
                     player = FullMatchSyncDto.EventDto.EventPlayerDto(id = 10001L, name = "Player 1"), // 홈팀 선수
                     assist = null,
                     type = "Goal",

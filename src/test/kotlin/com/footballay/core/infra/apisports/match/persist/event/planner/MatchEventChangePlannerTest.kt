@@ -150,6 +150,110 @@ class MatchEventChangePlannerTest {
     }
 
     @Test
+    @DisplayName("같은 sequence의 이벤트 팀이 변경되면 최신 팀으로 업데이트합니다")
+    fun `planChanges_updates_match_team_when_team_api_id_changes`() {
+        // given
+        val homeTeam = createMockHomeTeam()
+        val awayTeam = createMockAwayTeam()
+        val existingEvent = createMockMatchEvent(sequence = 1, matchTeam = homeTeam)
+        val eventDto = MatchEventPlanDto(events = listOf(createMockEventDto(sequence = 1, teamApiId = 2L)))
+
+        // when
+        val result =
+            MatchEventChangePlanner.planChanges(
+                eventDto,
+                mapOf(1 to existingEvent),
+                createMockFixture(),
+                homeTeam,
+                awayTeam,
+                emptyMap(),
+            )
+
+        // then
+        assertThat(result.toRetain).containsExactly(existingEvent)
+        assertThat(existingEvent.matchTeam).isEqualTo(awayTeam)
+    }
+
+    @Test
+    @DisplayName("중간 이벤트 추가로 sequence가 밀리면 기존 슬롯을 현재 snapshot 값으로 덮어씁니다")
+    fun `planChanges_overwrites_shifted_sequence_slots_from_current_snapshot`() {
+        // given
+        val homeTeam = createMockHomeTeam()
+        val awayTeam = createMockAwayTeam()
+        val playerA = createMockMatchPlayer(101L, "Player A")
+        val playerB = createMockMatchPlayer(102L, "Player B")
+        val playerC = createMockMatchPlayer(103L, "Player C")
+        val playerX = createMockMatchPlayer(104L, "Player X")
+        val allMatchPlayers =
+            listOf(playerA, playerB, playerC, playerX).associateBy { createMpKey(it.playerApiSports?.apiId, it.name) }
+        val existingEventA =
+            createMockMatchEvent(0, 10, homeTeam, playerA, null, 0, "Goal", "A", "A comment")
+        val existingEventB =
+            createMockMatchEvent(1, 20, homeTeam, playerB, playerA, 1, "Card", "B", "B comment")
+        val existingEventC =
+            createMockMatchEvent(2, 30, awayTeam, playerC, playerB, 2, "VAR", "C", "C comment")
+        val eventDto =
+            MatchEventPlanDto(
+                events =
+                    listOf(
+                        createMockEventDto(0, 10, 1L, createMpKey(101L, "Player A"), null, 0, "Goal", "A", "A comment"),
+                        createMockEventDto(
+                            1,
+                            25,
+                            2L,
+                            createMpKey(104L, "Player X"),
+                            createMpKey(101L, "Player A"),
+                            3,
+                            "Subst",
+                            "X",
+                            "X comment",
+                        ),
+                        createMockEventDto(
+                            2,
+                            20,
+                            1L,
+                            createMpKey(102L, "Player B"),
+                            createMpKey(104L, "Player X"),
+                            1,
+                            "Card",
+                            "B moved",
+                            "B moved comment",
+                        ),
+                        createMockEventDto(
+                            3,
+                            30,
+                            2L,
+                            createMpKey(103L, "Player C"),
+                            createMpKey(102L, "Player B"),
+                            2,
+                            "VAR",
+                            "C moved",
+                            "C moved comment",
+                        ),
+                    ),
+            )
+
+        // when
+        val result =
+            MatchEventChangePlanner.planChanges(
+                eventDto,
+                mapOf(0 to existingEventA, 1 to existingEventB, 2 to existingEventC),
+                createMockFixture(),
+                homeTeam,
+                awayTeam,
+                allMatchPlayers,
+            )
+
+        // then
+        assertThat(result.toRetain).containsExactly(existingEventB, existingEventC)
+        assertThat(result.toCreate).hasSize(1)
+        assertThat(result.toDelete).isEmpty()
+        assertEvent(existingEventB, awayTeam, playerX, playerA, 25, 3, "Subst", "X", "X comment")
+        assertEvent(existingEventC, homeTeam, playerB, playerX, 20, 1, "Card", "B moved", "B moved comment")
+        assertEvent(result.toCreate.single(), awayTeam, playerC, playerB, 30, 2, "VAR", "C moved", "C moved comment")
+    }
+
+    @Test
     @DisplayName("변경사항이 없는 기존 이벤트는 업데이트 계획에 포함되지 않습니다")
     fun `planChanges_변경사항이_없는_이벤트는_업데이트되지_않는다`() {
         // given
@@ -670,17 +774,22 @@ class MatchEventChangePlannerTest {
     private fun createMockEventDto(
         sequence: Int,
         elapsedTime: Int = 10,
+        teamApiId: Long? = null,
         playerMpKey: String? = null,
         assistMpKey: String? = null,
+        extraTime: Int? = 0,
+        eventType: String = "Goal",
+        detail: String? = "Normal Goal",
+        comments: String? = null,
     ): MatchEventDto =
         MatchEventDto(
             sequence = sequence,
             elapsedTime = elapsedTime,
-            extraTime = 0,
-            eventType = "Goal",
-            detail = "Normal Goal",
-            comments = null,
-            teamApiId = 1L,
+            extraTime = extraTime,
+            eventType = eventType,
+            detail = detail,
+            comments = comments,
+            teamApiId = teamApiId,
             playerMpKey = playerMpKey,
             assistMpKey = assistMpKey,
         )
@@ -688,19 +797,47 @@ class MatchEventChangePlannerTest {
     private fun createMockMatchEvent(
         sequence: Int,
         elapsedTime: Int = 10,
+        matchTeam: ApiSportsMatchTeam? = null,
+        player: ApiSportsMatchPlayer? = null,
+        assist: ApiSportsMatchPlayer? = null,
+        extraTime: Int? = 0,
+        eventType: String = "Goal",
+        detail: String? = "Normal Goal",
+        comments: String? = null,
     ): ApiSportsMatchEvent =
         ApiSportsMatchEvent(
             fixtureApi = createMockFixture(),
-            matchTeam = null,
-            player = null,
-            assist = null,
+            matchTeam = matchTeam,
+            player = player,
+            assist = assist,
             sequence = sequence,
             elapsedTime = elapsedTime,
-            extraTime = 0,
-            eventType = "Goal",
-            detail = "Normal Goal",
-            comments = null,
+            extraTime = extraTime,
+            eventType = eventType,
+            detail = detail,
+            comments = comments,
         )
+
+    private fun assertEvent(
+        event: ApiSportsMatchEvent,
+        matchTeam: ApiSportsMatchTeam,
+        player: ApiSportsMatchPlayer,
+        assist: ApiSportsMatchPlayer?,
+        elapsedTime: Int,
+        extraTime: Int?,
+        eventType: String,
+        detail: String,
+        comments: String,
+    ) {
+        assertThat(event.matchTeam).isSameAs(matchTeam)
+        assertThat(event.player).isSameAs(player)
+        assertThat(event.assist).isSameAs(assist)
+        assertThat(event.elapsedTime).isEqualTo(elapsedTime)
+        assertThat(event.extraTime).isEqualTo(extraTime)
+        assertThat(event.eventType).isEqualTo(eventType)
+        assertThat(event.detail).isEqualTo(detail)
+        assertThat(event.comments).isEqualTo(comments)
+    }
 
     private fun createMockMatchPlayer(
         apiId: Long?,

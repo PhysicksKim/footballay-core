@@ -16,9 +16,8 @@ class ApiSportsMatchEvent(
     /**
      * 이벤트가 화면상 귀속되는 팀입니다.
      *
-     * 일반 이벤트는 provider가 전달한 이벤트 팀입니다. 다만 `Goal`의 `Own Goal`은
-     * 자책골로 득점이 인정된 상대 팀으로 정규화되어 저장됩니다. 이 경우 [player]는
-     * [matchTeam]과 다른 팀의 자책골 선수일 수 있습니다.
+     * Own Goal을 포함해 API-Sports `event.team.id`에 해당하는 팀을 그대로 저장합니다.
+     * 따라서 [player]는 [matchTeam]과 다른 팀의 자책골 선수일 수 있습니다.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "match_team_id")
@@ -46,7 +45,9 @@ class ApiSportsMatchEvent(
     @Column(name = "sequence", nullable = false)
     /**
      * Core가 재정렬 후 부여한 이벤트 순서입니다.
-     * provider 배열 index가 아니며, 같은 시간의 이벤트를 안정적으로 정렬하는 자연 키입니다.
+     * 현재 Match Event snapshot을 0부터 정렬한 값으로, Frontend에 안정적인 순서를 제공합니다.
+     * 동기화 시 같은 sequence 위치의 엔티티는 현재 snapshot 값으로 덮어씁니다.
+     * Event 자체의 고정 ID를 의미하지 않습니다.
      */
     var sequence: Int,
     // --- event info fields ---
@@ -67,9 +68,8 @@ class ApiSportsMatchEvent(
     var comments: String? = null, // 이벤트 코멘트
 ) {
     /**
-     * JPA 엔티티 동등성: sequence 기반 비교
-     * - sequence를 자연 키로 사용
-     * - 영속 상태에서만 동등성 확인 (id != null)
+     * 현재 snapshot의 sequence 위치만으로 동등성을 비교합니다.
+     * - Event 자체의 고정 identity를 의미하지 않음
      * - 연관관계는 제외하여 성능 및 무한 재귀 방지
      */
     override fun equals(other: Any?): Boolean {
@@ -79,14 +79,12 @@ class ApiSportsMatchEvent(
         // 간단한 타입 체크
         if (other !is ApiSportsMatchEvent) return false
 
-        // 자연 키 기반 비교
+        // 현재 snapshot sequence 위치 비교
         return sequence == other.sequence
     }
 
     /**
-     * 일관된 해시코드: sequence 기반
-     * - 자연 키 사용으로 영속 상태 전환에 영향받지 않음
-     * - 안정적인 해시코드 보장
+     * 현재 snapshot sequence 위치 기반 해시코드입니다.
      */
     override fun hashCode(): Int = sequence.hashCode()
 
